@@ -1,5 +1,5 @@
 {
-  "name": "@jzck/open3cl",
+  "name": "@open3cl/engine",
   "version": "0.1.0",
   "description": "Open Source 3CL-DPE engine",
   "main": "index.js",
