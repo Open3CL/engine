@@ -11,7 +11,7 @@ Open3CL est une librairie JavaScript open source, spécialement conçue pour fac
 ## Installation
 
 ```bash
-npm install open3cl
+npm install @open3cl/engine
 ```
 
 ## Exemple d'utilisation
