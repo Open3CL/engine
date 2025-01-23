@@ -1,12 +1,55 @@
 # Open3CL
 
-Le méthode 3CL, décrite dans [ce PDF](https://rt-re-batiment.developpement-durable.gouv.fr/IMG/pdf/consolide_annexe_1_arrete_du_31_03_2021_relatif_aux_methodes_et_procedures_applicables.pdf), est la base de calcul pour les DPE.
+Open3CL est une librairie JavaScript open source, spécialement conçue pour faciliter le calcul des Diagnostics de Performance Énergétique (DPE). Elle implémente la norme définie dans [l'annexe 1 de l'arrêté du 31 mars 2021](https://rt-re-batiment.developpement-durable.gouv.fr/IMG/pdf/consolide_annexe_1_arrete_du_31_03_2021_relatif_aux_methodes_et_procedures_applicables.pdf). Elle est destinée aux développeurs qui souhaitent intégrer des calculs énergétiques précis et conformes à la réglementation dans leurs applications.
 
-Open3CL est un projet d'exploration pour mieux comprendre le DPE et la méthode de calcul 3CL, il est encore en développement, veuillez suivre [la progression ici](./test/).
+## Fonctionnalités principales
 
-## Modèle de données
+- **Calculs énergétiques** : Supporte les différentes méthodologies définies par la réglementation.
+- **Conformité** : Implémente la norme définie dans [l'annexe 1 de l'arrêté du 31 mars 2021](https://rt-re-batiment.developpement-durable.gouv.fr/IMG/pdf/consolide_annexe_1_arrete_du_31_03_2021_relatif_aux_methodes_et_procedures_applicables.pdf).
+- **Performance** : Optimisée pour des calculs rapides sur de grands ensembles de données.
 
-Les DPE dans la base de l'ademe sont au format XML. Open3CL fonctionne en json, car c'est un format plus simple pour travailler au quotidien. Le fichier [xml_to_json.js](./test/xml_to_json.js) permet de transformer un DPE xml en format json utilisable par Open3CL.
+## Installation
+
+```bash
+npm install open3cl
+```
+
+## Exemple d'utilisation
+
+Voici un exemple basique montrant comment utiliser Open3CL pour calculer un DPE :
+
+```javascript
+import { calcul_3cl } from 'open3cl';
+
+// Exemple d'objet JSON issu d'un fichier XML DPE
+const dpeData = {
+  numero_dpe: '2113E1018248X',
+  statut: 'ACTIF',
+  logement: {
+    caracteristique_generale: {
+      annee_construction: 1948,
+      surface_habitable_logement: 49.96
+    },
+    installation_chauffage_collection: {
+      installation_chauffage: [
+        {
+          description: 'Chaudière individuelle gaz standard',
+          surface_chauffee: 49.96,
+          generateur_chauffage_collection: {
+            generateur_chauffage: [{ description: '...' }]
+          }
+        }
+      ]
+    }
+  }
+};
+
+const result = calcul_3cl(dpeData);
+```
+
+## Documentation
+
+Vous pouvez consulter la documentation complète sur [l'annexe 1 de l'arrêté du 31 mars 2021](https://rt-re-batiment.developpement-durable.gouv.fr/IMG/pdf/consolide_annexe_1_arrete_du_31_03_2021_relatif_aux_methodes_et_procedures_applicables.pdf) pour obtenir plus de détails sur l'utilisation des différents modules et fonctions.
 
 ## Ressources
 
@@ -41,3 +84,21 @@ En travaillant sur les DPE je suis tombé sur quelques cas de DPE intéressants
 - `2387E0291550X` probleme ubat/uph comble amenagés
 - `2287E1724516Y` pour un meme generateur, position_volume_chauffe = 0 ou 1 selon si c'est le gen_ecs ou le gen_ch
 - `2387E3092820B`, `2287E1043883T` et plein d'autres dpe. Le diagnostiqueur override la valeur forfaitaire de pveil pour le mettre a 0 car il n'y a pas de veilleuse sur la chaudiere, or pour le moteur il n'y a aucun moyen de savoir si donnee_intermediaire.pveil a ete saisi ou s'il faut aller chercher une valeur dans le tableau.
+
+## Contribution
+
+Nous accueillons les contributions avec plaisir ! Si vous souhaitez améliorer Open3CL, veuillez :
+
+1. Forker le dépôt.
+2. Créer une branche pour vos modifications.
+3. Soumettre une pull request avec une description claire des changements apportés.
+
+Consultez le fichier `CONTRIBUTING.md` pour plus de détails.
+
+## License
+
+Ce projet est sous licence [MIT](LICENSE).
+
+## Contact
+
+Pour toute question ou suggestion, veuillez contacter l'équipe de développement

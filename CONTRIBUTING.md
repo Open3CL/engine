@@ -19,14 +19,14 @@ If you have a question on using Open3CL Library, please contact us by email.
 
 ## <a id="issue"></a> Issues and Bugs
 
-If you find a bug in the source code or a mistake in the documentation, you can help us by [submitting a ticket](https://opensource.guide/how-to-contribute/#opening-an-issue) to our [GitHub issues](https://github.com/jzck/Open3CL/issues).
-Even better, you can submit a Pull Request to our [Open3CL project](https://github.com/jzck/Open3CL).
+If you find a bug in the source code or a mistake in the documentation, you can help us by [submitting a ticket](https://opensource.guide/how-to-contribute/#opening-an-issue) to our [GitHub issues](https://github.com/Open3CL/engine/issues).
+Even better, you can submit a Pull Request to our [Open3CL project](https://github.com/Open3CL/engine).
 
 **Please see the Submission Guidelines below**.
 
 ## <a id="feature"></a> Feature Requests
 
-You can request a new feature by submitting a ticket to our [GitHub issues](https://github.com/jzck/Open3CL/issues). If you
+You can request a new feature by submitting a ticket to our [GitHub issues](https://github.com/Open3CL/engine/issues). If you
 would like to implement a new feature then consider what kind of change it is:
 
 - **Major Changes** that you wish to contribute to the project should be discussed first. Please open a ticket which clearly states that it is a feature request in the title and explain clearly what you want to achieve in the description, and the team will discuss with you what should be done in that ticket. You can then start working on a Pull Request.
@@ -36,7 +36,7 @@ would like to implement a new feature then consider what kind of change it is:
 
 ### [Submitting an Issue](https://opensource.guide/how-to-contribute/#opening-an-issue)
 
-Before you submit your issue search the [archive](https://github.com/jzck/Open3CL/issues?utf8=%E2%9C%93&q=is%3Aissue), maybe your question was already answered.
+Before you submit your issue search the [archive](https://github.com/Open3CL/engine/issues?utf8=%E2%9C%93&q=is%3Aissue), maybe your question was already answered.
 
 If your issue appears to be a bug, and has not been reported, open a new issue.
 Help us to maximize the effort we can spend fixing issues and adding new
@@ -53,7 +53,7 @@ chances of your issue being dealt with quickly:
 - **JHipster Registry Version(s)** - is it a regression?
 - **Browsers and Operating System** - is this a problem with all browsers or only IE8?
 
-Click [here](https://github.com/jzck/Open3CL/issues/new) to open a bug issue with a pre-filled template. For feature requests and enquiries you can use templates.
+Click [here](https://github.com/Open3CL/engine/issues/new) to open a bug issue with a pre-filled template. For feature requests and enquiries you can use templates.
 
 Issues opened without any of these info will be **closed** without any explanation.
 
@@ -61,7 +61,7 @@ Issues opened without any of these info will be **closed** without any explanati
 
 Before you submit your pull request consider the following guideline:
 
-- Search [GitHub](https://github.com/jzck/Open3CL/pulls?utf8=%E2%9C%93&q=is%3Apr) for an open or closed Pull Request
+- Search [GitHub](https://github.com/Open3CL/engine/pulls?utf8=%E2%9C%93&q=is%3Apr) for an open or closed Pull Request
   that relates to your submission.
 
 ## <a id="rules"></a> Coding Rules
