@@ -1,0 +1,1422 @@
+{
+  "numero_dpe": "2187E0981996L",
+  "statut": "ACTIF",
+  "administratif": {
+    "dpe_a_remplacer": "2187E0521990X",
+    "motif_remplacement": "Mise à jour méthode",
+    "enum_version_id": "2",
+    "date_visite_diagnostiqueur": "2021-10-18",
+    "date_etablissement_dpe": "2021-12-23",
+    "enum_modele_dpe_id": "1",
+    "diagnostiqueur": {
+      "usr_logiciel_id": 26615,
+      "version_logiciel": "LICIEL Diagnostics v4 [Moteur TribuEnergie: 1.4.23.4]",
+      "version_moteur_calcul": "3cl_tribu_1.4.23.4"
+    },
+    "geolocalisation": {
+      "invar_logement": "",
+      "idpar": "",
+      "immatriculation_copropriete": "",
+      "adresses": {
+        "adresse_bien": {
+          "adresse_brut": "La Villeneuve",
+          "code_postal_brut": 87120,
+          "nom_commune_brut": "REMPNAT",
+          "label_brut": "La Villeneuve 87120 REMPNAT",
+          "enum_statut_geocodage_ban_id": "1",
+          "ban_date_appel": "2021-10-18",
+          "ban_id": "87123_l3jbcl",
+          "ban_label": "Route de la Vienne 87120 Rempnat",
+          "ban_housenumber": "",
+          "ban_street": "",
+          "ban_citycode": 87123,
+          "ban_postcode": 87120,
+          "ban_city": "Rempnat",
+          "ban_type": "street",
+          "ban_score": 0.33726,
+          "ban_x": 612748.2,
+          "ban_y": 6511734.45,
+          "compl_nom_residence": "",
+          "compl_ref_batiment": "",
+          "compl_etage_appartement": 0,
+          "compl_ref_cage_escalier": "",
+          "compl_ref_logement": "Ce bien ne fait pas partie d'une copropriété"
+        }
+      }
+    }
+  },
+  "logement": {
+    "caracteristique_generale": {
+      "annee_construction": 1947,
+      "enum_periode_construction_id": "1",
+      "enum_methode_application_dpe_log_id": "1",
+      "surface_habitable_logement": 42.5,
+      "nombre_niveau_immeuble": "",
+      "nombre_niveau_logement": 1,
+      "hsp": 2.5,
+      "nombre_appartement": ""
+    },
+    "meteo": {
+      "enum_zone_climatique_id": "3",
+      "enum_classe_altitude_id": "2",
+      "batiment_materiaux_anciens": 0
+    },
+    "enveloppe": {
+      "inertie": {
+        "inertie_plancher_bas_lourd": 0,
+        "inertie_plancher_haut_lourd": 0,
+        "inertie_paroi_verticale_lourd": 1,
+        "enum_classe_inertie_id": "3"
+      },
+      "mur_collection": {
+        "mur": [
+          {
+            "donnee_entree": {
+              "description": "Mur  1 Nord, Est - Mur en pierre de taille et moellons avec remplissage tout venant d'épaisseur 50 cm non isolé donnant sur l'extérieur",
+              "enum_type_adjacence_id": "1",
+              "enum_orientation_id": "3",
+              "surface_paroi_totale": 32.24,
+              "surface_paroi_opaque": 32.24,
+              "tv_umur0_id": 15,
+              "enum_materiaux_structure_mur_id": "3",
+              "enum_methode_saisie_u0_id": "2",
+              "paroi_ancienne": 1,
+              "enum_type_doublage_id": "2",
+              "enum_type_isolation_id": "2",
+              "enum_methode_saisie_u_id": "1"
+            },
+            "donnee_intermediaire": {
+              "b": 1,
+              "umur": 1.9,
+              "umur0": 1.9
+            }
+          },
+          {
+            "donnee_entree": {
+              "description": "Mur  2 Sud, Ouest - Mur en blocs de béton pleins d'épaisseur ≤ 20 cm non isolé donnant sur l'extérieur",
+              "enum_type_adjacence_id": "1",
+              "enum_orientation_id": "4",
+              "surface_paroi_totale": 27.77,
+              "surface_paroi_opaque": 27.77,
+              "tv_umur0_id": 69,
+              "enum_materiaux_structure_mur_id": "11",
+              "enum_methode_saisie_u0_id": "2",
+              "paroi_ancienne": 0,
+              "enum_type_doublage_id": "2",
+              "enum_type_isolation_id": "2",
+              "enum_methode_saisie_u_id": "1"
+            },
+            "donnee_intermediaire": {
+              "b": 1,
+              "umur": 2.5,
+              "umur0": 2.5
+            }
+          }
+        ]
+      },
+      "plancher_bas_collection": {
+        "plancher_bas": [
+          {
+            "donnee_entree": {
+              "description": "Plancher - Plancher bois sur solives bois non isolé donnant sur un sous-sol non chauffé",
+              "enum_type_adjacence_id": "6",
+              "surface_paroi_opaque": 42.5,
+              "tv_upb0_id": 10,
+              "enum_type_plancher_bas_id": "10",
+              "enum_methode_saisie_u0_id": "2",
+              "enum_type_isolation_id": "2",
+              "enum_methode_saisie_u_id": "1",
+              "calcul_ue": 1,
+              "perimetre_ue": 27,
+              "ue": 0.42268421
+            },
+            "donnee_intermediaire": {
+              "b": 1,
+              "upb": 1.6,
+              "upb_final": 0.42268421,
+              "upb0": 1.6
+            }
+          }
+        ]
+      },
+      "plancher_haut_collection": {
+        "plancher_haut": [
+          {
+            "donnee_entree": {
+              "description": "Plafond - Plafond avec ou sans remplissage non isolé donnant sur un comble fortement ventilé",
+              "tv_coef_reduction_deperdition_id": 126,
+              "surface_aiu": 42.5,
+              "surface_aue": 22,
+              "enum_cfg_isolation_lnc_id": "2",
+              "enum_type_adjacence_id": "11",
+              "surface_paroi_opaque": 42.5,
+              "tv_uph0_id": 2,
+              "enum_type_plancher_haut_id": "2",
+              "enum_methode_saisie_u0_id": "2",
+              "enum_type_isolation_id": "2",
+              "enum_methode_saisie_u_id": "1"
+            },
+            "donnee_intermediaire": {
+              "b": 0.7,
+              "uph": 1.45,
+              "uph0": 1.45
+            }
+          }
+        ]
+      },
+      "baie_vitree_collection": {
+        "baie_vitree": [
+          {
+            "donnee_entree": {
+              "description": "Fenêtre  1 Nord - Fenêtres battantes bois, orientées Nord, simple vitrage",
+              "enum_type_adjacence_id": "1",
+              "surface_totale_baie": 1.76,
+              "nb_baie": 2,
+              "tv_ug_id": 1,
+              "enum_type_vitrage_id": "1",
+              "enum_inclinaison_vitrage_id": "3",
+              "enum_methode_saisie_perf_vitrage_id": "1",
+              "tv_uw_id": 562,
+              "enum_type_materiaux_menuiserie_id": "3",
+              "enum_type_baie_id": "4",
+              "double_fenetre": 0,
+              "uw_1": 5.4,
+              "sw_1": 0.52,
+              "enum_type_fermeture_id": "1",
+              "presence_retour_isolation": 0,
+              "largeur_dormant": 5,
+              "tv_sw_id": 89,
+              "enum_type_pose_id": "3",
+              "enum_orientation_id": "2",
+              "tv_coef_masque_proche_id": 19,
+              "masque_lointain_non_homogene_collection": ""
+            },
+            "donnee_intermediaire": {
+              "b": 1,
+              "ug": 5.8,
+              "uw": 5.4,
+              "u_menuiserie": 5.4,
+              "sw": 0.52,
+              "fe1": 1,
+              "fe2": 1
+            }
+          },
+          {
+            "donnee_entree": {
+              "description": "Fenêtre  2 Sud - Fenêtres battantes bois, orientées Sud, simple vitrage avec volets battants bois",
+              "enum_type_adjacence_id": "1",
+              "surface_totale_baie": 4,
+              "nb_baie": 2,
+              "tv_ug_id": 1,
+              "enum_type_vitrage_id": "1",
+              "enum_inclinaison_vitrage_id": "3",
+              "enum_methode_saisie_perf_vitrage_id": "1",
+              "tv_uw_id": 562,
+              "enum_type_materiaux_menuiserie_id": "3",
+              "enum_type_baie_id": "4",
+              "double_fenetre": 0,
+              "uw_1": 5.4,
+              "sw_1": 0.52,
+              "tv_deltar_id": 6,
+              "tv_ujn_id": 225,
+              "enum_type_fermeture_id": "7",
+              "presence_retour_isolation": 0,
+              "largeur_dormant": 5,
+              "tv_sw_id": 89,
+              "enum_type_pose_id": "2",
+              "enum_orientation_id": "1",
+              "tv_coef_masque_proche_id": 19,
+              "masque_lointain_non_homogene_collection": ""
+            },
+            "donnee_intermediaire": {
+              "b": 1,
+              "ug": 5.8,
+              "uw": 5.4,
+              "ujn": 3.8,
+              "u_menuiserie": 3.8,
+              "sw": 0.52,
+              "fe1": 1,
+              "fe2": 1
+            }
+          }
+        ]
+      },
+      "porte_collection": {
+        "porte": [
+          {
+            "donnee_entree": {
+              "description": "Porte - Porte(s) bois opaque pleine",
+              "enum_type_adjacence_id": "1",
+              "surface_porte": 1.98,
+              "tv_uporte_id": 1,
+              "enum_methode_saisie_uporte_id": "1",
+              "enum_type_porte_id": "1"
+            },
+            "donnee_intermediaire": {
+              "uporte": 3.5,
+              "b": 1
+            }
+          }
+        ]
+      },
+      "ets_collection": "",
+      "pont_thermique_collection": {
+        "pont_thermique": [
+          {
+            "donnee_entree": {
+              "description": "Mur  1 Nord, Est / Fenêtre  1 Nord",
+              "tv_pont_thermique_id": 73,
+              "l": 7.2,
+              "enum_methode_saisie_pont_thermique_id": "1",
+              "enum_type_liaison_id": "5"
+            },
+            "donnee_intermediaire": {
+              "k": 0.31
+            }
+          },
+          {
+            "donnee_entree": {
+              "description": "Mur  2 Sud, Ouest / Fenêtre  2 Sud",
+              "tv_pont_thermique_id": 75,
+              "l": 12,
+              "enum_methode_saisie_pont_thermique_id": "1",
+              "enum_type_liaison_id": "5"
+            },
+            "donnee_intermediaire": {
+              "k": 0.38
+            }
+          },
+          {
+            "donnee_entree": {
+              "description": "Mur  2 Sud, Ouest / Porte",
+              "tv_pont_thermique_id": 73,
+              "l": 5.3,
+              "enum_methode_saisie_pont_thermique_id": "1",
+              "enum_type_liaison_id": "5"
+            },
+            "donnee_intermediaire": {
+              "k": 0.31
+            }
+          }
+        ]
+      }
+    },
+    "ventilation_collection": {
+      "ventilation": [
+        {
+          "donnee_entree": {
+            "surface_ventile": 42.5,
+            "description": "Ventilation par ouverture des fenêtres",
+            "plusieurs_facade_exposee": 1,
+            "tv_q4pa_conv_id": 5,
+            "enum_methode_saisie_q4pa_conv_id": "1",
+            "tv_debits_ventilation_id": 1,
+            "enum_type_ventilation_id": "1",
+            "ventilation_post_2012": 0,
+            "ref_produit_ventilation": ""
+          },
+          "donnee_intermediaire": {
+            "q4pa_conv": 3.3,
+            "conso_auxiliaire_ventilation": 0,
+            "hperm": 46.63831346550058,
+            "hvent": 17.34
+          }
+        }
+      ]
+    },
+    "climatisation_collection": "",
+    "production_elec_enr": "",
+    "installation_ecs_collection": {
+      "installation_ecs": [
+        {
+          "donnee_entree": {
+            "description": "Ballon électrique à accumulation vertical (autres catégorie ou inconnue), contenance ballon 150 L",
+            "enum_cfg_installation_ecs_id": "1",
+            "enum_type_installation_id": "1",
+            "enum_methode_calcul_conso_id": "1",
+            "surface_habitable": 42.5,
+            "nombre_logement": 1,
+            "nombre_niveau_installation_ecs": 1,
+            "tv_rendement_distribution_ecs_id": 3,
+            "enum_bouclage_reseau_ecs_id": "1"
+          },
+          "donnee_intermediaire": {
+            "rendement_distribution": 0.8300000000000001,
+            "besoin_ecs": 851443.6828625003,
+            "besoin_ecs_depensier": 1201143.7668953124,
+            "conso_ecs": 1581.63076248494,
+            "conso_ecs_depensier": 2002.9561649341117
+          },
+          "generateur_ecs_collection": {
+            "generateur_ecs": [
+              {
+                "donnee_entree": {
+                  "description": "Electrique - Ballon électrique à accumulation vertical (autres catégorie ou inconnue)",
+                  "enum_type_generateur_ecs_id": "69",
+                  "ref_produit_generateur_ecs": "",
+                  "enum_usage_generateur_id": "2",
+                  "enum_type_energie_id": "1",
+                  "enum_methode_saisie_carac_sys_id": "1",
+                  "tv_pertes_stockage_id": 6,
+                  "enum_type_stockage_ecs_id": "3",
+                  "position_volume_chauffe": 1,
+                  "volume_stockage": 150
+                },
+                "donnee_intermediaire": {
+                  "ratio_besoin_ecs": 1,
+                  "rendement_generation": 1,
+                  "conso_ecs": 1581.63076248494,
+                  "conso_ecs_depensier": 2002.9561649341117,
+                  "rendement_stockage": 0.6485937089850371
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "installation_chauffage_collection": {
+      "installation_chauffage": [
+        {
+          "donnee_entree": {
+            "description": "Panneau rayonnant électrique NFC, NF** et NF*** avec programmateur pièce par pièce (système individuel)",
+            "surface_chauffee": 42.5,
+            "nombre_logement_echantillon": "",
+            "nombre_niveau_installation_ch": 1,
+            "enum_cfg_installation_ch_id": "1",
+            "enum_type_installation_id": "1",
+            "enum_methode_calcul_conso_id": "1"
+          },
+          "donnee_intermediaire": {
+            "besoin_ch": 18495.265002534295,
+            "besoin_ch_depensier": 22099.706068060204,
+            "conso_ch": 12584.648973915388,
+            "conso_ch_depensier": 15037.202400459619
+          },
+          "emetteur_chauffage_collection": {
+            "emetteur_chauffage": [
+              {
+                "donnee_entree": {
+                  "description": "",
+                  "surface_chauffee": 42.5,
+                  "tv_rendement_emission_id": 2,
+                  "tv_rendement_distribution_ch_id": 1,
+                  "tv_rendement_regulation_id": 2,
+                  "enum_type_emission_distribution_id": "2",
+                  "tv_intermittence_id": 38,
+                  "reseau_distribution_isole": 0,
+                  "enum_equipement_intermittence_id": "4",
+                  "enum_type_regulation_id": "2",
+                  "enum_type_chauffage_id": "1",
+                  "enum_temp_distribution_ch_id": "1",
+                  "enum_lien_generateur_emetteur_id": "1"
+                },
+                "donnee_intermediaire": {
+                  "i0": 0.77,
+                  "rendement_emission": 0.97,
+                  "rendement_distribution": 1,
+                  "rendement_regulation": 0.99
+                }
+              }
+            ]
+          },
+          "generateur_chauffage_collection": {
+            "generateur_chauffage": [
+              {
+                "donnee_entree": {
+                  "description": "Electrique - Panneau rayonnant électrique NFC, NF** et NF***",
+                  "ref_produit_generateur_ch": "Sans Objet",
+                  "enum_type_generateur_ch_id": "99",
+                  "enum_usage_generateur_id": "1",
+                  "enum_type_energie_id": "1",
+                  "position_volume_chauffe": 1,
+                  "tv_rendement_generation_id": 29,
+                  "n_radiateurs_gaz": "",
+                  "priorite_generateur_cascade": "",
+                  "enum_methode_saisie_carac_sys_id": "1",
+                  "enum_lien_generateur_emetteur_id": "1"
+                },
+                "donnee_intermediaire": {
+                  "rendement_generation": 1,
+                  "conso_ch": 12584.648973915388,
+                  "conso_ch_depensier": 15037.202400459619
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "sortie": {
+      "deperdition": {
+        "hvent": 17.34,
+        "hperm": 46.63831346550058,
+        "deperdition_renouvellement_air": 63.97831346550058,
+        "deperdition_mur": 130.68099999999998,
+        "deperdition_plancher_bas": 17.964078925,
+        "deperdition_plancher_haut": 43.1375,
+        "deperdition_baie_vitree": 24.704,
+        "deperdition_porte": 6.93,
+        "deperdition_pont_thermique": 8.435,
+        "deperdition_enveloppe": 295.82989239050056
+      },
+      "apport_et_besoin": {
+        "surface_sud_equivalente": 30.158336,
+        "apport_solaire_fr": 0,
+        "apport_interne_fr": 0,
+        "apport_solaire_ch": 1551436.4819200002,
+        "apport_interne_ch": 1459229.75,
+        "fraction_apport_gratuit_ch": 1,
+        "fraction_apport_gratuit_depensier_ch": 1,
+        "pertes_distribution_ecs_recup": 28739.140199632886,
+        "pertes_distribution_ecs_recup_depensier": 41872.20079445468,
+        "pertes_stockage_ecs_recup": 0,
+        "pertes_generateur_ch_recup": 0,
+        "pertes_generateur_ch_recup_depensier": 0,
+        "nadeq": 1.234375,
+        "v40_ecs_journalier": 69.125,
+        "v40_ecs_journalier_depensier": 97.515625,
+        "besoin_ch": 18495.265002534295,
+        "besoin_ch_depensier": 22099.706068060204,
+        "besoin_ecs": 851.4436828625003,
+        "besoin_ecs_depensier": 1201.1437668953124,
+        "besoin_fr": 0,
+        "besoin_fr_depensier": 0
+      },
+      "ef_conso": {
+        "conso_ch": 12584.648973915388,
+        "conso_ch_depensier": 15037.202400459619,
+        "conso_ecs": 1581.63076248494,
+        "conso_ecs_depensier": 2002.9561649341117,
+        "conso_eclairage": 79.03980000000001,
+        "conso_auxiliaire_generation_ch": 0,
+        "conso_auxiliaire_generation_ch_depensier": 0,
+        "conso_auxiliaire_distribution_ch": 0,
+        "conso_auxiliaire_generation_ecs": 0,
+        "conso_auxiliaire_generation_ecs_depensier": 0,
+        "conso_auxiliaire_distribution_ecs": 0,
+        "conso_auxiliaire_ventilation": 0,
+        "conso_totale_auxiliaire": 0,
+        "conso_fr": 0,
+        "conso_fr_depensier": 0,
+        "conso_5_usages": 14245.319536400328,
+        "conso_5_usages_m2": 335
+      },
+      "ep_conso": {
+        "ep_conso_ch": 28944.69264000539,
+        "ep_conso_ch_depensier": 28944.69264000539,
+        "ep_conso_ecs": 3637.750753715362,
+        "ep_conso_ecs_depensier": 3637.750753715362,
+        "ep_conso_eclairage": 181.79154000000003,
+        "ep_conso_auxiliaire_generation_ch": 0,
+        "ep_conso_auxiliaire_generation_ch_depensier": 0,
+        "ep_conso_auxiliaire_distribution_ch": 0,
+        "ep_conso_auxiliaire_generation_ecs": 0,
+        "ep_conso_auxiliaire_generation_ecs_depensier": 0,
+        "ep_conso_auxiliaire_distribution_ecs": 0,
+        "ep_conso_auxiliaire_ventilation": 0,
+        "ep_conso_totale_auxiliaire": 1,
+        "ep_conso_fr": 0,
+        "ep_conso_fr_depensier": 0,
+        "ep_conso_5_usages": 32764.23493372075,
+        "ep_conso_5_usages_m2": 770,
+        "classe_bilan_dpe": "G"
+      },
+      "emission_ges": {
+        "emission_ges_ch": 994.1872689393157,
+        "emission_ges_ch_depensier": 994.1872689393157,
+        "emission_ges_ecs": 102.8059995615211,
+        "emission_ges_ecs_depensier": 102.8059995615211,
+        "emission_ges_eclairage": 5.453746200000001,
+        "emission_ges_auxiliaire_generation_ch": 0,
+        "emission_ges_auxiliaire_generation_ch_depensier": 0,
+        "emission_ges_auxiliaire_distribution_ch": 0,
+        "emission_ges_auxiliaire_generation_ecs": 0,
+        "emission_ges_auxiliaire_generation_ecs_depensier": 0,
+        "emission_ges_auxiliaire_distribution_ecs": 0,
+        "emission_ges_auxiliaire_ventilation": 0,
+        "emission_ges_totale_auxiliaire": 0,
+        "emission_ges_fr": 0,
+        "emission_ges_fr_depensier": 0,
+        "emission_ges_5_usages": 1102.447014700837,
+        "emission_ges_5_usages_m2": 25,
+        "classe_emission_ges": "C"
+      },
+      "cout": {
+        "cout_ch": 2063.236317987992,
+        "cout_ch_depensier": 2063.236317987992,
+        "cout_ecs": 259.3062418800772,
+        "cout_ecs_depensier": 259.3062418800772,
+        "cout_eclairage": 12.958469184521872,
+        "cout_auxiliaire_generation_ch": 0,
+        "cout_auxiliaire_generation_ch_depensier": 0,
+        "cout_auxiliaire_distribution_ch": 0,
+        "cout_auxiliaire_generation_ecs": 0,
+        "cout_auxiliaire_generation_ecs_depensier": 0,
+        "cout_auxiliaire_distribution_ecs": 0,
+        "cout_auxiliaire_ventilation": 0,
+        "cout_total_auxiliaire": 0,
+        "cout_fr": 0,
+        "cout_fr_depensier": 0,
+        "cout_5_usages": 2335.5010290525915
+      },
+      "production_electricite": {
+        "production_pv": 0,
+        "conso_elec_ac": 0,
+        "conso_elec_ac_ch": 0,
+        "conso_elec_ac_ecs": 0,
+        "conso_elec_ac_fr": 0,
+        "conso_elec_ac_eclairage": 0,
+        "conso_elec_ac_auxiliaire": 0,
+        "conso_elec_ac_autre_usage": 0
+      },
+      "sortie_par_energie_collection": {
+        "sortie_par_energie": [
+          {
+            "enum_type_energie_id": "1",
+            "conso_ch": 12584.648973915388,
+            "conso_ecs": 1581.63076248494,
+            "conso_5_usages": 14245.319536400328,
+            "emission_ges_ch": 994.1872689393157,
+            "emission_ges_ecs": 102.8059995615211,
+            "emission_ges_5_usages": 1102.447014700837,
+            "cout_ch": 2063.236317987992,
+            "cout_ecs": 259.3062418800772,
+            "cout_5_usages": 2335.5010290525915
+          }
+        ]
+      },
+      "confort_ete": "",
+      "qualite_isolation": {
+        "ubat": 1.5178499438625206,
+        "qualite_isol_enveloppe": 4,
+        "qualite_isol_mur": 4,
+        "qualite_isol_plancher_haut_comble_perdu": 4,
+        "qualite_isol_plancher_bas": 4,
+        "qualite_isol_menuiserie": 4
+      }
+    }
+  },
+  "dpe_immeuble": "",
+  "descriptif_enr_collection": "",
+  "descriptif_simplifie_collection": {
+    "descriptif_simplifie": [
+      {
+        "description": "Ventilation par ouverture des fenêtres",
+        "enum_categorie_descriptif_simplifie_id": "8"
+      },
+      {
+        "description": "Mur en pierre de taille et moellons avec remplissage tout venant d'épaisseur 50 cm non isolé donnant sur l'extérieur",
+        "enum_categorie_descriptif_simplifie_id": "1"
+      },
+      {
+        "description": "Mur en blocs de béton pleins d'épaisseur ≤ 20 cm non isolé donnant sur l'extérieur",
+        "enum_categorie_descriptif_simplifie_id": "1"
+      },
+      {
+        "description": "Plafond avec ou sans remplissage non isolé donnant sur un comble fortement ventilé",
+        "enum_categorie_descriptif_simplifie_id": "3"
+      },
+      {
+        "description": "Plancher bois sur solives bois non isolé donnant sur un sous-sol non chauffé",
+        "enum_categorie_descriptif_simplifie_id": "2"
+      },
+      {
+        "description": "Fenêtres battantes bois, orientées Nord, simple vitrage",
+        "enum_categorie_descriptif_simplifie_id": "4"
+      },
+      {
+        "description": "Fenêtres battantes bois, orientées Sud, simple vitrage avec volets battants bois",
+        "enum_categorie_descriptif_simplifie_id": "4"
+      },
+      {
+        "description": "Porte(s) bois opaque pleine",
+        "enum_categorie_descriptif_simplifie_id": "4"
+      },
+      {
+        "description": "Panneau rayonnant électrique NFC, NF** et NF*** avec programmateur pièce par pièce (système individuel)",
+        "enum_categorie_descriptif_simplifie_id": "5"
+      },
+      {
+        "description": "Panneau rayonnant électrique NFC, NF** et NF*** avec programmateur pièce par pièce (système individuel)",
+        "enum_categorie_descriptif_simplifie_id": "9"
+      },
+      {
+        "description": "Ballon électrique à accumulation vertical (autres catégorie ou inconnue), contenance ballon 150 L",
+        "enum_categorie_descriptif_simplifie_id": "6"
+      }
+    ]
+  },
+  "fiche_technique_collection": {
+    "fiche_technique": [
+      {
+        "enum_categorie_fiche_technique_id": "11",
+        "sous_fiche_technique_collection": {
+          "sous_fiche_technique": [
+            {
+              "description": "Département: 87  Haute Vienne",
+              "valeur": "87  Haute Vienne",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Altitude: 603 m",
+              "valeur": "603 m",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "4"
+            },
+            {
+              "description": "Type de bien: Maison Individuelle",
+              "valeur": "Maison Individuelle",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Année de construction: Avant 1948",
+              "valeur": "Avant 1948",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "5"
+            },
+            {
+              "description": "Surface habitable du logement: 42,5 m²",
+              "valeur": "42,5 m²",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Nombre de niveaux du logement: 1",
+              "valeur": 1,
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Hauteur moyenne sous plafond: 2,5 m",
+              "valeur": "2,5 m",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            }
+          ]
+        }
+      },
+      {
+        "enum_categorie_fiche_technique_id": "1",
+        "sous_fiche_technique_collection": {
+          "sous_fiche_technique": [
+            {
+              "description": "Surface du mur: 32,24 m²",
+              "valeur": "32,24 m²",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Type de local non chauffé adjacent: l'extérieur",
+              "valeur": "l'extérieur",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Matériau mur: Mur en pierre de taille et moellons avec remplissage tout venant",
+              "valeur": "Mur en pierre de taille et moellons avec remplissage tout venant",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Epaisseur mur: 50 cm",
+              "valeur": "50 cm",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Isolation: non",
+              "valeur": "non",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            }
+          ]
+        }
+      },
+      {
+        "enum_categorie_fiche_technique_id": "1",
+        "sous_fiche_technique_collection": {
+          "sous_fiche_technique": [
+            {
+              "description": "Surface du mur: 27,77 m²",
+              "valeur": "27,77 m²",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Type de local non chauffé adjacent: l'extérieur",
+              "valeur": "l'extérieur",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Matériau mur: Mur en blocs de béton pleins",
+              "valeur": "Mur en blocs de béton pleins",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Epaisseur mur: ≤ 20 cm",
+              "valeur": "≤ 20 cm",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Isolation: non",
+              "valeur": "non",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            }
+          ]
+        }
+      },
+      {
+        "enum_categorie_fiche_technique_id": "2",
+        "sous_fiche_technique_collection": {
+          "sous_fiche_technique": [
+            {
+              "description": "Surface de plancher bas: 42,5 m²",
+              "valeur": "42,5 m²",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Type de local non chauffé adjacent: un sous-sol non chauffé",
+              "valeur": "un sous-sol non chauffé",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Etat isolation des parois Aue: non isolé",
+              "valeur": "non isolé",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Périmètre plancher bâtiment déperditif: 27 m",
+              "valeur": "27 m",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Surface plancher bâtiment déperditif: 42,5 m²",
+              "valeur": "42,5 m²",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Type de pb: Plancher bois sur solives bois",
+              "valeur": "Plancher bois sur solives bois",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Isolation : oui / non / inconnue: non",
+              "valeur": "non",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            }
+          ]
+        }
+      },
+      {
+        "enum_categorie_fiche_technique_id": "3",
+        "sous_fiche_technique_collection": {
+          "sous_fiche_technique": [
+            {
+              "description": "Surface de plancher haut: 42,5 m²",
+              "valeur": "42,5 m²",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Type de local non chauffé adjacent: un comble fortement ventilé",
+              "valeur": "un comble fortement ventilé",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Surface Aiu: 42,5 m²",
+              "valeur": "42,5 m²",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Etat isolation des parois Aiu: non isolé",
+              "valeur": "non isolé",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Surface Aue: 22 m²",
+              "valeur": "22 m²",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Etat isolation des parois Aue: non isolé",
+              "valeur": "non isolé",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Type de ph: Plafond avec ou sans remplissage",
+              "valeur": "Plafond avec ou sans remplissage",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Isolation: non",
+              "valeur": "non",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            }
+          ]
+        }
+      },
+      {
+        "enum_categorie_fiche_technique_id": "4",
+        "sous_fiche_technique_collection": {
+          "sous_fiche_technique": [
+            {
+              "description": "Surface de baies: 1,76 m²",
+              "valeur": "1,76 m²",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Placement: Mur  1 Nord, Est",
+              "valeur": "Mur  1 Nord, Est",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Orientation des baies: Nord",
+              "valeur": "Nord",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Inclinaison vitrage: vertical",
+              "valeur": "vertical",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Type ouverture: Fenêtres battantes",
+              "valeur": "Fenêtres battantes",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Type menuiserie: Bois",
+              "valeur": "Bois",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Présence de joints d'étanchéité: non",
+              "valeur": "non",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Type de vitrage: simple vitrage",
+              "valeur": "simple vitrage",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Longueur Pont Thermique: 7,2 m",
+              "valeur": "7,2 m",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Positionnement de la menuiserie: en tunnel",
+              "valeur": "en tunnel",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Largeur du dormant menuiserie: Lp: 5 cm",
+              "valeur": "Lp: 5 cm",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Type de masques proches: Absence de masque proche",
+              "valeur": "Absence de masque proche",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Type de masques lointains: Absence de masque lointain",
+              "valeur": "Absence de masque lointain",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            }
+          ]
+        }
+      },
+      {
+        "enum_categorie_fiche_technique_id": "4",
+        "sous_fiche_technique_collection": {
+          "sous_fiche_technique": [
+            {
+              "description": "Surface de baies: 4 m²",
+              "valeur": "4 m²",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Placement: Mur  2 Sud, Ouest",
+              "valeur": "Mur  2 Sud, Ouest",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Orientation des baies: Sud",
+              "valeur": "Sud",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Inclinaison vitrage: vertical",
+              "valeur": "vertical",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Type ouverture: Fenêtres battantes",
+              "valeur": "Fenêtres battantes",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Type menuiserie: Bois",
+              "valeur": "Bois",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Présence de joints d'étanchéité: non",
+              "valeur": "non",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Type de vitrage: simple vitrage",
+              "valeur": "simple vitrage",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Longueur Pont Thermique: 12 m",
+              "valeur": "12 m",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Positionnement de la menuiserie: au nu intérieur",
+              "valeur": "au nu intérieur",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Largeur du dormant menuiserie: Lp: 5 cm",
+              "valeur": "Lp: 5 cm",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Type volets: Volets battants bois (tablier > 22mm)",
+              "valeur": "Volets battants bois (tablier > 22mm)",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Type de masques proches: Absence de masque proche",
+              "valeur": "Absence de masque proche",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Type de masques lointains: Absence de masque lointain",
+              "valeur": "Absence de masque lointain",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            }
+          ]
+        }
+      },
+      {
+        "enum_categorie_fiche_technique_id": "5",
+        "sous_fiche_technique_collection": {
+          "sous_fiche_technique": [
+            {
+              "description": "Surface de porte: 1,98 m²",
+              "valeur": "1,98 m²",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Placement: Mur  2 Sud, Ouest",
+              "valeur": "Mur  2 Sud, Ouest",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Type de porte: Porte opaque pleine",
+              "valeur": "Porte opaque pleine",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Présence de joints d'étanchéité: non",
+              "valeur": "non",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Longueur Pont Thermique: 5,3 m",
+              "valeur": "5,3 m",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Positionnement de la menuiserie: en tunnel",
+              "valeur": "en tunnel",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Largeur du dormant menuiserie: Lp: 5 cm",
+              "valeur": "Lp: 5 cm",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            }
+          ]
+        }
+      },
+      {
+        "enum_categorie_fiche_technique_id": "6",
+        "sous_fiche_technique_collection": {
+          "sous_fiche_technique": [
+            {
+              "description": "Type de pont thermique: Mur  1 Nord, Est / Fenêtre  1 Nord",
+              "valeur": "Mur  1 Nord, Est / Fenêtre  1 Nord",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Type isolation: non isolé",
+              "valeur": "non isolé",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Longueur du PT: 7,2 m",
+              "valeur": "7,2 m",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Largeur du dormant menuiserie Lp: Lp: 5 cm",
+              "valeur": "Lp: 5 cm",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Position menuiseries: en tunnel",
+              "valeur": "en tunnel",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            }
+          ]
+        }
+      },
+      {
+        "enum_categorie_fiche_technique_id": "6",
+        "sous_fiche_technique_collection": {
+          "sous_fiche_technique": [
+            {
+              "description": "Type de pont thermique: Mur  2 Sud, Ouest / Fenêtre  2 Sud",
+              "valeur": "Mur  2 Sud, Ouest / Fenêtre  2 Sud",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Type isolation: non isolé",
+              "valeur": "non isolé",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Longueur du PT: 12 m",
+              "valeur": "12 m",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Largeur du dormant menuiserie Lp: Lp: 5 cm",
+              "valeur": "Lp: 5 cm",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Position menuiseries: au nu intérieur",
+              "valeur": "au nu intérieur",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            }
+          ]
+        }
+      },
+      {
+        "enum_categorie_fiche_technique_id": "6",
+        "sous_fiche_technique_collection": {
+          "sous_fiche_technique": [
+            {
+              "description": "Type de pont thermique: Mur  2 Sud, Ouest / Porte",
+              "valeur": "Mur  2 Sud, Ouest / Porte",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Type isolation: non isolé",
+              "valeur": "non isolé",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Longueur du PT: 5,3 m",
+              "valeur": "5,3 m",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Largeur du dormant menuiserie Lp: Lp: 5 cm",
+              "valeur": "Lp: 5 cm",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Position menuiseries: en tunnel",
+              "valeur": "en tunnel",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            }
+          ]
+        }
+      },
+      {
+        "enum_categorie_fiche_technique_id": "10",
+        "sous_fiche_technique_collection": {
+          "sous_fiche_technique": [
+            {
+              "description": "Type de ventilation: Ventilation par ouverture des fenêtres",
+              "valeur": "Ventilation par ouverture des fenêtres",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Façades exposées: plusieurs",
+              "valeur": "plusieurs",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Logement Traversant: oui",
+              "valeur": "oui",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            }
+          ]
+        }
+      },
+      {
+        "enum_categorie_fiche_technique_id": "7",
+        "sous_fiche_technique_collection": {
+          "sous_fiche_technique": [
+            {
+              "description": "Type d’installation de chauffage: Installation de chauffage simple",
+              "valeur": "Installation de chauffage simple",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Type générateur: Electrique - Panneau rayonnant électrique NFC, NF** et NF***",
+              "valeur": "Electrique - Panneau rayonnant électrique NFC, NF** et NF***",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Surface chauffée par chaque générateur: 42,5",
+              "valeur": "42,5",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Année installation générateur: 2000 (estimée en fonction de la marque et du modèle)",
+              "valeur": "2000 (estimée en fonction de la marque et du modèle)",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Energie utilisée: Electrique",
+              "valeur": "Electrique",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Type émetteur: Panneau rayonnant électrique NFC, NF** et NF***",
+              "valeur": "Panneau rayonnant électrique NFC, NF** et NF***",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Année installation émetteur: 2000 (estimée en fonction de la marque et du modèle)",
+              "valeur": "2000 (estimée en fonction de la marque et du modèle)",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Type de chauffage: divisé",
+              "valeur": "divisé",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Equipement intermittence: Avec intermittence pièce par pièce avec minimum de température",
+              "valeur": "Avec intermittence pièce par pièce avec minimum de température",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            }
+          ]
+        }
+      },
+      {
+        "enum_categorie_fiche_technique_id": "8",
+        "sous_fiche_technique_collection": {
+          "sous_fiche_technique": [
+            {
+              "description": "Nombre de niveaux desservis: 1",
+              "valeur": 1,
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Type générateur: Electrique - Ballon électrique à accumulation vertical (autres catégorie ou inconnue)",
+              "valeur": "Electrique - Ballon électrique à accumulation vertical (autres catégorie ou inconnue)",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Année installation générateur: Avant 1948",
+              "valeur": "Avant 1948",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "1"
+            },
+            {
+              "description": "Energie utilisée: Electrique",
+              "valeur": "Electrique",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Chaudière murale: non",
+              "valeur": "non",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Type de distribution: production hors volume habitable",
+              "valeur": "production hors volume habitable",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Type de production: accumulation",
+              "valeur": "accumulation",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            },
+            {
+              "description": "Volume de stockage: 150 L",
+              "valeur": "150 L",
+              "detail_origine_donnee": "",
+              "enum_origine_donnee_id": "2"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "justificatif_collection": "",
+  "descriptif_geste_entretien_collection": {
+    "descriptif_geste_entretien": [
+      {
+        "description": "Vérifier la température d'eau du ballon (55°C-60°C) pour éviter le risque de développement de la légionnelle (en dessous de 50°C).",
+        "enum_picto_geste_entretien_id": "9",
+        "categorie_geste_entretien": "Chauffe-eau"
+      },
+      {
+        "description": "Eteindre les lumières lorsque personne n'utilise la pièce.",
+        "enum_picto_geste_entretien_id": "4",
+        "categorie_geste_entretien": "Eclairage"
+      },
+      {
+        "description": "Faire vérifier les isolants et les compléter tous les 20 ans.",
+        "enum_picto_geste_entretien_id": "13",
+        "categorie_geste_entretien": "Isolation"
+      },
+      {
+        "description": "Ne jamais placer un meuble devant un émetteur de chaleur.",
+        "enum_picto_geste_entretien_id": "3",
+        "categorie_geste_entretien": "Radiateur"
+      },
+      {
+        "description": "Veiller à ouvrir les fenêtres de chaque pièce très régulièrement",
+        "enum_picto_geste_entretien_id": "1",
+        "categorie_geste_entretien": "Ventilation"
+      }
+    ]
+  },
+  "descriptif_travaux": {
+    "pack_travaux_collection": {
+      "pack_travaux": {
+        "enum_num_pack_travaux_id": "1",
+        "conso_5_usages_apres_travaux": 770.923174911076,
+        "emission_ges_5_usages_apres_travaux": 25.9399297576668,
+        "cout_pack_travaux_min": 8600,
+        "cout_pack_travaux_max": 12800,
+        "travaux_collection": {
+          "travaux": [
+            {
+              "description_travaux": "Isolation des murs par l’extérieur.\nSi un ravalement de façade est prévu, effectuer une isolation par l’extérieur avec des retours d’isolants au niveau des tableaux des baies quand cela est possible.",
+              "enum_lot_travaux_id": "1",
+              "avertissement_travaux": "",
+              "performance_recommande": "R > 4,5 m².K/W"
+            },
+            {
+              "description_travaux": "Isolation des plafonds par l’extérieur.",
+              "enum_lot_travaux_id": "3",
+              "avertissement_travaux": "",
+              "performance_recommande": "R > 7,5 m².K/W"
+            },
+            {
+              "description_travaux": "Remplacer le système actuel par un appareil de type pompe à chaleur.",
+              "enum_lot_travaux_id": "6",
+              "avertissement_travaux": "",
+              "performance_recommande": "COP = 3"
+            }
+          ]
+        }
+      }
+    },
+    "commentaire_travaux": ""
+  }
+}
