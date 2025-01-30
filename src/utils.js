@@ -471,12 +471,12 @@ export function getRange(inputNumber, ranges) {
 
   ranges.sort();
 
-  if (inputNumber < ranges[0]) {
+  if (inputNumber <= ranges[0]) {
     result.push(ranges[0]);
     result.push(ranges[1]);
     return result;
   }
-  if (inputNumber > ranges[ranges.length - 1]) {
+  if (inputNumber >= ranges[ranges.length - 1]) {
     result.push(ranges[ranges.length - 2]);
     result.push(ranges[ranges.length - 1]);
   }
