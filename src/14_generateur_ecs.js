@@ -204,6 +204,7 @@ export default function calc_gen_ecs(dpe, gen_ecs, ecs_di, ecs_de, GV, ca_id, zc
 
   // Ratio de virtualisation à prendre en compte sur le rendement (17.2.1 Génération d’un DPE à l’appartement)
   de.ratio_virtualisation = ecs_de.ratio_virtualisation || 1;
+  de.cle_repartition_ecs = ecs_de.cle_repartition_ecs || 1;
 
   const besoin_ecs = ecs_di.besoin_ecs;
   const besoin_ecs_dep = ecs_di.besoin_ecs_depensier;

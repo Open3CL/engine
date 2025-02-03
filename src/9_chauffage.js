@@ -54,6 +54,7 @@ export default function calc_chauffage(
     const genChDi = gen.donnee_intermediaire || {};
 
     genChDe.ratio_virtualisation = de.ratio_virtualisation || 1;
+    genChDe.cle_repartition_ch = de.cle_repartition_ch || 1;
     genChDe.surface_chauffee = de.surface_chauffee || Sh;
     genChDe.nombre_niveau_installation_ch = de.nombre_niveau_installation_ch || 1;
     genChDe.fch = Fch || 0.5;
