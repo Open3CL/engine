@@ -43,6 +43,10 @@ export function conso_aux_gen(di, de, type, besoin, besoin_dep, Sh) {
 
   const Paux_g_ch = g + (h * (pe / 1000)) / (de.ratio_virtualisation || 1);
 
+  // Pour les installations collectives, la conso des auxiliaires est calculée à partir du besoin de l'appartement
+  let besoinAppart = besoin * (de[`cle_repartition_${type}`] || 1);
+  let besoinAppartDep = besoin_dep * (de[`cle_repartition_${type}`] || 1);
+
   let ratio = 1;
 
   // Pour le chauffage, le besoin de chauffage est proratisé à la surface chauffée
@@ -52,9 +56,9 @@ export function conso_aux_gen(di, de, type, besoin, besoin_dep, Sh) {
   }
 
   di[`conso_auxiliaire_generation_${type}`] =
-    ((de.ratio_virtualisation || 1) * (Paux_g_ch * besoin * ratio)) / pe || 0;
+    ((de.ratio_virtualisation || 1) * (Paux_g_ch * besoinAppart * ratio)) / pe || 0;
   di[`conso_auxiliaire_generation_${type}_depensier`] =
-    (Paux_g_ch * besoin_dep * ratio) / di.pn || 0;
+    (Paux_g_ch * besoinAppartDep * ratio) / di.pn || 0;
 }
 
 /**
