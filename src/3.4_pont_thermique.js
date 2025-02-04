@@ -364,22 +364,6 @@ function tv_k(pt_di, di, de, du, pc_id, logement) {
         'bool'
       );
 
-      if (bug_for_bug_compat) {
-        // Certains logiciels n'utilisent le boolean presence_retour_isolation de la même manière
-        // 0 = oui pour certains, 1 = oui pour d'autres
-        const tvPontThermique = tv('pont_thermique', {
-          tv_pont_thermique_id: de.tv_pont_thermique_id
-        });
-
-        if (
-          tvPontThermique &&
-          parseInt(matcher.presence_retour_isolation) !==
-            parseInt(tvPontThermique.presence_retour_isolation)
-        ) {
-          matcher.presence_retour_isolation = parseInt(tvPontThermique.presence_retour_isolation);
-        }
-      }
-
       matcher.largeur_dormant = requestInput(mde, mdu, 'largeur_dormant', 'float');
     }
   }
