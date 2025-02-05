@@ -1,4 +1,3 @@
-import enums from './enums.js';
 import { tv, requestInputID, requestInput, bug_for_bug_compat } from './utils.js';
 import calc_pvent from './5_conso_ventilation.js';
 
@@ -21,15 +20,31 @@ function tv_debits_ventilation(di, de, du) {
 function tv_q4pa_conv(di, de, cg, mur_list, ph_list, porte_list, bv_list) {
   const surfaces = mur_list.concat(ph_list);
   const surface_isolee = surfaces.reduce((acc, s) => {
-    const type_isolation = enums.type_isolation[s.donnee_entree.enum_type_isolation_id];
     if (s.donnee_intermediaire.b === 0) return acc;
-    if (['non isolé', 'inconnu'].includes(type_isolation)) return acc;
+
+    const typeIsolation = parseInt(s.donnee_entree.enum_type_isolation_id);
+
+    // Si le type isolation est inconnu mais avec que la période d'isolation est connue et > 1974 alors on considère la surface isolée
+    if (typeIsolation === 1 && parseInt(s.donnee_entree.enum_periode_isolation_id) >= 3) {
+      return acc + s.donnee_entree.surface_paroi_opaque;
+    }
+
+    // Si type d'isolation "1 - inconnu" ou "2 - non isolé"
+    if ([1, 2].includes(typeIsolation)) return acc;
     else return acc + s.donnee_entree.surface_paroi_opaque;
   }, 0);
   const surface_non_isolee = surfaces.reduce((acc, s) => {
-    const type_isolation = enums.type_isolation[s.donnee_entree.enum_type_isolation_id];
     if (s.donnee_intermediaire.b === 0) return acc;
-    if (['non isolé', 'inconnu'].includes(type_isolation)) {
+
+    const typeIsolation = parseInt(s.donnee_entree.enum_type_isolation_id);
+
+    // Si le type isolation est inconnu mais avec que la période d'isolation est connue et > 1974 alors on considère la surface isolée
+    if (typeIsolation === 1 && parseInt(s.donnee_entree.enum_periode_isolation_id) >= 3) {
+      return acc;
+    }
+
+    // Si type d'isolation "1 - inconnu" ou "2 - non isolé"
+    if ([1, 2].includes(typeIsolation)) {
       return acc + s.donnee_entree.surface_paroi_opaque;
     } else return acc;
   }, 0);
