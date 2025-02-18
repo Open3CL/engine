@@ -1,6 +1,6 @@
 import { tvs as tv } from '../../../tv-v2.js';
-import { Log } from '../../../core/util/logger/log-service.js';
 import { getRange } from '../../../utils.js';
+import { logger } from '../../../core/util/logger/log-service.js';
 
 /**
  * Accès aux données des tables de valeurs
@@ -17,17 +17,17 @@ export class TvStore {
    * @param enumTypePorteId {string} Identifiant du type de porte
    * @return {number|undefined} Uporte si trouvé, sinon undefined
    */
-  static getUPorte(enumTypePorteId) {
+  getUPorte(enumTypePorteId) {
     const uPorte = tv['uporte'].find((v) =>
       v.enum_type_porte_id.split('|').includes(enumTypePorteId)
     )?.uporte;
 
     if (!uPorte) {
-      Log.error(`Pas de valeur forfaitaire uPorte pour enumTypePorteId:${enumTypePorteId}`);
+      logger.error(`Pas de valeur forfaitaire uPorte pour enumTypePorteId:${enumTypePorteId}`);
       return;
     }
 
-    Log.debug(`uPorte pour type ${enumTypePorteId} = ${uPorte}`);
+    logger.debug(`uPorte pour type ${enumTypePorteId} = ${uPorte}`);
     return parseFloat(uPorte);
   }
 
@@ -40,7 +40,7 @@ export class TvStore {
    * @param zc {string|undefined}
    * @return {number|undefined}
    */
-  static getB(
+  getB(
     enumTypeAdjacenceId,
     uVue = undefined,
     enumCfgIsolationLncId = undefined,
@@ -64,11 +64,11 @@ export class TvStore {
     )?.b;
 
     if (!b) {
-      Log.error(`Pas de valeur forfaitaire b pour enumTypeAdjacenceId:${enumTypeAdjacenceId}`);
+      logger.error(`Pas de valeur forfaitaire b pour enumTypeAdjacenceId:${enumTypeAdjacenceId}`);
       return;
     }
 
-    Log.debug(`b pour enumTypeAdjacenceId ${enumTypeAdjacenceId} = ${b}`);
+    logger.debug(`b pour enumTypeAdjacenceId ${enumTypeAdjacenceId} = ${b}`);
     return parseFloat(b);
   }
 
@@ -77,15 +77,17 @@ export class TvStore {
    * @param enumTypeAdjacenceId {string}
    * @return {number|undefined}
    */
-  static getUVue(enumTypeAdjacenceId) {
+  getUVue(enumTypeAdjacenceId) {
     const uvue = tv['uvue'].find((v) => v.enum_type_adjacence_id === enumTypeAdjacenceId)?.uvue;
 
     if (!uvue) {
-      Log.error(`Pas de valeur forfaitaire uVue pour enumTypeAdjacenceId:${enumTypeAdjacenceId}`);
+      logger.error(
+        `Pas de valeur forfaitaire uVue pour enumTypeAdjacenceId:${enumTypeAdjacenceId}`
+      );
       return;
     }
 
-    Log.debug(`uvue pour enumTypeAdjacenceId ${enumTypeAdjacenceId} = ${uvue}`);
+    logger.debug(`uvue pour enumTypeAdjacenceId ${enumTypeAdjacenceId} = ${uvue}`);
     return parseFloat(uvue);
   }
 
@@ -95,7 +97,7 @@ export class TvStore {
    * @param epaisseurStructure {number|undefined}
    * @return {number|undefined}
    */
-  static getUmur0(enumMateriauxStructureMurId, epaisseurStructure = undefined) {
+  getUmur0(enumMateriauxStructureMurId, epaisseurStructure = undefined) {
     const umur0 = tv['umur0']
       .filter((v) => v.enum_materiaux_structure_mur_id === enumMateriauxStructureMurId)
       .find(
@@ -107,13 +109,15 @@ export class TvStore {
       )?.umur0;
 
     if (!umur0) {
-      Log.error(
+      logger.error(
         `Pas de valeur forfaitaire umur0 pour enumMateriauxStructureMurId:${enumMateriauxStructureMurId}`
       );
       return;
     }
 
-    Log.debug(`umur0 pour enumMateriauxStructureMurId ${enumMateriauxStructureMurId} = ${umur0}`);
+    logger.debug(
+      `umur0 pour enumMateriauxStructureMurId ${enumMateriauxStructureMurId} = ${umur0}`
+    );
     return parseFloat(umur0);
   }
 
@@ -124,7 +128,7 @@ export class TvStore {
    * @param effetJoule {boolean}
    * @return {number|undefined}
    */
-  static getUmur(enumPeriodeConstructionId, enumZoneClimatiqueId, effetJoule = false) {
+  getUmur(enumPeriodeConstructionId, enumZoneClimatiqueId, effetJoule = false) {
     const umur = tv['umur'].find(
       (v) =>
         v.enum_periode_construction_id.split('|').includes(enumPeriodeConstructionId) &&
@@ -133,13 +137,13 @@ export class TvStore {
     )?.umur;
 
     if (!umur) {
-      Log.error(
+      logger.error(
         `Pas de valeur forfaitaire umur pour enumPeriodeConstructionId:${enumPeriodeConstructionId}, enumPeriodeConstructionId:${enumPeriodeConstructionId}`
       );
       return;
     }
 
-    Log.debug(
+    logger.debug(
       `umur pour enumPeriodeConstructionId:${enumPeriodeConstructionId}, enumPeriodeConstructionId:${enumPeriodeConstructionId} = ${umur}`
     );
     return parseFloat(umur);
@@ -150,19 +154,19 @@ export class TvStore {
    * @param enumTypePlancherBasId {string}
    * @return {number|undefined}
    */
-  static getUpb0(enumTypePlancherBasId) {
+  getUpb0(enumTypePlancherBasId) {
     const upbO = tv['upb0'].find(
       (v) => v.enum_type_plancher_bas_id === enumTypePlancherBasId
     )?.upb0;
 
     if (!upbO) {
-      Log.error(
+      logger.error(
         `Pas de valeur forfaitaire upbO pour enumTypePlancherBasId:${enumTypePlancherBasId}`
       );
       return;
     }
 
-    Log.debug(`upbO pour enumTypePlancherBasId ${enumTypePlancherBasId} = ${upbO}`);
+    logger.debug(`upbO pour enumTypePlancherBasId ${enumTypePlancherBasId} = ${upbO}`);
     return parseFloat(upbO);
   }
 
@@ -173,7 +177,7 @@ export class TvStore {
    * @param effetJoule {boolean}
    * @return {number|undefined}
    */
-  static getUpb(enumPeriodeConstructionId, enumZoneClimatiqueId, effetJoule = false) {
+  getUpb(enumPeriodeConstructionId, enumZoneClimatiqueId, effetJoule = false) {
     const upb = tv['upb'].find(
       (v) =>
         v.enum_zone_climatique_id.split('|').includes(enumZoneClimatiqueId) &&
@@ -182,13 +186,13 @@ export class TvStore {
     )?.upb;
 
     if (!upb) {
-      Log.error(
+      logger.error(
         `Pas de valeur forfaitaire upb pour enumPeriodeConstructionId:${enumPeriodeConstructionId}, enumPeriodeConstructionId:${enumPeriodeConstructionId}`
       );
       return;
     }
 
-    Log.debug(
+    logger.debug(
       `upb pour enumPeriodeConstructionId:${enumPeriodeConstructionId}, enumPeriodeConstructionId:${enumPeriodeConstructionId} = ${upb}`
     );
     return parseFloat(upb);
@@ -202,7 +206,7 @@ export class TvStore {
    * @param upb {number} Valeur de upb
    * @return {number|undefined}
    */
-  static getUeByUpd(enumTypeAdjacenceId, enumPeriodeConstructionId, dsp, upb) {
+  getUeByUpd(enumTypeAdjacenceId, enumPeriodeConstructionId, dsp, upb) {
     const ueValues =
       tv['ue'].filter(
         (v) =>
@@ -218,11 +222,11 @@ export class TvStore {
     if (ueValues.length) {
       [upb1, upb2] = getRange(upb, ueRange);
 
-      const ue1 = ueValues.find((value) => value.upb === upb1).ue;
-      const ue2 = ueValues.find((value) => value.upb === upb2).ue;
+      const ue1 = ueValues.find((value) => value.upb === upb1)?.ue || 0;
+      const ue2 = ueValues.find((value) => value.upb === upb2)?.ue || 0;
 
       const delta_ue = Number(ue2) - Number(ue1);
-      const delta_upb = upb2 - upb1;
+      const delta_upb = upb2 - upb1 || 0;
 
       if (delta_upb === 0) {
         ue = Number(ue1);
@@ -232,14 +236,14 @@ export class TvStore {
       }
     }
 
-    if (!ue) {
-      Log.error(
+    if (ue === undefined) {
+      logger.error(
         `Pas de valeur forfaitaire ue pour enumTypeAdjacenceId:${enumTypeAdjacenceId}, enumPeriodeConstructionId:${enumPeriodeConstructionId}, 2S/P:${dsp}`
       );
       return;
     }
 
-    Log.debug(
+    logger.debug(
       `ue pour enumTypeAdjacenceId:${enumTypeAdjacenceId}, enumPeriodeConstructionId:${enumPeriodeConstructionId}, 2S/P:${dsp} = ${ue}`
     );
     return parseFloat(ue);
@@ -250,19 +254,19 @@ export class TvStore {
    * @param enumTypePlancherHautId {string}
    * @return {number|undefined}
    */
-  static getUph0(enumTypePlancherHautId) {
+  getUph0(enumTypePlancherHautId) {
     const uph0 = tv['uph0'].find((v) =>
       v.enum_type_plancher_haut_id.split('|').includes(enumTypePlancherHautId)
     )?.uph0;
 
     if (!uph0) {
-      Log.error(
+      logger.error(
         `Pas de valeur forfaitaire uph0 pour enumTypePlancherHautId:${enumTypePlancherHautId}`
       );
       return;
     }
 
-    Log.debug(`upbO pour enumTypePlancherHautId ${enumTypePlancherHautId} = ${uph0}`);
+    logger.debug(`upbO pour enumTypePlancherHautId ${enumTypePlancherHautId} = ${uph0}`);
     return parseFloat(uph0);
   }
 
@@ -274,7 +278,7 @@ export class TvStore {
    * @param effetJoule {boolean}
    * @return {number|undefined}
    */
-  static getUph(enumPeriodeConstructionId, typeToiture, enumZoneClimatiqueId, effetJoule = false) {
+  getUph(enumPeriodeConstructionId, typeToiture, enumZoneClimatiqueId, effetJoule = false) {
     const uph = tv['uph'].find(
       (v) =>
         v.enum_periode_construction_id.split('|').includes(enumPeriodeConstructionId) &&
@@ -284,13 +288,13 @@ export class TvStore {
     )?.uph;
 
     if (!uph) {
-      Log.error(
+      logger.error(
         `Pas de valeur forfaitaire uph pour enumPeriodeConstructionId:${enumPeriodeConstructionId}, enumPeriodeConstructionId:${enumPeriodeConstructionId}, typeToiture:${typeToiture}`
       );
       return;
     }
 
-    Log.debug(
+    logger.debug(
       `uph pour enumPeriodeConstructionId:${enumPeriodeConstructionId}, enumPeriodeConstructionId:${enumPeriodeConstructionId}, typeToiture:${typeToiture} = ${uph}`
     );
     return parseFloat(uph);
@@ -305,13 +309,7 @@ export class TvStore {
    * @param epaisseurLame {number|undefined}
    * @return {number|undefined}
    */
-  static getUg(
-    enumTypeVitrageId,
-    enumTypeGazLameId,
-    enumInclinaisonVitrageId,
-    vitrageVir,
-    epaisseurLame
-  ) {
+  getUg(enumTypeVitrageId, enumTypeGazLameId, enumInclinaisonVitrageId, vitrageVir, epaisseurLame) {
     const ug = tv['ug'].find(
       (v) =>
         v.enum_type_vitrage_id.split('|').includes(enumTypeVitrageId) &&
@@ -323,13 +321,13 @@ export class TvStore {
     )?.ug;
 
     if (!ug) {
-      Log.error(
+      logger.error(
         `Pas de valeur forfaitaire ug pour enumTypeVitrageId:${enumTypeVitrageId}, enumTypeGazLameId:${enumTypeGazLameId}, enumInclinaisonVitrageId:${enumInclinaisonVitrageId}, vitrageVir:${vitrageVir}, epaisseurLame:${epaisseurLame}`
       );
       return;
     }
 
-    Log.debug(
+    logger.debug(
       `ug pour enumTypeVitrageId:${enumTypeVitrageId}, enumTypeGazLameId:${enumTypeGazLameId}, enumInclinaisonVitrageId:${enumInclinaisonVitrageId}, vitrageVir:${vitrageVir}, epaisseurLame:${epaisseurLame} = ${ug}`
     );
     return parseFloat(ug);

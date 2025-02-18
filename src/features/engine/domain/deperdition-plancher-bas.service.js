@@ -1,6 +1,5 @@
-import { DeperditionService } from './deperdition.service.js';
-import { TvStore } from '../../dpe/infrastructure/tv.store.js';
 import { PRECISION } from './constants.js';
+import { DeperditionService } from './deperdition.service.js';
 
 /**
  * Calcul des déperditions de l’enveloppe GV
@@ -10,18 +9,25 @@ import { PRECISION } from './constants.js';
  * Octobre 2021
  * @see consolide_anne…arrete_du_31_03_2021_relatif_aux_methodes_et_procedures_applicables.pdf
  */
-export class DeperditionPlancherBasService {
+export class DeperditionPlancherBasService extends DeperditionService {
+  /**
+   * @param tvStore {TvStore}
+   */
+  constructor(tvStore) {
+    super(tvStore);
+  }
+
   /**
    * @param ctx {Contexte}
    * @param pbDE {PlancherBasDE}
    * @param plancherBas {PlancherBas[]}
    * @return {PlancherBasDI}
    */
-  static process(ctx, pbDE, plancherBas) {
-    const upb0 = DeperditionPlancherBasService.upb0(pbDE);
-    const upb = DeperditionPlancherBasService.upb(pbDE, upb0, ctx);
-    const upb_final = DeperditionPlancherBasService.upbFinal(pbDE, upb, ctx, plancherBas);
-    const b = DeperditionService.b({
+  process(ctx, pbDE, plancherBas) {
+    const upb0 = this.#upb0(pbDE);
+    const upb = this.#upb(pbDE, upb0, ctx);
+    const upb_final = this.#upbFinal(pbDE, upb, ctx, plancherBas);
+    const b = this.b({
       enumTypeAdjacenceId: pbDE.enum_type_adjacence_id,
       surfaceAiu: pbDE.surface_aiu,
       surfaceAue: pbDE.surface_aue,
@@ -39,11 +45,11 @@ export class DeperditionPlancherBasService {
    * @param ctx {Contexte}
    * @return {number|undefined}
    */
-  static upb(pbDE, upb0, ctx) {
+  #upb(pbDE, upb0, ctx) {
     // On determine upb_nu (soit upb0 soit 2 comme valeur minimale forfaitaire)
     const upbNu = Math.min(upb0, 2);
 
-    const enumPeriodeIsolationId = DeperditionService.getEnumPeriodeIsolationId(
+    const enumPeriodeIsolationId = this.getEnumPeriodeIsolationId(
       pbDE.enum_periode_isolation_id,
       ctx
     );
@@ -59,7 +65,7 @@ export class DeperditionPlancherBasService {
       case '8': // année de construction saisie
         upb = Math.min(
           upbNu,
-          TvStore.getUpb(enumPeriodeIsolationId, ctx.zoneClimatiqueId, ctx.effetJoule)
+          this.tvStore.getUpb(enumPeriodeIsolationId, ctx.zoneClimatiqueId, ctx.effetJoule)
         );
         break;
       case '3': // epaisseur isolation saisie justifiée par mesure ou observation
@@ -82,12 +88,12 @@ export class DeperditionPlancherBasService {
    * @param pbDE {PlancherBasDE}
    * @return {number|undefined}
    */
-  static upb0(pbDE) {
+  #upb0(pbDE) {
     let upb0;
     switch (pbDE.enum_methode_saisie_u0_id) {
       case '1': // 'type de paroi inconnu (valeur par défaut)'
       case '2': // 'déterminé selon le matériau et épaisseur à partir de la table de valeur forfaitaire'
-        upb0 = TvStore.getUpb0(pbDE.enum_type_plancher_bas_id);
+        upb0 = this.tvStore.getUpb0(pbDE.enum_type_plancher_bas_id);
         break;
       case '5': // 'u0 non saisi car le u est saisi connu et justifié.'
         return;
@@ -108,7 +114,7 @@ export class DeperditionPlancherBasService {
    * @param plancherBas {PlancherBas[]}
    * @return {number|undefined}
    */
-  static upbFinal(pbDE, upb, ctx, plancherBas) {
+  #upbFinal(pbDE, upb, ctx, plancherBas) {
     if (pbDE.calcul_ue === 1) {
       return pbDE.ue;
     }
@@ -149,7 +155,7 @@ export class DeperditionPlancherBasService {
       return Math.abs(curr - dsp) < Math.abs(prev - dsp) ? curr : prev;
     });
 
-    const upbFinal = TvStore.getUeByUpd(
+    const upbFinal = this.tvStore.getUeByUpd(
       pbDE.enum_type_adjacence_id,
       ctx.enumPeriodeConstructionId,
       dsp,

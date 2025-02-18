@@ -1,18 +1,55 @@
-import { jest } from '@jest/globals';
-import { Log } from '../../../core/util/logger/log-service.js';
-import { DeperditionService } from './deperdition.service.js';
+import { DeperditionEnveloppeService } from './deperdition-enveloppe.service.js';
 import b from '../../../3.1_b.js';
 import corpus from '../../../../test/corpus-sano.json';
 import { getAdemeFileJson } from '../../../../test/test-helpers.js';
-import { DpeNormalizerService } from '../../normalizer/domain/dpe-normalizer.service.js';
 import { ContexteBuilder } from './contexte.builder.js';
+import { DeperditionPlancherBasService } from './deperdition-plancher-bas.service.js';
+import { DeperditionMurService } from './deperdition-mur.service.js';
+import { DeperditionPorteService } from './deperdition-porte.service.js';
+import { DeperditionPlancherHautService } from './deperdition-plancher-haut.service.js';
+import { DpeNormalizerService } from '../../normalizer/domain/dpe-normalizer.service.js';
+import { TvStore } from '../../dpe/infrastructure/tv.store.js';
+
+/** @type {DeperditionPorteService} **/
+let deperditionPorteService;
+
+/** @type {DeperditionMurService} **/
+let deperditionMurService;
+
+/** @type {DeperditionPlancherBasService} **/
+let deperditionPlancherBasService;
+
+/** @type {DeperditionPlancherHautService} **/
+let deperditionPlancherHautService;
+
+/** @type {DpeNormalizerService} **/
+let normalizerService;
+
+/** @type {ContexteBuilder} **/
+let contexteBuilder;
+
+/** @type {TvStore} **/
+let tvStore;
+
+/** @type {DeperditionEnveloppeService} **/
+let service;
 
 describe('Calcul des déperditions', () => {
-  beforeAll(() => {
-    Log.debug = jest.fn();
-    //Log.warn = jest.fn();
-    //Log.error = jest.fn();
-    Log.info = jest.fn();
+  beforeEach(() => {
+    tvStore = new TvStore();
+    deperditionPorteService = new DeperditionPorteService(tvStore);
+    deperditionMurService = new DeperditionMurService(tvStore);
+    deperditionPlancherBasService = new DeperditionPlancherBasService(tvStore);
+    deperditionPlancherHautService = new DeperditionPlancherHautService(tvStore);
+    normalizerService = new DpeNormalizerService();
+    contexteBuilder = new ContexteBuilder();
+
+    service = new DeperditionEnveloppeService(
+      deperditionMurService,
+      deperditionPorteService,
+      deperditionPlancherBasService,
+      deperditionPlancherHautService
+    );
   });
 
   describe('Détermination du coefficient de réduction des déperditions b', () => {
@@ -171,7 +208,7 @@ describe('Calcul des déperditions', () => {
           zoneClimatiqueId
         };
 
-        const b = DeperditionService.b(data);
+        const b = deperditionMurService.b(data);
         expect(b).toBe(bExpected);
       }
     );
@@ -188,7 +225,7 @@ describe('Calcul des déperditions', () => {
       };
 
       for (let i = 0; i < 1000; i++) {
-        const b = DeperditionService.b(data);
+        const b = deperditionMurService.b(data);
         expect(b).toBe(0.9);
       }
     });
@@ -214,14 +251,14 @@ describe('Calcul des déperditions', () => {
   describe("Test d'intégration de calcul des deperditions", () => {
     test.each(corpus)('deperditions pour dpe %s', (ademeId) => {
       let dpeRequest = getAdemeFileJson(ademeId);
-      dpeRequest = DpeNormalizerService.normalize(dpeRequest);
+      dpeRequest = normalizerService.normalize(dpeRequest);
 
       /** @type {Contexte} */
-      const ctx = ContexteBuilder.fromDpe(dpeRequest);
+      const ctx = contexteBuilder.fromDpe(dpeRequest);
       /** @type {Enveloppe} */
       const enveloppe = dpeRequest.logement.enveloppe;
       /** @type {Deperdition} */
-      const deperditions = DeperditionService.gv(ctx, enveloppe);
+      const deperditions = service.gv(ctx, enveloppe);
 
       expect(deperditions.deperdition_mur).toBeCloseTo(
         dpeRequest.logement.sortie.deperdition.deperdition_mur,

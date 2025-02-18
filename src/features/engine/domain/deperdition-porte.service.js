@@ -1,4 +1,3 @@
-import { TvStore } from '../../dpe/infrastructure/tv.store.js';
 import { DeperditionService } from './deperdition.service.js';
 
 /**
@@ -11,13 +10,20 @@ import { DeperditionService } from './deperdition.service.js';
  *
  * Si le coefficient U des portes est connu et justifié, le saisir directement. Sinon, prendre les valeurs tabulées
  */
-export class DeperditionPorteService {
+export class DeperditionPorteService extends DeperditionService {
+  /**
+   * @param tvStore {TvStore}
+   */
+  constructor(tvStore) {
+    super(tvStore);
+  }
+
   /**
    * @param ctx {Contexte}
    * @param porteDE {PorteDE}
    * @return {PorteDI}
    */
-  static process(ctx, porteDE) {
+  process(ctx, porteDE) {
     /** @type {PorteDI} */
     const di = {
       uporte: undefined,
@@ -32,10 +38,10 @@ export class DeperditionPorteService {
       di.uporte = porteDE.uporte_saisi;
     } else {
       // valeur forfaitaire
-      di.uporte = TvStore.getUPorte(porteDE.enum_type_porte_id);
+      di.uporte = this.tvStore.getUPorte(porteDE.enum_type_porte_id);
     }
 
-    di.b = DeperditionService.b({
+    di.b = this.b({
       enumTypeAdjacenceId: porteDE.enum_type_adjacence_id,
       surfaceAiu: porteDE.surface_aiu,
       surfaceAue: porteDE.surface_aue,

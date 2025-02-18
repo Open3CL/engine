@@ -1,11 +1,11 @@
+import { DE } from './dpe.model';
+
 export interface Climatisation {
   donnee_entree?: ClimatisationDE;
   donnee_intermediaire?: ClimatisationDI;
 }
 
-export interface ClimatisationDE {
-  description?: string;
-  reference: string;
+export interface ClimatisationDE extends DE {
   tv_seer_id?: number;
   nombre_logement_echantillon?: number;
   enum_methode_calcul_conso_id: number;

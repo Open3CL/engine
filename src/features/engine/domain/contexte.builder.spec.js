@@ -1,6 +1,13 @@
 import { ContexteBuilder } from './contexte.builder.js';
 
+/** @type {ContexteBuilder} **/
+let contexteBuilder;
+
 describe('Generateur du contexte du calcul', () => {
+  beforeEach(() => {
+    contexteBuilder = new ContexteBuilder();
+  });
+
   test('Contexte avec effet joule', () => {
     const dpe = {
       logement: {
@@ -18,7 +25,7 @@ describe('Generateur du contexte du calcul', () => {
       }
     };
 
-    expect(ContexteBuilder.fromDpe(dpe)).toStrictEqual({
+    expect(contexteBuilder.fromDpe(dpe)).toStrictEqual({
       effetJoule: true,
       enumPeriodeConstructionId: '1',
       zoneClimatiqueId: '1'
@@ -44,7 +51,7 @@ describe('Generateur du contexte du calcul', () => {
       }
     };
 
-    expect(ContexteBuilder.fromDpe(dpe)).toStrictEqual({
+    expect(contexteBuilder.fromDpe(dpe)).toStrictEqual({
       effetJoule: false,
       enumPeriodeConstructionId: '1',
       zoneClimatiqueId: '1'
@@ -59,7 +66,7 @@ describe('Generateur du contexte du calcul', () => {
       }
     };
 
-    expect(ContexteBuilder.fromDpe(dpe)).toStrictEqual({
+    expect(contexteBuilder.fromDpe(dpe)).toStrictEqual({
       effetJoule: false,
       enumPeriodeConstructionId: '1',
       zoneClimatiqueId: '1'
@@ -75,7 +82,7 @@ describe('Generateur du contexte du calcul', () => {
       }
     };
 
-    expect(ContexteBuilder.fromDpe(dpe)).toStrictEqual({
+    expect(contexteBuilder.fromDpe(dpe)).toStrictEqual({
       effetJoule: false,
       enumPeriodeConstructionId: '1',
       zoneClimatiqueId: '1'

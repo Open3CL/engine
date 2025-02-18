@@ -1,16 +1,16 @@
+import { BaieVitree } from './baie-vitree.model';
+import { Climatisation } from './climatisation.model';
+import { Ets } from './ets.model';
+import { InstallationChauffage } from './installation-chauffage.model';
+import { InstallationEcs } from './installation-ecs.model';
 import { Mur } from './mur.model';
-import { Porte } from './porte.model';
 import { PlancherBas } from './plancher-bas.model';
 import { PlancherHaut } from './plancher-haut.model';
-import { BaieVitree } from './baie-vitree.model';
-import { Ets } from './ets.model';
 import { PontThermique } from './pont-thermique.model';
-import { Ventilation } from './ventilation.model';
-import { Climatisation } from './climatisation.model';
+import { Porte } from './porte.model';
 import { ProductionElecEnr } from './production-elec-enr.model';
-import { InstallationEcs } from './installation-ecs.model';
-import { InstallationChauffage } from './installation-chauffage.model';
 import { Sortie } from './sortie.model';
+import { Ventilation } from './ventilation.model';
 
 /**
  * @see https://gitlab.com/observatoire-dpe/observatoire-dpe/-/blob/master/modele_donnee/DPE_complet.xsd?ref_type=heads
@@ -180,4 +180,9 @@ export interface Enveloppe {
   porte_collection: { porte: Porte[] };
   ets_collection: { ets: Ets };
   pont_thermique_collection: { pont_thermique: PontThermique[] };
+}
+
+export interface DE {
+  description?: string;
+  reference?: string;
 }

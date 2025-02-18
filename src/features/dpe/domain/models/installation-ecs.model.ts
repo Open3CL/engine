@@ -1,12 +1,12 @@
+import { DE } from './dpe.model';
+
 export interface InstallationEcs {
   donnee_entree?: InstallationEcsDE;
   donnee_intermediaire?: InstallationEcsDI;
   generateur_ecs_collection?: { generateur_ecs: GenerateurEcs[] };
 }
 
-export interface InstallationEcsDE {
-  description?: string;
-  reference: string;
+export interface InstallationEcsDE extends DE {
   enum_cfg_installation_ecs_id: number;
   enum_type_installation_id: number;
   enum_methode_calcul_conso_id: number;
@@ -40,9 +40,7 @@ export interface GenerateurEcs {
   donnee_intermediaire?: GenerateurEcsDI;
 }
 
-export interface GenerateurEcsDE {
-  description?: string;
-  reference: string;
+export interface GenerateurEcsDE extends DE {
   reference_generateur_mixte?: string;
   enum_type_generateur_ecs_id: number;
   ref_produit_generateur_ecs?: string;

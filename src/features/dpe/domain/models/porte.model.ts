@@ -1,11 +1,11 @@
+import { DE } from './dpe.model';
+
 export interface Porte {
   donnee_entree?: PorteDE;
   donnee_intermediaire?: PorteDI;
 }
 
-export interface PorteDE {
-  description?: string;
-  reference?: string;
+export interface PorteDE extends DE {
   reference_paroi?: string;
   reference_lnc?: string;
   enum_cfg_isolation_lnc_id?: number; // ENUM cfg_isolation_lnc

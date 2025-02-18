@@ -1,15 +1,14 @@
 import { DeperditionPorteService } from './deperdition-porte.service.js';
-import { jest } from '@jest/globals';
-import { Log } from '../../../core/util/logger/log-service.js';
 import corpus from '../../../../test/corpus-sano.json';
 import { getAdemeFileJson } from '../../../../test/test-helpers.js';
+import { TvStore } from '../../dpe/infrastructure/tv.store.js';
+
+/** @type {DeperditionPorteService} **/
+let service;
 
 describe('Calcul de déperdition des portes', () => {
-  beforeAll(() => {
-    Log.debug = jest.fn();
-    Log.warn = jest.fn();
-    Log.error = jest.fn();
-    Log.info = jest.fn();
+  beforeEach(() => {
+    service = new DeperditionPorteService(new TvStore());
   });
 
   describe('Determination de uPorte', () => {
@@ -70,7 +69,7 @@ describe('Calcul de déperdition des portes', () => {
         enum_type_porte_id: type
       };
 
-      const di = DeperditionPorteService.process(ctx, de);
+      const di = service.process(ctx, de);
       expect(di.uporte).toBe(uPorteExpected);
     });
 
@@ -82,7 +81,7 @@ describe('Calcul de déperdition des portes', () => {
         uporte_saisi: 1.6
       };
 
-      const di = DeperditionPorteService.process(ctx, de);
+      const di = service.process(ctx, de);
       expect(di.uporte).toBe(de.uporte_saisi);
     });
 
@@ -94,7 +93,7 @@ describe('Calcul de déperdition des portes', () => {
         uporte_saisi: 1.88
       };
 
-      const di = DeperditionPorteService.process(ctx, de);
+      const di = service.process(ctx, de);
       expect(di.uporte).toBe(de.uporte_saisi);
     });
   });
@@ -107,7 +106,7 @@ describe('Calcul de déperdition des portes', () => {
       const portes = dpeRequest.logement.enveloppe.porte_collection?.porte || [];
 
       portes.forEach((p) => {
-        const di = DeperditionPorteService.process(ctx, p.donnee_entree);
+        const di = service.process(ctx, p.donnee_entree);
         expect(di.uporte).toBeCloseTo(p.donnee_intermediaire.uporte, 2);
         expect(di.b).toBeCloseTo(p.donnee_intermediaire.b, 2);
       });

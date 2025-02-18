@@ -1,12 +1,12 @@
+import { DE } from './dpe.model';
+
 export interface Ventilation {
   donnee_entree?: VentilationDE;
   donnee_intermediaire?: VentilationDI;
 }
 
-export interface VentilationDE {
+export interface VentilationDE extends DE {
   surface_ventile: number;
-  description?: string;
-  reference?: string;
   plusieurs_facade_exposee: boolean;
   tv_q4pa_conv_id?: number;
   q4pa_conv_saisi?: number;

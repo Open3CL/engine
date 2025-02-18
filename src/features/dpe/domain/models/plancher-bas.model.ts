@@ -1,11 +1,11 @@
+import { DE } from './dpe.model';
+
 export interface PlancherBas {
   donnee_entree?: PlancherBasDE;
   donnee_intermediaire?: PlancherBasDI;
 }
 
-export interface PlancherBasDE {
-  description?: string;
-  reference?: string;
+export interface PlancherBasDE extends DE {
   reference_lnc?: string;
   tv_coef_reduction_deperdition_id?: string; // TV
   surface_aiu?: number;

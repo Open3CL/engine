@@ -1,15 +1,31 @@
-import { ContexteBuilder } from './contexte.builder.js';
-import { DeperditionService } from './deperdition.service.js';
-
 export class EngineService {
+  /**
+   * @type {DeperditionEnveloppeService}
+   */
+  #deperditionService;
+
+  /**
+   * @type {ContexteBuilder}
+   */
+  #contextBuilder;
+
+  /**
+   * @param deperditionService {DeperditionEnveloppeService}
+   * @param contextBuilder {ContexteBuilder}
+   */
+  constructor(deperditionService, contextBuilder) {
+    this.#deperditionService = deperditionService;
+    this.#contextBuilder = contextBuilder;
+  }
+
   /**
    * Applique la méthode 3CL à l'entrée du DPE
    * @param dpe {Dpe}
    * @return {Dpe} Nouveau DPE avec les données intermédiaires et les sorties calculées
    */
-  static process(dpe) {
+  process(dpe) {
     /** @type {Dpe} */
-    const proceededDpe = EngineService.#removeComputedData(JSON.parse(JSON.stringify(dpe)));
+    const proceededDpe = this.#removeComputedData(JSON.parse(JSON.stringify(dpe)));
 
     console.error(`Process DPE ${proceededDpe.numero_dpe}`);
 
@@ -25,12 +41,15 @@ export class EngineService {
       confort_ete: undefined,
       qualite_isolation: undefined
     };
-    const ctx = ContexteBuilder.fromDpe(proceededDpe);
+    const ctx = this.#contextBuilder.fromDpe(proceededDpe);
 
     // Calcul de l'inertie
 
     // Calcul des déperditions
-    proceededDpe.logement.sortie.deperdition = DeperditionService.gv(ctx, dpe.logement.enveloppe);
+    proceededDpe.logement.sortie.deperdition = this.#deperditionService.gv(
+      ctx,
+      dpe.logement.enveloppe
+    );
 
     // Calcul des déperditions par renouvellement de l'air
 
@@ -69,7 +88,7 @@ export class EngineService {
    * @param dpe {Dpe}
    * @return {Dpe} DPE sans les données intermédiaires et les sorties calculées
    */
-  static #removeComputedData(dpe) {
+  #removeComputedData(dpe) {
     delete dpe.logement.sortie;
     delete dpe.logement.enveloppe.inertie;
 

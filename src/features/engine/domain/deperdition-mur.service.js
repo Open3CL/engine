@@ -1,7 +1,6 @@
-import { DeperditionService } from './deperdition.service.js';
-import { TvStore } from '../../dpe/infrastructure/tv.store.js';
 import { PRECISION } from './constants.js';
-import { Log } from '../../../core/util/logger/log-service.js';
+import { logger } from '../../../core/util/logger/log-service.js';
+import { DeperditionService } from './deperdition.service.js';
 
 /**
  * Calcul des déperditions de l’enveloppe GV
@@ -11,16 +10,23 @@ import { Log } from '../../../core/util/logger/log-service.js';
  * Octobre 2021
  * @see consolide_anne…arrete_du_31_03_2021_relatif_aux_methodes_et_procedures_applicables.pdf
  */
-export class DeperditionMurService {
+export class DeperditionMurService extends DeperditionService {
+  /**
+   * @param tvStore {TvStore}
+   */
+  constructor(tvStore) {
+    super(tvStore);
+  }
+
   /**
    * @param ctx {Contexte}
    * @param murDE {MurDE}
    * @return {MurDI}
    */
-  static process(ctx, murDE) {
-    const umur0 = DeperditionMurService.umur0(murDE);
-    const umur = DeperditionMurService.umur(murDE, umur0, ctx);
-    const b = DeperditionService.b({
+  process(ctx, murDE) {
+    const umur0 = this.#umur0(murDE);
+    const umur = this.#umur(murDE, umur0, ctx);
+    const b = this.b({
       enumTypeAdjacenceId: murDE.enum_type_adjacence_id,
       surfaceAiu: murDE.surface_aiu,
       surfaceAue: murDE.surface_aue,
@@ -39,11 +45,11 @@ export class DeperditionMurService {
    * @param ctx {Contexte}
    * @return {number|undefined}
    */
-  static umur(murDE, umur0, ctx) {
+  #umur(murDE, umur0, ctx) {
     // On determine umur_nu (soit umur0 soit 2.5 comme valeur minimale forfaitaire)
     const umurNu = Math.min(umur0, 2.5);
 
-    const enumPeriodeIsolationId = DeperditionService.getEnumPeriodeIsolationId(
+    const enumPeriodeIsolationId = this.getEnumPeriodeIsolationId(
       murDE.enum_periode_isolation_id,
       ctx
     );
@@ -57,14 +63,14 @@ export class DeperditionMurService {
       case '2': // isolation inconnue (table forfaitaire)
         umur = Math.min(
           umurNu,
-          TvStore.getUmur(ctx.enumPeriodeConstructionId, ctx.zoneClimatiqueId, ctx.effetJoule)
+          this.tvStore.getUmur(ctx.enumPeriodeConstructionId, ctx.zoneClimatiqueId, ctx.effetJoule)
         );
         break;
       case '7': // année d'isolation différente de l'année de construction
       case '8': // année de construction saisie
         umur = Math.min(
           umurNu,
-          TvStore.getUmur(enumPeriodeIsolationId, ctx.zoneClimatiqueId, ctx.effetJoule)
+          this.tvStore.getUmur(enumPeriodeIsolationId, ctx.zoneClimatiqueId, ctx.effetJoule)
         );
         break;
       case '3': // epaisseur isolation saisie justifiée par mesure ou observation
@@ -74,7 +80,7 @@ export class DeperditionMurService {
         if (epaisseurIsolation) {
           umur = 1 / (1 / umurNu + (murDE.epaisseur_isolation * 0.01) / 0.04);
         } else {
-          Log.warn(
+          logger.warn(
             `Le mur ${murDE.description} ne possède pas de donnée d'entrée pour epaisseur_isolation 
               alors que methode_saisie_u = 'epaisseur isolation saisie'`
           );
@@ -100,14 +106,17 @@ export class DeperditionMurService {
    * @param murDE {MurDE}
    * @return {number|undefined}
    */
-  static umur0(murDE) {
+  #umur0(murDE) {
     let umur0;
     switch (murDE.enum_methode_saisie_u0_id) {
       case '1':
-        umur0 = TvStore.getUmur0(murDE.enum_materiaux_structure_mur_id);
+        umur0 = this.tvStore.getUmur0(murDE.enum_materiaux_structure_mur_id);
         break;
       case '2':
-        umur0 = TvStore.getUmur0(murDE.enum_materiaux_structure_mur_id, murDE.epaisseur_structure);
+        umur0 = this.tvStore.getUmur0(
+          murDE.enum_materiaux_structure_mur_id,
+          murDE.epaisseur_structure
+        );
         break;
       case '5':
         // Valeur u saisie directement umur0 vide

@@ -1,11 +1,11 @@
+import { DE } from './dpe.model';
+
 export interface PontThermique {
   donnee_entree?: PontThermiqueDE;
   donnee_intermediaire?: PontThermiqueDI;
 }
 
-export interface PontThermiqueDE {
-  description?: string;
-  reference: string;
+export interface PontThermiqueDE extends DE {
   reference_1?: string;
   reference_2?: string;
   tv_pont_thermique_id?: number; // TV

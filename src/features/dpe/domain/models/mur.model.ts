@@ -1,11 +1,11 @@
+import { DE } from './dpe.model';
+
 export interface Mur {
   donnee_entree?: MurDE;
   donnee_intermediaire?: MurDI;
 }
 
-export interface MurDE {
-  description?: string;
-  reference?: string;
+export interface MurDE extends DE {
   reference_lnc?: string;
   tv_coef_reduction_deperdition_id?: number; // TV
   surface_aiu?: number;

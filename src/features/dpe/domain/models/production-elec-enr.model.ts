@@ -1,12 +1,12 @@
+import { DE } from './dpe.model';
+
 export interface ProductionElecEnr {
   donnee_entree?: ProductionElecEnrDE;
   donnee_intermediaire?: ProductionElecEnrDI;
   panneaux_pv_collection?: PanneauFv[];
 }
 
-export interface ProductionElecEnrDE {
-  description?: string;
-  reference: string;
+export interface ProductionElecEnrDE extends DE {
   presence_production_pv: boolean;
   enum_type_enr_id: number;
 }

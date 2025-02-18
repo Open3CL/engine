@@ -1,6 +1,5 @@
-import { DeperditionService } from './deperdition.service.js';
-import { TvStore } from '../../dpe/infrastructure/tv.store.js';
 import { PRECISION } from './constants.js';
+import { DeperditionService } from './deperdition.service.js';
 
 /**
  * Calcul des déperditions de l’enveloppe GV
@@ -10,16 +9,23 @@ import { PRECISION } from './constants.js';
  * Octobre 2021
  * @see consolide_anne…arrete_du_31_03_2021_relatif_aux_methodes_et_procedures_applicables.pdf
  */
-export class DeperditionPlancherHautService {
+export class DeperditionPlancherHautService extends DeperditionService {
+  /**
+   * @param tvStore {TvStore}
+   */
+  constructor(tvStore) {
+    super(tvStore);
+  }
+
   /**
    * @param ctx {Contexte}
    * @param phDE {PlancherHautDE}
    * @return {PlancherHautDI}
    */
-  static process(ctx, phDE) {
-    const uph0 = DeperditionPlancherHautService.uph0(phDE);
-    const uph = DeperditionPlancherHautService.uph(phDE, uph0, ctx);
-    const b = DeperditionService.b({
+  process(ctx, phDE) {
+    const uph0 = this.#uph0(phDE);
+    const uph = this.#uph(phDE, uph0, ctx);
+    const b = this.b({
       enumTypeAdjacenceId: phDE.enum_type_adjacence_id,
       surfaceAiu: phDE.surface_aiu,
       surfaceAue: phDE.surface_aue,
@@ -37,11 +43,11 @@ export class DeperditionPlancherHautService {
    * @param ctx {Contexte}
    * @return {number|undefined}
    */
-  static uph(phDE, uph0, ctx) {
+  #uph(phDE, uph0, ctx) {
     // On determine uph_nu (soit uph0 soit 2 comme valeur minimale forfaitaire)
     const uphNu = Math.min(uph0, 2.5);
 
-    const enumPeriodeIsolationId = DeperditionService.getEnumPeriodeIsolationId(
+    const enumPeriodeIsolationId = this.getEnumPeriodeIsolationId(
       phDE.enum_periode_isolation_id,
       ctx
     );
@@ -58,9 +64,9 @@ export class DeperditionPlancherHautService {
       case '8': // année de construction saisie
         uph = Math.min(
           uphNu,
-          TvStore.getUph(
+          this.tvStore.getUph(
             enumPeriodeIsolationId,
-            DeperditionPlancherHautService.#getTypeAdjacence(phDE),
+            this.#getTypeAdjacence(phDE),
             ctx.zoneClimatiqueId,
             ctx.effetJoule
           )
@@ -86,14 +92,14 @@ export class DeperditionPlancherHautService {
    * @param phDE {PlancherHautDE}
    * @return {number|undefined}
    */
-  static uph0(phDE) {
+  #uph0(phDE) {
     let uph0;
     switch (phDE.enum_methode_saisie_u0_id) {
       case '1':
       case '2':
         // type de paroi inconnu (valeur par défaut)
         // déterminé selon le matériau et épaisseur à partir de la table de valeur forfaitaire
-        uph0 = TvStore.getUph0(phDE.enum_type_plancher_haut_id);
+        uph0 = this.tvStore.getUph0(phDE.enum_type_plancher_haut_id);
         break;
       case '5':
         // u0 non saisi car le u est saisi connu et justifié
@@ -113,7 +119,7 @@ export class DeperditionPlancherHautService {
    * @param phDE {PlancherHautDE}
    * @return {'combles'|'terasse'}
    */
-  static #getTypeAdjacence(phDE) {
+  #getTypeAdjacence(phDE) {
     switch (phDE.enum_type_adjacence_id) {
       case '1':
         // extérieur - type de ph != 'combles aménagés sous rampant'

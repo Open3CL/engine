@@ -1,78 +1,47 @@
-/**
- * Log service
- * Override standard console with log level configuration
- *
- * Define LOG_LEVEL with maximum level you want to log into console
- * possible values are : debug, trace, info, warn, error
- */
-export class Log {
-  /**
-   * @type {string[]}
-   */
-  static levelOrder = ['debug', 'info', 'warn', 'error'];
+import { createLogger, format, transports } from 'winston';
 
-  /**
-   * @param message {string} Log message
-   * @param detail {any|undefined} Log detail
-   */
-  static debug(message, detail = undefined) {
-    if (Log.isLogged('debug')) {
-      const msg = `[DEBUG] ${message}`;
-      detail ? console.debug(msg, detail) : console.debug(msg);
-    }
-  }
+const { combine, timestamp, prettyPrint, colorize, errors, printf } = format;
 
-  /**
-   * @param message {string} Log message
-   * @param detail {any|undefined} Log detail
-   */
-  static log(message, detail = undefined) {
-    if (Log.isLogged('debug')) {
-      Log.debug(message, detail);
-    }
-  }
+// Disable traditional console logs
+const copyLog = console.log;
+const copyWarn = console.warn;
+const copyDebug = console.debug;
+const copyError = console.error;
 
-  /**
-   * @param message {string} Log message
-   * @param detail {any|undefined} Log detail
-   */
-  static info(message, detail = undefined) {
-    if (Log.isLogged('info')) {
-      const msg = `[INFO] ${message}`;
-      detail ? console.info(msg, detail) : console.info(msg);
-    }
-  }
+export const logger = createLogger({
+  level: 'info',
+  format: combine(
+    errors({ stack: true }),
+    colorize(),
+    timestamp(),
+    prettyPrint(),
+    printf(({ level, message, timestamp, stack }) => {
+      if (stack) {
+        // print log trace
+        return `${timestamp} ${level}: ${message} - ${stack}`;
+      }
+      return `${timestamp} ${level}: ${message}`;
+    })
+  ),
+  transports: [new transports.Console()]
+});
 
-  /**
-   * @param message {string} Log message
-   * @param detail {any|undefined} Log detail
-   */
-  static warn(message, detail = undefined) {
-    if (Log.isLogged('warn')) {
-      const msg = `[WARN] ${message}`;
-      detail ? console.warn(msg, detail) : console.warn(msg);
-    }
+export const setLoggerOff = (ignoreErrors = false) => {
+  logger.silent = true;
+  console.log = () => {};
+  console.warn = () => {};
+  console.debug = () => {};
+  if (ignoreErrors) {
+    console.error = () => {};
   }
+};
 
-  /**
-   * @param message {string} Log message
-   * @param detail {any|undefined} Log detail
-   */
-  static error(message, detail = undefined) {
-    if (Log.isLogged('error')) {
-      const msg = `[ERROR] ${message}`;
-      detail ? console.error(msg, detail) : console.error(msg);
-    }
+export const setLoggerOn = (errorsIgnored = false) => {
+  logger.silent = false;
+  console.log = copyLog;
+  console.warn = copyWarn;
+  console.debug = copyDebug;
+  if (errorsIgnored) {
+    console.error = copyError;
   }
-
-  /**
-   * @param level {string} Log level
-   * @return true if this level should be logged
-   */
-  static isLogged(level) {
-    return (
-      !process.env.LOG_LEVEL ||
-      Log.levelOrder.indexOf(process.env.LOG_LEVEL) <= Log.levelOrder.indexOf(level)
-    );
-  }
-}
+};

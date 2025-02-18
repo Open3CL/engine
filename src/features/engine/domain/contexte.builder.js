@@ -6,12 +6,12 @@ export class ContexteBuilder {
    * @param dpe {any} Fichier DPE au format json
    * @return {Contexte}
    */
-  static fromDpe(dpe) {
+  fromDpe(dpe) {
     return {
       zoneClimatiqueId: dpe.logement.meteo.enum_zone_climatique_id.toString(),
       enumPeriodeConstructionId:
         dpe.logement.caracteristique_generale.enum_periode_construction_id.toString(),
-      effetJoule: ContexteBuilder.#hasEffetJoule(dpe)
+      effetJoule: this.#hasEffetJoule(dpe)
     };
   }
 
@@ -20,7 +20,7 @@ export class ContexteBuilder {
    * @param dpe {any} Fichier DPE au format json
    * @return {boolean}
    */
-  static #hasEffetJoule(dpe) {
+  #hasEffetJoule(dpe) {
     return (
       dpe.logement.installation_chauffage_collection?.installation_chauffage?.find((ic) =>
         ic.emetteur_chauffage_collection?.emetteur_chauffage?.find(

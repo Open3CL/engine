@@ -1,17 +1,24 @@
-import { jest } from '@jest/globals';
-import { Log } from '../../../core/util/logger/log-service.js';
 import { getAdemeFileJson } from '../../../../test/test-helpers.js';
 import { ContexteBuilder } from './contexte.builder.js';
 import { DpeNormalizerService } from '../../normalizer/domain/dpe-normalizer.service.js';
 import { DeperditionPlancherHautService } from './deperdition-plancher-haut.service.js';
 import corpus from '../../../../test/corpus-sano.json';
+import { TvStore } from '../../dpe/infrastructure/tv.store.js';
+
+/** @type {DeperditionPlancherHautService} **/
+let service;
+
+/** @type {DpeNormalizerService} **/
+let normalizerService;
+
+/** @type {ContexteBuilder} **/
+let contexteBuilder;
 
 describe('Calcul de déperdition des planchers haut', () => {
-  beforeAll(() => {
-    Log.debug = jest.fn();
-    Log.warn = jest.fn();
-    Log.error = jest.fn();
-    Log.info = jest.fn();
+  beforeEach(() => {
+    service = new DeperditionPlancherHautService(new TvStore());
+    normalizerService = new DpeNormalizerService();
+    contexteBuilder = new ContexteBuilder();
   });
 
   describe('Determination de uph, uph0 et uph_final', () => {
@@ -32,7 +39,7 @@ describe('Calcul de déperdition des planchers haut', () => {
         enum_methode_saisie_u_id: '8'
       };
 
-      const di = DeperditionPlancherHautService.process(ctx, de);
+      const di = service.process(ctx, de);
       expect(di.uph0).toBeCloseTo(2.3);
       expect(di.uph).toBeCloseTo(0.75);
     });
@@ -54,7 +61,7 @@ describe('Calcul de déperdition des planchers haut', () => {
         enum_methode_saisie_u_id: '7' // année d'isolation différente de l'année de construction saisie justifiée (table forfaitaire)
       };
 
-      const di = DeperditionPlancherHautService.process(ctx, de);
+      const di = service.process(ctx, de);
       expect(di.uph0).toBeCloseTo(2.5);
       expect(di.uph).toBeCloseTo(0.4); // Dans le DPE d'origine, uph (0.25) est pris dans la partie "comble" et pas "terrasse" alors que le local donne sur l'extérieur
       expect(di.b).toBeCloseTo(1);
@@ -77,7 +84,7 @@ describe('Calcul de déperdition des planchers haut', () => {
         enum_methode_saisie_u_id: '7' // année d'isolation différente de l'année de construction saisie justifiée (table forfaitaire)
       };
 
-      const di = DeperditionPlancherHautService.process(ctx, de);
+      const di = service.process(ctx, de);
       expect(di.uph0).toBeCloseTo(2.5);
       expect(di.uph).toBeCloseTo(0.27); // Dans le DPE d'origine, uph (0.2) est pris dans la partie "comble" et pas "terrasse" alors que le local donne sur l'extérieur
       expect(di.b).toBeCloseTo(1);
@@ -100,7 +107,7 @@ describe('Calcul de déperdition des planchers haut', () => {
         enum_methode_saisie_u_id: '7' // année d'isolation différente de l'année de construction saisie justifiée (table forfaitaire)
       };
 
-      const di = DeperditionPlancherHautService.process(ctx, de);
+      const di = service.process(ctx, de);
       expect(di.uph0).toBeCloseTo(2.5);
       expect(di.uph).toBeCloseTo(0.5);
       expect(di.b).toBeCloseTo(1);
@@ -123,7 +130,7 @@ describe('Calcul de déperdition des planchers haut', () => {
         uph_saisi: 1.25
       };
 
-      const di = DeperditionPlancherHautService.process(ctx, de);
+      const di = service.process(ctx, de);
       expect(di.uph).toBeCloseTo(1.25);
       expect(di.uph0).toBeUndefined();
     });
@@ -146,7 +153,7 @@ describe('Calcul de déperdition des planchers haut', () => {
         uph0_saisi: 1.25
       };
 
-      const di = DeperditionPlancherHautService.process(ctx, de);
+      const di = service.process(ctx, de);
       expect(di.uph0).toBeCloseTo(1.25);
       expect(di.uph).toBeCloseTo(0.5);
     });
@@ -167,7 +174,7 @@ describe('Calcul de déperdition des planchers haut', () => {
         enum_methode_saisie_u_id: '7'
       };
 
-      const di = DeperditionPlancherHautService.process(ctx, de);
+      const di = service.process(ctx, de);
       expect(di.uph0).toBeCloseTo(2.5);
       expect(di.uph).toBeCloseTo(0.4);
     });
@@ -179,16 +186,16 @@ describe('Calcul de déperdition des planchers haut', () => {
        * @type {Dpe}
        */
       let dpeRequest = getAdemeFileJson(ademeId);
-      dpeRequest = DpeNormalizerService.normalize(dpeRequest);
+      dpeRequest = normalizerService.normalize(dpeRequest);
 
       /** @type {Contexte} */
-      const ctx = ContexteBuilder.fromDpe(dpeRequest);
+      const ctx = contexteBuilder.fromDpe(dpeRequest);
 
       /** @type {PlancherHaut[]} */
       const phs = dpeRequest.logement.enveloppe.plancher_haut_collection?.plancher_haut || [];
 
       phs.forEach((ph) => {
-        const di = DeperditionPlancherHautService.process(ctx, ph.donnee_entree);
+        const di = service.process(ctx, ph.donnee_entree);
 
         if (ph.donnee_intermediaire) {
           expect(di.uph0).toBeCloseTo(ph.donnee_intermediaire.uph0, 2);

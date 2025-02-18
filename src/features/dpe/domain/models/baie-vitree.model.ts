@@ -1,12 +1,12 @@
+import { DE } from './dpe.model';
+
 export interface BaieVitree {
   donnee_entree?: BaieVitreeDE;
   donnee_intermediaire?: BaieVitreeDI;
   baie_vitree_double_fenetre?: BaieVitreeDoubleFenetre;
 }
 
-export interface BaieVitreeDE {
-  description?: string;
-  reference?: string;
+export interface BaieVitreeDE extends DE {
   reference_paroi?: string;
   reference_lnc?: string;
   tv_coef_reduction_deperdition_id?: string; // TV

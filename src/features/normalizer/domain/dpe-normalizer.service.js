@@ -9,7 +9,7 @@ export class DpeNormalizerService {
    * @param dpe {Dpe}
    * @return {Dpe} Normalized DPE
    */
-  static normalize(dpe) {
+  normalize(dpe) {
     /**
      * On clone le DPE d'origine pour ne pas le modifier
      * @type {Dpe}

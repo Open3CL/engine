@@ -1,3 +1,5 @@
+import { DE } from './dpe.model';
+
 export interface InstallationChauffage {
   donnee_entree?: InstallationChauffageDE;
   donnee_intermediaire?: InstallationChauffageDI;
@@ -5,9 +7,7 @@ export interface InstallationChauffage {
   generateur_chauffage_collection?: { generateur_chauffage: GenerateurChauffage[] };
 }
 
-export interface InstallationChauffageDE {
-  description?: string;
-  reference: string;
+export interface InstallationChauffageDE extends DE {
   surface_chauffee: number;
   nombre_logement_echantillon?: number;
   rdim: number;
@@ -37,9 +37,7 @@ export interface EmetteurChauffage {
   donnee_intermediaire?: EmetteurChauffageDI;
 }
 
-export interface EmetteurChauffageDE {
-  description?: string;
-  reference: string;
+export interface EmetteurChauffageDE extends DE {
   surface_chauffee: number;
   tv_rendement_emission_id: number;
   tv_rendement_distribution_ch_id: number;
@@ -67,9 +65,7 @@ export interface GenerateurChauffage {
   donnee_intermediaire?: GenerateurChauffageDI;
 }
 
-export interface GenerateurChauffageDE {
-  description?: string;
-  reference: string;
+export interface GenerateurChauffageDE extends DE {
   reference_generateur_mixte?: number;
   ref_produit_generateur_ch?: number;
   enum_type_generateur_ch_id: number;

@@ -1,14 +1,12 @@
-import { jest } from '@jest/globals';
-import { Log } from '../../../core/util/logger/log-service.js';
 import { TvStore } from './tv.store.js';
 import { tv } from '../../../utils.js';
 
+/** @type {TvStore} **/
+let tvStore;
+
 describe('Lecture des tables de valeurs', () => {
-  beforeAll(() => {
-    Log.debug = jest.fn();
-    Log.warn = jest.fn();
-    Log.error = jest.fn();
-    Log.info = jest.fn();
+  beforeEach(() => {
+    tvStore = new TvStore();
   });
 
   describe('lecture des valeurs de b', () => {
@@ -52,7 +50,7 @@ describe('Lecture des tables de valeurs', () => {
         rAiuAue = undefined,
         bExpected
       }) => {
-        const b = TvStore.getB(enumTypeAdjacenceId, uVue, enumCfgIsolationLncId, rAiuAue);
+        const b = tvStore.getB(enumTypeAdjacenceId, uVue, enumCfgIsolationLncId, rAiuAue);
         expect(b).toBe(bExpected);
       }
     );
@@ -123,7 +121,7 @@ describe('Lecture des tables de valeurs', () => {
         expected: undefined
       }
     ])('uVue pour $label (id:$enumTypeAdjacenceId)', ({ enumTypeAdjacenceId, expected }) => {
-      const uVue = TvStore.getUVue(enumTypeAdjacenceId);
+      const uVue = tvStore.getUVue(enumTypeAdjacenceId);
       expect(uVue).toBe(expected);
     });
   });
@@ -170,13 +168,13 @@ describe('Lecture des tables de valeurs', () => {
     ])(
       'umur pour $label (id:$enumMateriauxStructureMurId)',
       ({ enumMateriauxStructureMurId, epaisseurStructure, expected }) => {
-        const umur0 = TvStore.getUmur0(enumMateriauxStructureMurId, epaisseurStructure);
+        const umur0 = tvStore.getUmur0(enumMateriauxStructureMurId, epaisseurStructure);
         expect(umur0).toBe(expected);
       }
     );
 
     test('pas de valeur de umur0', () => {
-      const umur0 = TvStore.getUmur0('0');
+      const umur0 = tvStore.getUmur0('0');
       expect(umur0).toBeUndefined();
     });
   });
@@ -232,13 +230,13 @@ describe('Lecture des tables de valeurs', () => {
     ])(
       'umur pour $label',
       ({ enumPeriodeConstructionId, enumZoneClimatiqueId, effetJoule, expected }) => {
-        const umur = TvStore.getUmur(enumPeriodeConstructionId, enumZoneClimatiqueId, effetJoule);
+        const umur = tvStore.getUmur(enumPeriodeConstructionId, enumZoneClimatiqueId, effetJoule);
         expect(umur).toBe(expected);
       }
     );
 
     test('pas de valeur de umur', () => {
-      const umur = TvStore.getUmur('0', '1', true);
+      const umur = tvStore.getUmur('0', '1', true);
       expect(umur).toBeUndefined();
     });
   });
@@ -260,13 +258,13 @@ describe('Lecture des tables de valeurs', () => {
     ])(
       'upb0 pour type plancher bas $enumTypePlancherBasId',
       ({ enumTypePlancherBasId, expected }) => {
-        const upb0 = TvStore.getUpb0(enumTypePlancherBasId);
+        const upb0 = tvStore.getUpb0(enumTypePlancherBasId);
         expect(upb0).toBe(expected);
       }
     );
 
     test('pas de valeur de upb0', () => {
-      const upb0 = TvStore.getUpb0('0');
+      const upb0 = tvStore.getUpb0('0');
       expect(upb0).toBeUndefined();
     });
   });
@@ -322,13 +320,13 @@ describe('Lecture des tables de valeurs', () => {
     ])(
       'upb pour $label',
       ({ enumPeriodeConstructionId, enumZoneClimatiqueId, effetJoule, expected }) => {
-        const upb = TvStore.getUpb(enumPeriodeConstructionId, enumZoneClimatiqueId, effetJoule);
+        const upb = tvStore.getUpb(enumPeriodeConstructionId, enumZoneClimatiqueId, effetJoule);
         expect(upb).toBe(expected);
       }
     );
 
     test('pas de valeur de upb', () => {
-      const upb = TvStore.getUpb('0', '1', true);
+      const upb = tvStore.getUpb('0', '1', true);
       expect(upb).toBeUndefined();
     });
   });
@@ -336,7 +334,15 @@ describe('Lecture des tables de valeurs', () => {
   describe('lecture des valeurs de ue par upb', () => {
     test.each([
       {
-        label: 'ue non extrapolé',
+        label: 'ue non extrapolé (upb = min des ue disponibles)',
+        enumTypeAdjacenceId: '3',
+        enumPeriodeConstructionId: '1',
+        dsp: 4,
+        upb: 0.31,
+        expected: 0.25
+      },
+      {
+        label: 'ue non extrapolé (upb = max des ue disponibles)',
         enumTypeAdjacenceId: '3',
         enumPeriodeConstructionId: '1',
         dsp: 4,
@@ -362,13 +368,13 @@ describe('Lecture des tables de valeurs', () => {
     ])(
       'ue pour $label',
       ({ enumTypeAdjacenceId, enumPeriodeConstructionId, dsp, upb, expected }) => {
-        const ue = TvStore.getUeByUpd(enumTypeAdjacenceId, enumPeriodeConstructionId, dsp, upb);
+        const ue = tvStore.getUeByUpd(enumTypeAdjacenceId, enumPeriodeConstructionId, dsp, upb);
         expect(ue).toBeCloseTo(expected);
       }
     );
 
     test('pas de valeur de ue', () => {
-      const ue = TvStore.getUeByUpd('0', '1', 0, 0);
+      const ue = tvStore.getUeByUpd('0', '1', 0, 0);
       expect(ue).toBeUndefined();
     });
   });
@@ -394,13 +400,13 @@ describe('Lecture des tables de valeurs', () => {
     ])(
       'uph0 pour type plancher Haut $enumTypePlancherHautId',
       ({ enumTypePlancherHautId, expected }) => {
-        const uph0 = TvStore.getUph0(enumTypePlancherHautId);
+        const uph0 = tvStore.getUph0(enumTypePlancherHautId);
         expect(uph0).toBe(expected);
       }
     );
 
     test('pas de valeur de uph0', () => {
-      const uph0 = TvStore.getUph0('0');
+      const uph0 = tvStore.getUph0('0');
       expect(uph0).toBeUndefined();
     });
   });
@@ -432,13 +438,13 @@ describe('Lecture des tables de valeurs', () => {
       'uph pour type plancher Haut',
       ({ enumPeriodeConstructionId, typeToiture, enumZoneClimatiqueId, effetJoule, expected }) => {
         expect(
-          TvStore.getUph(enumPeriodeConstructionId, typeToiture, enumZoneClimatiqueId, effetJoule)
+          tvStore.getUph(enumPeriodeConstructionId, typeToiture, enumZoneClimatiqueId, effetJoule)
         ).toBe(expected);
       }
     );
 
     test('pas de valeur de uph', () => {
-      const uph = TvStore.getUph('0', 'terrasse', '1', false);
+      const uph = tvStore.getUph('0', 'terrasse', '1', false);
       expect(uph).toBeUndefined();
     });
   });
@@ -509,7 +515,7 @@ describe('Lecture des tables de valeurs', () => {
         expected
       }) => {
         expect(
-          TvStore.getUg(
+          tvStore.getUg(
             enumTypeVitrageId,
             enumTypeGazLameId,
             enumInclinaisonVitrageId,
@@ -521,7 +527,7 @@ describe('Lecture des tables de valeurs', () => {
     );
 
     test('pas de valeur de ug', () => {
-      const ug = TvStore.getUg('0', '0', '0', false, 0);
+      const ug = tvStore.getUg('0', '0', '0', false, 0);
       expect(ug).toBeUndefined();
     });
   });
@@ -529,7 +535,7 @@ describe('Lecture des tables de valeurs', () => {
   xdescribe('Benchmark b', () => {
     test('reworked', () => {
       for (let i = 0; i < 1000; i++) {
-        const b = TvStore.getB('8');
+        const b = tvStore.getB('8');
         expect(b).toBe(1);
       }
     });
@@ -549,7 +555,7 @@ describe('Lecture des tables de valeurs', () => {
   xdescribe('Benchmark uVue', () => {
     test('reworked', () => {
       for (let i = 0; i < 1000; i++) {
-        const uVue = TvStore.getUVue('8');
+        const uVue = tvStore.getUVue('8');
         expect(uVue).toBe(3);
       }
     });
