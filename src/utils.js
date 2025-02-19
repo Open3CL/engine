@@ -7,6 +7,11 @@ export function set_bug_for_bug_compat() {
   bug_for_bug_compat = true;
 }
 
+export let use_enum_as_string = false;
+export function set_use_enum_as_string() {
+  use_enum_as_string = true;
+}
+
 export let tv_match_new_version = false;
 export function set_tv_match_optimized_version() {
   tv_match_new_version = true;
@@ -279,6 +284,22 @@ export function removeKeyFromJSON(jsonObj, keyToRemove, skipKeys) {
   }
 }
 
+export function useEnumAsString(jsonObj) {
+  for (const key in jsonObj) {
+    if (jsonObj.hasOwnProperty(key)) {
+      if (key === 'donnee_entree') {
+        for (const kde in jsonObj[key]) {
+          if (kde.startsWith('enum_')) {
+            jsonObj[key][kde] = jsonObj[key][kde].toString();
+          }
+        }
+      } else if (typeof jsonObj[key] === 'object') {
+        useEnumAsString(jsonObj[key]);
+      }
+    }
+  }
+}
+
 export function clean_dpe(dpe_in) {
   // skip generateur_[ecs|chauffage] because some input data is contained in donnee_intermediaire (e.g. pn, qp0, ...)
   removeKeyFromJSON(dpe_in, 'donnee_intermediaire', ['generateur_ecs', 'generateur_chauffage']);
@@ -299,6 +320,9 @@ export function sanitize_dpe(dpe_in) {
     if (!_.has(dpe_in, path)) {
       _.set(dpe_in, path, []);
     }
+  }
+  if (use_enum_as_string) {
+    useEnumAsString(dpe_in);
   }
 }
 
