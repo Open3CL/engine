@@ -13,6 +13,7 @@
   },
   "scripts": {
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "test:coverage": "npm run test -- --coverage",
     "test:benchmark": "node inspect test/run_benchmark.js",
     "qa:lint": "eslint .",
     "qa:lint:fix": "npm run qa:lint -- --fix",
@@ -34,7 +35,8 @@
   "dependencies": {
     "@jest/globals": "^29.7.0",
     "fast-xml-parser": "^4.5.0",
-    "lodash": "^4.17.21"
+    "lodash": "^4.17.21",
+    "winston": "3.13.0"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.2.1",
@@ -62,7 +64,7 @@
     "semantic-release": "^23.0.6",
     "xlsx": "^0.18.5"
   },
-  "author": "Jack Halford",
+  "author": "Open3Cl",
   "license": "GPL-3.0",
   "bugs": {
     "url": "https://github.com/Open3CL/engine/issues"
