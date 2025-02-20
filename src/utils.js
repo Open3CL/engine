@@ -287,12 +287,8 @@ export function removeKeyFromJSON(jsonObj, keyToRemove, skipKeys) {
 export function useEnumAsString(jsonObj) {
   for (const key in jsonObj) {
     if (jsonObj.hasOwnProperty(key)) {
-      if (key === 'donnee_entree') {
-        for (const kde in jsonObj[key]) {
-          if (kde.startsWith('enum_')) {
-            jsonObj[key][kde] = jsonObj[key][kde].toString();
-          }
-        }
+      if (key.startsWith('enum_')) {
+        jsonObj[key] = jsonObj[key].toString();
       } else if (typeof jsonObj[key] === 'object') {
         useEnumAsString(jsonObj[key]);
       }
