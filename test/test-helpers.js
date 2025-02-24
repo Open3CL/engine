@@ -1,10 +1,11 @@
 import { XMLParser } from 'fast-xml-parser';
 import fs from 'node:fs';
 import enums from '../src/enums.js';
+import { expect } from 'vitest';
 
 const xmlParser = new XMLParser({
   // We want to make sure collections of length 1 are still parsed as arrays
-  isArray: (name, jpath, isLeafNode, isAttribute) => {
+  isArray: (name) => {
     const collectionNames = [
       'mur',
       'plancher_bas',

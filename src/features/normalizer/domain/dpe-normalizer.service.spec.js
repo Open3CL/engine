@@ -1,5 +1,3 @@
-/**
- * @type {Dpe}
- * */
+import { describe } from 'vitest';
 
-describe('Normalisation des DPE', () => {});
+describe.skip('Normalisation des DPE', () => {});

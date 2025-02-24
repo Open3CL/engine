@@ -2,9 +2,10 @@ import { calcul_3cl } from '../src/engine.js';
 import corpus from './corpus.json';
 import { getAdemeFileJson } from './test-helpers.js';
 import { set_tv_match_optimized_version, unset_tv_match_optimized_version } from '../src/utils.js';
+import { describe, expect, test } from 'vitest';
 
 describe('Test Open3CL tvMatch function refactoring on corpus', () => {
-  it('Both old and optimized tvMatch functions should produce same results', () => {
+  test('Both old and optimized tvMatch functions should produce same results', () => {
     for (let codeDpe of corpus) {
       const dpeRequest = getAdemeFileJson(codeDpe);
       unset_tv_match_optimized_version();

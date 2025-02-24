@@ -1,14 +1,15 @@
 import { DeperditionEnveloppeService } from './deperdition-enveloppe.service.js';
-import b from '../../../3.1_b.js';
-import corpus from '../../../../test/corpus-sano.json';
-import { getAdemeFileJson } from '../../../../test/test-helpers.js';
-import { ContexteBuilder } from './contexte.builder.js';
-import { DeperditionPlancherBasService } from './deperdition-plancher-bas.service.js';
-import { DeperditionMurService } from './deperdition-mur.service.js';
-import { DeperditionPorteService } from './deperdition-porte.service.js';
-import { DeperditionPlancherHautService } from './deperdition-plancher-haut.service.js';
-import { DpeNormalizerService } from '../../normalizer/domain/dpe-normalizer.service.js';
-import { TvStore } from '../../dpe/infrastructure/tv.store.js';
+import corpus from '../../../../../test/corpus-sano.json';
+import { getAdemeFileJson } from '../../../../../test/test-helpers.js';
+import { ContexteBuilder } from '../contexte.builder.js';
+import { DeperditionPlancherBasService } from './plancher_bas/deperdition-plancher-bas.service.js';
+import { DeperditionMurService } from './mur/deperdition-mur.service.js';
+import { DeperditionPorteService } from './porte/deperdition-porte.service.js';
+import { DeperditionPlancherHautService } from './plancher_haut/deperdition-plancher-haut.service.js';
+import { DpeNormalizerService } from '../../../normalizer/domain/dpe-normalizer.service.js';
+import { TvStore } from '../../../dpe/infrastructure/tv.store.js';
+import { beforeEach, describe, expect, test } from 'vitest';
+import b from '../../../../3.1_b.js';
 
 /** @type {DeperditionPorteService} **/
 let deperditionPorteService;
@@ -214,7 +215,7 @@ describe('Calcul des déperditions', () => {
     );
   });
 
-  xdescribe('Benchmark', () => {
+  describe.skip('Benchmark', () => {
     test('reworked', () => {
       const data = {
         enumTypeAdjacenceId: '8',
@@ -255,10 +256,10 @@ describe('Calcul des déperditions', () => {
 
       /** @type {Contexte} */
       const ctx = contexteBuilder.fromDpe(dpeRequest);
-      /** @type {Enveloppe} */
-      const enveloppe = dpeRequest.logement.enveloppe;
+      /** @type {Logement} */
+      const logement = dpeRequest.logement;
       /** @type {Deperdition} */
-      const deperditions = service.gv(ctx, enveloppe);
+      const deperditions = service.deperditions(ctx, logement);
 
       expect(deperditions.deperdition_mur).toBeCloseTo(
         dpeRequest.logement.sortie.deperdition.deperdition_mur,

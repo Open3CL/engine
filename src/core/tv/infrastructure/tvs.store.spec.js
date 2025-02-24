@@ -1,7 +1,8 @@
 import { TvsStore } from './tvs.store.js';
+import { describe, expect, test } from 'vitest';
 
 describe('TvsStore unit tests', () => {
-  it('should get rendement distribution ch id', () => {
+  test('should get rendement distribution ch id', () => {
     const store = new TvsStore();
 
     expect(store.getRendementDistributionCh('41', '0')).toMatchObject({
@@ -24,7 +25,7 @@ describe('TvsStore unit tests', () => {
     });
   });
 
-  it('should get rendement distribution ch by id', () => {
+  test('should get rendement distribution ch by id', () => {
     const store = new TvsStore();
 
     expect(store.getRendementDistributionChById('10')).toMatchObject({

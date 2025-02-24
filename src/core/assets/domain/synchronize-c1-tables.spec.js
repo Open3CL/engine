@@ -2,17 +2,17 @@ import { SynchronizeC1Tables } from './synchronize-c1-tables.js';
 import { FileStore } from '../../file/infrastructure/adapter/file.store.js';
 import { ApplicationConfig } from '../../conf/infrastructure/application.config.js';
 import { C1TablesFixture } from '../../../../test/fixtures/core/assets/c1-tables.fixture.js';
-import { jest } from '@jest/globals';
+import { describe, expect, test, vi } from 'vitest';
 
 describe('SynchronizeC1Tables unit tests', () => {
-  it('should read and parse 18.5_c1.ods file', () => {
+  test('should read and parse 18.5_c1.ods file', () => {
     const fileStore = new FileStore();
     const appConfig = new ApplicationConfig();
     const synchronizeC1Tables = new SynchronizeC1Tables(fileStore, appConfig);
 
     const c1Data = C1TablesFixture.aC1Example();
-    jest.spyOn(fileStore, 'readLocalOdsFileAndConvertToJson').mockResolvedValue(c1Data);
-    jest.spyOn(ApplicationConfig.prototype, 'c1FilePath', 'get').mockReturnValue('src/file.ods');
+    vi.spyOn(fileStore, 'readLocalOdsFileAndConvertToJson').mockResolvedValue(c1Data);
+    vi.spyOn(ApplicationConfig.prototype, 'c1FilePath', 'get').mockReturnValue('src/file.ods');
 
     return synchronizeC1Tables.execute().then((output) => {
       expect(fileStore.readLocalOdsFileAndConvertToJson).toHaveBeenCalled();

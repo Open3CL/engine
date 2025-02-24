@@ -1,5 +1,7 @@
 import { TvStore } from './tv.store.js';
 import { tv } from '../../../utils.js';
+import { beforeEach, describe, expect, test } from 'vitest';
+import { TypeHabitation } from '../domain/models/type-habitation.model.js';
 
 /** @type {TvStore} **/
 let tvStore;
@@ -532,7 +534,121 @@ describe('Lecture des tables de valeurs', () => {
     });
   });
 
-  xdescribe('Benchmark b', () => {
+  describe('lecture des valeurs de debits_ventilation', () => {
+    test.each([
+      {
+        label: 'Ventilation par ouverture des fenêtres',
+        enumTypeVentilation: '1',
+        expected: {
+          qvarep_conv: '1.2',
+          qvasouf_conv: '1.2',
+          smea_conv: '0'
+        }
+      },
+      {
+        label: 'VMC SF Auto réglable de 2001 à 2012',
+        enumTypeVentilation: '5',
+        expected: {
+          qvarep_conv: '1.5',
+          qvasouf_conv: '0',
+          smea_conv: '2'
+        }
+      }
+    ])(`debitsVentilation pour ventilation $label`, ({ enumTypeVentilation, expected }) => {
+      expect(tvStore.getDebitsVentilation(enumTypeVentilation)).toMatchObject(expected);
+    });
+
+    test('pas de valeur de debits_ventilation', () => {
+      const ug = tvStore.getDebitsVentilation('0');
+      expect(ug).toBeUndefined();
+    });
+  });
+
+  describe('lecture des valeurs de q4paConv', () => {
+    test.each([
+      {
+        label: 'Ventilation avant 1948, appartement',
+        periodConstruction: '1',
+        typeHabitation: TypeHabitation.APPARTEMENT,
+        isolationSurface: '0',
+        expected: {
+          q4pa_conv: '4.6'
+        }
+      },
+      {
+        label: 'Ventilation avant 1948, appartement',
+        periodConstruction: '1',
+        typeHabitation: TypeHabitation.APPARTEMENT,
+        isolationSurface: undefined,
+        expected: {
+          q4pa_conv: '4.6'
+        }
+      },
+      {
+        label: 'Ventilation 1948-1974, maison',
+        periodConstruction: '2',
+        typeHabitation: TypeHabitation.MAISON,
+        isolationSurface: undefined,
+        expected: {
+          q4pa_conv: '2.2'
+        }
+      },
+      {
+        label: 'Ventilation 1948-1974, maison surfaces isolées',
+        periodConstruction: '2',
+        typeHabitation: TypeHabitation.MAISON,
+        isolationSurface: '1',
+        expected: {
+          q4pa_conv: '1.9'
+        }
+      },
+      {
+        label: 'Ventilation avant 1948, maison avec joints',
+        periodConstruction: '1',
+        typeHabitation: TypeHabitation.MAISON,
+        isolationSurface: undefined,
+        presenceJointsMenuiserie: '1',
+        expected: {
+          q4pa_conv: '2.5'
+        }
+      },
+      {
+        label: 'Ventilation avant 1948, maison avec joints',
+        periodConstruction: '1',
+        typeHabitation: TypeHabitation.MAISON,
+        isolationSurface: '0',
+        presenceJointsMenuiserie: '1',
+        expected: {
+          q4pa_conv: '2.5'
+        }
+      }
+    ])(
+      `q4paConv pour ventilation $label`,
+      ({
+        periodConstruction,
+        typeHabitation,
+        isolationSurface,
+        presenceJointsMenuiserie,
+        expected
+      }) => {
+        expect(
+          tvStore.getQ4paConv(
+            periodConstruction,
+            typeHabitation,
+            isolationSurface,
+            presenceJointsMenuiserie
+          )
+        ).toMatchObject(expected);
+      }
+    );
+
+    test('pas de valeur de debits_ventilation', () => {
+      const ug = tvStore.getQ4paConv('2', TypeHabitation.MAISON, '0', '1');
+      expect(ug).toBeUndefined();
+    });
+  });
+
+  describe.skip('Benchmark b', () => {
     test('reworked', () => {
       for (let i = 0; i < 1000; i++) {
         const b = tvStore.getB('8');
@@ -552,7 +668,7 @@ describe('Lecture des tables de valeurs', () => {
     });
   });
 
-  xdescribe('Benchmark uVue', () => {
+  describe.skip('Benchmark uVue', () => {
     test('reworked', () => {
       for (let i = 0; i < 1000; i++) {
         const uVue = tvStore.getUVue('8');

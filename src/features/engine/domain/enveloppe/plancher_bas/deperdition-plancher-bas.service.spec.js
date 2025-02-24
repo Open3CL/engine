@@ -1,9 +1,10 @@
-import corpus from '../../../../test/corpus-sano.json';
-import { getAdemeFileJson } from '../../../../test/test-helpers.js';
-import { ContexteBuilder } from './contexte.builder.js';
-import { DpeNormalizerService } from '../../normalizer/domain/dpe-normalizer.service.js';
+import corpus from '../../../../../../test/corpus-sano.json';
+import { getAdemeFileJson } from '../../../../../../test/test-helpers.js';
+import { ContexteBuilder } from '../../contexte.builder.js';
+import { DpeNormalizerService } from '../../../../normalizer/domain/dpe-normalizer.service.js';
 import { DeperditionPlancherBasService } from './deperdition-plancher-bas.service.js';
-import { TvStore } from '../../dpe/infrastructure/tv.store.js';
+import { TvStore } from '../../../../dpe/infrastructure/tv.store.js';
+import { beforeEach, describe, expect, test } from 'vitest';
 
 /** @type {DeperditionPlancherBasService} **/
 let service;
@@ -41,7 +42,7 @@ describe('Calcul de déperdition des planchers bas', () => {
         ue: 0.49684211
       };
 
-      const di = service.process(ctx, de, []);
+      const di = service.execute(ctx, de, []);
       expect(di.upb).toBeCloseTo(2);
       expect(di.upb0).toBeCloseTo(2);
       expect(di.upb_final).toBeCloseTo(0.49684211);
@@ -68,7 +69,7 @@ describe('Calcul de déperdition des planchers bas', () => {
         ue: 0.37117494
       };
 
-      const di = service.process(ctx, de, [{ donnee_entree: de }]);
+      const di = service.execute(ctx, de, [{ donnee_entree: de }]);
       expect(di.upb).toBeCloseTo(0.59154929577464788);
       expect(di.upb0).toBeCloseTo(2);
       expect(di.upb_final).toBeCloseTo(0.37117494);
@@ -91,7 +92,7 @@ describe('Calcul de déperdition des planchers bas', () => {
         calcul_ue: 0
       };
 
-      const di = service.process(ctx, de, []);
+      const di = service.execute(ctx, de, []);
       expect(di.upb).toBeCloseTo(1.45);
       expect(di.upb0).toBeCloseTo(1.45);
       expect(di.upb_final).toBeCloseTo(1.45);
@@ -115,7 +116,7 @@ describe('Calcul de déperdition des planchers bas', () => {
         upb0_saisi: 3.2
       };
 
-      const di = service.process(ctx, de, []);
+      const di = service.execute(ctx, de, []);
       expect(di.upb).toBeCloseTo(2);
       expect(di.upb0).toBeCloseTo(3.2);
       expect(di.upb_final).toBeCloseTo(2);
@@ -138,7 +139,7 @@ describe('Calcul de déperdition des planchers bas', () => {
         calcul_ue: 0
       };
 
-      const di = service.process(ctx, de, []);
+      const di = service.execute(ctx, de, []);
       expect(di.upb).toBeCloseTo(2);
       expect(di.upb0).toBeCloseTo(2);
       expect(di.upb_final).toBeCloseTo(2);
@@ -162,7 +163,7 @@ describe('Calcul de déperdition des planchers bas', () => {
         upb_saisi: 1.25
       };
 
-      const di = service.process(ctx, de, []);
+      const di = service.execute(ctx, de, []);
       expect(di.upb).toBeCloseTo(1.25);
       expect(di.upb0).toBeUndefined();
       expect(di.upb_final).toBeCloseTo(1.25);
@@ -184,7 +185,7 @@ describe('Calcul de déperdition des planchers bas', () => {
       const pbs = dpeRequest.logement.enveloppe.plancher_bas_collection?.plancher_bas || [];
 
       pbs.forEach((pb) => {
-        const di = service.process(ctx, pb.donnee_entree, pbs);
+        const di = service.execute(ctx, pb.donnee_entree, pbs);
 
         if (pb.donnee_intermediaire) {
           expect(di.upb0).toBeCloseTo(pb.donnee_intermediaire.upb0, 2);

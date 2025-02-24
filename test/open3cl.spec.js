@@ -1,15 +1,15 @@
 import { calcul_3cl } from '../src/engine.js';
 import corpus from './corpus.json';
-import { jest } from '@jest/globals';
 import { getAdemeFileJson, getResultFile, saveResultFile } from './test-helpers.js';
 import { PRECISION } from './constant.js';
+import { beforeAll, describe, expect, test, vi } from 'vitest';
 
 describe('Test Open3CL engine on corpus', () => {
   /**
    * Generate all required files
    */
   beforeAll(() => {
-    jest.spyOn(console, 'warn').mockImplementation(() => {});
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
     corpus.forEach((ademeId) => {
       const dpeRequest = getAdemeFileJson(ademeId);
       try {
@@ -313,7 +313,7 @@ describe('Test Open3CL engine on corpus', () => {
         }
       );
 
-      xit.each([
+      test.each([
         'isolation_toiture',
         'protection_solaire_exterieure',
         'aspect_traversant',
@@ -329,7 +329,7 @@ describe('Test Open3CL engine on corpus', () => {
         );
       });
 
-      xit.each([
+      test.each([
         'ubat',
         'qualite_isol_enveloppe',
         'qualite_isol_mur',

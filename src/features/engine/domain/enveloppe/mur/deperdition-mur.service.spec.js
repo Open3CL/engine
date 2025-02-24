@@ -1,9 +1,10 @@
-import corpus from '../../../../test/corpus-sano.json';
-import { getAdemeFileJson } from '../../../../test/test-helpers.js';
+import corpus from '../../../../../../test/corpus-sano.json';
+import { getAdemeFileJson } from '../../../../../../test/test-helpers.js';
 import { DeperditionMurService } from './deperdition-mur.service.js';
-import { ContexteBuilder } from './contexte.builder.js';
-import { DpeNormalizerService } from '../../normalizer/domain/dpe-normalizer.service.js';
-import { TvStore } from '../../dpe/infrastructure/tv.store.js';
+import { ContexteBuilder } from '../../contexte.builder.js';
+import { DpeNormalizerService } from '../../../../normalizer/domain/dpe-normalizer.service.js';
+import { TvStore } from '../../../../dpe/infrastructure/tv.store.js';
+import { beforeEach, describe, expect, test } from 'vitest';
 
 /** @type {DeperditionMurService} **/
 let service;
@@ -93,7 +94,7 @@ describe('Calcul de déperdition des murs', () => {
           enum_periode_isolation_id: enumIsolationId
         };
 
-        const di = service.process(ctx, de);
+        const di = service.execute(ctx, de);
         expect(di.umur0).toBe(umur0Expected);
         expect(di.umur).toBeCloseTo(umurExpected);
       }
@@ -118,7 +119,7 @@ describe('Calcul de déperdition des murs', () => {
         epaisseur_isolation: 10
       };
 
-      const di = service.process(ctx, de);
+      const di = service.execute(ctx, de);
       expect(di.umur0).toBe(2.5);
       expect(di.umur).toBeCloseTo(0.3448275862068969);
     });
@@ -142,7 +143,7 @@ describe('Calcul de déperdition des murs', () => {
         epaisseur_isolation: 10
       };
 
-      const di = service.process(ctx, de);
+      const di = service.execute(ctx, de);
       expect(di.umur0).toBe(1.45);
       expect(di.umur).toBeCloseTo(0.31351351351351353);
     });
@@ -165,7 +166,7 @@ describe('Calcul de déperdition des murs', () => {
         umur_saisi: 0.32
       };
 
-      const di = service.process(ctx, de);
+      const di = service.execute(ctx, de);
       expect(di.umur0).toBeUndefined();
       expect(di.umur).toBeCloseTo(0.32);
     });
@@ -188,7 +189,7 @@ describe('Calcul de déperdition des murs', () => {
         enum_type_isolation_id: '2'
       };
 
-      const di = service.process(ctx, de);
+      const di = service.execute(ctx, de);
       expect(di.umur0).toBeCloseTo(0.81545);
       expect(di.umur).toBeCloseTo(0.81545);
     });
@@ -211,7 +212,7 @@ describe('Calcul de déperdition des murs', () => {
         enum_type_isolation_id: '2'
       };
 
-      const di = service.process(ctx, de);
+      const di = service.execute(ctx, de);
       expect(di.umur0).toBeCloseTo(1.59664);
       expect(di.umur).toBeCloseTo(1.59664);
     });
@@ -235,7 +236,7 @@ describe('Calcul de déperdition des murs', () => {
         enum_periode_isolation_id: '5'
       };
 
-      const di = service.process(ctx, de);
+      const di = service.execute(ctx, de);
       expect(di.umur0).toBeCloseTo(1.55091);
       expect(di.umur).toBeCloseTo(0.7); // 0.7 dans le DPE d'origine, comme si effet joule
     });
@@ -259,7 +260,7 @@ describe('Calcul de déperdition des murs', () => {
         enum_type_isolation_id: '3'
       };
 
-      const di = service.process(ctx, de);
+      const di = service.execute(ctx, de);
       expect(di.umur0).toBeUndefined(); // umur saisie directement
       expect(di.umur).toBeCloseTo(0.32);
     });
@@ -283,7 +284,7 @@ describe('Calcul de déperdition des murs', () => {
         enum_type_isolation_id: '3'
       };
 
-      const di = service.process(ctx, de);
+      const di = service.execute(ctx, de);
       expect(di.umur0).toBeCloseTo(0.82983999999999991);
       expect(di.umur).toBeCloseTo(0.26990177584075975);
     });
@@ -308,7 +309,7 @@ describe('Calcul de déperdition des murs', () => {
         enum_type_isolation_id: '2'
       };
 
-      const di = service.process(ctx, de);
+      const di = service.execute(ctx, de);
       expect(di.umur0).toBeCloseTo(0.81545);
       expect(di.umur).toBeCloseTo(0.81545);
     });
@@ -329,7 +330,7 @@ describe('Calcul de déperdition des murs', () => {
         if (['2187E0982013C', '2287E2336469P', '2387E0045247S'].includes(ademeId)) {
           m.donnee_entree.enduit_isolant_paroi_ancienne = m.donnee_entree.paroi_ancienne;
         }
-        const di = service.process(ctx, m.donnee_entree);
+        const di = service.execute(ctx, m.donnee_entree);
 
         if (m.donnee_intermediaire.umur0) {
           expect(di.umur0).toBeCloseTo(m.donnee_intermediaire.umur0, 2);

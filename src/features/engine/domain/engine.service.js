@@ -1,9 +1,12 @@
+import { inject } from 'dioma';
+import { ContexteBuilder } from './contexte.builder.js';
+import { DeperditionEnveloppeService } from './enveloppe/deperdition-enveloppe.service.js';
+
 export class EngineService {
   /**
    * @type {DeperditionEnveloppeService}
    */
   #deperditionService;
-
   /**
    * @type {ContexteBuilder}
    */
@@ -13,7 +16,10 @@ export class EngineService {
    * @param deperditionService {DeperditionEnveloppeService}
    * @param contextBuilder {ContexteBuilder}
    */
-  constructor(deperditionService, contextBuilder) {
+  constructor(
+    deperditionService = inject(DeperditionEnveloppeService),
+    contextBuilder = inject(ContexteBuilder)
+  ) {
     this.#deperditionService = deperditionService;
     this.#contextBuilder = contextBuilder;
   }
@@ -23,7 +29,7 @@ export class EngineService {
    * @param dpe {Dpe}
    * @return {Dpe} Nouveau DPE avec les données intermédiaires et les sorties calculées
    */
-  process(dpe) {
+  execute(dpe) {
     /** @type {Dpe} */
     const proceededDpe = this.#removeComputedData(JSON.parse(JSON.stringify(dpe)));
 
@@ -46,9 +52,9 @@ export class EngineService {
     // Calcul de l'inertie
 
     // Calcul des déperditions
-    proceededDpe.logement.sortie.deperdition = this.#deperditionService.gv(
+    proceededDpe.logement.sortie.deperdition = this.#deperditionService.deperditions(
       ctx,
-      dpe.logement.enveloppe
+      dpe.logement
     );
 
     // Calcul des déperditions par renouvellement de l'air

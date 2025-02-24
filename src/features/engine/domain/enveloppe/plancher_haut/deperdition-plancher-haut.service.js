@@ -1,5 +1,7 @@
-import { PRECISION } from './constants.js';
-import { DeperditionService } from './deperdition.service.js';
+import { inject } from 'dioma';
+import { PRECISION } from '../../constants.js';
+import { DeperditionService } from '../deperdition.service.js';
+import { TvStore } from '../../../../dpe/infrastructure/tv.store.js';
 
 /**
  * Calcul des déperditions de l’enveloppe GV
@@ -13,7 +15,7 @@ export class DeperditionPlancherHautService extends DeperditionService {
   /**
    * @param tvStore {TvStore}
    */
-  constructor(tvStore) {
+  constructor(tvStore = inject(TvStore)) {
     super(tvStore);
   }
 
@@ -22,7 +24,7 @@ export class DeperditionPlancherHautService extends DeperditionService {
    * @param phDE {PlancherHautDE}
    * @return {PlancherHautDI}
    */
-  process(ctx, phDE) {
+  execute(ctx, phDE) {
     const uph0 = this.#uph0(phDE);
     const uph = this.#uph(phDE, uph0, ctx);
     const b = this.b({

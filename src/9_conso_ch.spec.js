@@ -1,4 +1,5 @@
 import { conso_ch } from './9_conso_ch.js';
+import { describe, expect, test } from 'vitest';
 
 describe('Recherche de bugs dans le calcul de la consommation du chauffage', () => {
   test('calcul de la consommation du chauffage pour 2475E2510509B', () => {

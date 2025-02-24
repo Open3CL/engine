@@ -1,5 +1,6 @@
 import { getAdemeFileJson } from './test-helpers.js';
 import { calcul_3cl } from '../src/index.js';
+import { describe, expect, test } from 'vitest';
 
 describe('calcul de déperdition par ventilation', () => {
   test('Les surfaces de déperdition ne doivent pas prendre en compte les surfaces déperditives (b > 0)', () => {

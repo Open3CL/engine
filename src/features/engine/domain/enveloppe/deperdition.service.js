@@ -1,8 +1,11 @@
-import enums from '../../../enums.js';
-import { logger } from '../../../core/util/logger/log-service.js';
+import enums from '../../../../enums.js';
+import { logger } from '../../../../core/util/logger/log-service.js';
+import { inject } from 'dioma';
+import { TvStore } from '../../../dpe/infrastructure/tv.store.js';
 
 /**
- * Classe générique pour tous les éléments de l'enveloppe du DPE (murs, ph, pb, porte...)
+ * Calcul des déperditions de l’enveloppe GV
+ * @see Méthode de calcul 3CL-DPE 2021 (cotobre 2021) chapitre 3
  */
 export class DeperditionService {
   /**
@@ -13,7 +16,7 @@ export class DeperditionService {
   /**
    * @param tvStore {TvStore}
    */
-  constructor(tvStore) {
+  constructor(tvStore = inject(TvStore)) {
     this.tvStore = tvStore;
   }
 
@@ -24,7 +27,7 @@ export class DeperditionService {
    * @return void
    */
   /* eslint-disable no-unused-vars */
-  process(ctx, de) {
+  execute(ctx, de) {
     throw new Error('Unsupported operation');
   }
 

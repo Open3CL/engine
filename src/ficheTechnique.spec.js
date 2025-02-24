@@ -1,4 +1,5 @@
 import getFicheTechnique from './ficheTechnique.js';
+import { describe, expect, test } from 'vitest';
 
 describe('FicheTechnique service tests', () => {
   const dpe = {
@@ -119,7 +120,7 @@ describe('FicheTechnique service tests', () => {
     }
   };
 
-  it('should return a fiche technique', async () => {
+  test('should return a fiche technique', async () => {
     let fiche = getFicheTechnique(dpe, '10', 'exposées');
     expect(fiche).not.toBeNull();
     expect(fiche.description).toBe('Façades exposées: plusieurs');
@@ -148,14 +149,14 @@ describe('FicheTechnique service tests', () => {
     expect(fiche).not.toBeNull();
   });
 
-  it('should return a fiche technique with multiple criteria', async () => {
+  test('should return a fiche technique with multiple criteria', async () => {
     let fiche = getFicheTechnique(dpe, '10', 'exposées', [1950, 'Gaz']);
     expect(fiche).not.toBeNull();
     expect(fiche.description).toBe('Façades exposées: plusieurs');
     expect(fiche.valeur).toBe('aucune');
   });
 
-  it('should not return a non existing fiche technique', async () => {
+  test('should not return a non existing fiche technique', async () => {
     let fiche = getFicheTechnique(dpe, '40', 'exposées');
     expect(fiche).toBeNull();
 

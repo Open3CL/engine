@@ -1,4 +1,5 @@
 import { Inertie } from './7_inertie.js';
+import { describe, expect, test } from 'vitest';
 
 describe('Inertie unit tests', () => {
   /**
@@ -6,7 +7,7 @@ describe('Inertie unit tests', () => {
    */
   const inertie = new Inertie();
 
-  it.each([
+  test.each([
     [1, 1, 0, 9],
     [1, 1, 0, 11],
     [1, 1, 0, 12],
@@ -34,7 +35,7 @@ describe('Inertie unit tests', () => {
     }
   );
 
-  it.each([
+  test.each([
     [1, 2, 8],
     [1, 4, 8],
     [1, 9, 8],
@@ -53,7 +54,7 @@ describe('Inertie unit tests', () => {
     }
   );
 
-  it.each([
+  test.each([
     [1, 1, 0, 2, 0],
     [1, 1, 0, 3, 0],
     [1, 1, 0, 4, 0],

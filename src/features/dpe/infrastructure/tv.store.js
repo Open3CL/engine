@@ -1,6 +1,7 @@
 import { tvs as tv } from '../../../tv-v2.js';
 import { getRange } from '../../../utils.js';
 import { logger } from '../../../core/util/logger/log-service.js';
+import { TypeHabitation } from '../domain/models/type-habitation.model.js';
 
 /**
  * Accès aux données des tables de valeurs
@@ -331,5 +332,58 @@ export class TvStore {
       `ug pour enumTypeVitrageId:${enumTypeVitrageId}, enumTypeGazLameId:${enumTypeGazLameId}, enumInclinaisonVitrageId:${enumInclinaisonVitrageId}, vitrageVir:${vitrageVir}, epaisseurLame:${epaisseurLame} = ${ug}`
     );
     return parseFloat(ug);
+  }
+
+  /**
+   * Débits de la ventilation
+   * @param typeVentilation {number}
+   * @return {object|undefined}
+   */
+  getDebitsVentilation(typeVentilation) {
+    const debitsVentilation = tv['debits_ventilation'].find((v) =>
+      v.enum_type_ventilation_id.split('|').includes(typeVentilation)
+    );
+
+    if (!debitsVentilation) {
+      logger.error(
+        `Pas de valeur forfaitaire debits_ventilation pour enumTypeVentilationId: ${typeVentilation}`
+      );
+      return;
+    }
+
+    return debitsVentilation;
+  }
+
+  /**
+   * Valeur conventionnelle de la perméabilité sous 4Pa
+   * @see Chapitre 4 - Calcul des déperditions par renouvellement d’air
+   *
+   * @param periodConstruction {string}
+   * @param typeHabitation {TypeHabitation}
+   * @param isolationSurface {string | undefined}
+   * @param presenceJointsMenuiserie {string | undefined}
+   *
+   * @return {object|undefined}
+   */
+  getQ4paConv(periodConstruction, typeHabitation, isolationSurface, presenceJointsMenuiserie) {
+    const q4paConv = tv['q4pa_conv'].find(
+      (v) =>
+        v.enum_periode_construction_id.split('|').includes(periodConstruction) &&
+        v.type_habitation.split('/').includes(TypeHabitation[typeHabitation].toLowerCase()) &&
+        (isolationSurface === undefined || v.isolation_surfaces === isolationSurface) &&
+        (presenceJointsMenuiserie === undefined ||
+          v.presence_joints_menuiserie === presenceJointsMenuiserie)
+    );
+
+    if (!q4paConv) {
+      logger.error(
+        `Pas de valeur forfaitaire q4pa_conv pour periodConstruction: ${periodConstruction}, 
+        typeHabitation: ${typeHabitation}, isolationSurface: ${isolationSurface}, 
+        presenceJointsMenuiserie: ${presenceJointsMenuiserie}`
+      );
+      return;
+    }
+
+    return q4paConv;
   }
 }

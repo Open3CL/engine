@@ -1,6 +1,8 @@
-import { PRECISION } from './constants.js';
-import { logger } from '../../../core/util/logger/log-service.js';
-import { DeperditionService } from './deperdition.service.js';
+import { logger } from '../../../../../core/util/logger/log-service.js';
+import { inject } from 'dioma';
+import { PRECISION } from '../../constants.js';
+import { DeperditionService } from '../deperdition.service.js';
+import { TvStore } from '../../../../dpe/infrastructure/tv.store.js';
 
 /**
  * Calcul des déperditions de l’enveloppe GV
@@ -14,7 +16,7 @@ export class DeperditionMurService extends DeperditionService {
   /**
    * @param tvStore {TvStore}
    */
-  constructor(tvStore) {
+  constructor(tvStore = inject(TvStore)) {
     super(tvStore);
   }
 
@@ -23,7 +25,7 @@ export class DeperditionMurService extends DeperditionService {
    * @param murDE {MurDE}
    * @return {MurDI}
    */
-  process(ctx, murDE) {
+  execute(ctx, murDE) {
     const umur0 = this.#umur0(murDE);
     const umur = this.#umur(murDE, umur0, ctx);
     const b = this.b({

@@ -1,14 +1,14 @@
 import { calcul_3cl } from '../src/engine.js';
 import corpus from './corpus.json';
 import { getAdemeFileJson, saveResultFile } from './test-helpers.js';
-import { jest } from '@jest/globals';
+import { describe, expect, test, beforeAll, vi } from 'vitest';
 import { Nadeq } from '../src/11_nadeq.js';
 
 describe('Test Open3CL engine compliance on corpus', () => {
   const nadeq = new Nadeq();
 
   beforeAll(() => {
-    jest.spyOn(console, 'warn').mockImplementation(() => {});
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
     corpus.forEach((ademeId) => {
       const dpeRequest = getAdemeFileJson(ademeId);
       try {

@@ -6,6 +6,7 @@ export interface Ventilation {
 }
 
 export interface VentilationDE extends DE {
+  enum_type_ventilation_id: number;
   surface_ventile: number;
   plusieurs_facade_exposee: boolean;
   tv_q4pa_conv_id?: number;
@@ -23,4 +24,10 @@ export interface VentilationDI {
   conso_auxiliaire_ventilation: number;
   hperm: number;
   hvent: number;
+}
+
+enum TypeVentilation {
+  SIMPLE_FLUX_AUTO = 'SIMPLE_FLUX_AUTO',
+  SIMPLE_FLUX_HYGRO = 'SIMPLE_FLUX_HYGRO',
+  DOUBLE_FLUX = 'DOUBLE_FLUX'
 }

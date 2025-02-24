@@ -186,3 +186,9 @@ export interface DE {
   description?: string;
   reference?: string;
 }
+
+enum TypeHabitation {
+  MAISON = 'MAISON',
+  APPARTEMENT = 'APPARTEMENT',
+  IMMEUBLE = 'IMMEUBLE'
+}

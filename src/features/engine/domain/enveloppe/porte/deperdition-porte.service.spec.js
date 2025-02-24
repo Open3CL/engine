@@ -1,7 +1,8 @@
 import { DeperditionPorteService } from './deperdition-porte.service.js';
-import corpus from '../../../../test/corpus-sano.json';
-import { getAdemeFileJson } from '../../../../test/test-helpers.js';
-import { TvStore } from '../../dpe/infrastructure/tv.store.js';
+import corpus from '../../../../../../test/corpus-sano.json';
+import { getAdemeFileJson } from '../../../../../../test/test-helpers.js';
+import { beforeEach, describe, expect, test } from 'vitest';
+import { TvStore } from '../../../../dpe/infrastructure/tv.store.js';
 
 /** @type {DeperditionPorteService} **/
 let service;
@@ -69,7 +70,7 @@ describe('Calcul de déperdition des portes', () => {
         enum_type_porte_id: type
       };
 
-      const di = service.process(ctx, de);
+      const di = service.execute(ctx, de);
       expect(di.uporte).toBe(uPorteExpected);
     });
 
@@ -81,7 +82,7 @@ describe('Calcul de déperdition des portes', () => {
         uporte_saisi: 1.6
       };
 
-      const di = service.process(ctx, de);
+      const di = service.execute(ctx, de);
       expect(di.uporte).toBe(de.uporte_saisi);
     });
 
@@ -93,7 +94,7 @@ describe('Calcul de déperdition des portes', () => {
         uporte_saisi: 1.88
       };
 
-      const di = service.process(ctx, de);
+      const di = service.execute(ctx, de);
       expect(di.uporte).toBe(de.uporte_saisi);
     });
   });
@@ -106,7 +107,7 @@ describe('Calcul de déperdition des portes', () => {
       const portes = dpeRequest.logement.enveloppe.porte_collection?.porte || [];
 
       portes.forEach((p) => {
-        const di = service.process(ctx, p.donnee_entree);
+        const di = service.execute(ctx, p.donnee_entree);
         expect(di.uporte).toBeCloseTo(p.donnee_intermediaire.uporte, 2);
         expect(di.b).toBeCloseTo(p.donnee_intermediaire.b, 2);
       });

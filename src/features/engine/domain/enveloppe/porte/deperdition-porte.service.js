@@ -1,4 +1,6 @@
-import { DeperditionService } from './deperdition.service.js';
+import { inject } from 'dioma';
+import { DeperditionService } from '../deperdition.service.js';
+import { TvStore } from '../../../../dpe/infrastructure/tv.store.js';
 
 /**
  * Calcul des déperditions de l’enveloppe GV
@@ -14,7 +16,7 @@ export class DeperditionPorteService extends DeperditionService {
   /**
    * @param tvStore {TvStore}
    */
-  constructor(tvStore) {
+  constructor(tvStore = inject(TvStore)) {
     super(tvStore);
   }
 
@@ -23,7 +25,7 @@ export class DeperditionPorteService extends DeperditionService {
    * @param porteDE {PorteDE}
    * @return {PorteDI}
    */
-  process(ctx, porteDE) {
+  execute(ctx, porteDE) {
     /** @type {PorteDI} */
     const di = {
       uporte: undefined,

@@ -1,4 +1,5 @@
 import { calc_generateur_ch } from './9_generateur_ch.js';
+import { describe, expect, test } from 'vitest';
 
 describe('Recherche de bugs dans le calcul de la consommation des generateurs de chauffage', () => {
   test('calcul de la consommation des generateurs de chauffage pour 2475E2510509B', () => {

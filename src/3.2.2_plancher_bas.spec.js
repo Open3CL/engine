@@ -1,4 +1,5 @@
 import calc_pb from './3.2.2_plancher_bas.js';
+import { describe, expect, test } from 'vitest';
 
 describe('Recherche de bugs dans le calcul de déperdition des planchers bas', () => {
   describe('calcul de déperdition pour les planchers bas de 2287E1043883T', () => {
