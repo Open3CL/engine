@@ -9,7 +9,7 @@
     "ecmaVersion": "latest",
     "sourceType": "module"
   },
-  "ignorePatterns": ["duplicate", "test"],
+  "ignorePatterns": ["duplicate", "test, output"],
   "extends": ["eslint:recommended", "prettier"],
   "rules": {
     "no-prototype-builtins": "off",

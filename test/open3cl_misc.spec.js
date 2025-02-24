@@ -1,8 +1,9 @@
 import { calcul_3cl } from '../src/engine.js';
 import { getAdemeFileJson } from './test-helpers.js';
+import { describe, expect, test } from 'vitest';
 
 describe('Open3cl misc unit tests', () => {
-  it('should match ujn in tv with a two digits precision uw number', () => {
+  test('should match ujn in tv with a two digits precision uw number', () => {
     const output = calcul_3cl(structuredClone(getAdemeFileJson('2302E4043473J')));
 
     /**
@@ -14,7 +15,7 @@ describe('Open3cl misc unit tests', () => {
     ).toMatchObject({ ujn: 2 });
   });
 
-  it('regular expression with "+" character should be accepted for isolation ITE + ITI', () => {
+  test('regular expression with "+" character should be accepted for isolation ITE + ITI', () => {
     const output = calcul_3cl(structuredClone(getAdemeFileJson('2302E4043473J')));
 
     /**
@@ -27,7 +28,7 @@ describe('Open3cl misc unit tests', () => {
     ).toMatchObject({ k: 0.08 });
   });
 
-  it('should use inertie class only for individual housing', () => {
+  test('should use inertie class only for individual housing', () => {
     /**
      * Dans le fichier de table de valeur (onglet intermittence), si la méthode application dpe est différente de 1
      * alors aucune classe d'inertie n'est précisée.
@@ -41,7 +42,7 @@ describe('Open3cl misc unit tests', () => {
     ).toMatchObject({ i0: 0.86 });
   });
 
-  it('should be able to specify uph_saisi', () => {
+  test('should be able to specify uph_saisi', () => {
     const input = structuredClone(getAdemeFileJson('2344E0308327N'));
 
     input.logement.enveloppe.plancher_haut_collection.plancher_haut[0].donnee_entree.enum_methode_saisie_u_id = 9;
@@ -64,7 +65,7 @@ describe('Open3cl misc unit tests', () => {
     );
   });
 
-  it('should be able to process a dpe with empty plancher_bas_collection and plancher_haut_collection', () => {
+  test('should be able to process a dpe with empty plancher_bas_collection and plancher_haut_collection', () => {
     const output = calcul_3cl(structuredClone(getAdemeFileJson('2421E0125604W')));
 
     expect(output.logement.enveloppe.plancher_bas_collection).toBe('');
@@ -73,7 +74,7 @@ describe('Open3cl misc unit tests', () => {
     expect(output.logement.sortie.qualite_isolation.qualite_isol_plancher_bas).toBe(1);
   });
 
-  it('should have a valid tv_umur_if if no periode_isolation', () => {
+  test('should have a valid tv_umur_if if no periode_isolation', () => {
     const input = structuredClone(getAdemeFileJson('2421E0125604W'));
     const inputTvMurId = input.logement.enveloppe.mur_collection.mur[0].donnee_entree.tv_umur_id;
 
@@ -83,7 +84,7 @@ describe('Open3cl misc unit tests', () => {
     expect(inputTvMurId).toBe(outputTvMurId);
   });
 
-  it('should have the same tv_rendement_distribution_ch_id', () => {
+  test('should have the same tv_rendement_distribution_ch_id', () => {
     const input = getAdemeFileJson('2432E0658897O');
 
     /**

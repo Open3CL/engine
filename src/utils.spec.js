@@ -1,7 +1,8 @@
 import { convertExpression, getRange, getThicknessFromDescription } from './utils.js';
+import { describe, expect, test } from 'vitest';
 
 describe('Utils unit tests', () => {
-  it.each([
+  test.each([
     [0, null],
     [0, undefined],
     [0, ''],
@@ -13,7 +14,7 @@ describe('Utils unit tests', () => {
     expect(getThicknessFromDescription(description)).toBe(thickness);
   });
 
-  it.each([
+  test.each([
     ['70 < Pn <= 400', '(70 < Pn) && (Pn <= 400)'],
     ['70 < Pn', '70 < Pn'],
     ['Pn <= 400', 'Pn <= 400'],
@@ -25,7 +26,7 @@ describe('Utils unit tests', () => {
     expect(convertExpression(expression)).toBe(expected);
   });
 
-  it.each([
+  test.each([
     [[1, 1.2, 3.4, 5.6], 0.5, [1, 1.2]],
     [[1, 1.2, 3.4, 5.6], 1, [1, 1]],
     [[1, 1.2, 3.4, 5.6], 1.3, [1.2, 3.4]],

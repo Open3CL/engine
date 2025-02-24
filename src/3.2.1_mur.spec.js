@@ -1,4 +1,5 @@
 import calc_mur from './3.2.1_mur.js';
+import { describe, expect, test } from 'vitest';
 
 describe('Recherche de bugs dans le calcul de déperdition des murs', () => {
   /**

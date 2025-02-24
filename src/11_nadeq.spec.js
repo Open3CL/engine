@@ -1,4 +1,5 @@
 import { Nadeq } from './11_nadeq.js';
+import { describe, expect, test } from 'vitest';
 
 describe('Nadeq unit tests', () => {
   /**
@@ -6,7 +7,7 @@ describe('Nadeq unit tests', () => {
    */
   const nadeq = new Nadeq();
 
-  it.each([
+  test.each([
     [1, 8],
     [1, 28],
     [1.28125, 45],
@@ -26,7 +27,7 @@ describe('Nadeq unit tests', () => {
     }
   );
 
-  it.each([
+  test.each([
     [1, 8, 1],
     [2, 8, 2],
     [1.3375, 28, 1],

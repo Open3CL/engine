@@ -1,11 +1,11 @@
 import { calcul_3cl } from '../src/engine.js';
 import corpus from './corpus.json';
-import { jest } from '@jest/globals';
+import { beforeAll, describe, expect, test, vi } from 'vitest';
 import { getAdemeFileJson, getResultFile, saveResultFile } from './test-helpers.js';
 
 describe('Test DPE validators', () => {
   beforeAll(() => {
-    jest.spyOn(console, 'warn').mockImplementation(() => {});
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
     corpus.forEach((ademeId) => {
       const dpeRequest = getAdemeFileJson(ademeId);
       try {

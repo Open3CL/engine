@@ -1,4 +1,5 @@
 import { ProductionENR } from './16.2_production_enr.js';
+import { describe, expect, test, it } from 'vitest';
 
 describe('production ENR unit tests', () => {
   /**

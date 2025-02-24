@@ -8,7 +8,7 @@ const data = fs.readFileSync(0, 'utf-8');
 
 const options = {
   // We want to make sure collections of length 1 are still parsed as arrays
-  isArray: (name, jpath, isLeafNode, isAttribute) => {
+  isArray: (name) => {
     const collectionNames = [
       'mur',
       'plancher_bas',

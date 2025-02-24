@@ -1,4 +1,5 @@
 import { calc_ai, calc_as } from './6.1_apport_gratuit.js';
+import { describe, expect, test } from 'vitest';
 
 describe("Recherche de bugs dans le calcul de l'apport gratuit", () => {
   /**

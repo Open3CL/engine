@@ -2,10 +2,10 @@ import { FileStore } from '../../file/infrastructure/adapter/file.store.js';
 import { ApplicationConfig } from '../../conf/infrastructure/application.config.js';
 import { DpeGesLimitValuesTablesFixture } from '../../../../test/fixtures/core/assets/dpe-ges-limit-values-tables.fixture.js';
 import { SynchronizeDpeGesLimitValuesTables } from './synchronize-dpe-ges-limit-values-tables.js';
-import { jest } from '@jest/globals';
+import { describe, expect, test, vi } from 'vitest';
 
 describe('SynchronizeDpeGesLimitValuesTables unit tests', () => {
-  it('should read and parse dpe_ges_limit_values file', () => {
+  test('should read and parse dpe_ges_limit_values file', () => {
     const fileStore = new FileStore();
     const appConfig = new ApplicationConfig();
     const synchronizeDpeGesLimitValuesTables = new SynchronizeDpeGesLimitValuesTables(
@@ -14,10 +14,10 @@ describe('SynchronizeDpeGesLimitValuesTables unit tests', () => {
     );
 
     const dpeGesLimitData = DpeGesLimitValuesTablesFixture.aDpeGesLimitExample();
-    jest.spyOn(fileStore, 'readLocalOdsFileAndConvertToJson').mockResolvedValue(dpeGesLimitData);
-    jest
-      .spyOn(ApplicationConfig.prototype, 'solicitationsExtFilePath', 'get')
-      .mockReturnValue('src/file.ods');
+    vi.spyOn(fileStore, 'readLocalOdsFileAndConvertToJson').mockResolvedValue(dpeGesLimitData);
+    vi.spyOn(ApplicationConfig.prototype, 'solicitationsExtFilePath', 'get').mockReturnValue(
+      'src/file.ods'
+    );
 
     return synchronizeDpeGesLimitValuesTables.execute().then((output) => {
       expect(fileStore.readLocalOdsFileAndConvertToJson).toHaveBeenCalled();

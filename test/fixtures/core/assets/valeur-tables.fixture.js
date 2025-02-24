@@ -4,6 +4,13 @@ export class ValeurTablesFixture {
       coef_reduction_deperdition: [
         {
           tv_coef_reduction_deperdition_id: '1'
+        },
+        {
+          tv_coef_reduction_deperdition_id: '9',
+          enum_type_adjacence_id: '14',
+          type_adjacence: 'local non chauffé',
+          aiu_aue_max: '≤ 0.25',
+          b: '0.95'
         }
       ],
       ditribution: {},

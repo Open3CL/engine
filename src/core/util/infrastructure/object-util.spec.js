@@ -1,7 +1,8 @@
 import { ObjectUtil } from './object-util.js';
+import { describe, expect, test } from 'vitest';
 
 describe('ObjectUtil unit tests', () => {
-  it('should be able to deeply transform an object keys and values', () => {
+  test('should be able to deeply transform an object keys and values', () => {
     expect(
       ObjectUtil.deepObjectTransform(
         { key1: 'Value1', key2: 'Value2', nested: [{ key3: 'Value3' }] },

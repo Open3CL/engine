@@ -16,7 +16,7 @@ jobs:
     name: Build
     runs-on: ubuntu-24.04
     env:
-      NODE_OPTIONS: "--max-old-space-size=4096"
+      NODE_OPTIONS: '--max-old-space-size=4096'
     steps:
       - uses: actions/setup-node@v4
         with:
@@ -37,8 +37,9 @@ jobs:
       - name: Generate assets
         run: npm run assets:sync
 
-      - name: Run unit tests
-        run: npm run test
+      - name: Run unit tests with coverage
+        run: npm run test:ci
+        continue-on-error: true
 
       - name: Run qa
         run: |

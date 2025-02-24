@@ -1,13 +1,14 @@
 import { FileStore } from './file.store.js';
+import { describe, expect, test, vi } from 'vitest';
 
-global.fetch = jest.fn(() =>
+global.fetch = vi.fn(() =>
   Promise.resolve({
     arrayBuffer: () => Promise.resolve(new ArrayBuffer(1))
   })
 );
 
 describe('FileStore unit tests', () => {
-  it('should be able to download and parse an xlsx file', () => {
+  test('should be able to download and parse an xlsx file', () => {
     const fileStore = new FileStore();
 
     return fileStore.downloadXlsxFileAndConvertToJson('http://localhost:8080').then((output) => {
@@ -15,7 +16,7 @@ describe('FileStore unit tests', () => {
     });
   });
 
-  it('should be able to read and parse local ods file', () => {
+  test('should be able to read and parse local ods file', () => {
     const fileStore = new FileStore();
 
     return fileStore.readLocalOdsFileAndConvertToJson('file.ods').then((output) => {
@@ -23,7 +24,7 @@ describe('FileStore unit tests', () => {
     });
   });
 
-  it('should write file to local system', () => {
+  test('should write file to local system', () => {
     const fileStore = new FileStore();
     return fileStore.writeFileToLocalSystem('src/output.js', 'filecontent');
   });

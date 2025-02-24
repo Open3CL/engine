@@ -4,12 +4,12 @@ import { ApplicationConfig } from '../../conf/infrastructure/application.config.
 import { SynchronizeC1Tables } from './synchronize-c1-tables.js';
 import { SynchronizeSolicitationsTables } from './synchronize-solicitations-tables.js';
 import { ValeurTablesFixture } from '../../../../test/fixtures/core/assets/valeur-tables.fixture.js';
-import { jest } from '@jest/globals';
 import { SynchronizeDpeGesLimitValuesTables } from './synchronize-dpe-ges-limit-values-tables.js';
 import { AddAdditionnalUeValuesTables } from './add-additionnal-ue-values-tables.js';
+import { describe, expect, test, vi } from 'vitest';
 
 describe('SynchronizeValeurTables unit tests', () => {
-  it('should download, parse and convert valeur_tables.xlsx file', () => {
+  test('should download, parse and convert valeur_tables.xlsx file', () => {
     const fileStore = new FileStore();
     const appConfig = new ApplicationConfig();
     const synchronizeC1Tables = new SynchronizeC1Tables(fileStore, appConfig);
@@ -29,19 +29,19 @@ describe('SynchronizeValeurTables unit tests', () => {
     );
 
     const valeurTablesData = ValeurTablesFixture.aValeurTableExample();
-    jest
-      .spyOn(ApplicationConfig.prototype, 'ademeValeurTablesFileUrl', 'get')
-      .mockReturnValue('http://localhost/file.xlsx');
-    jest
-      .spyOn(ApplicationConfig.prototype, 'assetsOutputFolder', 'get')
-      .mockReturnValue('src/assets');
+    vi.spyOn(ApplicationConfig.prototype, 'ademeValeurTablesFileUrl', 'get').mockReturnValue(
+      'http://localhost/file.xlsx'
+    );
+    vi.spyOn(ApplicationConfig.prototype, 'assetsOutputFolder', 'get').mockReturnValue(
+      'src/assets'
+    );
 
-    jest.spyOn(fileStore, 'downloadXlsxFileAndConvertToJson').mockResolvedValue(valeurTablesData);
-    jest.spyOn(fileStore, 'writeFileToLocalSystem').mockResolvedValue(null);
-    jest.spyOn(synchronizeC1Tables, 'execute').mockResolvedValue({});
-    jest.spyOn(synchronizeSolicitationTables, 'execute').mockResolvedValue({});
-    jest.spyOn(synchronizeDpeGesLimitValuesTables, 'execute').mockResolvedValue({});
-    jest.spyOn(addAdditionnalUeValuesTables, 'execute').mockResolvedValue({});
+    vi.spyOn(fileStore, 'downloadXlsxFileAndConvertToJson').mockResolvedValue(valeurTablesData);
+    vi.spyOn(fileStore, 'writeFileToLocalSystem').mockResolvedValue(null);
+    vi.spyOn(synchronizeC1Tables, 'execute').mockResolvedValue({});
+    vi.spyOn(synchronizeSolicitationTables, 'execute').mockResolvedValue({});
+    vi.spyOn(synchronizeDpeGesLimitValuesTables, 'execute').mockResolvedValue({});
+    vi.spyOn(addAdditionnalUeValuesTables, 'execute').mockResolvedValue({});
 
     return synchronizeValeurTables.execute().then(() => {
       expect(fileStore.downloadXlsxFileAndConvertToJson).toHaveBeenCalled();

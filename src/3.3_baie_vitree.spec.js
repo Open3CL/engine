@@ -1,5 +1,6 @@
 import calc_bv from './3.3_baie_vitree.js';
 import { PRECISION } from '../test/constant.js';
+import { describe, expect, test } from 'vitest';
 
 describe('Recherche de bugs dans le calcul de déperdition des baies vitrées', () => {
   test('calcul de déperdition pour les murs de 2187E0982013C baie 1', () => {
