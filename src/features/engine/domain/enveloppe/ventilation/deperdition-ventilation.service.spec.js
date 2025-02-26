@@ -2,9 +2,23 @@ import { TvStore } from '../../../../dpe/infrastructure/tv.store.js';
 import { DeperditionVentilationService } from './deperdition-ventilation.service.js';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { TypeHabitation } from '../../../../dpe/domain/models/type-habitation.model.js';
+import corpus from '../../../../../../test/corpus-sano.json';
+import { getAdemeFileJson } from '../../../../../../test/test-helpers.js';
+import { DpeNormalizerService } from '../../../../normalizer/domain/dpe-normalizer.service.js';
+import { ContexteBuilder } from '../../contexte.builder.js';
+import { DeperditionEnveloppeService } from '../deperdition-enveloppe.service.js';
 
 /** @type {DeperditionVentilationService} **/
 let service;
+
+/** @type {DpeNormalizerService} **/
+let normalizerService;
+
+/** @type {DeperditionEnveloppeService} **/
+let deperditionEnveloppeService;
+
+/** @type {ContexteBuilder} **/
+let contexteBuilder;
 
 /** @type {TvStore} **/
 let tvStore;
@@ -13,6 +27,9 @@ describe('Calcul de déperdition des portes', () => {
   beforeEach(() => {
     tvStore = new TvStore();
     service = new DeperditionVentilationService(tvStore);
+    normalizerService = new DpeNormalizerService();
+    contexteBuilder = new ContexteBuilder();
+    deperditionEnveloppeService = new DeperditionEnveloppeService();
   });
 
   describe('Determination de q4paConv', () => {
@@ -389,5 +406,37 @@ describe('Calcul de déperdition des portes', () => {
         expect(pventMoy).toBeCloseTo(expectedPventMoy, 2);
       }
     );
+  });
+
+  describe("Test d'intégration des ventilations", () => {
+    test.each(corpus)('vérification des DI de la ventilation pour dpe %s', (ademeId) => {
+      let dpeRequest = getAdemeFileJson(ademeId);
+      dpeRequest = normalizerService.normalize(dpeRequest);
+
+      const initialVentilations = [
+        ...(dpeRequest.logement.ventilation_collection?.ventilation || [])
+      ];
+
+      /** @type {Contexte} */
+      const ctx = contexteBuilder.fromDpe(dpeRequest);
+
+      deperditionEnveloppeService.deperditions(ctx, dpeRequest.logement);
+
+      const ventilations = dpeRequest.logement.ventilation_collection?.ventilation || [];
+
+      ventilations.forEach((ventilation, index) => {
+        expect(initialVentilations[index].donnee_intermediaire.hvent).toBeCloseTo(
+          ventilation.donnee_intermediaire.hvent,
+          2
+        );
+        expect(initialVentilations[index].donnee_intermediaire.hperm).toBeCloseTo(
+          ventilation.donnee_intermediaire.hperm,
+          2
+        );
+        expect(
+          initialVentilations[index].donnee_intermediaire.conso_auxiliaire_ventilation
+        ).toBeCloseTo(ventilation.donnee_intermediaire.conso_auxiliaire_ventilation, 2);
+      });
+    });
   });
 });

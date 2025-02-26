@@ -28,7 +28,7 @@ export interface BaieVitreeDE extends DE {
   enum_type_materiaux_menuiserie_id?: string; // ENUM type_materiaux_menuiserie
   enum_type_baie_id?: string; // ENUM type_baie
   uw_saisi?: number;
-  double_fenetre?: boolean;
+  double_fenetre?: number;
   uw_1?: number;
   sw_1?: number;
   uw_2?: number;
@@ -45,12 +45,10 @@ export interface BaieVitreeDE extends DE {
   sw_saisi?: number;
   enum_type_pose_id?: string; // ENUM type_pose
   enum_orientation_id?: string;
-  tv_coef_masque_proche_id?: string;
-  tv_coef_masque_lointain_homogene_id?: string;
+  tv_coef_masque_proche_id?: number;
+  tv_coef_masque_lointain_homogene_id?: number;
   masque_lointain_non_homogene_collection: {
-    masque_lointain_non_homogene: {
-      tv_coef_masque_lointain_non_homogene_id?: string; // TV
-    };
+    masque_lointain_non_homogene: MasqueLointainNonHomogene;
   }[];
 }
 
@@ -92,4 +90,8 @@ export interface BaieVitreeDoubleFenetreDI {
   ug?: number;
   uw: number;
   sw: number;
+}
+
+export interface MasqueLointainNonHomogene {
+  tv_coef_masque_lointain_non_homogene_id?: string;
 }
