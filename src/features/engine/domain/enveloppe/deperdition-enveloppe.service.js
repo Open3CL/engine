@@ -4,6 +4,7 @@ import { DeperditionPorteService } from './porte/deperdition-porte.service.js';
 import { DeperditionPlancherBasService } from './plancher_bas/deperdition-plancher-bas.service.js';
 import { DeperditionPlancherHautService } from './plancher_haut/deperdition-plancher-haut.service.js';
 import { DeperditionVentilationService } from './ventilation/deperdition-ventilation.service.js';
+import { DeperditionBaieVitreeService } from './baie_vitree/deperdition-baie-vitree.service.js';
 
 /**
  * Calcul des déperditions de l’enveloppe
@@ -29,6 +30,11 @@ export class DeperditionEnveloppeService {
    * @type {DeperditionPlancherHautService}
    */
   #deperditionPlancherHautService;
+
+  /**
+   * @type {DeperditionBaieVitreeService}
+   */
+  #deperditionBaieVitreeService;
 
   /**
    * @type {DeperditionVentilationService}
@@ -66,6 +72,7 @@ export class DeperditionEnveloppeService {
    * @param deperditionPorteService {DeperditionPorteService}
    * @param deperditionPlancherBasService {DeperditionPlancherBasService}
    * @param deperditionPlancherHautService {DeperditionPlancherHautService}
+   * @param deperditionBaieVitreeService {DeperditionBaieVitreeService}
    * @param deperditionVentilationService {DeperditionVentilationService}
    */
   constructor(
@@ -73,12 +80,14 @@ export class DeperditionEnveloppeService {
     deperditionPorteService = inject(DeperditionPorteService),
     deperditionPlancherBasService = inject(DeperditionPlancherBasService),
     deperditionPlancherHautService = inject(DeperditionPlancherHautService),
+    deperditionBaieVitreeService = inject(DeperditionBaieVitreeService),
     deperditionVentilationService = inject(DeperditionVentilationService)
   ) {
     this.#deperditionMurService = deperditionMurService;
     this.#deperditionPorteService = deperditionPorteService;
     this.#deperditionPlancherBasService = deperditionPlancherBasService;
     this.#deperditionPlancherHautService = deperditionPlancherHautService;
+    this.#deperditionBaieVitreeService = deperditionBaieVitreeService;
     this.#deperditionVentilationService = deperditionVentilationService;
     this.#surfaceDeperditive = 0;
     this.#surfaceIsolee = 0;
@@ -135,6 +144,7 @@ export class DeperditionEnveloppeService {
       deperdition_mur: 0,
       deperdition_plancher_bas: 0,
       deperdition_plancher_haut: 0,
+      deperdition_baie_vitree: 0,
       deperdition_porte: 0
     };
 
@@ -211,6 +221,12 @@ export class DeperditionEnveloppeService {
     });
 
     enveloppe.baie_vitree_collection.baie_vitree?.forEach((bv) => {
+      bv.donnee_intermediaire = this.#deperditionBaieVitreeService.execute(ctx, bv);
+      deperditions.deperdition_baie_vitree +=
+        bv.donnee_intermediaire.b *
+        bv.donnee_entree.surface_totale_baie *
+        bv.donnee_intermediaire.u_menuiserie;
+
       // Surface de baie vitrée déperditive si b != 0
       if (bv.donnee_intermediaire.b > 0) {
         this.#surfaceDeperditive += bv.donnee_entree.surface_totale_baie;
