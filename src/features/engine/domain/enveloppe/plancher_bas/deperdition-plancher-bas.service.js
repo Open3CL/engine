@@ -166,4 +166,50 @@ export class DeperditionPlancherBasService extends DeperditionService {
 
     return Math.round(parseFloat(upbFinal) * PRECISION) / PRECISION;
   }
+
+  /**
+   * Retourner le type d'isolation du plancher
+   * Si isolation inconnue :
+   *  - Les planchers sur terre-plein sont considérés non isolés avant 2001 et isolés par l’extérieur (en sous-face) à partir de 2001
+   *  - Les autres planchers sont considérés isolés par l’extérieur
+   *
+   * @param ctx {Contexte}
+   * @param plancherBasDE {PlancherBasDE}
+   * @return {number}
+   */
+  typeIsolation(ctx, plancherBasDE) {
+    const typeIsolation = parseInt(plancherBasDE.enum_type_isolation_id);
+
+    // Type d'isolation inconnu
+    if (typeIsolation === 1) {
+      const typeAdjacence = parseInt(plancherBasDE.enum_type_adjacence_id);
+      const periodeIsolation =
+        parseInt(plancherBasDE.enum_periode_isolation_id) ||
+        parseInt(ctx.enumPeriodeConstructionId);
+
+      // Plancher sur terre-plein
+      if (typeAdjacence === 5) {
+        // Année isolation / construction < 2001
+        if (periodeIsolation < 7) {
+          // Non isolé
+          return 2;
+        } else {
+          // Isolation ITE
+          return 4;
+        }
+      } else {
+        // Année isolation / construction < 1975
+        if (periodeIsolation < 3) {
+          // Non isolé
+          return 2;
+        } else {
+          // Isolation ITE
+          return 4;
+        }
+      }
+    }
+
+    // Isolation ITE si "isolé mais type d'isolation inconnu"
+    return typeIsolation === 9 ? 4 : typeIsolation;
+  }
 }

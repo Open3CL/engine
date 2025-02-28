@@ -4,8 +4,7 @@ import { Ets } from './ets.model';
 import { InstallationChauffage } from './installation-chauffage.model';
 import { InstallationEcs } from './installation-ecs.model';
 import { Mur } from './mur.model';
-import { PlancherBas } from './plancher-bas.model';
-import { PlancherHaut } from './plancher-haut.model';
+import { PlancherBas, PlancherHaut } from './plancher.model';
 import { PontThermique } from './pont-thermique.model';
 import { Porte } from './porte.model';
 import { ProductionElecEnr } from './production-elec-enr.model';
@@ -187,7 +186,12 @@ export interface DE {
   reference?: string;
 }
 
-enum TypeHabitation {
+export enum TypeHabitation {
+  MAISON = 'MAISON',
+  APPARTEMENT = 'APPARTEMENT',
+  IMMEUBLE = 'IMMEUBLE'
+}
+export enum TypeDpe {
   MAISON = 'MAISON',
   APPARTEMENT = 'APPARTEMENT',
   IMMEUBLE = 'IMMEUBLE'

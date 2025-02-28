@@ -133,4 +133,37 @@ export class DeperditionPlancherHautService extends DeperditionService {
         return 'combles';
     }
   }
+
+  /**
+   * Retourner le type d'isolation du plancher haut
+   * Si isolation inconnue :
+   *  - Pour les bâtiments d’avant 1975, la paroi est considérée comme non isolée
+   *  - Pour les bâtiments construits à partir de 1975, les plafonds sont considérés isolés par l’extérieur
+   *
+   * @param ctx {Contexte}
+   * @param plancherHautDE {PlancherHautDE}
+   * @return {number}
+   */
+  typeIsolation(ctx, plancherHautDE) {
+    const typeIsolation = parseInt(plancherHautDE.enum_type_isolation_id);
+
+    // Type d'isolation inconnu
+    if (typeIsolation === 1) {
+      const periodeIsolation =
+        parseInt(plancherHautDE.enum_periode_isolation_id) ||
+        parseInt(ctx.enumPeriodeConstructionId);
+
+      // Année isolation / construction < 1975
+      if (periodeIsolation < 3) {
+        // Non isolé
+        return 2;
+      } else {
+        // Isolation ITE
+        return 4;
+      }
+    }
+
+    // Isolation ITE si "isolé mais type d'isolation inconnu"
+    return typeIsolation === 9 ? 4 : typeIsolation;
+  }
 }

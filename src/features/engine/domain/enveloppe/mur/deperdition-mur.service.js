@@ -165,4 +165,32 @@ export class DeperditionMurService extends DeperditionService {
      */
     return Math.min(2.5, Math.round(parseFloat(umur0) * PRECISION) / PRECISION);
   }
+
+  /**
+   * Retourner le type d'isolation du mur
+   * Si isolation inconnue, on considère isolation iti si la période d'isolation (à défaut année de construction) est > 1975
+   *
+   * @param ctx {Contexte}
+   * @param murDE {MurDE}
+   * @return {number}
+   */
+  typeIsolation(ctx, murDE) {
+    const typeIsolation = parseInt(murDE.enum_type_isolation_id);
+
+    // Type d'isolation inconnu
+    if (typeIsolation === 1) {
+      const periodeIsolation = murDE.enum_periode_isolation_id || ctx.enumPeriodeConstructionId;
+
+      // Année isolation / construction > 1974
+      if (parseInt(periodeIsolation) >= 3) {
+        // Isolation ITI
+        return 3;
+      } else {
+        // Non isolé
+        return 2;
+      }
+    }
+
+    return typeIsolation;
+  }
 }

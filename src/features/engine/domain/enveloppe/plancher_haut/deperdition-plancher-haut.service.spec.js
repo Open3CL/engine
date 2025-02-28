@@ -181,6 +181,67 @@ describe('Calcul de déperdition des planchers haut', () => {
     });
   });
 
+  test.each([
+    {
+      label: 'plafond avec isolation inconnue et période isolation 1974',
+      enumTypeIsolationId: 1,
+      enumPeriodIsolationId: 1,
+      enumPeriodeConstructionId: undefined,
+      typeIsolationExpected: 2
+    },
+    {
+      label: 'plafond avec isolation inconnue et période construction 1974',
+      enumTypeIsolationId: 1,
+      enumPeriodIsolationId: undefined,
+      enumPeriodeConstructionId: 1,
+      typeIsolationExpected: 2
+    },
+    {
+      label: 'plafond avec isolation inconnue et période isolation 1975',
+      enumTypeIsolationId: 1,
+      enumPeriodIsolationId: 3,
+      enumPeriodeConstructionId: undefined,
+      typeIsolationExpected: 4
+    },
+    {
+      label: 'plafond avec isolation de type "isolé mais type d\'isolation inconnu"',
+      enumTypeIsolationId: 9,
+      enumPeriodIsolationId: 1,
+      enumPeriodeConstructionId: undefined,
+      typeIsolationExpected: 4
+    },
+    {
+      label: 'plafond avec isolation iti+ite',
+      enumTypeIsolationId: 6,
+      enumPeriodIsolationId: 1,
+      enumPeriodeConstructionId: undefined,
+      typeIsolationExpected: 6
+    }
+  ])(
+    "Récupération du type d'isolation pour $label",
+    ({
+      enumTypeIsolationId,
+      enumPeriodIsolationId = undefined,
+      enumPeriodeConstructionId = undefined,
+      typeIsolationExpected
+    }) => {
+      /**
+       * @type {PlancherHautDE}
+       */
+      let plancherHautDE = {
+        enum_type_isolation_id: enumTypeIsolationId,
+        enum_periode_isolation_id: enumPeriodIsolationId
+      };
+
+      /**
+       * @type {Contexte}
+       */
+      const ctx = { enumPeriodeConstructionId };
+
+      expect(service.typeIsolation(ctx, plancherHautDE)).toBe(typeIsolationExpected);
+    }
+  );
+
   describe("Test d'intégration de plancher haut", () => {
     test.each(corpus)('vérification des DI des ph pour dpe %s', (ademeId) => {
       /**
