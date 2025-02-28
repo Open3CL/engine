@@ -315,6 +315,67 @@ describe('Calcul de déperdition des murs', () => {
     });
   });
 
+  test.each([
+    {
+      label: 'mur avec isolation inconnue et période isolation 1975',
+      enumTypeIsolationId: 1,
+      enumPeriodIsolationId: 3,
+      enumPeriodeConstructionId: undefined,
+      typeIsolationExpected: 3
+    },
+    {
+      label: 'mur avec isolation inconnue et période construction 1975',
+      enumTypeIsolationId: 1,
+      enumPeriodIsolationId: undefined,
+      enumPeriodeConstructionId: 6,
+      typeIsolationExpected: 3
+    },
+    {
+      label: 'mur avec isolation inconnue et période isolation 1974',
+      enumTypeIsolationId: 1,
+      enumPeriodIsolationId: 2,
+      enumPeriodeConstructionId: undefined,
+      typeIsolationExpected: 2
+    },
+    {
+      label: 'mur avec isolation inconnue et période construction 1974',
+      enumTypeIsolationId: 1,
+      enumPeriodIsolationId: undefined,
+      enumPeriodeConstructionId: 1,
+      typeIsolationExpected: 2
+    },
+    {
+      label: 'mur avec isolation iti+ite',
+      enumTypeIsolationId: 6,
+      enumPeriodIsolationId: 1,
+      enumPeriodeConstructionId: undefined,
+      typeIsolationExpected: 6
+    }
+  ])(
+    "Récupération du type d'isolation pour $label",
+    ({
+      enumTypeIsolationId,
+      enumPeriodIsolationId = undefined,
+      enumPeriodeConstructionId = undefined,
+      typeIsolationExpected
+    }) => {
+      /**
+       * @type {MurDE}
+       */
+      let murDE = {
+        enum_type_isolation_id: enumTypeIsolationId,
+        enum_periode_isolation_id: enumPeriodIsolationId
+      };
+
+      /**
+       * @type {Contexte}
+       */
+      const ctx = { enumPeriodeConstructionId };
+
+      expect(service.typeIsolation(ctx, murDE)).toBe(typeIsolationExpected);
+    }
+  );
+
   describe("Test d'intégration de mur", () => {
     test.each(corpus)('vérification des DI des murs pour dpe %s', (ademeId) => {
       let dpeRequest = getAdemeFileJson(ademeId);

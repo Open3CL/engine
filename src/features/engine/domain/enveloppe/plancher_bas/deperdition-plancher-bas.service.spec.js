@@ -170,6 +170,91 @@ describe('Calcul de déperdition des planchers bas', () => {
     });
   });
 
+  test.each([
+    {
+      label:
+        'plancher bas avec isolation inconnue, adjacence terre-plein et période isolation 1974',
+      enumTypeIsolationId: 1,
+      enumTypeAdjacenceId: 5,
+      enumPeriodIsolationId: 1,
+      enumPeriodeConstructionId: undefined,
+      typeIsolationExpected: 2
+    },
+    {
+      label:
+        'plancher bas avec isolation inconnue, adjacence terre-plein et période construction 2000',
+      enumTypeIsolationId: 1,
+      enumTypeAdjacenceId: 5,
+      enumPeriodIsolationId: undefined,
+      enumPeriodeConstructionId: 6,
+      typeIsolationExpected: 2
+    },
+    {
+      label:
+        'plancher bas avec isolation inconnue, adjacence terre-plein et période isolation 2001',
+      enumTypeIsolationId: 1,
+      enumPeriodIsolationId: 7,
+      enumTypeAdjacenceId: 5,
+      enumPeriodeConstructionId: undefined,
+      typeIsolationExpected: 4
+    },
+    {
+      label: 'plancher bas avec isolation inconnue, adjacence garage et période isolation 1974',
+      enumTypeIsolationId: 1,
+      enumPeriodIsolationId: 2,
+      enumTypeAdjacenceId: 8,
+      enumPeriodeConstructionId: undefined,
+      typeIsolationExpected: 2
+    },
+    {
+      label: 'plancher bas avec isolation inconnue, adjacence garage et période isolation 1975',
+      enumTypeIsolationId: 1,
+      enumPeriodIsolationId: 3,
+      enumTypeAdjacenceId: 8,
+      enumPeriodeConstructionId: undefined,
+      typeIsolationExpected: 4
+    },
+    {
+      label: 'plancher bas avec isolation de type "isolé mais type d\'isolation inconnu"',
+      enumTypeIsolationId: 9,
+      enumPeriodIsolationId: 1,
+      enumPeriodeConstructionId: undefined,
+      typeIsolationExpected: 4
+    },
+    {
+      label: 'plancher bas avec isolation iti+ite',
+      enumTypeIsolationId: 6,
+      enumPeriodIsolationId: 1,
+      enumPeriodeConstructionId: undefined,
+      typeIsolationExpected: 6
+    }
+  ])(
+    "Récupération du type d'isolation pour $label",
+    ({
+      enumTypeIsolationId,
+      enumPeriodIsolationId = undefined,
+      enumTypeAdjacenceId = undefined,
+      enumPeriodeConstructionId = undefined,
+      typeIsolationExpected
+    }) => {
+      /**
+       * @type {PlancherBasDE}
+       */
+      let plancherBasDE = {
+        enum_type_isolation_id: enumTypeIsolationId,
+        enum_type_adjacence_id: enumTypeAdjacenceId,
+        enum_periode_isolation_id: enumPeriodIsolationId
+      };
+
+      /**
+       * @type {Contexte}
+       */
+      const ctx = { enumPeriodeConstructionId };
+
+      expect(service.typeIsolation(ctx, plancherBasDE)).toBe(typeIsolationExpected);
+    }
+  );
+
   describe("Test d'intégration de plancher bas", () => {
     test.each(corpus)('vérification des DI des pb pour dpe %s', (ademeId) => {
       /**

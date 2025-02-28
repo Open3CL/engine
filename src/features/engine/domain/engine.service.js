@@ -1,6 +1,7 @@
 import { inject } from 'dioma';
 import { ContexteBuilder } from './contexte.builder.js';
 import { DeperditionEnveloppeService } from './enveloppe/deperdition-enveloppe.service.js';
+import { logger } from '../../../core/util/logger/log-service.js';
 
 export class EngineService {
   /**
@@ -33,7 +34,7 @@ export class EngineService {
     /** @type {Dpe} */
     const proceededDpe = this.#removeComputedData(JSON.parse(JSON.stringify(dpe)));
 
-    console.error(`Process DPE ${proceededDpe.numero_dpe}`);
+    logger.info(`Process DPE ${proceededDpe.numero_dpe}`);
 
     proceededDpe.logement.sortie = {
       deperdition: undefined,
