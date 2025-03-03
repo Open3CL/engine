@@ -1,6 +1,6 @@
 import { DeperditionService } from '../deperdition.service.js';
 import { inject } from 'dioma';
-import { BaieVitreeTvStore } from '../../../../dpe/infrastructure/baieVitreeTv.store.js';
+import { BaieVitreeTvStore } from '../../../../dpe/infrastructure/enveloppe/baieVitreeTv.store.js';
 
 /**
  * Calcul des déperditions des baies vitrées

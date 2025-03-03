@@ -4,7 +4,7 @@ import { ContexteBuilder } from '../../contexte.builder.js';
 import { DpeNormalizerService } from '../../../../normalizer/domain/dpe-normalizer.service.js';
 import { DeperditionBaieVitreeService } from './deperdition-baie-vitree.service.js';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
-import { BaieVitreeTvStore } from '../../../../dpe/infrastructure/baieVitreeTv.store.js';
+import { BaieVitreeTvStore } from '../../../../dpe/infrastructure/enveloppe/baieVitreeTv.store.js';
 
 /** @type {DeperditionBaieVitreeService} **/
 let service;
