@@ -2,12 +2,19 @@ import { inject } from 'dioma';
 import { ContexteBuilder } from './contexte.builder.js';
 import { DeperditionEnveloppeService } from './enveloppe/deperdition-enveloppe.service.js';
 import { logger } from '../../../core/util/logger/log-service.js';
+import { SurfaceSudEquivalenteService } from './logement/surface-sud-equivalente.service.js';
 
 export class EngineService {
   /**
    * @type {DeperditionEnveloppeService}
    */
   #deperditionService;
+
+  /**
+   * @type {SurfaceSudEquivalenteService}
+   */
+  #surfaceSudEquivalenteService;
+
   /**
    * @type {ContexteBuilder}
    */
@@ -15,13 +22,16 @@ export class EngineService {
 
   /**
    * @param deperditionService {DeperditionEnveloppeService}
+   * @param surfaceSudEquivalenteService {SurfaceSudEquivalenteService}
    * @param contextBuilder {ContexteBuilder}
    */
   constructor(
     deperditionService = inject(DeperditionEnveloppeService),
+    surfaceSudEquivalenteService = inject(SurfaceSudEquivalenteService),
     contextBuilder = inject(ContexteBuilder)
   ) {
     this.#deperditionService = deperditionService;
+    this.#surfaceSudEquivalenteService = surfaceSudEquivalenteService;
     this.#contextBuilder = contextBuilder;
   }
 
@@ -55,8 +65,15 @@ export class EngineService {
     // Calcul des déperditions
     proceededDpe.logement.sortie.deperdition = this.#deperditionService.deperditions(
       ctx,
-      dpe.logement
+      proceededDpe.logement
     );
+
+    proceededDpe.logement.sortie.apport_et_besoin = {
+      surface_sud_equivalente: this.#surfaceSudEquivalenteService.execute(
+        ctx,
+        proceededDpe.logement.enveloppe
+      )
+    };
 
     // Calcul des déperditions par renouvellement de l'air
 

@@ -1,4 +1,3 @@
-import enums from '../../../../enums.js';
 import { logger } from '../../../../core/util/logger/log-service.js';
 import { inject } from 'dioma';
 import { TvStore } from '../../../dpe/infrastructure/tv.store.js';
@@ -71,13 +70,13 @@ export class DeperditionService {
      * Prise en compte de la zone climatique
      */
     if (['10'].includes(enumTypeAdjacenceId)) {
-      if (!d.zoneClimatiqueId) {
+      if (!d.zoneClimatique) {
         logger.warn(
           `impossible de calculer b pour TypeAdjacenceId:${enumTypeAdjacenceId} sans zone climatique`
         );
         return;
       }
-      zc = enums.zone_climatique[parseInt(d.zoneClimatiqueId)];
+      zc = d.zoneClimatique;
     }
 
     return this.tvStore.getB(enumTypeAdjacenceId, uVue, d.enumCfgIsolationLncId, rAiuAue, zc);

@@ -34,7 +34,7 @@ export class DeperditionPlancherBasService extends DeperditionService {
       surfaceAiu: pbDE.surface_aiu,
       surfaceAue: pbDE.surface_aue,
       enumCfgIsolationLncId: pbDE.enum_cfg_isolation_lnc_id,
-      zoneClimatiqueId: ctx.zoneClimatiqueId
+      zoneClimatique: ctx.zoneClimatique.value
     });
 
     /** @type {PlancherBasDI} */
@@ -67,7 +67,7 @@ export class DeperditionPlancherBasService extends DeperditionService {
       case '8': // année de construction saisie
         upb = Math.min(
           upbNu,
-          this.tvStore.getUpb(enumPeriodeIsolationId, ctx.zoneClimatiqueId, ctx.effetJoule)
+          this.tvStore.getUpb(enumPeriodeIsolationId, ctx.zoneClimatique.id, ctx.effetJoule)
         );
         break;
       case '3': // epaisseur isolation saisie justifiée par mesure ou observation
