@@ -14,7 +14,7 @@ describe('Calcul de déperdition des portes', () => {
 
   describe('Determination de uPorte', () => {
     /** @type {Contexte} */
-    const ctx = { zoneClimatiqueId: '1' };
+    const ctx = { zoneClimatique: { id: 1 } };
 
     test.each([
       { type: '1', label: 'porte simple en bois porte opaque pleine', uPorteExpected: 3.5 },
@@ -103,7 +103,7 @@ describe('Calcul de déperdition des portes', () => {
     test.each(corpus)('vérification des DI des portes pour dpe %s', (ademeId) => {
       const dpeRequest = getAdemeFileJson(ademeId);
       /** @type {Contexte} */
-      const ctx = { zoneClimatiqueId: dpeRequest.logement.meteo.enum_zone_climatique_id };
+      const ctx = { zoneClimatique: { id: dpeRequest.logement.meteo.enum_zone_climatique_id } };
       const portes = dpeRequest.logement.enveloppe.porte_collection?.porte || [];
 
       portes.forEach((p) => {

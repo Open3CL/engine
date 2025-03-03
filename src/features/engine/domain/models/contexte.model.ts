@@ -1,10 +1,15 @@
-import { TypeHabitation } from '../../../dpe/domain/models/dpe.model';
+import { TypeDpe, TypeHabitation } from '../../../dpe/domain/models/dpe.model';
 
 export interface Contexte {
   typeHabitation: TypeHabitation;
-  enumPeriodeConstructionId: string;
-  surfaceHabitable: string;
-  hauteurSousPlafond: string;
-  zoneClimatiqueId: string;
+  typeDpe: TypeDpe;
+  enumPeriodeConstructionId: number;
+  surfaceHabitable: number;
+  hauteurSousPlafond: number;
+  nombreAppartement: number;
+  zoneClimatique: {
+    id: string;
+    value: string;
+  };
   effetJoule: boolean;
 }

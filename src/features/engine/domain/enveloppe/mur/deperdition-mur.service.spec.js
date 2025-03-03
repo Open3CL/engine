@@ -77,7 +77,9 @@ describe('Calcul de déperdition des murs', () => {
         const ctx = {
           effetJoule,
           enumPeriodeConstructionId,
-          zoneClimatiqueId
+          zoneClimatique: {
+            id: zoneClimatiqueId
+          }
         };
 
         /** @type {MurDE} */
@@ -105,7 +107,9 @@ describe('Calcul de déperdition des murs', () => {
       const ctx = {
         effetJoule: false,
         enumPeriodeConstructionId: '6',
-        zoneClimatiqueId: '3'
+        zoneClimatique: {
+          id: '3'
+        }
       };
       /** @type {MurDE} */
       const de = {
@@ -129,7 +133,9 @@ describe('Calcul de déperdition des murs', () => {
       const ctx = {
         effetJoule: false,
         enumPeriodeConstructionId: '6',
-        zoneClimatiqueId: '3'
+        zoneClimatique: {
+          id: '3'
+        }
       };
       /** @type {MurDE} */
       const de = {
@@ -153,7 +159,9 @@ describe('Calcul de déperdition des murs', () => {
       const ctx = {
         effetJoule: false,
         enumPeriodeConstructionId: '6',
-        zoneClimatiqueId: '3'
+        zoneClimatique: {
+          id: '3'
+        }
       };
       /** @type {MurDE} */
       const de = {
@@ -176,7 +184,9 @@ describe('Calcul de déperdition des murs', () => {
       const ctx = {
         effetJoule: false,
         enumPeriodeConstructionId: '6',
-        zoneClimatiqueId: '3'
+        zoneClimatique: {
+          id: '3'
+        }
       };
       /** @type {MurDE} */
       const de = {
@@ -199,7 +209,9 @@ describe('Calcul de déperdition des murs', () => {
       const ctx = {
         effetJoule: false,
         enumPeriodeConstructionId: '6',
-        zoneClimatiqueId: '3'
+        zoneClimatique: {
+          id: '3'
+        }
       };
       /** @type {MurDE} */
       const de = {
@@ -222,7 +234,9 @@ describe('Calcul de déperdition des murs', () => {
       const ctx = {
         effetJoule: true,
         enumPeriodeConstructionId: '1',
-        zoneClimatiqueId: '3'
+        zoneClimatique: {
+          id: '3'
+        }
       };
       /** @type {MurDE} */
       const de = {
@@ -246,7 +260,9 @@ describe('Calcul de déperdition des murs', () => {
       const ctx = {
         effetJoule: true,
         enumPeriodeConstructionId: '1',
-        zoneClimatiqueId: '3'
+        zoneClimatique: {
+          id: 3
+        }
       };
       /** @type {MurDE} */
       const de = {
@@ -270,7 +286,9 @@ describe('Calcul de déperdition des murs', () => {
       const ctx = {
         effetJoule: false,
         enumPeriodeConstructionId: '1',
-        zoneClimatiqueId: '3'
+        zoneClimatique: {
+          id: 3
+        }
       };
       /** @type {MurDE} */
       const de = {
@@ -294,7 +312,9 @@ describe('Calcul de déperdition des murs', () => {
       const ctx = {
         effetJoule: false,
         enumPeriodeConstructionId: '1',
-        zoneClimatiqueId: '3'
+        zoneClimatique: {
+          id: 3
+        }
       };
       /** @type {MurDE} */
       const de = {

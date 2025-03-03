@@ -48,7 +48,7 @@ export class DeperditionPorteService extends DeperditionService {
       surfaceAiu: porteDE.surface_aiu,
       surfaceAue: porteDE.surface_aue,
       enumCfgIsolationLncId: porteDE.enum_cfg_isolation_lnc_id,
-      zoneClimatiqueId: ctx.zoneClimatiqueId
+      zoneClimatique: ctx.zoneClimatique.value
     });
 
     return di;
