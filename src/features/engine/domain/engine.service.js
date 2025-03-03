@@ -2,7 +2,7 @@ import { inject } from 'dioma';
 import { ContexteBuilder } from './contexte.builder.js';
 import { DeperditionEnveloppeService } from './enveloppe/deperdition-enveloppe.service.js';
 import { logger } from '../../../core/util/logger/log-service.js';
-import { SurfaceSudEquivalenteService } from './logement/surface-sud-equivalente.service.js';
+import { ApportEtBesoinService } from './apport_et_besoin/apport-et-besoin.service.js';
 
 export class EngineService {
   /**
@@ -11,9 +11,9 @@ export class EngineService {
   #deperditionService;
 
   /**
-   * @type {SurfaceSudEquivalenteService}
+   * @type {ApportEtBesoinService}
    */
-  #surfaceSudEquivalenteService;
+  #apportEtBesoinService;
 
   /**
    * @type {ContexteBuilder}
@@ -22,16 +22,16 @@ export class EngineService {
 
   /**
    * @param deperditionService {DeperditionEnveloppeService}
-   * @param surfaceSudEquivalenteService {SurfaceSudEquivalenteService}
+   * @param apportEtBesoinService {ApportEtBesoinService}
    * @param contextBuilder {ContexteBuilder}
    */
   constructor(
     deperditionService = inject(DeperditionEnveloppeService),
-    surfaceSudEquivalenteService = inject(SurfaceSudEquivalenteService),
+    apportEtBesoinService = inject(ApportEtBesoinService),
     contextBuilder = inject(ContexteBuilder)
   ) {
     this.#deperditionService = deperditionService;
-    this.#surfaceSudEquivalenteService = surfaceSudEquivalenteService;
+    this.#apportEtBesoinService = apportEtBesoinService;
     this.#contextBuilder = contextBuilder;
   }
 
@@ -68,12 +68,10 @@ export class EngineService {
       proceededDpe.logement
     );
 
-    proceededDpe.logement.sortie.apport_et_besoin = {
-      surface_sud_equivalente: this.#surfaceSudEquivalenteService.execute(
-        ctx,
-        proceededDpe.logement.enveloppe
-      )
-    };
+    proceededDpe.logement.sortie.apport_et_besoin = this.#apportEtBesoinService.execute(
+      ctx,
+      proceededDpe.logement.enveloppe
+    );
 
     // Calcul des déperditions par renouvellement de l'air
 
