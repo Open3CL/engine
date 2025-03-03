@@ -10,18 +10,19 @@ import { TypeDpe } from '../../../dpe/domain/models/type-habitation.model.js';
  */
 export class NadeqService {
   /**
-   * @param ctx {Contexte}
-   * @param bv {BaieVitree}
+   * @param typeDpe {TypeDpe}
+   * @param surfaceHabitable {number}
+   * @param nombreAppartement {number}
    * @return {number}
    */
-  execute(ctx) {
-    if (ctx.typeDpe === TypeDpe.MAISON) {
-      return this.#calculateIndividualNadeq(ctx.surfaceHabitable);
-    } else if (ctx.typeDpe === TypeDpe.APPARTEMENT) {
-      return this.#calculateCollectiveNadeq(ctx.surfaceHabitable, 1);
+  execute(typeDpe, surfaceHabitable, nombreAppartement) {
+    if (typeDpe === TypeDpe.MAISON) {
+      return this.#calculateIndividualNadeq(surfaceHabitable);
+    } else if (typeDpe === TypeDpe.APPARTEMENT) {
+      return this.#calculateCollectiveNadeq(surfaceHabitable, 1);
     }
 
-    return this.#calculateCollectiveNadeq(ctx.surfaceHabitable, ctx.nombreAppartement);
+    return this.#calculateCollectiveNadeq(surfaceHabitable, nombreAppartement);
   }
 
   /**

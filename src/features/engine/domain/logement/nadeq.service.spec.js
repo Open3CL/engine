@@ -18,11 +18,7 @@ describe('Nadeq unit tests', () => {
   ])(
     `Typologie MAISON : Nombre d'adultes équivalent $expectedNadeq pour une surface de logement $surfaceHabitable`,
     ({ expectedNadeq, surfaceHabitable }) => {
-      const ctx = {
-        surfaceHabitable: surfaceHabitable,
-        typeDpe: TypeDpe.MAISON
-      };
-      expect(service.execute(ctx)).toBe(expectedNadeq);
+      expect(service.execute(TypeDpe.MAISON, surfaceHabitable)).toBe(expectedNadeq);
     }
   );
 
@@ -36,11 +32,7 @@ describe('Nadeq unit tests', () => {
   ])(
     `Typologie APPARTEMENT : Nombre d'adultes équivalent $expectedNadeq pour une surface de logement $surfaceHabitable`,
     ({ expectedNadeq, surfaceHabitable }) => {
-      const ctx = {
-        surfaceHabitable: surfaceHabitable,
-        typeDpe: TypeDpe.APPARTEMENT
-      };
-      expect(service.execute(ctx)).toBeCloseTo(expectedNadeq, 2);
+      expect(service.execute(TypeDpe.APPARTEMENT, surfaceHabitable)).toBeCloseTo(expectedNadeq, 2);
     }
   );
 
@@ -60,12 +52,10 @@ describe('Nadeq unit tests', () => {
   ])(
     `Typologie IMMEUBLE : Nombre d'adultes équivalent $expectedNadeq pour une surface de logement $surfaceHabitable et un nombre d'apartement $nombreAppartement`,
     ({ expectedNadeq, surfaceHabitable, nombreAppartement }) => {
-      const ctx = {
-        surfaceHabitable: surfaceHabitable,
-        nombreAppartement: nombreAppartement,
-        typeDpe: TypeDpe.IMMEUBLE
-      };
-      expect(service.execute(ctx)).toBeCloseTo(expectedNadeq, 2);
+      expect(service.execute(TypeDpe.IMMEUBLE, surfaceHabitable, nombreAppartement)).toBeCloseTo(
+        expectedNadeq,
+        2
+      );
     }
   );
 });
