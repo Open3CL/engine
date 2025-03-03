@@ -4,5 +4,5 @@ export interface DeperditionData {
   surfaceAue?: number;
   enumCfgIsolationLncId?: string;
   tvCoefReductionDeperditionId?: string;
-  zoneClimatiqueId?: string;
+  zoneClimatique?: string;
 }

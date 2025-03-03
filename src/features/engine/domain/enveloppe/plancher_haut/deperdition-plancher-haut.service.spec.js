@@ -28,7 +28,9 @@ describe('Calcul de déperdition des planchers haut', () => {
       const ctx = {
         effetJoule: false,
         enumPeriodeConstructionId: '2',
-        zoneClimatiqueId: '3'
+        zoneClimatique: {
+          id: '3'
+        }
       };
       /** @type {PlancherHautDE} */
       const de = {
@@ -50,7 +52,9 @@ describe('Calcul de déperdition des planchers haut', () => {
       const ctx = {
         effetJoule: false,
         enumPeriodeConstructionId: '1',
-        zoneClimatiqueId: '3'
+        zoneClimatique: {
+          id: '3'
+        }
       };
       /** @type {PlancherHautDE} */
       const de = {
@@ -73,7 +77,9 @@ describe('Calcul de déperdition des planchers haut', () => {
       const ctx = {
         effetJoule: true,
         enumPeriodeConstructionId: '1',
-        zoneClimatiqueId: '3'
+        zoneClimatique: {
+          id: '3'
+        }
       };
       /** @type {PlancherHautDE} */
       const de = {
@@ -96,7 +102,9 @@ describe('Calcul de déperdition des planchers haut', () => {
       const ctx = {
         effetJoule: true,
         enumPeriodeConstructionId: '1',
-        zoneClimatiqueId: '3'
+        zoneClimatique: {
+          id: '3'
+        }
       };
       /** @type {PlancherHautDE} */
       const de = {
@@ -119,7 +127,9 @@ describe('Calcul de déperdition des planchers haut', () => {
       const ctx = {
         effetJoule: false,
         enumPeriodeConstructionId: '6',
-        zoneClimatiqueId: '3'
+        zoneClimatique: {
+          id: '3'
+        }
       };
       /** @type {PlancherHautDE} */
       const de = {
@@ -141,7 +151,9 @@ describe('Calcul de déperdition des planchers haut', () => {
       const ctx = {
         effetJoule: false,
         enumPeriodeConstructionId: '6',
-        zoneClimatiqueId: '3'
+        zoneClimatique: {
+          id: '3'
+        }
       };
       /** @type {PlancherHautDE} */
       const de = {
@@ -164,7 +176,9 @@ describe('Calcul de déperdition des planchers haut', () => {
       const ctx = {
         effetJoule: false,
         enumPeriodeConstructionId: '6',
-        zoneClimatiqueId: '3'
+        zoneClimatique: {
+          id: '3'
+        }
       };
       /** @type {PlancherHautDE} */
       const de = {

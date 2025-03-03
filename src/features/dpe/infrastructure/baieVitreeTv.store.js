@@ -2,6 +2,7 @@ import { tvs as tv } from '../../../tv-v2.js';
 import { getRange } from '../../../utils.js';
 import { logger } from '../../../core/util/logger/log-service.js';
 import { TvStore } from './tv.store.js';
+import enums from '../../../enums.js';
 
 /**
  * Accès aux données des tables de valeurs pour les baies vitrées
@@ -288,5 +289,74 @@ export class BaieVitreeTvStore extends TvStore {
     }
 
     return parseFloat(fe2);
+  }
+
+  /**
+   * Calcul des coefficients de réduction de température des espaces tampons
+   *
+   * @param zoneClimatique {string}
+   * @param enumCfgIsolationLncId {number}
+   * @return {number|undefined}
+   */
+  getBver(zoneClimatique, enumCfgIsolationLncId) {
+    const bver = tv['coef_reduction_deperdition'].find(
+      (v) =>
+        zoneClimatique.toLowerCase().startsWith(v.zone_climatique?.toLowerCase()) &&
+        parseInt(v.enum_cfg_isolation_lnc_id) === parseInt(enumCfgIsolationLncId)
+    )?.b;
+
+    if (!bver) {
+      logger.error(
+        `Pas de valeur b pour zoneClimatique:${zoneClimatique}, enumCfgIsolationLncId:${enumCfgIsolationLncId}`
+      );
+      return;
+    }
+
+    return parseFloat(bver);
+  }
+
+  /**
+   * Calcul des coefficients de transparence des espaces tampons
+   *
+   * @param tvCoefTransparenceEtsId {number}
+   * @return {number|undefined}
+   */
+  getCoefTransparenceEts(tvCoefTransparenceEtsId) {
+    const coefTransparence = tv['coef_transparence_ets'].find(
+      (v) => parseInt(v.tv_coef_transparence_ets_id) === parseInt(tvCoefTransparenceEtsId)
+    )?.coef_transparence_ets;
+
+    if (!coefTransparence) {
+      logger.error(
+        `Pas de valeur coef_transparence_ets pour tvCoefTransparenceEtsId:${tvCoefTransparenceEtsId}`
+      );
+      return;
+    }
+
+    return parseFloat(coefTransparence);
+  }
+
+  /**
+   * @see 18.5 - Coefficients d’orientation et d’inclinaison des parois vitrées : C1
+   *
+   * @param enumOrientationId {number}
+   * @param enumInclinaisonVitrageId {number}
+   * @param zoneClimatiqueId {number}
+   * @param mois {string}
+   *
+   * @return {number|undefined}
+   */
+  getCoefficientBaieVitree(enumOrientationId, enumInclinaisonVitrageId, zoneClimatiqueId, mois) {
+    const orientation = enums.orientation[enumOrientationId];
+    const inclinaison = enums.inclinaison_vitrage[enumInclinaisonVitrageId];
+    const zoneClimatique = enums.zone_climatique[zoneClimatiqueId];
+
+    const c1ZoneClimatique = tv['c1'][zoneClimatique][mois];
+
+    if (inclinaison === 'horizontal') {
+      return c1ZoneClimatique[inclinaison];
+    }
+
+    return c1ZoneClimatique[`${orientation} ${inclinaison}`];
   }
 }

@@ -110,7 +110,7 @@ export class DeperditionVentilationService extends DeperditionService {
 
   /**
    * Déperdition thermique par renouvellement d’air due au système de ventilation
-   * @param surfaceHabitable {string}
+   * @param surfaceHabitable {number}
    * @param debitsVentilation {{qvarep_conv?: number, qvasouf_conv?: number, smea_conv?: number}}
    * @return number
    */

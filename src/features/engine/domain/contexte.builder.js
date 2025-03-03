@@ -1,4 +1,5 @@
-import { TypeHabitation } from '../../dpe/domain/models/type-habitation.model.js';
+import { TypeDpe, TypeHabitation } from '../../dpe/domain/models/type-habitation.model.js';
+import enums from '../../../enums.js';
 
 /**
  * Génère un contexte du logement à étudier avec des données persistées durant l'analyse
@@ -11,14 +12,30 @@ export class ContexteBuilder {
    * @return {Contexte}
    */
   fromDpe(dpe) {
+    const caracteristiqueGenerale = dpe.logement.caracteristique_generale;
+
     return {
-      zoneClimatiqueId: dpe.logement.meteo?.enum_zone_climatique_id.toString(),
-      typeHabitation: this.#getTypeHabitation(dpe),
-      enumPeriodeConstructionId:
-        dpe.logement.caracteristique_generale.enum_periode_construction_id?.toString(),
+      zoneClimatique: this.#zoneClimatique(dpe),
+      typeHabitation: this.#getTypeHabitation(caracteristiqueGenerale),
+      typeDpe: this.#getTypeDpe(caracteristiqueGenerale),
+      enumPeriodeConstructionId: caracteristiqueGenerale.enum_periode_construction_id?.toString(),
       effetJoule: this.#hasEffetJoule(dpe),
-      surfaceHabitable: this.#getSurfaceHabitable(dpe),
-      hauteurSousPlafond: dpe.logement.caracteristique_generale.hsp
+      surfaceHabitable: this.#getSurfaceHabitable(caracteristiqueGenerale),
+      hauteurSousPlafond: caracteristiqueGenerale.hsp,
+      nombreAppartement: caracteristiqueGenerale.nombre_appartement
+    };
+  }
+
+  /**
+   * La zone climatique à partir du type de DPE
+   * @param dpe {Dpe}
+   * @return {{id: number, value: string}}
+   */
+  #zoneClimatique(dpe) {
+    const zoneClimatiqueId = parseInt(dpe.logement.meteo?.enum_zone_climatique_id);
+    return {
+      id: zoneClimatiqueId.toString(),
+      value: enums.zone_climatique[zoneClimatiqueId]
     };
   }
 
@@ -39,43 +56,20 @@ export class ContexteBuilder {
 
   /**
    * Le type d'habitation est détecté à partir du type de DPE
-   * @param dpe {Dpe}
+   * @param caracteristiqueGenerale {CaracteristiqueGenerale}
    * @return {TypeHabitation}
    */
-  #getTypeHabitation(dpe) {
-    const methodeApplication =
-      dpe.logement.caracteristique_generale.enum_methode_application_dpe_log_id;
+  #getTypeHabitation(caracteristiqueGenerale) {
+    const methodeApplication = parseInt(
+      caracteristiqueGenerale.enum_methode_application_dpe_log_id
+    );
 
-    if (['1', '14', '18'].includes(methodeApplication)) {
+    if ([1, 14, 18].includes(methodeApplication)) {
       return TypeHabitation.MAISON;
     } else if (
       [
-        '2',
-        '3',
-        '4',
-        '5',
-        '10',
-        '11',
-        '12',
-        '13',
-        '15',
-        '16',
-        '19',
-        '20',
-        '22',
-        '23',
-        '24',
-        '25',
-        '31',
-        '32',
-        '33',
-        '34',
-        '35',
-        '36',
-        '37',
-        '38',
-        '39',
-        '40'
+        2, 3, 4, 5, 10, 11, 12, 13, 15, 16, 19, 20, 22, 23, 24, 25, 31, 32, 33, 34, 35, 36, 37, 38,
+        39, 40
       ].includes(methodeApplication)
     ) {
       return TypeHabitation.APPARTEMENT;
@@ -84,10 +78,28 @@ export class ContexteBuilder {
   }
 
   /**
-   * @param dpe {Dpe}
+   * Le type de DPE est détecté à partir du type de DPE
+   * @param caracteristiqueGenerale {CaracteristiqueGenerale}
+   * @return {TypeDpe}
+   */
+  #getTypeDpe(caracteristiqueGenerale) {
+    const methodeApplication = parseInt(
+      caracteristiqueGenerale.enum_methode_application_dpe_log_id
+    );
+
+    if ([1, 14, 18].includes(methodeApplication)) {
+      return TypeDpe.MAISON;
+    } else if ([2, 3, 4, 5, 31, 32, 35, 36, 37].includes(methodeApplication)) {
+      return TypeDpe.APPARTEMENT;
+    }
+    return TypeDpe.IMMEUBLE;
+  }
+
+  /**
+   * @param caracteristiqueGenerale {CaracteristiqueGenerale}
    * @return {number}
    */
-  #getSurfaceHabitable(dpe) {
+  #getSurfaceHabitable(caracteristiqueGenerale) {
     /**
      * Certains DPE appartement sont générés à partir des données du DPE immeuble, la surface à prendre en compte est
      * celle de l'immeuble pour les besoins ECS
@@ -110,31 +122,15 @@ export class ContexteBuilder {
      * 40 - dpe appartement généré à partir des données DPE immeuble chauffage collectif ecs mixte (collectif-individuel)
      */
     if (
-      [
-        '10',
-        '11',
-        '12',
-        '13',
-        '15',
-        '16',
-        '19',
-        '20',
-        '22',
-        '23',
-        '24',
-        '25',
-        '33',
-        '34',
-        '38',
-        '39',
-        '40'
-      ].includes(dpe.logement.caracteristique_generale.enum_methode_application_dpe_log_id)
+      [10, 11, 12, 13, 15, 16, 19, 20, 22, 23, 24, 25, 33, 34, 38, 39, 40].includes(
+        parseInt(caracteristiqueGenerale.enum_methode_application_dpe_log_id)
+      )
     ) {
-      return dpe.logement.caracteristique_generale.surface_habitable_immeuble;
+      return caracteristiqueGenerale.surface_habitable_immeuble;
     }
 
-    return this.#getTypeHabitation(dpe) === TypeHabitation.IMMEUBLE
-      ? dpe.logement.caracteristique_generale.surface_habitable_immeuble
-      : dpe.logement.caracteristique_generale.surface_habitable_logement;
+    return this.#getTypeHabitation(caracteristiqueGenerale) === TypeHabitation.IMMEUBLE
+      ? caracteristiqueGenerale.surface_habitable_immeuble
+      : caracteristiqueGenerale.surface_habitable_logement;
   }
 }

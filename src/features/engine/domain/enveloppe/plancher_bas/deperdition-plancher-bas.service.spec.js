@@ -28,7 +28,9 @@ describe('Calcul de déperdition des planchers bas', () => {
       const ctx = {
         effetJoule: false,
         enumPeriodeConstructionId: '6',
-        zoneClimatiqueId: '3'
+        zoneClimatique: {
+          id: '3'
+        }
       };
       /** @type {PlancherBasDE} */
       const de = {
@@ -53,7 +55,9 @@ describe('Calcul de déperdition des planchers bas', () => {
       const ctx = {
         effetJoule: false,
         enumPeriodeConstructionId: '6',
-        zoneClimatiqueId: '3'
+        zoneClimatique: {
+          id: '3'
+        }
       };
       /** @type {PlancherBasDE} */
       const de = {
@@ -80,7 +84,9 @@ describe('Calcul de déperdition des planchers bas', () => {
       const ctx = {
         effetJoule: false,
         enumPeriodeConstructionId: '6',
-        zoneClimatiqueId: '3'
+        zoneClimatique: {
+          id: '3'
+        }
       };
       /** @type {PlancherBasDE} */
       const de = {
@@ -103,7 +109,9 @@ describe('Calcul de déperdition des planchers bas', () => {
       const ctx = {
         effetJoule: false,
         enumPeriodeConstructionId: '6',
-        zoneClimatiqueId: '3'
+        zoneClimatique: {
+          id: '3'
+        }
       };
       /** @type {PlancherBasDE} */
       const de = {
@@ -127,7 +135,9 @@ describe('Calcul de déperdition des planchers bas', () => {
       const ctx = {
         effetJoule: false,
         enumPeriodeConstructionId: '6',
-        zoneClimatiqueId: '3'
+        zoneClimatique: {
+          id: '3'
+        }
       };
       /** @type {PlancherBasDE} */
       const de = {
@@ -150,7 +160,9 @@ describe('Calcul de déperdition des planchers bas', () => {
       const ctx = {
         effetJoule: false,
         enumPeriodeConstructionId: '6',
-        zoneClimatiqueId: '3'
+        zoneClimatique: {
+          id: '3'
+        }
       };
       /** @type {PlancherBasDE} */
       const de = {

@@ -34,7 +34,7 @@ export class DeperditionMurService extends DeperditionService {
       surfaceAue: murDE.surface_aue,
       enumCfgIsolationLncId: murDE.enum_cfg_isolation_lnc_id,
       tvCoefReductionDeperditionId: murDE.tv_coef_reduction_deperdition_id,
-      zoneClimatiqueId: ctx.zoneClimatiqueId
+      zoneClimatique: ctx.zoneClimatique.value
     });
 
     /** @type {MurDI} */
@@ -65,14 +65,14 @@ export class DeperditionMurService extends DeperditionService {
       case '2': // isolation inconnue (table forfaitaire)
         umur = Math.min(
           umurNu,
-          this.tvStore.getUmur(ctx.enumPeriodeConstructionId, ctx.zoneClimatiqueId, ctx.effetJoule)
+          this.tvStore.getUmur(ctx.enumPeriodeConstructionId, ctx.zoneClimatique.id, ctx.effetJoule)
         );
         break;
       case '7': // année d'isolation différente de l'année de construction
       case '8': // année de construction saisie
         umur = Math.min(
           umurNu,
-          this.tvStore.getUmur(enumPeriodeIsolationId, ctx.zoneClimatiqueId, ctx.effetJoule)
+          this.tvStore.getUmur(enumPeriodeIsolationId, ctx.zoneClimatique.id, ctx.effetJoule)
         );
         break;
       case '3': // epaisseur isolation saisie justifiée par mesure ou observation

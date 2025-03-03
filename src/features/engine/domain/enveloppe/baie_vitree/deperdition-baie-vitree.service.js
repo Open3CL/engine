@@ -31,7 +31,7 @@ export class DeperditionBaieVitreeService extends DeperditionService {
       surfaceAiu: bvDE.surface_aiu,
       surfaceAue: bvDE.surface_aue,
       enumCfgIsolationLncId: bvDE.enum_cfg_isolation_lnc_id,
-      zoneClimatiqueId: ctx.zoneClimatiqueId
+      zoneClimatique: ctx.zoneClimatique?.value
     });
 
     let sw = this.sw(bv);

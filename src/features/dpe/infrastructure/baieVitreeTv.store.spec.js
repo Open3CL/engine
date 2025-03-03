@@ -345,6 +345,112 @@ describe('Lecture des tables de valeurs', () => {
     });
   });
 
+  describe('lecture des valeurs coefficients de réduction de température des espaces tampons', () => {
+    test.each([
+      {
+        label: 'lc non isolé + espace tampon solarisé orienté nord',
+        zoneClimatique: 'H1a',
+        enumCfgIsolationLncId: '9',
+        expected: 0.85
+      },
+      {
+        label: 'lc isolé + espace tampon solarisé orienté sud',
+        zoneClimatique: 'H2C',
+        enumCfgIsolationLncId: '7',
+        expected: 0.57
+      }
+    ])(
+      `incidence masque proche pour baie vitrée $label`,
+      ({ zoneClimatique, enumCfgIsolationLncId, expected }) => {
+        expect(tvStore.getBver(zoneClimatique, enumCfgIsolationLncId)).toBe(expected);
+      }
+    );
+
+    test('pas de valeur de coefficients de réduction de température', () => {
+      const ug = tvStore.getBver('h3C', 1);
+      expect(ug).toBeUndefined();
+    });
+  });
+
+  describe('lecture des valeurs de coefficients de transparence des espaces tampons', () => {
+    test.each([
+      {
+        label: 'Parois en polycarbonate',
+        tvCoefTransparenceEtsId: '9',
+        expected: 0.39
+      },
+      {
+        label: 'Parois triple vitrage en Bois / Bois-métal',
+        tvCoefTransparenceEtsId: '5',
+        expected: 0.49
+      }
+    ])(
+      `incidence masque proche pour baie vitrée $label`,
+      ({ tvCoefTransparenceEtsId, expected }) => {
+        expect(tvStore.getCoefTransparenceEts(tvCoefTransparenceEtsId)).toBe(expected);
+      }
+    );
+
+    test('pas de valeur de coefficients de transparence', () => {
+      const ug = tvStore.getCoefTransparenceEts(0);
+      expect(ug).toBeUndefined();
+    });
+  });
+
+  describe("lecture des coefficients d'orientation et inclinaison des parois vitrées", () => {
+    test.each([
+      {
+        label: 'Baie vitrée orientée nord, inclinaison inf25°',
+        enumOrientationId: '2',
+        enumInclinaisonVitrageId: '1',
+        zoneClimatiqueId: '1',
+        mois: 'Janvier',
+        expected: 0.52
+      },
+      {
+        label: 'Baie vitrée orientée nord, inclinaison inf25°',
+        enumOrientationId: '2',
+        enumInclinaisonVitrageId: '1',
+        zoneClimatiqueId: '1',
+        mois: 'Juillet',
+        expected: 1.98
+      },
+      {
+        label: 'Baie vitrée orientée sud, inclinaison sup75°',
+        enumOrientationId: '1',
+        enumInclinaisonVitrageId: '3',
+        zoneClimatiqueId: '2',
+        mois: 'Janvier',
+        expected: 1
+      },
+      {
+        label: 'Baie vitrée orientée sud, inclinaison horizontale',
+        enumOrientationId: '1',
+        enumInclinaisonVitrageId: '4',
+        zoneClimatiqueId: '2',
+        mois: 'Janvier',
+        expected: 0.58
+      }
+    ])(
+      `coefficient pour $label`,
+      ({ enumOrientationId, enumInclinaisonVitrageId, zoneClimatiqueId, mois, expected }) => {
+        expect(
+          tvStore.getCoefficientBaieVitree(
+            enumOrientationId,
+            enumInclinaisonVitrageId,
+            zoneClimatiqueId,
+            mois
+          )
+        ).toMatchObject(expected);
+      }
+    );
+  });
+
+  test('lecture des épaisseurs disponibles pour les coefficients de transmission thermique ug', () => {
+    const ug = tvStore.getEpaisseurAvailableForUg();
+    expect(ug).toStrictEqual([0, 6, 8, 10, 12, 14, 15, 16, 18, 20]);
+  });
+
   test('lecture des épaisseurs disponibles pour les coefficients de transmission thermique ug', () => {
     const ug = tvStore.getEpaisseurAvailableForUg();
     expect(ug).toStrictEqual([0, 6, 8, 10, 12, 14, 15, 16, 18, 20]);
