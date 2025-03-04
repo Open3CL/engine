@@ -157,4 +157,31 @@ describe('Generateur du contexte du calcul', () => {
       typeDpe: TypeDpe.IMMEUBLE
     });
   });
+
+  test('Contexte avec calcul ilpa', () => {
+    const dpe = {
+      logement: {
+        caracteristique_generale: {},
+        meteo: {
+          batiment_materiaux_anciens: 0
+        },
+        enveloppe: {
+          inertie: {
+            enum_classe_inertie_id: 4
+          }
+        }
+      }
+    };
+
+    expect(contexteBuilder.fromDpe(dpe)).toMatchObject({ inertie: { id: 4, ilpa: 0 } });
+
+    dpe.logement.enveloppe.inertie.enum_classe_inertie_id = 1;
+    expect(contexteBuilder.fromDpe(dpe)).toMatchObject({ inertie: { id: 1, ilpa: 0 } });
+
+    dpe.logement.meteo.batiment_materiaux_anciens = 1;
+    expect(contexteBuilder.fromDpe(dpe)).toMatchObject({ inertie: { id: 1, ilpa: 1 } });
+
+    dpe.logement.enveloppe.inertie.enum_classe_inertie_id = 2;
+    expect(contexteBuilder.fromDpe(dpe)).toMatchObject({ inertie: { id: 2, ilpa: 1 } });
+  });
 });
