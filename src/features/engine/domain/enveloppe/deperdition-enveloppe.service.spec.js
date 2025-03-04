@@ -99,7 +99,7 @@ describe('Calcul des déperditions', () => {
         enumTypeAdjacenceId: '10',
         surfaceAiu: 8.14,
         surfaceAue: 22.8,
-        zoneClimatiqueId: '5',
+        zoneClimatique: 'h2c',
         enumCfgIsolationLncId: '9',
         label: 'espace tampon solarisé (véranda,loggia fermée)',
         bExpected: 0.85
@@ -197,7 +197,7 @@ describe('Calcul des déperditions', () => {
         enumTypeAdjacenceId,
         surfaceAiu = undefined,
         surfaceAue = undefined,
-        zoneClimatiqueId = undefined,
+        zoneClimatique = undefined,
         enumCfgIsolationLncId = undefined,
         bExpected
       }) => {
@@ -206,7 +206,7 @@ describe('Calcul des déperditions', () => {
           surfaceAiu,
           surfaceAue,
           enumCfgIsolationLncId,
-          zoneClimatiqueId
+          zoneClimatique
         };
 
         const b = deperditionMurService.b(data);

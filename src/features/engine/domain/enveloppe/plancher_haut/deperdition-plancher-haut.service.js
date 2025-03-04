@@ -32,7 +32,7 @@ export class DeperditionPlancherHautService extends DeperditionService {
       surfaceAiu: phDE.surface_aiu,
       surfaceAue: phDE.surface_aue,
       enumCfgIsolationLncId: phDE.enum_cfg_isolation_lnc_id,
-      zoneClimatiqueId: ctx.zoneClimatiqueId
+      zoneClimatique: ctx.zoneClimatique.value
     });
 
     /** @type {PlancherHautDI} */
@@ -69,7 +69,7 @@ export class DeperditionPlancherHautService extends DeperditionService {
           this.tvStore.getUph(
             enumPeriodeIsolationId,
             this.#getTypeAdjacence(phDE),
-            ctx.zoneClimatiqueId,
+            ctx.zoneClimatique.id,
             ctx.effetJoule
           )
         );

@@ -6,6 +6,7 @@ import { DeperditionPlancherHautService } from './plancher_haut/deperdition-plan
 import { DeperditionVentilationService } from './ventilation/deperdition-ventilation.service.js';
 import { DeperditionBaieVitreeService } from './baie_vitree/deperdition-baie-vitree.service.js';
 import { DeperditionPontThermiqueService } from './pont_thermique/deperdition-pont-thermique.service.js';
+import { EspaceTamponService } from './espace_tampon/espace-tampon.service.js';
 
 /**
  * Calcul des déperditions de l’enveloppe
@@ -36,6 +37,11 @@ export class DeperditionEnveloppeService {
    * @type {DeperditionBaieVitreeService}
    */
   #deperditionBaieVitreeService;
+
+  /**
+   * @type {EspaceTamponService}
+   */
+  #espaceTamponService;
 
   /**
    * @type {DeperditionPontThermiqueService}
@@ -79,6 +85,7 @@ export class DeperditionEnveloppeService {
    * @param deperditionPlancherBasService {DeperditionPlancherBasService}
    * @param deperditionPlancherHautService {DeperditionPlancherHautService}
    * @param deperditionBaieVitreeService {DeperditionBaieVitreeService}
+   * @param espaceTamponService {EspaceTamponService}
    * @param deperditionPontThermiqueService {DeperditionPontThermiqueService}
    * @param deperditionVentilationService {DeperditionVentilationService}
    */
@@ -88,6 +95,7 @@ export class DeperditionEnveloppeService {
     deperditionPlancherBasService = inject(DeperditionPlancherBasService),
     deperditionPlancherHautService = inject(DeperditionPlancherHautService),
     deperditionBaieVitreeService = inject(DeperditionBaieVitreeService),
+    espaceTamponService = inject(EspaceTamponService),
     deperditionPontThermiqueService = inject(DeperditionPontThermiqueService),
     deperditionVentilationService = inject(DeperditionVentilationService)
   ) {
@@ -96,6 +104,7 @@ export class DeperditionEnveloppeService {
     this.#deperditionPlancherBasService = deperditionPlancherBasService;
     this.#deperditionPlancherHautService = deperditionPlancherHautService;
     this.#deperditionBaieVitreeService = deperditionBaieVitreeService;
+    this.#espaceTamponService = espaceTamponService;
     this.#deperditionPontThermiqueService = deperditionPontThermiqueService;
     this.#deperditionVentilationService = deperditionVentilationService;
     this.#surfaceDeperditive = 0;
@@ -248,6 +257,16 @@ export class DeperditionEnveloppeService {
         this.#surfaceMenuiserieSansJoint += bv.donnee_entree.surface_totale_baie;
       }
     });
+
+    let ets = enveloppe.ets_collection?.ets;
+    if (ets) {
+      // Certaines vérandas sont dupliqués dans les DPE.
+      if (Array.isArray(ets)) {
+        ets = ets[0];
+      }
+
+      ets.donnee_intermediaire = this.#espaceTamponService.execute(ctx, ets);
+    }
 
     enveloppe.pont_thermique_collection.pont_thermique?.forEach((pt) => {
       pt.donnee_intermediaire = this.#deperditionPontThermiqueService.execute(
