@@ -4,7 +4,7 @@ import { ContexteBuilder } from '../../contexte.builder.js';
 import { DpeNormalizerService } from '../../../../normalizer/domain/dpe-normalizer.service.js';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { DeperditionPontThermiqueService } from './deperdition-pont-thermique.service.js';
-import { PontThermiqueTvStore } from '../../../../dpe/infrastructure/pontThermiqueTv.store.js';
+import { PontThermiqueTvStore } from '../../../../dpe/infrastructure/enveloppe/pontThermiqueTv.store.js';
 import { DeperditionMurService } from '../mur/deperdition-mur.service.js';
 import { DeperditionPlancherHautService } from '../plancher_haut/deperdition-plancher-haut.service.js';
 import { DeperditionPlancherBasService } from '../plancher_bas/deperdition-plancher-bas.service.js';

@@ -1,8 +1,8 @@
-import { tvs as tv } from '../../../tv-v2.js';
-import { getRange } from '../../../utils.js';
-import { logger } from '../../../core/util/logger/log-service.js';
-import { TvStore } from './tv.store.js';
-import enums from '../../../enums.js';
+import { tvs as tv } from '../../../../tv-v2.js';
+import { getRange } from '../../../../utils.js';
+import { logger } from '../../../../core/util/logger/log-service.js';
+import { TvStore } from './../tv.store.js';
+import enums from '../../../../enums.js';
 
 /**
  * Accès aux données des tables de valeurs pour les baies vitrées

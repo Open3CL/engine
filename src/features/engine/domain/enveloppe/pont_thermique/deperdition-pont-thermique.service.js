@@ -3,7 +3,7 @@ import { DeperditionService } from '../deperdition.service.js';
 import { logger } from '../../../../../core/util/logger/log-service.js';
 import { compareReferences } from '../../../../../utils.js';
 import { DeperditionMurService } from '../mur/deperdition-mur.service.js';
-import { PontThermiqueTvStore } from '../../../../dpe/infrastructure/pontThermiqueTv.store.js';
+import { PontThermiqueTvStore } from '../../../../dpe/infrastructure/enveloppe/pontThermiqueTv.store.js';
 import enums from '../../../../../enums.js';
 import { DeperditionPlancherHautService } from '../plancher_haut/deperdition-plancher-haut.service.js';
 import { DeperditionPlancherBasService } from '../plancher_bas/deperdition-plancher-bas.service.js';

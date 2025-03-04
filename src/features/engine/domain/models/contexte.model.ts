@@ -11,5 +11,10 @@ export interface Contexte {
     id: string;
     value: string;
   };
+  altitude: {
+    id: string;
+    value: string;
+  };
   effetJoule: boolean;
+  nadeq: number;
 }

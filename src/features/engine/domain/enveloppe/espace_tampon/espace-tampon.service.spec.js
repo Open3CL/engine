@@ -1,7 +1,7 @@
 import { ContexteBuilder } from '../../contexte.builder.js';
 import { DpeNormalizerService } from '../../../../normalizer/domain/dpe-normalizer.service.js';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
-import { BaieVitreeTvStore } from '../../../../dpe/infrastructure/baieVitreeTv.store.js';
+import { BaieVitreeTvStore } from '../../../../dpe/infrastructure/enveloppe/baieVitreeTv.store.js';
 import { EspaceTamponService } from './espace-tampon.service.js';
 import { getAdemeFileJson } from '../../../../../../test/test-helpers.js';
 

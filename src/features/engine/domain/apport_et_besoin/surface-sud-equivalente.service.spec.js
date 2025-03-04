@@ -4,7 +4,7 @@ import { DpeNormalizerService } from '../../../normalizer/domain/dpe-normalizer.
 import { ContexteBuilder } from '../contexte.builder.js';
 import { SurfaceSudEquivalenteService } from './surface-sud-equivalente.service.js';
 import { getAdemeFileJson } from '../../../../../test/test-helpers.js';
-import { BaieVitreeTvStore } from '../../../dpe/infrastructure/baieVitreeTv.store.js';
+import { BaieVitreeTvStore } from '../../../dpe/infrastructure/enveloppe/baieVitreeTv.store.js';
 
 /** @type {SurfaceSudEquivalenteService} **/
 let service;

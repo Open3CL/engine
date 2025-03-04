@@ -1,9 +1,9 @@
 import { mois_liste } from '../../../../utils.js';
 import { inject } from 'dioma';
-import { BaieVitreeTvStore } from '../../../dpe/infrastructure/baieVitreeTv.store.js';
+import { BaieVitreeTvStore } from '../../../dpe/infrastructure/enveloppe/baieVitreeTv.store.js';
 
 /**
- * Calcul e la surface sud équivalente du logement
+ * Calcul de la surface sud équivalente du logement
  * Chapitre 6.2 Détermination de la surface Sud équivalente
  *
  * Methode_de_calcul_3CL_DPE_2021 - Page 45

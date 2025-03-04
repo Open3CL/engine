@@ -1,11 +1,23 @@
 import { TypeDpe, TypeHabitation } from '../../dpe/domain/models/type-habitation.model.js';
 import enums from '../../../enums.js';
+import { NadeqService } from './logement/nadeq.service.js';
+import { inject } from 'dioma';
 
 /**
  * Génère un contexte du logement à étudier avec des données persistées durant l'analyse
  */
 export class ContexteBuilder {
-  constructor() {}
+  /**
+   * @type {NadeqService}
+   */
+  #nadeqService;
+
+  /**
+   * @param nadeqService {NadeqService}
+   */
+  constructor(nadeqService = inject(NadeqService)) {
+    this.#nadeqService = nadeqService;
+  }
 
   /**
    * @param dpe {Dpe}
@@ -14,28 +26,50 @@ export class ContexteBuilder {
   fromDpe(dpe) {
     const caracteristiqueGenerale = dpe.logement.caracteristique_generale;
 
+    const typeDpe = this.#getTypeDpe(caracteristiqueGenerale);
+    const surfaceHabitable = this.#getSurfaceHabitable(caracteristiqueGenerale);
+
     return {
       zoneClimatique: this.#zoneClimatique(dpe),
+      altitude: this.#altitude(dpe),
       typeHabitation: this.#getTypeHabitation(caracteristiqueGenerale),
-      typeDpe: this.#getTypeDpe(caracteristiqueGenerale),
+      typeDpe: typeDpe,
       enumPeriodeConstructionId: caracteristiqueGenerale.enum_periode_construction_id?.toString(),
       effetJoule: this.#hasEffetJoule(dpe),
-      surfaceHabitable: this.#getSurfaceHabitable(caracteristiqueGenerale),
+      surfaceHabitable: surfaceHabitable,
       hauteurSousPlafond: caracteristiqueGenerale.hsp,
-      nombreAppartement: caracteristiqueGenerale.nombre_appartement
+      nombreAppartement: caracteristiqueGenerale.nombre_appartement,
+      nadeq: this.#nadeqService.execute(
+        typeDpe,
+        surfaceHabitable,
+        caracteristiqueGenerale.nombre_appartement
+      )
     };
   }
 
   /**
    * La zone climatique à partir du type de DPE
    * @param dpe {Dpe}
-   * @return {{id: number, value: string}}
+   * @return {{id: string, value: string}}
    */
   #zoneClimatique(dpe) {
     const zoneClimatiqueId = parseInt(dpe.logement.meteo?.enum_zone_climatique_id);
     return {
       id: zoneClimatiqueId.toString(),
       value: enums.zone_climatique[zoneClimatiqueId]
+    };
+  }
+
+  /**
+   * La classe d'altitude à partir du type de DPE
+   * @param dpe {Dpe}
+   * @return {{id: string, value: string}}
+   */
+  #altitude(dpe) {
+    const altitudeId = parseInt(dpe.logement.meteo?.enum_classe_altitude_id);
+    return {
+      id: altitudeId.toString(),
+      value: enums.classe_altitude[altitudeId]
     };
   }
 
