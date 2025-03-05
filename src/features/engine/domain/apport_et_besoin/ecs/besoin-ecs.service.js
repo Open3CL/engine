@@ -3,7 +3,7 @@ import { EcsTvStore } from '../../../../dpe/infrastructure/ecs/ecsTv.store.js';
 import { inject } from 'dioma';
 
 /**
- * Calcul du nombre d’adultes équivalent Nadeq
+ * Calcul du besoin en eau chaude sanitaire
  * Chapitre 11.1 Calcul du besoin d’ECS
  *
  * Methode_de_calcul_3CL_DPE_2021 - Page 70

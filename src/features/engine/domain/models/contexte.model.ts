@@ -17,4 +17,8 @@ export interface Contexte {
   };
   effetJoule: boolean;
   nadeq: number;
+  inertie: {
+    id: number;
+    ilpa: number;
+  };
 }

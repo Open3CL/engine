@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
-import { DpeNormalizerService } from '../../../normalizer/domain/dpe-normalizer.service.js';
-import { ContexteBuilder } from '../contexte.builder.js';
 import { SurfaceSudEquivalenteService } from './surface-sud-equivalente.service.js';
 import { BaieVitreeTvStore } from '../../../dpe/infrastructure/enveloppe/baieVitreeTv.store.js';
 import { ApportEtBesoinService } from './apport-et-besoin.service.js';
 import { BesoinEcsService } from './ecs/besoin-ecs.service.js';
+import { BesoinFroidService } from './froid/besoin-froid.service.js';
+import { ApportGratuitService } from './apport_gratuit/apport-gratuit.service.js';
 
 /** @type {SurfaceSudEquivalenteService} **/
 let surfaceSudEquivalenteService;
@@ -12,26 +12,31 @@ let surfaceSudEquivalenteService;
 /** @type {BesoinEcsService} **/
 let besoinEcsService;
 
+/** @type {BesoinFroidService} **/
+let besoinFroidService;
+
+/** @type {ApportGratuitService} **/
+let apportGratuitService;
+
 /** @type {ApportEtBesoinService} **/
 let service;
-
-/** @type {DpeNormalizerService} **/
-let normalizerService;
-
-/** @type {ContexteBuilder} **/
-let contexteBuilder;
 
 /** @type {BaieVitreeTvStore} **/
 let tvStore;
 
-describe('Calcul de déperdition des portes', () => {
+describe('Calcul des apports et besoin du logement', () => {
   beforeEach(() => {
     tvStore = new BaieVitreeTvStore();
     surfaceSudEquivalenteService = new SurfaceSudEquivalenteService(tvStore);
     besoinEcsService = new BesoinEcsService();
-    service = new ApportEtBesoinService(besoinEcsService, surfaceSudEquivalenteService);
-    normalizerService = new DpeNormalizerService();
-    contexteBuilder = new ContexteBuilder();
+    besoinFroidService = new BesoinFroidService();
+    apportGratuitService = new ApportGratuitService();
+    service = new ApportEtBesoinService(
+      besoinEcsService,
+      besoinFroidService,
+      surfaceSudEquivalenteService,
+      apportGratuitService
+    );
   });
 
   test('Determination des apports et besoin du logement', () => {
@@ -40,19 +45,41 @@ describe('Calcul de déperdition des portes', () => {
       besoin_ecs: 1526,
       besoin_ecs_depensier: 2685.3
     });
+    vi.spyOn(besoinFroidService, 'execute').mockReturnValue({
+      besoin_fr: 896,
+      besoin_fr_depensier: 1025.3
+    });
+    vi.spyOn(apportGratuitService, 'apportSolaire').mockReturnValue({
+      apport_solaire_ch: 5236.9,
+      apport_solaire_fr: 145.2
+    });
+    vi.spyOn(apportGratuitService, 'apportInterne').mockReturnValue({
+      apport_interne_ch: 1236.9,
+      apport_interne_fr: 3345.2
+    });
 
     /** @type {Contexte} */
-    const ctx = { zoneClimatique: { id: 1 } };
-    /** @type { Enveloppe } **/
-    const enveloppe = {
-      porte_collection: {}
-    };
-    expect(service.execute(ctx, enveloppe)).toStrictEqual({
+    const ctx = { zoneClimatique: { id: 1 }, nadeq: 2.5 };
+    /** @type { Logement } **/
+    const logement = { enveloppe: {} };
+    expect(service.execute(ctx, logement)).toStrictEqual({
       surface_sud_equivalente: 18.5,
       besoin_ecs: 1526,
-      besoin_ecs_depensier: 2685.3
+      besoin_ecs_depensier: 2685.3,
+      besoin_fr: 896,
+      besoin_fr_depensier: 1025.3,
+      apport_solaire_ch: 5236.9,
+      apport_solaire_fr: 145.2,
+      apport_interne_ch: 1236.9,
+      apport_interne_fr: 3345.2,
+      nadeq: 2.5,
+      v40_ecs_journalier: 140,
+      v40_ecs_journalier_depensier: 197.5
     });
-    expect(surfaceSudEquivalenteService.execute).toHaveBeenCalledWith(ctx, enveloppe);
+    expect(surfaceSudEquivalenteService.execute).toHaveBeenCalledWith(ctx, logement.enveloppe);
     expect(besoinEcsService.execute).toHaveBeenCalledWith(ctx);
+    expect(besoinFroidService.execute).toHaveBeenCalledWith(ctx, logement);
+    expect(apportGratuitService.apportSolaire).toHaveBeenCalledWith(ctx, logement);
+    expect(apportGratuitService.apportInterne).toHaveBeenCalledWith(ctx, logement);
   });
 });

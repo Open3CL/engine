@@ -18,7 +18,7 @@ let contexteBuilder;
 /** @type {BaieVitreeTvStore} **/
 let tvStore;
 
-describe('Calcul de déperdition des portes', () => {
+describe('Calcul de la surface sud équivalente du logement', () => {
   beforeEach(() => {
     tvStore = new BaieVitreeTvStore();
     service = new SurfaceSudEquivalenteService(tvStore);
@@ -118,12 +118,17 @@ describe('Calcul de déperdition des portes', () => {
     test("Aucune pour les baies vitrées qui ne donnent pas sur l'extérieur", () => {
       expect(service.execute({}, [])).toBe(0);
 
-      const baiesVitrees = [
-        {
-          donnee_entree: { enum_type_adjacence_id: 18 }
+      /** @type {Enveloppe} */
+      const enveloppe = {
+        baie_vitree_collection: {
+          baie_vitree: [
+            {
+              donnee_entree: { enum_type_adjacence_id: 18 }
+            }
+          ]
         }
-      ];
-      expect(service.ssdMois({}, baiesVitrees, [], 'Janvier')).toBe(0);
+      };
+      expect(service.ssdMois({}, enveloppe, 'Janvier')).toBe(0);
     });
 
     test("Baies vitrées donnant sur l'extérieur", () => {
@@ -131,17 +136,23 @@ describe('Calcul de déperdition des portes', () => {
 
       /** @type {Contexte} */
       const ctx = { zoneClimatique: { id: 1 } };
-      const baiesVitrees = [
-        {
-          donnee_entree: {
-            enum_type_adjacence_id: 1,
-            enum_orientation_id: 2,
-            surface_totale_baie: 10
-          },
-          donnee_intermediaire: { sw: 1 }
+
+      /** @type {Enveloppe} */
+      const enveloppe = {
+        baie_vitree_collection: {
+          baie_vitree: [
+            {
+              donnee_entree: {
+                enum_type_adjacence_id: 1,
+                enum_orientation_id: 2,
+                surface_totale_baie: 10
+              },
+              donnee_intermediaire: { sw: 1 }
+            }
+          ]
         }
-      ];
-      expect(service.ssdMois(ctx, baiesVitrees, [], 'Janvier')).toBe(5);
+      };
+      expect(service.ssdMois(ctx, enveloppe, 'Janvier')).toBe(5);
       expect(tvStore.getCoefficientBaieVitree).toHaveBeenCalledWith(2, 3, 1, 'Janvier');
     });
 
@@ -150,37 +161,46 @@ describe('Calcul de déperdition des portes', () => {
 
       /** @type {Contexte} */
       const ctx = { zoneClimatique: { id: 1 } };
-      const baiesVitrees = [
-        {
-          donnee_entree: {
-            enum_type_adjacence_id: 10,
-            enum_orientation_id: 2,
-            surface_totale_baie: 10
-          },
-          donnee_intermediaire: { sw: 1 }
+
+      /** @type {Enveloppe} */
+      const enveloppe = {
+        baie_vitree_collection: {
+          baie_vitree: [
+            {
+              donnee_entree: {
+                enum_type_adjacence_id: 10,
+                enum_orientation_id: 2,
+                surface_totale_baie: 10
+              },
+              donnee_intermediaire: { sw: 1 }
+            },
+            {
+              donnee_entree: {
+                enum_type_adjacence_id: 1,
+                enum_orientation_id: 2,
+                surface_totale_baie: 10
+              },
+              donnee_intermediaire: { sw: 1 }
+            }
+          ]
         },
-        {
-          donnee_entree: {
-            enum_type_adjacence_id: 1,
-            enum_orientation_id: 2,
-            surface_totale_baie: 10
-          },
-          donnee_intermediaire: { sw: 1 }
-        }
-      ];
-      const ets = {
-        donnee_intermediaire: { bver: 0.6, coef_transparence_ets: 0.4 },
-        baie_ets_collection: {
-          baie_ets: {
-            donnee_entree: {
-              enum_inclinaison_vitrage_id: 3,
-              enum_orientation_id: 1,
-              surface_totale_baie: 7
+        ets_collection: {
+          ets: {
+            donnee_intermediaire: { bver: 0.6, coef_transparence_ets: 0.4 },
+            baie_ets_collection: {
+              baie_ets: {
+                donnee_entree: {
+                  enum_inclinaison_vitrage_id: 3,
+                  enum_orientation_id: 1,
+                  surface_totale_baie: 7
+                }
+              }
             }
           }
         }
       };
-      expect(service.ssdMois(ctx, baiesVitrees, ets, 'Janvier')).toBe(6.5224);
+
+      expect(service.ssdMois(ctx, enveloppe, 'Janvier')).toBe(6.5224);
       expect(tvStore.getCoefficientBaieVitree).toHaveBeenCalledWith(2, 3, 1, 'Janvier');
       expect(tvStore.getCoefficientBaieVitree).toHaveBeenCalledWith(1, 3, 1, 'Janvier');
     });

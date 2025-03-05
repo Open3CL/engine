@@ -70,7 +70,7 @@ export class EngineService {
 
     proceededDpe.logement.sortie.apport_et_besoin = this.#apportEtBesoinService.execute(
       ctx,
-      proceededDpe.logement.enveloppe
+      proceededDpe.logement
     );
 
     // Calcul des déperditions par renouvellement de l'air
@@ -112,7 +112,6 @@ export class EngineService {
    */
   #removeComputedData(dpe) {
     delete dpe.logement.sortie;
-    delete dpe.logement.enveloppe.inertie;
 
     dpe.logement.enveloppe.mur_collection.mur?.map((m) => delete m.donnee_intermediaire);
     dpe.logement.enveloppe.baie_vitree_collection.baie_vitree?.map((m) => {

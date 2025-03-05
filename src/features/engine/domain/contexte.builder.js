@@ -28,6 +28,7 @@ export class ContexteBuilder {
 
     const typeDpe = this.#getTypeDpe(caracteristiqueGenerale);
     const surfaceHabitable = this.#getSurfaceHabitable(caracteristiqueGenerale);
+    const inertieId = parseInt(dpe.logement.enveloppe?.inertie?.enum_classe_inertie_id);
 
     return {
       zoneClimatique: this.#zoneClimatique(dpe),
@@ -43,7 +44,15 @@ export class ContexteBuilder {
         typeDpe,
         surfaceHabitable,
         caracteristiqueGenerale.nombre_appartement
-      )
+      ),
+      inertie: {
+        id: inertieId,
+        ilpa:
+          parseInt(dpe.logement.meteo?.batiment_materiaux_anciens) === 1 &&
+          [1, 2].includes(inertieId)
+            ? 1
+            : 0
+      }
     };
   }
 

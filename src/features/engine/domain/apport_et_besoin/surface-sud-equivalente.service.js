@@ -29,22 +29,21 @@ export class SurfaceSudEquivalenteService {
    * @return {number}
    */
   execute(ctx, enveloppe) {
-    const baiesVitrees = enveloppe.baie_vitree_collection?.baie_vitree || [];
-    const ets = enveloppe.ets_collection?.ets || [];
-
-    return mois_liste.reduce((acc, mois) => acc + this.ssdMois(ctx, baiesVitrees, ets, mois), 0);
+    return mois_liste.reduce((acc, mois) => acc + this.ssdMois(ctx, enveloppe, mois), 0);
   }
 
   /**
-   * Calcul de la surface sud du logement pour un mois donné
+   * Calcul de la surface sud équivalente du logement pour un mois donné
    *
    * @param ctx {Contexte}
-   * @param baiesVitrees {BaieVitree[]}
-   * @param ets {Ets}
+   * @param enveloppe {Enveloppe}
    * @param mois {string}
    * @returns {number}
    */
-  ssdMois(ctx, baiesVitrees, ets, mois) {
+  ssdMois(ctx, enveloppe, mois) {
+    const baiesVitrees = enveloppe.baie_vitree_collection?.baie_vitree || [];
+    let ets = enveloppe.ets_collection?.ets || [];
+
     let SseVerandaj = 0;
 
     /**
