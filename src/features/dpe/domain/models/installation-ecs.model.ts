@@ -3,6 +3,7 @@ import { DE } from './dpe.model';
 export interface InstallationEcs {
   donnee_entree?: InstallationEcsDE;
   donnee_intermediaire?: InstallationEcsDI;
+  donnee_utilisateur?: InstallationEcsDU;
   generateur_ecs_collection?: { generateur_ecs: GenerateurEcs[] };
 }
 
@@ -35,8 +36,16 @@ export interface InstallationEcsDI {
   conso_ecs_depensier: number;
 }
 
+export interface InstallationEcsDU {
+  QdwIndVc: { conventionnel: number; depensier: number };
+  QdwColVc: { conventionnel: number; depensier: number };
+  QdwColHVc: { conventionnel: number; depensier: number };
+  QgwRecuperable: number;
+}
+
 export interface GenerateurEcs {
   donnee_entree?: GenerateurEcsDE;
+  donnee_utilisateur?: GenerateurEcsDU;
   donnee_intermediaire?: GenerateurEcsDI;
 }
 
@@ -55,8 +64,8 @@ export interface GenerateurEcsDE extends DE {
   date_arrete_reseau_chaleur?: string;
   tv_reseau_chaleur_id?: number;
   enum_type_stockage_ecs_id: number;
-  position_volume_chauffe: boolean;
-  position_volume_chauffe_stockage?: boolean;
+  position_volume_chauffe: number;
+  position_volume_chauffe_stockage?: number;
   volume_stockage: number;
   presence_ventouse?: boolean;
 }
@@ -73,4 +82,8 @@ export interface GenerateurEcsDI {
   conso_ecs: number;
   conso_ecs_depensier: number;
   rendement_stockage?: number;
+}
+
+export interface GenerateurEcsDU {
+  Qgw?: number;
 }

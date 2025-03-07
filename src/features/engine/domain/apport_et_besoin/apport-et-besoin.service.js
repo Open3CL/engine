@@ -3,6 +3,8 @@ import { BesoinEcsService } from './ecs/besoin-ecs.service.js';
 import { SurfaceSudEquivalenteService } from './surface-sud-equivalente.service.js';
 import { BesoinFroidService } from './froid/besoin-froid.service.js';
 import { ApportGratuitService } from './apport_gratuit/apport-gratuit.service.js';
+import { InstallationEcsService } from '../ecs/installation-ecs.service.js';
+import { PerteEcsRecupService } from './ecs/perte-ecs-recup.service.js';
 
 /**
  * Calcul des déperditions de l’enveloppe GV
@@ -20,6 +22,16 @@ export class ApportEtBesoinService {
   #besoinEcsService;
 
   /**
+   * @type {InstallationEcsService}
+   */
+  #installationEcsService;
+
+  /**
+   * @type {PerteEcsRecupService}
+   */
+  #perteEcsRecupService;
+
+  /**
    * @type {BesoinFroidService}
    */
   #besoinFroidService;
@@ -31,17 +43,23 @@ export class ApportEtBesoinService {
 
   /**
    * @param besoinEcsService {BesoinEcsService}
+   * @param installationEcsService {InstallationEcsService}
+   * @param perteEcsRecupService {PerteEcsRecupService}
    * @param besoinFroidService {BesoinFroidService}
    * @param surfaceSudEquivalenteService {SurfaceSudEquivalenteService}
    * @param apportGratuitService {ApportGratuitService}
    */
   constructor(
     besoinEcsService = inject(BesoinEcsService),
+    installationEcsService = inject(InstallationEcsService),
+    perteEcsRecupService = inject(PerteEcsRecupService),
     besoinFroidService = inject(BesoinFroidService),
     surfaceSudEquivalenteService = inject(SurfaceSudEquivalenteService),
     apportGratuitService = inject(ApportGratuitService)
   ) {
     this.#besoinEcsService = besoinEcsService;
+    this.#installationEcsService = installationEcsService;
+    this.#perteEcsRecupService = perteEcsRecupService;
     this.#besoinFroidService = besoinFroidService;
     this.#surfaceSudEquivalenteService = surfaceSudEquivalenteService;
     this.#apportGratuitService = apportGratuitService;
@@ -55,8 +73,15 @@ export class ApportEtBesoinService {
    * @return {ApportEtBesoin}
    */
   execute(ctx, logement) {
+    const besoinEcs = this.#besoinEcsService.execute(ctx);
+
+    /**
+     * Détermination des besoins et pertes des installations ECS
+     */
+    this.#installationEcsService.execute(ctx, logement, besoinEcs);
+
     return {
-      ...this.#besoinEcsService.execute(ctx),
+      ...besoinEcs,
       ...{
         surface_sud_equivalente: this.#surfaceSudEquivalenteService.execute(
           ctx,
@@ -68,7 +93,8 @@ export class ApportEtBesoinService {
       },
       ...this.#besoinFroidService.execute(ctx, logement),
       ...this.#apportGratuitService.apportInterne(ctx, logement),
-      ...this.#apportGratuitService.apportSolaire(ctx, logement)
+      ...this.#apportGratuitService.apportSolaire(ctx, logement),
+      ...this.#perteEcsRecupService.execute(ctx, logement)
     };
   }
 }
