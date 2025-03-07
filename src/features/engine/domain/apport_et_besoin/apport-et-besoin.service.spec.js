@@ -5,6 +5,8 @@ import { ApportEtBesoinService } from './apport-et-besoin.service.js';
 import { BesoinEcsService } from './ecs/besoin-ecs.service.js';
 import { BesoinFroidService } from './froid/besoin-froid.service.js';
 import { ApportGratuitService } from './apport_gratuit/apport-gratuit.service.js';
+import { PerteEcsRecupService } from './ecs/perte-ecs-recup.service.js';
+import { InstallationEcsService } from '../ecs/installation-ecs.service.js';
 
 /** @type {SurfaceSudEquivalenteService} **/
 let surfaceSudEquivalenteService;
@@ -14,6 +16,12 @@ let besoinEcsService;
 
 /** @type {BesoinFroidService} **/
 let besoinFroidService;
+
+/** @type {InstallationEcsService} **/
+let installationEcsService;
+
+/** @type {PerteEcsRecupService} **/
+let perteEcsRecupService;
 
 /** @type {ApportGratuitService} **/
 let apportGratuitService;
@@ -30,9 +38,13 @@ describe('Calcul des apports et besoin du logement', () => {
     surfaceSudEquivalenteService = new SurfaceSudEquivalenteService(tvStore);
     besoinEcsService = new BesoinEcsService();
     besoinFroidService = new BesoinFroidService();
+    installationEcsService = new InstallationEcsService();
+    perteEcsRecupService = new PerteEcsRecupService();
     apportGratuitService = new ApportGratuitService();
     service = new ApportEtBesoinService(
       besoinEcsService,
+      installationEcsService,
+      perteEcsRecupService,
       besoinFroidService,
       surfaceSudEquivalenteService,
       apportGratuitService
@@ -57,6 +69,12 @@ describe('Calcul des apports et besoin du logement', () => {
       apport_interne_ch: 1236.9,
       apport_interne_fr: 3345.2
     });
+    vi.spyOn(installationEcsService, 'execute').mockReturnThis();
+    vi.spyOn(perteEcsRecupService, 'execute').mockReturnValue({
+      pertes_distribution_ecs_recup: 354.2,
+      pertes_distribution_ecs_recup_depensier: 532.6,
+      pertes_stockage_ecs_recup: 25.9
+    });
 
     /** @type {Contexte} */
     const ctx = { zoneClimatique: { id: 1 }, nadeq: 2.5 };
@@ -74,7 +92,10 @@ describe('Calcul des apports et besoin du logement', () => {
       apport_interne_fr: 3345.2,
       nadeq: 2.5,
       v40_ecs_journalier: 140,
-      v40_ecs_journalier_depensier: 197.5
+      v40_ecs_journalier_depensier: 197.5,
+      pertes_distribution_ecs_recup: 354.2,
+      pertes_distribution_ecs_recup_depensier: 532.6,
+      pertes_stockage_ecs_recup: 25.9
     });
     expect(surfaceSudEquivalenteService.execute).toHaveBeenCalledWith(ctx, logement.enveloppe);
     expect(besoinEcsService.execute).toHaveBeenCalledWith(ctx);

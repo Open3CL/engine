@@ -132,8 +132,12 @@ export class ContexteBuilder {
 
     if ([1, 14, 18].includes(methodeApplication)) {
       return TypeDpe.MAISON;
-    } else if ([2, 3, 4, 5, 31, 32, 35, 36, 37].includes(methodeApplication)) {
+    } else if (
+      [2, 3, 4, 5, 15, 16, 19, 20, 22, 23, 24, 25, 31, 32, 35, 36, 37].includes(methodeApplication)
+    ) {
       return TypeDpe.APPARTEMENT;
+    } else if ([10, 11, 12, 13, 33, 34, 38, 39, 40].includes(methodeApplication)) {
+      return TypeDpe.APPARTEMENT_A_PARTIR_IMMEUBLE;
     }
     return TypeDpe.IMMEUBLE;
   }

@@ -30,4 +30,40 @@ describe('Lecture des tables de valeurs', () => {
       expect(ecsTvStore.getTefs(classeAltitude, zoneClimatique, mois)).toBe(expected);
     });
   });
+
+  describe('Lecture des valeurs de pertes_stockage', () => {
+    test.each([
+      {
+        label: 'Ballon électrique à accumulation horizontal < 100L',
+        enumTypeGenerateurEcsId: '68',
+        volumeStockage: 50,
+        expected: 0.39
+      },
+      {
+        label: 'Ballon électrique à accumulation horizontal entre 100L et 200L',
+        enumTypeGenerateurEcsId: '68',
+        volumeStockage: 150,
+        expected: 0.33
+      },
+      {
+        label: 'Ballon électrique à accumulation horizontal entre 200L et 300L',
+        enumTypeGenerateurEcsId: '68',
+        volumeStockage: 250,
+        expected: 0.3
+      },
+      {
+        label: 'Ballon électrique à accumulation horizontal > 300L',
+        enumTypeGenerateurEcsId: '68',
+        volumeStockage: 301,
+        expected: 0.3
+      }
+    ])(`$label`, ({ enumTypeGenerateurEcsId, volumeStockage, expected }) => {
+      expect(ecsTvStore.getPertesStockage(enumTypeGenerateurEcsId, volumeStockage)).toBe(expected);
+    });
+
+    test('pas de valeur de pertes_stockage', () => {
+      const pertes_stockage = ecsTvStore.getPertesStockage('298', 600);
+      expect(pertes_stockage).toBeUndefined();
+    });
+  });
 });
