@@ -15,8 +15,10 @@ export class FrTvStore extends TvStore {
    * — e_fr_28 : ensoleillement reçu en période de refroidissement pour un mois donné et une consigne de refroidissement à 28°C (comportement conventionnel).
    * — textmoy_clim_26 : Température extérieure moyenne pour un mois donné et une consigne de refroidissement à 26°C (comportement conventionnel).
    * — textmoy_clim_28 : nombre d’heures de chauffage pour un mois donné et une consigne de refroidissement à 28°C (comportement conventionnel).
+   * — dh19 : degrés heures de chauffage pour un mois donné à 19°C (comportement conventionnel).
+   * — dh21 : degrés heures de chauffage pour un mois donné à 21°C (comportement dépensier).
    *
-   * @param type {'e', nref26' | 'nref28' | 'e_fr_26' | 'e_fr_28' | 'textmoy_clim_26' | 'textmoy_clim_28'}
+   * @param type {'e', nref26' | 'nref28' | 'e_fr_26' | 'e_fr_28' | 'textmoy_clim_26' | 'textmoy_clim_28'| 'dh19'| 'dh21'}
    * @param classeAltitude {string}
    * @param zoneClimatique {string}
    * @param mois {string}
@@ -31,6 +33,6 @@ export class FrTvStore extends TvStore {
       values = values[ilpa];
     }
 
-    return values[classeAltitude][mois][zoneClimatique];
+    return parseFloat(values[classeAltitude][mois][zoneClimatique]);
   }
 }

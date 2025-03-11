@@ -58,8 +58,8 @@ export class InstallationEcsService {
        */
       this.pertesDistributionStockageEcsInstallation(
         installationEcs,
-        besoinEcsInstallation,
-        besoinEcsDepensierInstallation
+        besoinEcsInstallation * 1000,
+        besoinEcsDepensierInstallation * 1000
       );
     });
   }
@@ -73,7 +73,7 @@ export class InstallationEcsService {
   }
 
   /**
-   * Return le besoin rationalisé de l'installation par rapport au besoin glbal du logement
+   * Return le besoin rationalisé de l'installation par rapport au besoin global du logement
    *
    * @param ctx {Contexte}
    * @param installationEcs {InstallationEcs}
@@ -109,8 +109,8 @@ export class InstallationEcsService {
    * Qgw:  pertes brutes annuelles de stockage (Wh)
    *
    * @param installationEcs {InstallationEcs}
-   * @param besoinEcsInstallation {number}
-   * @param besoinEcsDepensierInstallation {number}
+   * @param besoinEcsInstallation {number} // en Wh
+   * @param besoinEcsDepensierInstallation {number} // en Wh
    */
   pertesDistributionStockageEcsInstallation(
     installationEcs,

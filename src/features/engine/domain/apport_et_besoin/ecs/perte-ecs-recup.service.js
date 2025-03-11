@@ -29,20 +29,23 @@ export class PerteEcsRecupService {
   }
 
   /**
+   * Pertes de distribution et de stockage ECS (kWh)
    * @param ctx {Contexte}
    * @param logement {Logement}
-   * @return {{pertes_distribution_ecs_recup: number, pertes_distribution_ecs_recup_depensier: number, pertes_stockage_ecs_recup: number}}
+   * @return {{pertes_distribution_ecs_recup: number, pertes_distribution_ecs_recup_depensier: number, pertes_stockage_ecs_recup: number, pertes_stockage_ecs_recup_depensier: number}}
    */
   execute(ctx, logement) {
     return {
-      pertes_distribution_ecs_recup: this.pertesDistributionEcsRecup(ctx, logement, false),
-      pertes_distribution_ecs_recup_depensier: this.pertesDistributionEcsRecup(ctx, logement, true),
-      pertes_stockage_ecs_recup: this.pertesStockageEcsRecup(ctx, logement)
+      pertes_distribution_ecs_recup: this.pertesDistributionEcsRecup(ctx, logement, false) / 1000,
+      pertes_distribution_ecs_recup_depensier:
+        this.pertesDistributionEcsRecup(ctx, logement, true) / 1000,
+      pertes_stockage_ecs_recup: this.pertesStockageEcsRecup(ctx, logement, false) / 1000,
+      pertes_stockage_ecs_recup_depensier: this.pertesStockageEcsRecup(ctx, logement, true) / 1000
     };
   }
 
   /**
-   * Pertes récupérées de distribution d’ECS pour le chauffage
+   * Pertes récupérées de distribution d’ECS pour le chauffage (Wh)
    * 9.1.1 Consommation de chauffage
    *
    * @param ctx {Contexte}
@@ -89,14 +92,15 @@ export class PerteEcsRecupService {
   }
 
   /**
-   * Pertes récupérées du stockage d’ECS pour le chauffage
+   * Pertes récupérées du stockage d’ECS pour le chauffage (Wh)
    * 9.1.1 Consommation de chauffage
    *
    * @param ctx {Contexte}
    * @param logement {Logement}
+   * @param depensier {boolean}
    * @returns {number}
    */
-  pertesStockageEcsRecup(ctx, logement) {
+  pertesStockageEcsRecup(ctx, logement, depensier) {
     const installationsEcs = logement.installation_ecs_collection?.installation_ecs || [];
 
     let pertesStockage = installationsEcs.reduce((acc, installation) => {
@@ -111,7 +115,7 @@ export class PerteEcsRecupService {
         acc +
         pertesStockage *
           this.#tvStore.getData(
-            'nref19',
+            depensier ? 'nref21' : 'nref19',
             ctx.altitude.value,
             ctx.zoneClimatique.value,
             mois,

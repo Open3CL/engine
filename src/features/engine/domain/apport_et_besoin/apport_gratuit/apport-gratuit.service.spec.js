@@ -41,7 +41,10 @@ describe('Calcul des apports gratuits au logement', () => {
     };
 
     /** @type { Logement } **/
-    const logement = { enveloppe: { porte_collection: {} } };
+    const logement = {
+      enveloppe: { porte_collection: {} },
+      donnees_de_calcul: { apportsSolaire: {} }
+    };
 
     if (withClimatisation) {
       logement.climatisation_collection = { climatisation: [{}] };
@@ -81,6 +84,8 @@ describe('Calcul des apports gratuits au logement', () => {
           mois
         );
       }
+
+      expect(logement.donnees_de_calcul.apportsSolaire[mois]).toBe(185000);
     }
   });
 
@@ -106,7 +111,10 @@ describe('Calcul des apports gratuits au logement', () => {
     };
 
     /** @type { Logement } **/
-    const logement = { enveloppe: { porte_collection: {} } };
+    const logement = {
+      enveloppe: { porte_collection: {} },
+      donnees_de_calcul: { apportsInterneCh: {}, apportsInterneDepensier: {} }
+    };
 
     if (withClimatisation) {
       logement.climatisation_collection = { climatisation: [{}] };
@@ -141,6 +149,9 @@ describe('Calcul des apports gratuits au logement', () => {
           mois
         );
       }
+
+      expect(logement.donnees_de_calcul.apportsInterneCh[mois]).toBeCloseTo(1306.33, 2);
+      expect(logement.donnees_de_calcul.apportsInterneDepensier[mois]).toBeCloseTo(1306.33, 2);
     }
   });
 

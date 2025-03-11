@@ -71,7 +71,7 @@ export interface GenerateurChauffageDE extends DE {
   enum_type_generateur_ch_id: number;
   enum_usage_generateur_id: number;
   enum_type_energie_id: number;
-  position_volume_chauffe: boolean;
+  position_volume_chauffe: number;
   tv_rendement_generation_id?: number;
   tv_scop_id?: number;
   tv_temp_fonc_100_id?: number;
@@ -81,7 +81,7 @@ export interface GenerateurChauffageDE extends DE {
   identifiant_reseau_chaleur?: string;
   date_arrete_reseau_chaleur?: string;
   priorite_generateur_cascade?: number;
-  presence_ventouse?: boolean;
+  presence_ventouse?: number;
   presence_regulation_combustion?: boolean;
   enum_methode_saisie_carac_sys_id: number;
   enum_lien_generateur_emetteur_id: number;

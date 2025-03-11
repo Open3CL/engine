@@ -38,15 +38,15 @@ describe('Calcul des pertes de distribution et stockage récupérées', () => {
     {
       label: 'Installation ECS en mode conventionnel',
       depensier: false,
-      expected: 0.36
+      expected: 0.192
     },
     {
       label: 'Installation ECS en mode dépensier',
       depensier: true,
-      expected: 0.72
+      expected: 0.725
     }
   ])('Calcul des pertes de distribution récupérées pour $label', ({ depensier, expected }) => {
-    vi.spyOn(tvStore, 'getData').mockReturnValue(1.5);
+    vi.spyOn(tvStore, 'getData').mockReturnValue(depensier ? 1.5 : 0.8);
 
     /** @type {Contexte} */
     const ctx = {
@@ -75,7 +75,7 @@ describe('Calcul des pertes de distribution et stockage récupérées', () => {
       }
     };
 
-    expect(service.pertesDistributionEcsRecup(ctx, logement, depensier)).toBeCloseTo(expected, 2);
+    expect(service.pertesDistributionEcsRecup(ctx, logement, depensier)).toBeCloseTo(expected, 3);
     for (const mois of mois_liste) {
       expect(tvStore.getData).toHaveBeenCalledWith(
         depensier ? 'nref21' : 'nref19',
@@ -87,8 +87,19 @@ describe('Calcul des pertes de distribution et stockage récupérées', () => {
     }
   });
 
-  test('Calcul des pertes de stockage récupérées pour une installation ECS', () => {
-    vi.spyOn(tvStore, 'getData').mockReturnValue(1.5);
+  test.each([
+    {
+      label: 'Installation ECS en mode conventionnel',
+      depensier: false,
+      expected: 63.209
+    },
+    {
+      label: 'Installation ECS en mode dépensier',
+      depensier: true,
+      expected: 118.516
+    }
+  ])('Calcul des pertes de stockage récupérées pour $label', ({ depensier, expected }) => {
+    vi.spyOn(tvStore, 'getData').mockReturnValue(depensier ? 1.5 : 0.8);
 
     /** @type {Contexte} */
     const ctx = {
@@ -101,15 +112,21 @@ describe('Calcul des pertes de distribution et stockage récupérées', () => {
     const logement = {
       installation_ecs_collection: {
         installation_ecs: [
-          { donnee_utilisateur: { QgwRecuperable: 120 } },
+          { donnee_utilisateur: { QgwRecuperable: 120012 } },
           { donnee_utilisateur: { QgwRecuperable: 150 } }
         ]
       }
     };
 
-    expect(service.pertesStockageEcsRecup(ctx, logement)).toBeCloseTo(0.27);
+    expect(service.pertesStockageEcsRecup(ctx, logement, depensier)).toBeCloseTo(expected, 3);
     for (const mois of mois_liste) {
-      expect(tvStore.getData).toHaveBeenCalledWith('nref19', '400-800m', 'h1a', mois, 1);
+      expect(tvStore.getData).toHaveBeenCalledWith(
+        depensier ? 'nref21' : 'nref19',
+        '400-800m',
+        'h1a',
+        mois,
+        1
+      );
     }
   });
 
@@ -142,6 +159,7 @@ describe('Calcul des pertes de distribution et stockage récupérées', () => {
         );
       }
     );
+
     test.each(corpus)(
       'vérification des pertes de distribution ecs recup depensier des installations ECS pour dpe %s',
       (ademeId) => {
@@ -170,6 +188,7 @@ describe('Calcul des pertes de distribution et stockage récupérées', () => {
         );
       }
     );
+
     test.each(corpus)(
       'vérification des pertes de stockage ecs recup des installations ECS pour dpe %s',
       (ademeId) => {
@@ -189,10 +208,6 @@ describe('Calcul des pertes de distribution et stockage récupérées', () => {
           () =>
             expect(pertesStockage.pertes_stockage_ecs_recup).toBeCloseTo(
               dpeRequest.logement.sortie.apport_et_besoin.pertes_stockage_ecs_recup
-            ),
-          () =>
-            expect(pertesStockage.pertes_stockage_ecs_recup).toBeCloseTo(
-              dpeRequest.logement.sortie.apport_et_besoin.pertes_stockage_ecs_recup * 1000
             ),
           () =>
             expect(pertesStockage.pertes_stockage_ecs_recup * 1000).toBeCloseTo(
