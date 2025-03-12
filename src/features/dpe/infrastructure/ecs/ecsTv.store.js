@@ -58,8 +58,10 @@ export class EcsTvStore extends TvStore {
    * @return {[number]}
    */
   getElectriqueEcsGenerateurs() {
-    return tv['pertes_stockage'].flatMap((v) =>
-      v.enum_type_generateur_ecs_id.split('|').map(Number)
-    );
+    return [
+      ...new Set(
+        tv['pertes_stockage'].flatMap((v) => v.enum_type_generateur_ecs_id.split('|').map(Number))
+      )
+    ];
   }
 }

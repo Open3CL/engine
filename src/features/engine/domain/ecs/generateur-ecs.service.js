@@ -21,12 +21,12 @@ export class GenerateurEcsService {
   }
 
   /**
-   * Détermination des apports et besoins pour le bien concerné
+   * Détermination des données de calcul pour une installation ECS
    *
    * @param installationEcs {InstallationEcs}
    */
   execute(installationEcs) {
-    const generateursEcs = installationEcs.generateur_ecs_collection.generateur_ecs || [];
+    const generateursEcs = installationEcs.generateur_ecs_collection?.generateur_ecs || [];
 
     generateursEcs.forEach((generateurEcs) => {
       /** @type {GenerateurEcsDE}*/

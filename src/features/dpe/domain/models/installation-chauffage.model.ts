@@ -1,4 +1,5 @@
 import { DE } from './dpe.model';
+import { GenerateurEcsDU } from './installation-ecs.model';
 
 export interface InstallationChauffage {
   donnee_entree?: InstallationChauffageDE;
@@ -62,6 +63,7 @@ export interface EmetteurChauffageDI {
 
 export interface GenerateurChauffage {
   donnee_entree?: GenerateurChauffageDE;
+  donnee_utilisateur?: GenerateurChauffageDU;
   donnee_intermediaire?: GenerateurChauffageDI;
 }
 
@@ -98,4 +100,25 @@ export interface GenerateurChauffageDI {
   rpint?: number;
   conso_ch: number;
   conso_ch_depensier: number;
+}
+
+export interface GenerateurChauffageDU {
+  ratio_virtualisation?: number;
+  typeGenerateur?: TypeGenerateur;
+  generateur?: {
+    tv_generateur_combustion_id: string;
+    enum_type_generateur_ch_id: string;
+    type_generateur: string;
+    critere_pn: string;
+    pveil: string;
+    qp0_perc: string;
+    rpint: string;
+    rpn: string;
+  };
+}
+
+export enum TypeGenerateur {
+  COMBUSTION = 'COMBUSTION',
+  PAC = 'PAC',
+  OTHER = 'OTHER'
 }

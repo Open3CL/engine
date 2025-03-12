@@ -14,6 +14,7 @@ import { getAdemeFileJson } from '../../../../../test/test-helpers.js';
 import { PRECISION_PERCENT } from '../../../../../test/constant.js';
 import { DpeNormalizerService } from '../../../normalizer/domain/dpe-normalizer.service.js';
 import { ContexteBuilder } from '../contexte.builder.js';
+import { InstallationChService } from '../ch/installation-ch.service.js';
 
 /** @type {SurfaceSudEquivalenteService} **/
 let surfaceSudEquivalenteService;
@@ -26,6 +27,9 @@ let besoinFroidService;
 
 /** @type {InstallationEcsService} **/
 let installationEcsService;
+
+/** @type {InstallationChService} **/
+let installationChService;
 
 /** @type {PerteEcsRecupService} **/
 let perteEcsRecupService;
@@ -59,6 +63,7 @@ describe('Calcul des apports et besoin du logement', () => {
     besoinChService = new BesoinChService();
     besoinFroidService = new BesoinFroidService();
     installationEcsService = new InstallationEcsService();
+    installationChService = new InstallationChService();
     perteEcsRecupService = new PerteEcsRecupService();
     apportGratuitService = new ApportGratuitService();
     perteChRecupService = new PerteChRecupService();
@@ -66,6 +71,7 @@ describe('Calcul des apports et besoin du logement', () => {
       besoinEcsService,
       besoinChService,
       installationEcsService,
+      installationChService,
       perteEcsRecupService,
       besoinFroidService,
       surfaceSudEquivalenteService,
@@ -99,6 +105,7 @@ describe('Calcul des apports et besoin du logement', () => {
       apport_interne_fr: 3345.2
     });
     vi.spyOn(installationEcsService, 'execute').mockReturnThis();
+    vi.spyOn(installationChService, 'execute').mockReturnThis();
     vi.spyOn(perteEcsRecupService, 'execute').mockReturnValue({
       pertes_distribution_ecs_recup: 354.2,
       pertes_distribution_ecs_recup_depensier: 532.6,

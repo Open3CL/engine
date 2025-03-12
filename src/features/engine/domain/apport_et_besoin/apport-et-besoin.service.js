@@ -7,6 +7,7 @@ import { InstallationEcsService } from '../ecs/installation-ecs.service.js';
 import { PerteEcsRecupService } from './ecs/perte-ecs-recup.service.js';
 import { BesoinChService } from './ch/besoin-ch.service.js';
 import { PerteChRecupService } from './ch/perte-ch-recup.service.js';
+import { InstallationChService } from '../ch/installation-ch.service.js';
 
 /**
  * Calcul des déperditions de l’enveloppe GV
@@ -34,6 +35,11 @@ export class ApportEtBesoinService {
   #installationEcsService;
 
   /**
+   * @type {InstallationChService}
+   */
+  #installationChService;
+
+  /**
    * @type {PerteEcsRecupService}
    */
   #perteEcsRecupService;
@@ -57,6 +63,7 @@ export class ApportEtBesoinService {
    * @param besoinEcsService {BesoinEcsService}
    * @param besoinChService {BesoinChService}
    * @param installationEcsService {InstallationEcsService}
+   * @param installationChService {InstallationChService}
    * @param perteEcsRecupService {PerteEcsRecupService}
    * @param besoinFroidService {BesoinFroidService}
    * @param surfaceSudEquivalenteService {SurfaceSudEquivalenteService}
@@ -67,6 +74,7 @@ export class ApportEtBesoinService {
     besoinEcsService = inject(BesoinEcsService),
     besoinChService = inject(BesoinChService),
     installationEcsService = inject(InstallationEcsService),
+    installationChService = inject(InstallationChService),
     perteEcsRecupService = inject(PerteEcsRecupService),
     besoinFroidService = inject(BesoinFroidService),
     surfaceSudEquivalenteService = inject(SurfaceSudEquivalenteService),
@@ -76,6 +84,7 @@ export class ApportEtBesoinService {
     this.#besoinEcsService = besoinEcsService;
     this.#besoinChService = besoinChService;
     this.#installationEcsService = installationEcsService;
+    this.#installationChService = installationChService;
     this.#perteEcsRecupService = perteEcsRecupService;
     this.#besoinFroidService = besoinFroidService;
     this.#surfaceSudEquivalenteService = surfaceSudEquivalenteService;
@@ -97,6 +106,11 @@ export class ApportEtBesoinService {
      * Détermination des besoins et pertes des installations ECS
      */
     this.#installationEcsService.execute(ctx, logement, besoinEcs);
+
+    /**
+     * Détermination des données des installations de chauffage
+     */
+    this.#installationChService.execute(logement);
 
     const apportsInternes = this.#apportGratuitService.apportInterne(ctx, logement);
     const apportsSolaires = this.#apportGratuitService.apportSolaire(ctx, logement);
