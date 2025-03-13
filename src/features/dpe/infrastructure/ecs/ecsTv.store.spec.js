@@ -66,4 +66,8 @@ describe('Lecture des tables de valeurs', () => {
       expect(pertes_stockage).toBeUndefined();
     });
   });
+
+  test('ids des générateurs électriques ECS', () => {
+    expect(ecsTvStore.getElectriqueEcsGenerateurs()).toStrictEqual([68, 118, 69, 70, 71]);
+  });
 });
