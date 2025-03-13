@@ -36,6 +36,7 @@ export class ContexteBuilder {
       typeHabitation: this.#getTypeHabitation(caracteristiqueGenerale),
       typeDpe: typeDpe,
       enumPeriodeConstructionId: caracteristiqueGenerale.enum_periode_construction_id?.toString(),
+      anneeConstruction: parseInt(caracteristiqueGenerale.annee_construction),
       effetJoule: this.#hasEffetJoule(dpe),
       surfaceHabitable: surfaceHabitable,
       hauteurSousPlafond: caracteristiqueGenerale.hsp,

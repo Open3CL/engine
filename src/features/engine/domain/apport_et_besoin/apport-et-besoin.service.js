@@ -110,7 +110,7 @@ export class ApportEtBesoinService {
     /**
      * Détermination des données des installations de chauffage
      */
-    this.#installationChService.execute(logement);
+    this.#installationChService.execute(ctx, logement);
 
     const apportsInternes = this.#apportGratuitService.apportInterne(ctx, logement);
     const apportsSolaires = this.#apportGratuitService.apportSolaire(ctx, logement);

@@ -353,4 +353,32 @@ export class TvStore {
 
     return q4paConv;
   }
+
+  /**
+   * Température extérieure de base(°C)
+   *
+   * @param classeAltitude {string}
+   * @param zoneClimatique {string}
+   */
+  getTempBase(classeAltitude, zoneClimatique) {
+    const Tbase = {
+      1: {
+        h1: -9.5,
+        h2: -6.5,
+        h3: -3.5
+      },
+      2: {
+        h1: -11.5,
+        h2: -8.5,
+        h3: -5.5
+      },
+      3: {
+        h1: -13.5,
+        h2: -10.5,
+        h3: -7.5
+      }
+    };
+
+    return Tbase[classeAltitude][zoneClimatique];
+  }
 }

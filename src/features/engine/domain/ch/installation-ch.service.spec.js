@@ -30,7 +30,12 @@ describe('Calcul des installations de chauffage', () => {
       installation_chauffage_collection: { installation_chauffage: [installationCh] }
     };
 
-    service.execute(logement);
-    expect(generateurChService.execute).toHaveBeenCalledWith(installationCh);
+    /** @type {Contexte} */
+    const ctx = {
+      zoneClimatique: { id: 1 }
+    };
+
+    service.execute(ctx, logement);
+    expect(generateurChService.execute).toHaveBeenCalledWith(ctx, logement, installationCh);
   });
 });

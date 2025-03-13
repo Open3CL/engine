@@ -4,6 +4,7 @@ export interface Contexte {
   typeHabitation: TypeHabitation;
   typeDpe: TypeDpe;
   enumPeriodeConstructionId: number;
+  anneeConstruction: number;
   surfaceHabitable: number;
   hauteurSousPlafond: number;
   nombreAppartement: number;

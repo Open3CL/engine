@@ -37,7 +37,7 @@ export function tv_temp_fonc_30_100(di, de, du, em_ch, ac) {
     const em_ch_de = em.donnee_entree;
     const em_ch_du = em.donnee_utilisateur;
     const matcher = {
-      type_generateur_ch_id: de.enum_type_generateur_ch_id,
+      enum_type_generateur_ch_id: de.enum_type_generateur_ch_id,
       enum_temp_distribution_ch_id: requestInputID(em_ch_de, em_ch_du, 'temp_distribution_ch'),
       periode_emetteurs: requestInput(em_ch_de, em_ch_du, 'periode_installation_emetteur')
     };
