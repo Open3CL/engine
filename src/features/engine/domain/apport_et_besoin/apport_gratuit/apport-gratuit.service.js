@@ -46,7 +46,7 @@ export class ApportGratuitService {
 
     return mois_liste.reduce(
       (acc, mois) => {
-        acc.apport_solaire_ch += this.apportSolaireMois(
+        const apportSolaire = this.apportSolaireMois(
           ctx,
           logement.enveloppe,
           mois,
@@ -58,6 +58,9 @@ export class ApportGratuitService {
             ctx.inertie.ilpa
           )
         );
+        acc.apport_solaire_ch += apportSolaire;
+        logement.donnees_de_calcul.apportsSolaire[mois] = apportSolaire;
+
         if (clim.length > 0) {
           acc.apport_solaire_fr += this.apportSolaireMois(
             ctx,
@@ -84,7 +87,7 @@ export class ApportGratuitService {
 
     return mois_liste.reduce(
       (acc, mois) => {
-        acc.apport_interne_ch += this.apportInterneMois(
+        const apportInterne = this.apportInterneMois(
           ctx,
           this.#frTvStore.getData(
             'nref19',
@@ -94,6 +97,19 @@ export class ApportGratuitService {
             ctx.inertie.ilpa
           )
         );
+        acc.apport_interne_ch += apportInterne;
+        logement.donnees_de_calcul.apportsInterneCh[mois] = apportInterne;
+        logement.donnees_de_calcul.apportsInterneDepensier[mois] = this.apportInterneMois(
+          ctx,
+          this.#frTvStore.getData(
+            'nref21',
+            ctx.altitude.value,
+            ctx.zoneClimatique.value,
+            mois,
+            ctx.inertie.ilpa
+          )
+        );
+
         if (clim.length > 0) {
           acc.apport_interne_fr += this.apportInterneMois(
             ctx,

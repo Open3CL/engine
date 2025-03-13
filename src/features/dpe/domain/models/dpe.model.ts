@@ -159,6 +159,15 @@ export interface Logement {
   installation_ecs_collection: { installation_ecs: InstallationEcs[] };
   installation_chauffage_collection: { installation_chauffage: InstallationChauffage[] };
   sortie: Sortie;
+  donnees_de_calcul: LogementDonneesCalcul;
+}
+
+export interface LogementDonneesCalcul {
+  apportsInterneCh: { [key: string]: number };
+  apportsInterneDepensier: { [key: string]: number };
+  apportsSolaire: { [key: string]: number };
+  besoinChauffageHP: { [key: string]: number };
+  besoinChauffageDepensierHP: { [key: string]: number };
 }
 
 export interface Tertiaire extends Logement {}

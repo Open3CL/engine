@@ -58,6 +58,14 @@ export class EngineService {
       confort_ete: undefined,
       qualite_isolation: undefined
     };
+    proceededDpe.logement.donnees_de_calcul = {
+      apportsInterne: [],
+      apportsInterneDepensier: [],
+      apportsInterneCh: [],
+      apportsSolaire: [],
+      besoinChauffageHP: [],
+      besoinChauffageDepensierHP: []
+    };
     const ctx = this.#contextBuilder.fromDpe(proceededDpe);
 
     // Calcul de l'inertie
@@ -101,6 +109,8 @@ export class EngineService {
 
     // Calcul du DPE dans le collectif
 
+    delete proceededDpe.logement.donnees_de_calcul;
+
     return proceededDpe;
   }
 
@@ -142,9 +152,10 @@ export class EngineService {
       m.emetteur_chauffage_collection.emetteur_chauffage?.map((n) => {
         delete n.donnee_intermediaire;
       });
-      m.generateur_chauffage_collection.generateur_chauffage?.map((n) => {
+      // @todo calculer les données intermédiaires (notamment pn et qp0)
+      /*m.generateur_chauffage_collection.generateur_chauffage?.map((n) => {
         delete n.donnee_intermediaire;
-      });
+      });*/
       delete m.donnee_intermediaire;
     });
     delete dpe.logement.production_elec_enr?.donnee_intermediaire;
