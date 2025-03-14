@@ -49,4 +49,26 @@ describe('Lecture des tables de valeurs', () => {
       expect(tvStore.getData(type, '400-800m', 'h1a', 'Juin', ilpa)).toBe(expected);
     });
   });
+
+  describe('Lecture des valeurs de coefficient d’efficience énergétique eer', () => {
+    test.each([
+      {
+        zoneClimatiqueId: '2',
+        periodeInstallationId: 1,
+        expected: 3.6
+      },
+      {
+        zoneClimatiqueId: '8',
+        periodeInstallationId: 2,
+        expected: 5.415
+      }
+    ])(`type: $type, ilpa: $ilpa`, ({ zoneClimatiqueId, periodeInstallationId, expected }) => {
+      expect(tvStore.getEer(zoneClimatiqueId, periodeInstallationId)).toBe(expected);
+    });
+
+    test('pas de valeur de eer', () => {
+      const eer = tvStore.getEer('8', 8);
+      expect(eer).toBeUndefined();
+    });
+  });
 });

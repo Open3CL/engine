@@ -1,5 +1,6 @@
 import { tvs as tv } from '../../../../tv-v2.js';
 import { TvStore } from './../tv.store.js';
+import { logger } from '../../../../core/util/logger/log-service.js';
 
 /**
  * Accès aux données des tables de valeurs pour le besoin en froid
@@ -34,5 +35,31 @@ export class FrTvStore extends TvStore {
     }
 
     return parseFloat(values[classeAltitude][mois][zoneClimatique]);
+  }
+
+  /**
+   * Coefficient d’efficience énergétique
+   * @see 10.3 - Les consommations de refroidissement
+   *
+   * @param zoneClimatiqueId {string}
+   * @param periodeInstallationId {number}
+   *
+   * @return {number|undefined}
+   */
+  getEer(zoneClimatiqueId, periodeInstallationId) {
+    const eer = tv['seer'].find(
+      (v) =>
+        v.enum_zone_climatique_id.split('|').includes(zoneClimatiqueId) &&
+        parseInt(v.enum_periode_installation_fr_id) === periodeInstallationId
+    )?.eer;
+
+    if (!eer) {
+      logger.error(
+        `Pas de valeur forfaitaire eer pour zoneClimatiqueId:${zoneClimatiqueId}, periodeInstallationId:${periodeInstallationId}`
+      );
+      return;
+    }
+
+    return parseFloat(eer);
   }
 }
