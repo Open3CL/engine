@@ -3,6 +3,7 @@ import { ContexteBuilder } from './contexte.builder.js';
 import { DeperditionEnveloppeService } from './enveloppe/deperdition-enveloppe.service.js';
 import { logger } from '../../../core/util/logger/log-service.js';
 import { ApportEtBesoinService } from './apport_et_besoin/apport-et-besoin.service.js';
+import { ConsoService } from './conso/conso.service.js';
 
 export class EngineService {
   /**
@@ -16,6 +17,11 @@ export class EngineService {
   #apportEtBesoinService;
 
   /**
+   * @type {ConsoService}
+   */
+  #consoService;
+
+  /**
    * @type {ContexteBuilder}
    */
   #contextBuilder;
@@ -23,15 +29,18 @@ export class EngineService {
   /**
    * @param deperditionService {DeperditionEnveloppeService}
    * @param apportEtBesoinService {ApportEtBesoinService}
+   * @param consoService {ConsoService}
    * @param contextBuilder {ContexteBuilder}
    */
   constructor(
     deperditionService = inject(DeperditionEnveloppeService),
     apportEtBesoinService = inject(ApportEtBesoinService),
+    consoService = inject(ConsoService),
     contextBuilder = inject(ContexteBuilder)
   ) {
     this.#deperditionService = deperditionService;
     this.#apportEtBesoinService = apportEtBesoinService;
+    this.#consoService = consoService;
     this.#contextBuilder = contextBuilder;
   }
 
@@ -98,6 +107,7 @@ export class EngineService {
     // Calcul des consommations chauffage
 
     // Calcul des consommations de froid
+    this.#consoService.execute(ctx, proceededDpe.logement);
 
     // Calcul des consommations ECS
 

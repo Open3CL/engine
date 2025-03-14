@@ -1,9 +1,9 @@
 import { inject } from 'dioma';
 import { ChTvStore } from '../../../dpe/infrastructure/ch/chTv.store.js';
-import { TypeGenerateur } from '../../../dpe/domain/models/installation-chauffage.model.js';
 import { excel_to_js_exec } from '../../../../utils.js';
 import { TvStore } from '../../../dpe/infrastructure/tv.store.js';
 import { EmetteurChService } from './emetteur-ch.service.js';
+import { TypeGenerateur } from '../../../dpe/domain/models/type-generateur.model.js';
 
 /**
  * Calcul des données de calcul pour chacun des générateurs
