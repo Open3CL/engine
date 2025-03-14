@@ -22,9 +22,10 @@ export class InstallationChService {
   /**
    * Détermination des données des installations de chauffage
    *
+   * @param ctx {Contexte}
    * @param logement {Logement}
    */
-  execute(logement) {
+  execute(ctx, logement) {
     const installationsChauffage =
       logement.installation_chauffage_collection?.installation_chauffage || [];
 
@@ -32,7 +33,7 @@ export class InstallationChService {
       /**
        * Calcul des données nécessaires au calcul pour chaque générateur (qp0)
        */
-      this.#generateurChService.execute(installationChauffage);
+      this.#generateurChService.execute(ctx, logement, installationChauffage);
     });
   }
 }

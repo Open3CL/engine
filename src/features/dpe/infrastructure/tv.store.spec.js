@@ -565,6 +565,18 @@ describe('Lecture des tables de valeurs', () => {
     });
   });
 
+  test('lecture des valeurs de tempBase', () => {
+    expect(tvStore.getTempBase('1', 'h1')).toBe(-9.5);
+    expect(tvStore.getTempBase('1', 'h2')).toBe(-6.5);
+    expect(tvStore.getTempBase('1', 'h3')).toBe(-3.5);
+    expect(tvStore.getTempBase('2', 'h1')).toBe(-11.5);
+    expect(tvStore.getTempBase('2', 'h2')).toBe(-8.5);
+    expect(tvStore.getTempBase('2', 'h3')).toBe(-5.5);
+    expect(tvStore.getTempBase('3', 'h1')).toBe(-13.5);
+    expect(tvStore.getTempBase('3', 'h2')).toBe(-10.5);
+    expect(tvStore.getTempBase('3', 'h3')).toBe(-7.5);
+  });
+
   describe.skip('Benchmark b', () => {
     test('reworked', () => {
       for (let i = 0; i < 1000; i++) {

@@ -148,6 +148,13 @@ describe('Calcul des apports et besoin du logement', () => {
     expect(besoinFroidService.execute).toHaveBeenCalledWith(ctx, logement);
     expect(apportGratuitService.apportSolaire).toHaveBeenCalledWith(ctx, logement);
     expect(apportGratuitService.apportInterne).toHaveBeenCalledWith(ctx, logement);
+    expect(perteEcsRecupService.execute).toHaveBeenCalledWith(ctx, logement);
+    expect(perteChRecupService.execute).toHaveBeenCalledWith(ctx, logement);
+    expect(installationEcsService.execute).toHaveBeenCalledWith(ctx, logement, {
+      besoin_ecs: 1526,
+      besoin_ecs_depensier: 2685.3
+    });
+    expect(installationChService.execute).toHaveBeenCalledWith(ctx, logement);
   });
 
   describe("Test d'intégration pour les besoins en chauffage", () => {

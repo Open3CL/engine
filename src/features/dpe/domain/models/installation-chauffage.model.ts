@@ -105,6 +105,8 @@ export interface GenerateurChauffageDI {
 export interface GenerateurChauffageDU {
   ratio_virtualisation?: number;
   typeGenerateur?: TypeGenerateur;
+  combustion: boolean;
+  pac: boolean;
   generateur?: {
     tv_generateur_combustion_id: string;
     enum_type_generateur_ch_id: string;
@@ -118,7 +120,6 @@ export interface GenerateurChauffageDU {
 }
 
 export enum TypeGenerateur {
-  COMBUSTION = 'COMBUSTION',
-  PAC = 'PAC',
+  CHAUDIERE = 'CHAUDIERE',
   OTHER = 'OTHER'
 }

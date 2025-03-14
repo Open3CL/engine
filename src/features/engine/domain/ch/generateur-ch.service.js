@@ -2,6 +2,8 @@ import { inject } from 'dioma';
 import { ChTvStore } from '../../../dpe/infrastructure/ch/chTv.store.js';
 import { TypeGenerateur } from '../../../dpe/domain/models/installation-chauffage.model.js';
 import { excel_to_js_exec } from '../../../../utils.js';
+import { TvStore } from '../../../dpe/infrastructure/tv.store.js';
+import { EmetteurChService } from './emetteur-ch.service.js';
 
 /**
  * Calcul des données de calcul pour chacun des générateurs
@@ -16,21 +18,41 @@ export class GenerateurChService {
   /**
    * @type {ChTvStore}
    */
+  #chTvStore;
+
+  /**
+   * @type {TvStore}
+   */
   #tvStore;
 
   /**
-   * @param tvStore {ChTvStore}
+   * @type {EmetteurChService}
    */
-  constructor(tvStore = inject(ChTvStore)) {
+  #emetteurChService;
+
+  /**
+   * @param chTvStore {ChTvStore}
+   * @param tvStore {TvStore}
+   * @param emetteurChService {EmetteurChService}
+   */
+  constructor(
+    chTvStore = inject(ChTvStore),
+    tvStore = inject(TvStore),
+    emetteurChService = inject(EmetteurChService)
+  ) {
+    this.#chTvStore = chTvStore;
     this.#tvStore = tvStore;
+    this.#emetteurChService = emetteurChService;
   }
 
   /**
    * Détermination des données de calcul pour une installation de chauffage
    *
+   * @param ctx {Contexte}
+   * @param logement {Logement}
    * @param installationChauffage {InstallationChauffage}
    */
-  execute(installationChauffage) {
+  execute(ctx, logement, installationChauffage) {
     const generateursChauffage =
       installationChauffage.generateur_chauffage_collection?.generateur_chauffage || [];
 
@@ -38,25 +60,46 @@ export class GenerateurChService {
       /** @type {GenerateurChauffageDE}*/
       const generateurChauffageDE = generateurChauffage.donnee_entree;
 
-      const typeGenerateur = this.typeGenerateur(generateurChauffageDE);
+      /** @type {GenerateurChauffageDI}*/
+      const generateurChauffageDI = generateurChauffage.donnee_intermediaire;
 
       generateurChauffage.donnee_utilisateur = {
-        typeGenerateur,
+        typeGenerateur: this.typeGenerateur(generateurChauffageDE),
+        combustion: this.generateurCombustion(generateurChauffageDE),
+        pac: this.generateurPAC(generateurChauffageDE),
         ratio_virtualisation: installationChauffage.donnee_entree.ratio_virtualisation || 1
       };
 
-      if (typeGenerateur === TypeGenerateur.COMBUSTION) {
-        generateurChauffage.donnee_utilisateur.generateur = this.#tvStore.getGenerateurCombustion(
+      if (generateurChauffage.donnee_utilisateur.combustion) {
+        // Calcul de la puissance nominale si non définie
+        if (!generateurChauffageDI.pn) {
+          generateurChauffage.donnee_intermediaire.pn = this.pn(ctx, logement);
+        }
+
+        generateurChauffage.donnee_utilisateur.generateur = this.#chTvStore.getGenerateurCombustion(
           generateurChauffageDE.enum_type_generateur_ch_id,
           generateurChauffage.donnee_intermediaire.pn /
             ((generateurChauffage.donnee_utilisateur.ratio_virtualisation || 1) * 1000)
         );
 
-        const caracteristiques = this.caracteristiques(generateurChauffage);
+        const emetteurs = (
+          installationChauffage.emetteur_chauffage_collection?.emetteur_chauffage || []
+        ).filter(
+          (emetteur) =>
+            emetteur.donnee_entree.enum_lien_generateur_emetteur_id ===
+            generateurChauffageDE.enum_lien_generateur_emetteur_id
+        );
+
+        const caracteristiques = this.caracteristiques(ctx, generateurChauffage, emetteurs);
         generateurChauffage.donnee_intermediaire.qp0 = caracteristiques.qp0;
         generateurChauffage.donnee_intermediaire.rpn = caracteristiques.rpn;
         generateurChauffage.donnee_intermediaire.rpint = caracteristiques.rpint;
         generateurChauffage.donnee_intermediaire.pveil = caracteristiques.pveil;
+
+        if (caracteristiques.temp_fonc_30)
+          generateurChauffage.donnee_intermediaire.temp_fonc_30 = caracteristiques.temp_fonc_30;
+        if (caracteristiques.temp_fonc_100)
+          generateurChauffage.donnee_intermediaire.temp_fonc_100 = caracteristiques.temp_fonc_100;
       }
     });
   }
@@ -68,10 +111,23 @@ export class GenerateurChService {
    * @return {TypeGenerateur}
    */
   typeGenerateur(generateurChauffageDE) {
-    if (this.generateurCombustion(generateurChauffageDE)) {
-      return TypeGenerateur.COMBUSTION;
-    } else if (this.generateurPAC(generateurChauffageDE)) {
-      return TypeGenerateur.PAC;
+    const typeGenerateurChauffage = parseInt(generateurChauffageDE.enum_type_generateur_ch_id);
+
+    // Chaudière Fioul
+    if (typeGenerateurChauffage >= 75 && typeGenerateurChauffage <= 84) {
+      return TypeGenerateur.CHAUDIERE;
+    }
+    // Chaudière Gaz
+    if (typeGenerateurChauffage >= 85 && typeGenerateurChauffage <= 97) {
+      return TypeGenerateur.CHAUDIERE;
+    }
+    // Chaudière gpl
+    if (typeGenerateurChauffage >= 127 && typeGenerateurChauffage <= 139) {
+      return TypeGenerateur.CHAUDIERE;
+    }
+    // Chaudière hybride
+    if ([148, 149, 150, 151, 160, 161].includes(typeGenerateurChauffage)) {
+      return TypeGenerateur.CHAUDIERE;
     }
 
     return TypeGenerateur.OTHER;
@@ -84,7 +140,7 @@ export class GenerateurChService {
    * @return {boolean}
    */
   generateurCombustion(generateurChauffageDE) {
-    return this.#tvStore
+    return this.#chTvStore
       .getCombustionGenerateurs()
       .includes(parseInt(generateurChauffageDE.enum_type_generateur_ch_id));
   }
@@ -96,7 +152,7 @@ export class GenerateurChService {
    * @return {boolean}
    */
   generateurPAC(generateurChauffageDE) {
-    return this.#tvStore
+    return this.#chTvStore
       .getPacGenerateurs()
       .includes(parseInt(generateurChauffageDE.enum_type_generateur_ch_id));
   }
@@ -109,19 +165,45 @@ export class GenerateurChService {
    *   — rpn : rendements à pleine charge
    *   — rpint : rendements à charge intermédiaire
    *   — pveil : puissance de la veilleuse
+   *   — temp_fonc_30 : températeur de fonctionnement du générateur à 30% de charge
+   *   — temp_fonc_100 : températeur de fonctionnement du générateur à 100% de charge
    *
+   * @param ctx {Contexte}
    * @param generateurChauffage {GenerateurChauffage}
-   * @return {{qp0: number, rpn: number, rpint: number, rpint: number, pveil: number}}
+   * @param emetteursChauffage {EmetteurChauffage[]}
+   * @return {{qp0: number, rpn: number, rpint: number, rpint: number, pveil: number, temp_fonc_30: number, temp_fonc_100: number}}
    */
-  caracteristiques(generateurChauffage) {
-    const rpnrpint = this.rpnrpint(generateurChauffage);
-
-    return {
+  caracteristiques(ctx, generateurChauffage, emetteursChauffage) {
+    const caracteristiques = {
       qp0: this.qp0(generateurChauffage),
-      rpn: rpnrpint.rpn,
-      rpint: rpnrpint.rpint,
+      ...this.rpnrpint(generateurChauffage),
       pveil: this.pveil(generateurChauffage)
     };
+
+    if (generateurChauffage.donnee_utilisateur.typeGenerateur === TypeGenerateur.CHAUDIERE) {
+      const { temp_fonc_30, temp_fonc_100 } = this.temperatureFonctionnement(
+        ctx,
+        generateurChauffage,
+        emetteursChauffage
+      );
+
+      if (temp_fonc_30) caracteristiques.temp_fonc_30 = temp_fonc_30;
+      if (temp_fonc_100) caracteristiques.temp_fonc_100 = temp_fonc_100;
+    }
+
+    return caracteristiques;
+  }
+
+  /**
+   * Calcul de la puissance nominale du générateur
+   *
+   * @param ctx {Contexte}
+   * @param logement {Logement}
+   * @return {number}
+   */
+  pn(ctx, logement) {
+    const Tbase = this.#tvStore.getTempBase(ctx.altitude.id, ctx.zoneClimatique.id);
+    return (1.2 * logement.sortie.deperdition.deperdition_enveloppe * (19 - Tbase)) / 0.95 ** 3;
   }
 
   /**
@@ -197,6 +279,39 @@ export class GenerateurChService {
       return generateurChauffage.donnee_utilisateur.generateur?.pveil || 0;
     } else {
       return generateurChauffageDI.pveilleuse;
+    }
+  }
+
+  /**
+   * Calcul des températures de fonctionnement du générateur à 30% et 100% de charge
+   *
+   * @param ctx {Contexte}
+   * @param generateurChauffage {GenerateurChauffage}
+   * @param emetteursChauffage {EmetteurChauffage[]}
+   * @return {{temp_fonc_30: number, temp_fonc_100: number}}
+   */
+  temperatureFonctionnement(ctx, generateurChauffage, emetteursChauffage) {
+    const generateurChauffageDE = generateurChauffage.donnee_entree;
+    const generateurChauffageDI = generateurChauffage.donnee_intermediaire;
+
+    /**
+     * 5 - caractéristiques saisies à partir de la plaque signalétique ou d'une documentation technique du système à combustion : pn, rpn,rpint,qp0,temp_fonc_30,temp_fonc_100
+     */
+    if (
+      parseInt(generateurChauffageDE.enum_methode_saisie_carac_sys_id) === 5 &&
+      generateurChauffageDI.temp_fonc_30 &&
+      generateurChauffageDI.temp_fonc_100
+    ) {
+      return {
+        temp_fonc_30: generateurChauffageDI.temp_fonc_30,
+        temp_fonc_100: generateurChauffageDI.temp_fonc_100
+      };
+    } else {
+      return this.#emetteurChService.temperatureFonctionnement(
+        ctx,
+        generateurChauffage.donnee_entree,
+        emetteursChauffage
+      );
     }
   }
 

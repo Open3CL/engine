@@ -106,6 +106,7 @@ describe('Generateur du contexte du calcul', () => {
           enum_classe_altitude_id: 2
         },
         caracteristique_generale: {
+          annee_construction: 2005,
           enum_periode_construction_id: 4,
           surface_habitable_logement: 48.9,
           surface_habitable_immeuble: 105,
@@ -120,6 +121,7 @@ describe('Generateur du contexte du calcul', () => {
       surfaceHabitable: dpe.logement.caracteristique_generale.surface_habitable_logement,
       typeHabitation: TypeHabitation.MAISON,
       typeDpe: TypeDpe.MAISON,
+      anneeConstruction: 2005,
       enumPeriodeConstructionId: '4',
       hauteurSousPlafond: 2.8,
       nombreAppartement: 18,

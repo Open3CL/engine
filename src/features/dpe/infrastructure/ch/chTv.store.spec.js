@@ -25,4 +25,75 @@ describe('Lecture des tables de valeurs', () => {
       163, 164, 165, 166, 167, 168, 169, 170
     ]);
   });
+
+  test('Caractéristique du générateur à combustion', () => {
+    expect(chTvStore.getGenerateurCombustion('128', 125)).toStrictEqual({
+      tv_generateur_combustion_id: '2',
+      enum_type_generateur_ch_id: '86|128',
+      enum_type_generateur_ecs_id: '46|93',
+      type_generateur: 'Chaudière gaz  classique 1981-1985',
+      pn: 'Pn',
+      rpn: '84 + 2 logPn',
+      rpint: '80 + 3 logPn',
+      qp0_perc: '2%',
+      pveil: '150'
+    });
+
+    expect(chTvStore.getGenerateurCombustion('84', 125)).toStrictEqual({
+      tv_generateur_combustion_id: '26',
+      enum_type_generateur_ch_id: '84',
+      enum_type_generateur_ecs_id: '44',
+      type_generateur: 'Chaudière fioul à condensation après 2015',
+      critere_pn: '70<Pn≤400',
+      pn: 'Pn',
+      rpn: '94 + logPn',
+      rpint: '100 + logPn',
+      qp0_perc: '0.60%'
+    });
+  });
+
+  describe('Lecture des valeurs de temp_fonc_30 ou temp_fonc_100', () => {
+    test.each([
+      {
+        label:
+          "Chaudière standard après 1990, emetteurs entre 1981 et 2000, basse température d'émission",
+        pourcentageFonctionnement: 30,
+        enumTypeGenerateurId: '89',
+        enumTemperatureDistribution: 2,
+        enumPeriodeEmetteurs: 2,
+        expected: 45
+      },
+      {
+        label: "Emetteurs entre 1981 et 2000, basse température d'émission",
+        pourcentageFonctionnement: 100,
+        enumTypeGenerateurId: '89',
+        enumTemperatureDistribution: 2,
+        enumPeriodeEmetteurs: 2,
+        expected: 35
+      }
+    ])(
+      `$label`,
+      ({
+        pourcentageFonctionnement,
+        enumTypeGenerateurId,
+        enumTemperatureDistribution,
+        enumPeriodeEmetteurs,
+        expected
+      }) => {
+        expect(
+          chTvStore.temperatureFonctionnement(
+            pourcentageFonctionnement,
+            enumTypeGenerateurId,
+            enumTemperatureDistribution,
+            enumPeriodeEmetteurs
+          )
+        ).toBe(expected);
+      }
+    );
+
+    test('pas de valeur de temp_fonc_30 ou temp_fonc_100', () => {
+      const pertes_stockage = chTvStore.temperatureFonctionnement(100, 600, 600, 600);
+      expect(pertes_stockage).toBeUndefined();
+    });
+  });
 });
