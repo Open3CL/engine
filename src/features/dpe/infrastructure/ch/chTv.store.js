@@ -24,13 +24,13 @@ export class ChTvStore extends TvStore {
   }
 
   /**
-   * @param tv {string}
+   * @param tvType {string}
    * @returns {any[]}
    */
-  #getTypeGenerateurChId(tv) {
+  #getTypeGenerateurChId(tvType) {
     return [
       ...new Set(
-        tv[tv].flatMap((v) =>
+        tv[tvType].flatMap((v) =>
           (v.enum_type_generateur_ch_id
             ? v.enum_type_generateur_ch_id.split('|').map(Number)
             : []
