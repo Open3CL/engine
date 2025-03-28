@@ -149,7 +149,7 @@ Distribué sous la license `GPL-3.0 license`. Lire le fichier `LICENSE` pour plu
 
 ## Contact
 
-contact@redfroggy.fr
+Pour plus d'informations merci de nous contacter à cette adresse : open3cl@redfroggy.fr
 
 <p align="right">(<a href="#readme-top">Retour sommaire</a>)</p>
 
