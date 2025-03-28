@@ -1,22 +1,79 @@
-# Open3CL
+<a id="readme-top"></a>
+[![Contributors][contributors-shield]][contributors-url]
+[![Forks][forks-shield]][forks-url]
+[![Stargazers][stars-shield]][stars-url]
+[![Issues][issues-shield]][issues-url]
+[![ GPL-3.0 license][license-shield]][license-url]
 
-Open3CL est une librairie JavaScript open source, spécialement conçue pour faciliter le calcul des Diagnostics de Performance Énergétique (DPE). Elle implémente la norme définie dans [l'annexe 1 de l'arrêté du 31 mars 2021](https://rt-re-batiment.developpement-durable.gouv.fr/IMG/pdf/consolide_annexe_1_arrete_du_31_03_2021_relatif_aux_methodes_et_procedures_applicables.pdf). Elle est destinée aux développeurs qui souhaitent intégrer des calculs énergétiques précis et conformes à la réglementation dans leurs applications.
+<br />
+<div align="center">
+  <a href="https://github.com/othneildrew/Best-README-Template">
+    <img src="images/logo.png" alt="Logo" width="260" height="80">
+  </a>
 
-## Fonctionnalités principales
+<h3 align="center">Open3CL</h3>
+  Implémentation open source du moteur Open3CL de l'ADEME.
+  <p align="center">
 
-- **Calculs énergétiques** : Supporte les différentes méthodologies définies par la réglementation.
-- **Conformité** : Implémente la norme définie dans [l'annexe 1 de l'arrêté du 31 mars 2021](https://rt-re-batiment.developpement-durable.gouv.fr/IMG/pdf/consolide_annexe_1_arrete_du_31_03_2021_relatif_aux_methodes_et_procedures_applicables.pdf).
-- **Performance** : Optimisée pour des calculs rapides sur de grands ensembles de données.
+![Javascript][Javascript]
 
-## Installation
+   <br/>    
+<a href="https://github.com/Open3CL/issues/new?labels=bug&template=bug-report---.md">Créer un bug</a>
+    &middot;
+    <a href="https://github.com/Open3CL/issues/new?labels=enhancement&template=feature-request---.md">Créer une feature</a>
+  </p>
+</div>
 
-```bash
-npm install @open3cl/engine
+<details>
+  <summary>Sommaire</summary>
+  <ol>
+    <li>
+      <a href="#a-propos-du-projet">A propos du projet</a>
+    </li>
+    <li>
+      <a href="#demarrage">Démarrage</a>
+      <ul>
+        <li><a href="#pre-requis">Pre-requis</a></li>
+        <li><a href="#installation">Installation</a></li>
+        <li><a href="#documentation">Documentation</a></li>
+      </ul>
+    </li>
+    <li><a href="#usage">Usage</a></li>
+    <li><a href="#rapports">Rapports</a></li>
+    <li><a href="#roadmap">Roadmap</a></li>
+    <li><a href="#contribution">Contribution</a></li>
+    <li><a href="#license">License</a></li>
+    <li><a href="#contact">Contact</a></li>
+    <li><a href="#acknowledgments">Acknowledgments</a></li>
+  </ol>
+</details>
+
+## A propos du projet
+
+Open3CL est une librairie JavaScript open source, spécialement conçue pour faciliter le calcul des Diagnostics de Performance Énergétique (DPE).
+Elle implémente la norme définie dans [l'annexe 1 de l'arrêté du 31 mars 2021](https://rt-re-batiment.developpement-durable.gouv.fr/IMG/pdf/consolide_annexe_1_arrete_du_31_03_2021_relatif_aux_methodes_et_procedures_applicables.pdf). Elle est destinée aux développeurs qui souhaitent intégrer des calculs énergétiques précis et conformes à la réglementation dans leurs applications.
+
+<p align="right">(<a href="#readme-top">Retour sommaire</a>)</p>
+
+## Démarrage
+
+### Pre-requis
+
+Vous devez d'abord installer [NodeJS](https://nodejs.org/en) en version 20 ou supérieure.
+
+### Installation
+
+```sh
+  npm install @open3cl/engine
 ```
 
-## Exemple d'utilisation
+### Documentation
 
-Voici un exemple basique montrant comment utiliser Open3CL pour calculer un DPE :
+Lien à faire vers les wiki
+
+<p align="right">(<a href="#readme-top">Retour sommaire</a>)</p>
+
+## Usage
 
 ```javascript
 import { calcul_3cl } from 'open3cl';
@@ -47,58 +104,70 @@ const dpeData = {
 const result = calcul_3cl(dpeData);
 ```
 
-## Documentation
+<p align="right">(<a href="#readme-top">Retour sommaire</a>)</p>
 
-Vous pouvez consulter la documentation complète sur [l'annexe 1 de l'arrêté du 31 mars 2021](https://rt-re-batiment.developpement-durable.gouv.fr/IMG/pdf/consolide_annexe_1_arrete_du_31_03_2021_relatif_aux_methodes_et_procedures_applicables.pdf) pour obtenir plus de détails sur l'utilisation des différents modules et fonctions.
+## Rapports
 
-## Ressources
+Lister ici les rapports de tests avec stats sur le CORPUS DPE.
 
-- [PDF Méthode 3CL v1.3](https://rt-re-batiment.developpement-durable.gouv.fr/IMG/pdf/consolide_annexe_1_arrete_du_31_03_2021_relatif_aux_methodes_et_procedures_applicables.pdf)
-- [Gitlab Observatoire DPE](https://gitlab.com/observatoire-dpe/observatoire-dpe/-/blob/master/README.md)
-- [Légifrance 13/04/2021 ajout d'indicateur de confort thermique dans la sortie du DPE](https://www.legifrance.gouv.fr/download/pdf?id=doxMrRr0wbfJVvtWjfDP4qE7zNsiFZL-4wqNyqoY-CA=)
-- [Légifrance 13/04/2021 valeurs GES](https://www.legifrance.gouv.fr/download/pdf?id=doxMrRr0wbfJVvtWjfDP4gHzzERt1iX0PtobthCE6A0=)
-- [CSTB Procédure de certification](https://www.google.com/url?sa=t&rct=j&q=&esrc=s&source=web&cd=&cad=rja&uact=8&ved=2ahUKEwjH-fG2-s7_AhXLaqQEHTP8CwMQFnoECA4QAQ&url=https%3A%2F%2Frt-re-batiment.developpement-durable.gouv.fr%2FIMG%2Fpdf%2Freglement_evaluation_logiciel_dpe_2021_-_audit_energetique-13122022_v2.pdf&usg=AOvVaw3SWv8drhqbgMMT8K9m6a2C&opi=89978449)
-- [Valeurs des étiquettes énergétiques](https://docs.google.com/spreadsheets/d/1QVXUOLP8aJukA-PLBGyVB0ZJTWmLEE1WbflXUfsT_jU/edit#gid=0)
+## Roadmap
 
-## Quelques DPE intéressants
+- [x] Site Open 3CL
+- [ ] Refacto technique
+- [ ] Rapports de tests
+- [ ] Certification ADEME
+- [ ] Fonctionnalités
+  - [ ] DPE à l'immeuble
+  - [ ] Photovoltaïque
 
-En travaillant sur les DPE je suis tombé sur quelques cas de DPE intéressants
+Voir la liste des [issues](https://github.com/Open3CL/Open3CL/issues) pour avoir le détail complet des bugs et fonctionnalités en cours de réalisation.
 
-- `2307E3075089A` chaudiere a condensation + climatiseur
-- `2344E2258429L` DPE generé a partir des données immeuble
-- `2362E3036179P` poele a charbon
-- `2369E2991011Q` 1 radiateur à gaz + fenetres avec masques lointains
-- `2387E0402213E` methode_application 'maison_individuelle' mais les portes sont saisie depuis une étude rt2012/rt2020
-- `2387E0576340J` 2 gen ch
-- `2387E0888781I` inertie lourde + paroi anciennes (tableaux de valeurs différents)
-- `2387E1742056P` 2 emetteur ch
-- `2387E2058698D` ventil hybride
-- `2387E2603968B` inertie lourde + parois ancienne (différentes periode de chauffe)
-- `2387E2899635W` 2 installation_ch
-- `2387E2923777K` pas d’ECS, pas de portes
-- `2387E3074987E` bouclage ECS
-- `2387E3092820B` pas de pancher_haut
-- `2387E3103131Q` Analysimmo 4.1.1 incohérence ventil calculée comme si presence_joint_menuiserie=1 alors qu’aucune menuiserie n’a de joints
-- `2387E3103505A` Analysimmo 4.1.1 incohérence pont thermique, PB considéré pont ITI+ITE ??
-- `2187E1039187C` toiture terrasse
-- `2387E0291550X` probleme ubat/uph comble amenagés
-- `2287E1724516Y` pour un meme generateur, position_volume_chauffe = 0 ou 1 selon si c'est le gen_ecs ou le gen_ch
-- `2387E3092820B`, `2287E1043883T` et plein d'autres dpe. Le diagnostiqueur override la valeur forfaitaire de pveil pour le mettre a 0 car il n'y a pas de veilleuse sur la chaudiere, or pour le moteur il n'y a aucun moyen de savoir si donnee_intermediaire.pveil a ete saisi ou s'il faut aller chercher une valeur dans le tableau.
+<p align="right">(<a href="#readme-top">Retour sommaire</a>)</p>
 
 ## Contribution
 
 Nous accueillons les contributions avec plaisir ! Si vous souhaitez améliorer Open3CL, veuillez :
 
-1. Forker le dépôt.
-2. Créer une branche pour vos modifications.
-3. Soumettre une pull request avec une description claire des changements apportés.
+- Forker le dépôt.
+- Créer une branche pour vos modifications.
+- Soumettre une pull request avec une description claire des changements apportés.
+- Consultez le fichier `CONTRIBUTING.md` pour plus de détails.
 
-Consultez le fichier `CONTRIBUTING.md` pour plus de détails.
+### Meilleurs contributeurs
+
+<a href="https://github.com/Open3CL/engine/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=Open3CL/engine" alt="contrib.rocks image" />
+</a>
+
+<p align="right">(<a href="#readme-top">Retour sommaire</a>)</p>
 
 ## License
 
-Ce projet est sous licence [MIT](LICENSE).
+Distribué sous la license `GPL-3.0 license`. Lire le fichier `LICENSE` pour plus d'informations.
+
+<p align="right">(<a href="#readme-top">Retour sommaire</a>)</p>
 
 ## Contact
 
-Pour toute question ou suggestion, veuillez contacter l'équipe de développement
+contact@redfroggy.fr
+
+<p align="right">(<a href="#readme-top">Retour sommaire</a>)</p>
+
+## Remerciements
+
+A compléter
+
+<p align="right">(<a href="#readme-top">Retour sommaire</a>)</p>
+
+[contributors-shield]: https://img.shields.io/github/contributors/Open3CL/engine.svg?style=for-the-badge
+[contributors-url]: https://github.com/Open3CL/engine/graphs/contributors
+[forks-shield]: https://img.shields.io/github/forks/Open3CL/engine.svg?style=for-the-badge
+[forks-url]: https://github.com/Open3CL/network/members
+[stars-shield]: https://img.shields.io/github/stars/Open3CL/engine.svg?style=for-the-badge
+[stars-url]: https://github.com/Open3CL/stargazers
+[issues-shield]: https://img.shields.io/github/issues/Open3CL/engine.svg?style=for-the-badge
+[issues-url]: https://github.com/Open3CL/issues
+[license-shield]: https://img.shields.io/github/license/Open3CL/engine.svg?style=for-the-badge
+[license-url]: https://github.com/Open3CL/blob/master/LICENSE
+[product-screenshot]: images/screenshot.png
+[Javascript]: https://img.shields.io/badge/javascript-000000?style=for-the-badge&logo=javascript&logoColor=white
