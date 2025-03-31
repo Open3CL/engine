@@ -120,7 +120,7 @@ Lister ici les rapports de tests avec stats sur le CORPUS DPE.
   - [ ] DPE à l'immeuble
   - [ ] Photovoltaïque
 
-Voir la liste des [issues](https://github.com/Open3CL/Open3CL/issues) pour avoir le détail complet des bugs et fonctionnalités en cours de réalisation.
+Voir la liste des [issues](https://github.com/Open3CL/engine/issues) pour avoir le détail complet des bugs et fonctionnalités en cours de réalisation.
 
 <p align="right">(<a href="#readme-top">Retour sommaire</a>)</p>
 
