@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Open3CL reports</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.css"
+      rel="stylesheet"
+    />
+    <script
+      src="https://code.jquery.com/jquery-3.7.1.min.js"
+      integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo="
+      crossorigin="anonymous"
+    ></script>
+    <script>
+      let threshold = 5;
+      let showStatsCompat = false;
+      $(document).ready(() => {
+        document.getElementById('showStatsCompat').addEventListener('change', (event) => {
+          showStatsCompat = !showStatsCompat;
+          loadGlobalReportData();
+          loadDetailReportData();
+        });
+
+        document.getElementById('threshold').addEventListener('change', (event) => {
+          threshold = Number(event.target.value);
+          loadGlobalReportData();
+          loadDetailReportData();
+        });
+
+        loadGlobalReportData();
+        loadDetailReportData();
+      });
+    </script>
+    <script src="global_report_chart.js"></script>
+    <script src="detailed_report_chart.js"></script>
+  </head>
+  <body>
+    <div>
+      <div class="w-full">
+        <form class="flex justify-center gap-2 pt-3">
+          <div class="text-center">
+            <div class="ms-3 text-sm font-medium text-gray-900 dark:text-gray-300">
+              Marge d'erreur (en %)
+            </div>
+            <select
+              id="threshold"
+              class="mt-2 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+            >
+              <option value="5" selected>5%</option>
+              <option value="6">6%</option>
+              <option value="7">7%</option>
+              <option value="8">8%</option>
+              <option value="9">9%</option>
+              <option value="10">10%</option>
+            </select>
+          </div>
+          <div class="text-center">
+            <div class="ms-3 text-sm font-medium text-gray-900 dark:text-gray-300">
+              Mode de compatibilité
+            </div>
+            <label class="inline-flex items-center cursor-pointer mt-2">
+              <input type="checkbox" value="" class="sr-only peer" id="showStatsCompat" />
+              <div
+                class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600 dark:peer-checked:bg-blue-600"
+              ></div>
+            </label>
+          </div>
+        </form>
+      </div>
+      <div id="charts" class="p-6 flex">
+        <div style="width: 600px">
+          <canvas id="globalChart"></canvas>
+        </div>
+        <div style="width: 800px">
+          <canvas id="detailedChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.js"></script>
+  </body>
+</html>
