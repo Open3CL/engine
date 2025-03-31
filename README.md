@@ -141,7 +141,7 @@ Nous accueillons les contributions avec plaisir ! Si vous souhaitez améliorer O
 
 <p align="right">(<a href="#readme-top">Retour sommaire</a>)</p>
 
-## License
+## Licence
 
 Distribué sous la license `GPL-3.0 license`. Lire le fichier `LICENSE` pour plus d'informations.
 
