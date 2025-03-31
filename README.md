@@ -7,7 +7,7 @@
 
 <br />
 <div align="center">
-  <a href="https://github.com/othneildrew/Best-README-Template">
+  <a href="https://open3cl.fr">
     <img src="images/logo.png" alt="Logo" width="260" height="80">
   </a>
 
@@ -131,7 +131,7 @@ Nous accueillons les contributions avec plaisir ! Si vous souhaitez améliorer O
 - Forker le dépôt.
 - Créer une branche pour vos modifications.
 - Soumettre une pull request avec une description claire des changements apportés.
-- Consultez le fichier  [CONTRIBUTING.md](CONTRIBUTING.md) pour plus de détails.
+- Consultez le fichier [CONTRIBUTING.md](CONTRIBUTING.md) pour plus de détails.
 
 ### Meilleurs contributeurs
 
