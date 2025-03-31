@@ -131,7 +131,7 @@ Nous accueillons les contributions avec plaisir ! Si vous souhaitez améliorer O
 - Forker le dépôt.
 - Créer une branche pour vos modifications.
 - Soumettre une pull request avec une description claire des changements apportés.
-- Consultez le fichier `CONTRIBUTING.md` pour plus de détails.
+- Consultez le fichier  [CONTRIBUTING.md](CONTRIBUTING.md) pour plus de détails.
 
 ### Meilleurs contributeurs
 
