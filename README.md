@@ -73,7 +73,7 @@ Lien à faire vers les wiki
 
 <p align="right">(<a href="#readme-top">Retour sommaire</a>)</p>
 
-## Usage
+## Utilisation
 
 ```javascript
 import { calcul_3cl } from 'open3cl';
