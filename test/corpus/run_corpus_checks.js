@@ -213,30 +213,8 @@ export const validateCorpus = async () => {
     for (const dpeCode of dpeCodes) {
       try {
         const dpe = await getAdemeFileJson(dpeCode);
-
-        /**
-         * Seuls les DPEs des appartements ou maisons font partie de la cible Kardino
-         * 1 - dpe maison individuelle
-         * 2 - dpe appartement individuel chauffage individuel ecs individuel
-         * 3 - dpe appartement individuel chauffage collectif ecs individuel
-         * 4 - dpe appartement individuel chauffage individuel ecs collectif
-         * 5 - dpe appartement individuel chauffage collectif ecs collectif
-         * 31 - dpe appartement individuel chauffage mixte (collectif-individuel) ecs individuel
-         * 32 - dpe appartement individuel chauffage mixte (collectif-individuel) ecs collectif
-         * 35 - dpe appartement individuel chauffage mixte (collectif-individuel) ecs mixte (collectif-individuel)
-         * 36 - dpe appartement individuel chauffage individuel ecs mixte (collectif-individuel)
-         * 37 - dpe appartement individuel chauffage collectif ecs mixte (collectif-individuel)
-         */
-        if (
-          dpe.administratif.enum_version_id !== '1.1' &&
-          ['1', '2', '3', '4', '5', '31', '32', '35', '36', '37'].includes(
-            dpe.logement.caracteristique_generale.enum_methode_application_dpe_log_id
-          )
-        ) {
-          GLOBAL_REPORT.total++;
-
-          runEngineAndVerifyOutput(dpe);
-        }
+        GLOBAL_REPORT.total++;
+        runEngineAndVerifyOutput(dpe);
       } catch (ex) {
         console.error(ex);
         GLOBAL_REPORT.total--;
