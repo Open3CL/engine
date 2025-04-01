@@ -14,6 +14,14 @@
   "scripts": {
     "test": "vitest run",
     "test:ci": "vitest run --coverage",
+    "test:corpus": "node test/corpus/run_corpus_checks.js",
+    "test:corpus:bench:5": "npm run test:corpus -- threshold=5 && npm run test:corpus -- compatibility threshold=5",
+    "test:corpus:bench:6": "npm run test:corpus -- threshold=6 && npm run test:corpus -- compatibility threshold=6",
+    "test:corpus:bench:7": "npm run test:corpus -- threshold=7 && npm run test:corpus -- compatibility threshold=7",
+    "test:corpus:bench:8": "npm run test:corpus -- threshold=8 && npm run test:corpus -- compatibility threshold=8",
+    "test:corpus:bench:9": "npm run test:corpus -- threshold=9 && npm run test:corpus -- compatibility threshold=9",
+    "test:corpus:bench:10": "npm run test:corpus -- threshold=10 && npm run test:corpus -- compatibility threshold=10",
+    "test:corpus:bench": "npm run test:corpus:bench:5 && npm run test:corpus:bench:6 && npm run test:corpus:bench:7 && npm run test:corpus:bench:8 && npm run test:corpus:bench:9 && npm run test:corpus:bench:10",
     "test:benchmark": "node inspect test/run_benchmark.js",
     "qa:lint": "eslint .",
     "qa:lint:fix": "npm run qa:lint -- --fix",
@@ -35,7 +43,7 @@
   "dependencies": {
     "dioma": "^0.4.6",
     "fast-xml-parser": "^4.5.0",
-    "lodash": "^4.17.21",
+    "lodash-es": "^4.17.21",
     "winston": "3.13.0"
   },
   "devDependencies": {
@@ -55,6 +63,7 @@
     "eslint-plugin-import": "^2.29.1",
     "eslint-plugin-n": "^16.6.2",
     "eslint-plugin-promise": "^6.1.1",
+    "fast-csv": "^5.0.2",
     "husky": "^9.0.11",
     "jscpd": "^3.5.10",
     "prettier": "^3.2.5",
