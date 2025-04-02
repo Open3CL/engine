@@ -24,20 +24,31 @@ export default function calc_qualite_isolation(enveloppe, dp) {
   /**
    * enum_type_adjacence_id = 22 - Local non déperditif (local à usage d'habitation chauffé)
    */
-  const mur_list = (enveloppe.mur_collection.mur || []).filter(
+  const mur_list = (
+    Array.isArray(enveloppe.mur_collection?.mur) ? enveloppe.mur_collection.mur : []
+  ).filter(
     (mur) => mur.donnee_entree.enum_type_adjacence_id !== '22' && mur.donnee_intermediaire.b > 0
   );
 
-  const planchersHauts = enveloppe.plancher_haut_collection.plancher_haut || [];
-  const planchersBas = (enveloppe.plancher_bas_collection.plancher_bas || []).filter(
-    (mur) => mur.donnee_entree.enum_type_adjacence_id !== '22'
-  );
-  const baiesVitrees = (enveloppe.baie_vitree_collection.baie_vitree || []).filter(
-    (porte) => porte.donnee_intermediaire.b > 0
-  );
-  const portes = (enveloppe.porte_collection.porte || []).filter(
-    (porte) => porte.donnee_intermediaire.b > 0
-  );
+  const planchersHauts = Array.isArray(enveloppe.plancher_haut_collection?.plancher_haut)
+    ? enveloppe.plancher_haut_collection.plancher_haut
+    : [];
+
+  const planchersBas = (
+    Array.isArray(enveloppe.plancher_bas_collection?.plancher_bas)
+      ? enveloppe.plancher_bas_collection.plancher_bas
+      : []
+  ).filter((mur) => mur.donnee_entree.enum_type_adjacence_id !== '22');
+
+  const baiesVitrees = (
+    Array.isArray(enveloppe.baie_vitree_collection?.baie_vitree)
+      ? enveloppe.baie_vitree_collection.baie_vitree
+      : []
+  ).filter((porte) => porte.donnee_intermediaire.b > 0);
+
+  const portes = (
+    Array.isArray(enveloppe.porte_collection?.porte) ? enveloppe.porte_collection.porte : []
+  ).filter((porte) => porte.donnee_intermediaire.b > 0);
 
   let phCombleAmenagee = [];
   let phCombleToitTerrasse = [];

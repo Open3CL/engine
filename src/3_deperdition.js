@@ -210,15 +210,30 @@ export default function calc_deperdition(cg, zc, th, effetJoule, dpe, Sh) {
   const logement = dpe.logement;
   const enveloppe = logement.enveloppe;
 
-  const mur_list = enveloppe.mur_collection.mur || [];
+  // Ensure all lists are definitely arrays
+  const mur_list = Array.isArray(enveloppe?.mur_collection?.mur)
+    ? enveloppe.mur_collection.mur
+    : [];
   const declaredMurs = structuredClone(mur_list);
-  const pb_list = enveloppe.plancher_bas_collection.plancher_bas || [];
-  const ph_list = enveloppe.plancher_haut_collection.plancher_haut || [];
-  const porte_list = enveloppe.porte_collection.porte || [];
-  const bv_list = enveloppe.baie_vitree_collection.baie_vitree || [];
-  const pt_list = enveloppe.pont_thermique_collection.pont_thermique || [];
+  const pb_list = Array.isArray(enveloppe?.plancher_bas_collection?.plancher_bas)
+    ? enveloppe.plancher_bas_collection.plancher_bas
+    : [];
+  const ph_list = Array.isArray(enveloppe?.plancher_haut_collection?.plancher_haut)
+    ? enveloppe.plancher_haut_collection.plancher_haut
+    : [];
+  const porte_list = Array.isArray(enveloppe?.porte_collection?.porte)
+    ? enveloppe.porte_collection.porte
+    : [];
+  const bv_list = Array.isArray(enveloppe?.baie_vitree_collection?.baie_vitree)
+    ? enveloppe.baie_vitree_collection.baie_vitree
+    : [];
+  const pt_list = Array.isArray(enveloppe?.pont_thermique_collection?.pont_thermique)
+    ? enveloppe.pont_thermique_collection.pont_thermique
+    : [];
   const declaredPontsThermiques = structuredClone(pt_list);
-  const vt_list = logement.ventilation_collection.ventilation || [];
+  const vt_list = Array.isArray(logement?.ventilation_collection?.ventilation)
+    ? logement.ventilation_collection.ventilation
+    : [];
 
   mur_list.forEach((mur) => calc_mur(mur, zc, pc, effetJoule));
   pb_list.forEach((pb) => calc_pb(pb, zc, pc, effetJoule, pb_list));

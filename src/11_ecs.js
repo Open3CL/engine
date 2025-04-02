@@ -75,10 +75,20 @@ export default function calc_ecs(
   di.besoin_ecs = becs * di.ratio_besoin_ecs;
   di.besoin_ecs_depensier = becs_dep * di.ratio_besoin_ecs;
 
-  const pvc = ecs.generateur_ecs_collection.generateur_ecs[0].donnee_entree.position_volume_chauffe;
+  let pvc = 0; // Default value if generator info is not available
+  if (
+    ecs.generateur_ecs_collection &&
+    ecs.generateur_ecs_collection.generateur_ecs &&
+    ecs.generateur_ecs_collection.generateur_ecs.length > 0 &&
+    ecs.generateur_ecs_collection.generateur_ecs[0].donnee_entree
+  ) {
+    pvc = ecs.generateur_ecs_collection.generateur_ecs[0].donnee_entree.position_volume_chauffe;
+  }
   tv_rendement_distribution_ecs(di, de, du, pvc);
 
-  const gen_ecs_list = ecs.generateur_ecs_collection.generateur_ecs;
+  const gen_ecs_list = Array.isArray(ecs.generateur_ecs_collection?.generateur_ecs)
+    ? ecs.generateur_ecs_collection.generateur_ecs
+    : [];
   gen_ecs_list.forEach((gen_ecs) => calc_gen_ecs(dpe, gen_ecs, di, de, GV, ca_id, zc_id, th));
 
   di.conso_ecs = gen_ecs_list.reduce(

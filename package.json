@@ -1,6 +1,6 @@
 {
   "name": "@open3cl/engine",
-  "version": "0.1.0",
+  "version": "1.0.16",
   "description": "Open Source 3CL-DPE engine",
   "main": "index.js",
   "directories": {
