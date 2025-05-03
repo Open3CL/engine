@@ -47,10 +47,10 @@ export function calcul_3cl(dpe) {
 
   if (logement.enveloppe === undefined) {
     console.warn('vide: logement.enveloppe');
-    return null;
+    //return null;
   } else if (!logement.enveloppe.mur_collection) {
     console.warn('vide: logement.enveloppe.mur_collection');
-    return null;
+    //return null;
   } else if (
     !logement.enveloppe.plancher_haut_collection ||
     !logement.enveloppe.plancher_haut_collection.plancher_haut.length
@@ -67,7 +67,7 @@ export function calcul_3cl(dpe) {
       };
     } else {
       console.error('plancher_bas_collection should not be empty');
-      return null;
+      //return null;
     }
   } else if (
     !logement.enveloppe.plancher_bas_collection ||
@@ -85,7 +85,7 @@ export function calcul_3cl(dpe) {
       };
     } else {
       console.error('plancher_bas_collection should not be empty');
-      return null;
+      //return null;
     }
   }
 

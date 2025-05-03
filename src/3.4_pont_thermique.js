@@ -32,7 +32,10 @@ function defaultValue(type_liaison, pt_di, de) {
 function tv_k(pt_di, di, de, du, pc_id, logement) {
   const enveloppe = logement.enveloppe;
 
-  const mur_list = enveloppe.mur_collection.mur || [];
+  const mur_list =
+    enveloppe.mur_collection && Array.isArray(enveloppe.mur_collection.mur)
+      ? enveloppe.mur_collection.mur
+      : [];
   const pb_list = enveloppe.plancher_bas_collection.plancher_bas || [];
   const ph_list = enveloppe.plancher_haut_collection.plancher_haut || [];
   const bv_list = enveloppe.baie_vitree_collection.baie_vitree || [];
@@ -169,7 +172,9 @@ function tv_k(pt_di, di, de, du, pc_id, logement) {
   switch (type_liaison) {
     case 'plancher bas / mur':
     case 'plancher haut lourd / mur': {
-      const plancher_list = ph_list.concat(pb_list);
+      const plancher_list = (Array.isArray(ph_list) ? ph_list : []).concat(
+        Array.isArray(pb_list) ? pb_list : []
+      );
       const plancher = plancher_list.find(
         (plancher) =>
           compareReferences(plancher.donnee_entree.reference, de.reference_1) ||

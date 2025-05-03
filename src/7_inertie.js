@@ -142,7 +142,9 @@ export class Inertie {
         this.calculateInertiePhLourd
       ),
       inertie_paroi_verticale_lourd: this.#calculateInertieForCollection(
-        enveloppe.mur_collection.mur || [],
+        enveloppe && enveloppe.mur_collection && Array.isArray(enveloppe.mur_collection.mur)
+          ? enveloppe.mur_collection.mur
+          : [],
         this.calculateInertieMurLourd
       )
     };

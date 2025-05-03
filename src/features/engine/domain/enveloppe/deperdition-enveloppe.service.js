@@ -167,26 +167,28 @@ export class DeperditionEnveloppeService {
       deperdition_porte: 0
     };
 
-    enveloppe.mur_collection.mur?.forEach((m) => {
-      m.donnee_intermediaire = this.#deperditionMurService.execute(ctx, m.donnee_entree);
-      deperditions.deperdition_mur +=
-        m.donnee_intermediaire.b *
-        m.donnee_entree.surface_paroi_opaque *
-        m.donnee_intermediaire.umur;
+    (Array.isArray(enveloppe.mur_collection.mur) ? enveloppe.mur_collection.mur : []).forEach(
+      (m) => {
+        m.donnee_intermediaire = this.#deperditionMurService.execute(ctx, m.donnee_entree);
+        deperditions.deperdition_mur +=
+          m.donnee_intermediaire.b *
+          m.donnee_entree.surface_paroi_opaque *
+          m.donnee_intermediaire.umur;
 
-      if (m.donnee_intermediaire.b > 0) {
-        // Paroi déperditive si b != 0 et adjacence != 'local non déperditif'
-        if (m.donnee_entree.enum_type_adjacence_id !== '22') {
-          this.#surfaceDeperditive += m.donnee_entree.surface_paroi_opaque;
-        }
-        // Surface isolée si b != 0 et type d'isolation != 'inconnu' et != 'non isolé'
-        if (['1', '2'].includes(m.donnee_entree.enum_type_isolation_id)) {
-          this.#surfaceNonIsolee += m.donnee_entree.surface_paroi_opaque;
-        } else {
-          this.#surfaceIsolee += m.donnee_entree.surface_paroi_opaque;
+        if (m.donnee_intermediaire.b > 0) {
+          // Paroi déperditive si b != 0 et adjacence != 'local non déperditif'
+          if (m.donnee_entree.enum_type_adjacence_id !== '22') {
+            this.#surfaceDeperditive += m.donnee_entree.surface_paroi_opaque;
+          }
+          // Surface isolée si b != 0 et type d'isolation != 'inconnu' et != 'non isolé'
+          if (['1', '2'].includes(m.donnee_entree.enum_type_isolation_id)) {
+            this.#surfaceNonIsolee += m.donnee_entree.surface_paroi_opaque;
+          } else {
+            this.#surfaceIsolee += m.donnee_entree.surface_paroi_opaque;
+          }
         }
       }
-    });
+    );
 
     enveloppe.porte_collection.porte?.forEach((p) => {
       p.donnee_intermediaire = this.#deperditionPorteService.execute(ctx, p.donnee_entree);
