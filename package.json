@@ -43,7 +43,7 @@
   "dependencies": {
     "dioma": "^0.4.6",
     "fast-xml-parser": "^4.5.0",
-    "lodash-es": "^4.17.21",
+    "lodash-es": "4.17.21",
     "winston": "3.13.0"
   },
   "devDependencies": {
@@ -70,7 +70,7 @@
     "pretty-quick": "^4.0.0",
     "semantic-release": "^23.0.6",
     "vitest": "3.0.6",
-    "xlsx": "^0.18.5"
+    "xlsx": "0.18.5"
   },
   "author": "Open3Cl",
   "license": "GPL-3.0",
