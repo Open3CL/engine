@@ -64,7 +64,7 @@ export default function calc_ecs(
   const di = {};
   const du = {};
 
-  const multipleEcsInstallation = ecs.donnee_entree.enum_cfg_installation_ecs_id === '2';
+  const multipleEcsInstallation = ecs.donnee_entree.enum_cfg_installation_ecs_id === '3';
   const nbLogements = dpe.logement.caracteristique_generale.nombre_appartement || 1;
 
   /**
