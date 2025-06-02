@@ -64,16 +64,30 @@ export default function calc_ecs(
   const di = {};
   const du = {};
 
+  const multipleEcsInstallation = ecs.donnee_entree.enum_cfg_installation_ecs_id === '3';
+  const nbLogements = dpe.logement.caracteristique_generale.nombre_appartement || 1;
+
+  /**
+   * 11.4 Plusieurs systèmes d’ECS (limité à 2 systèmes différents par logement)
+   * Les besoins en ECS pour chaque générateur sont / 2
+   */
+  let becsLogement = becs;
+  let becsDepLogement = becs_dep;
+  if (multipleEcsInstallation) {
+    becsLogement = becs / 2;
+    becsDepLogement = becs_dep / 2;
+  }
+
   // La conso de chaque générateur ECS doit être ramenée au prorata de la surface du logement
   di.ratio_besoin_ecs = 1;
   if (virtualisationECS) {
     di.ratio_besoin_ecs = de.cle_repartition_ecs || 1;
-  } else if (de.rdim) {
-    di.ratio_besoin_ecs = 1 / de.rdim || 1;
+  } else if (nbLogements > 1) {
+    di.ratio_besoin_ecs = 1 / nbLogements || 1;
   }
 
-  di.besoin_ecs = becs * di.ratio_besoin_ecs;
-  di.besoin_ecs_depensier = becs_dep * di.ratio_besoin_ecs;
+  di.besoin_ecs = becsLogement * di.ratio_besoin_ecs;
+  di.besoin_ecs_depensier = becsDepLogement * di.ratio_besoin_ecs;
 
   const pvc = ecs.generateur_ecs_collection.generateur_ecs[0].donnee_entree.position_volume_chauffe;
   tv_rendement_distribution_ecs(di, de, du, pvc);
