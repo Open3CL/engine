@@ -104,6 +104,42 @@ describe('production ENR unit tests', () => {
     });
   });
 
+  test('should update ep conso', () => {
+    const productionElectricite = {
+      conso_elec_ac_fr: 100,
+      conso_elec_ac_ch: 150,
+      conso_elec_ac_ecs: 200,
+      conso_elec_ac_eclairage: 250,
+      conso_elec_ac_auxiliaire: 300
+    };
+
+    const conso = {
+      ep_conso: {
+        ep_conso_ecs: 1000,
+        ep_conso_ch: 500,
+        ep_conso_fr: 800,
+        ep_conso_eclairage: 900,
+        ep_conso_totale_auxiliaire: 1250,
+        ep_conso_5_usages: 1500,
+        ep_conso_5_usages_m2: 100
+      }
+    };
+
+    productionENR.updateEPConso(productionElectricite, conso, 10);
+
+    expect(conso).toStrictEqual({
+      ep_conso: {
+        ep_conso_ecs: 800,
+        ep_conso_ch: 350,
+        ep_conso_fr: 700,
+        ep_conso_eclairage: 650,
+        ep_conso_totale_auxiliaire: 950,
+        ep_conso_5_usages: 500,
+        ep_conso_5_usages_m2: 50
+      }
+    });
+  });
+
   test('should get tapl', () => {
     let productionElectricite = productionENR.getTapl({}, {}, 158, 2500);
 
