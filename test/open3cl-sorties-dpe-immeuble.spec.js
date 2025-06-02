@@ -10,11 +10,11 @@ describe('DPE immeuble unit tests', () => {
     /** @type {FullDpe} **/
     const output = calcul_3cl(structuredClone(input));
 
-    expect(
-      output.logement.installation_ecs_collection.installation_ecs[0].donnee_intermediaire
-        .besoin_ecs
-    ).toEqual(
-      input.logement.installation_ecs_collection.installation_ecs[0].donnee_intermediaire.besoin_ecs
-    );
+    output.logement.installation_ecs_collection.installation_ecs.forEach((installation, index) => {
+      expect(installation.donnee_intermediaire.besoin_ecs).toEqual(
+        input.logement.installation_ecs_collection.installation_ecs[index].donnee_intermediaire
+          .besoin_ecs
+      );
+    });
   });
 });
