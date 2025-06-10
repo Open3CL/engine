@@ -7,7 +7,7 @@ import calc_besoin_ch from './9_besoin_ch.js';
 import calc_chauffage, { tauxChargeForGenerator } from './9_chauffage.js';
 import calc_confort_ete from './2021_04_13_confort_ete.js';
 import calc_qualite_isolation from './2021_04_13_qualite_isolation.js';
-import calc_conso from './conso.js';
+import calc_conso, { classe_bilan_dpe, classe_emission_ges } from './conso.js';
 import {
   add_references,
   bug_for_bug_compat,
@@ -491,4 +491,30 @@ export function calcul_3cl(dpe) {
   };
 
   return dpe;
+}
+
+/**
+ * Retourne les classes calculées ges dpe.
+ * @param dpe {FullDpe}
+ * @returns {{dpeClass: string, gesClass: string}}
+ */
+export function get_classe_ges_dpe(dpe) {
+  const zc_id = dpe.logement.meteo.enum_zone_climatique_id;
+  const ca_id = dpe.logement.meteo.enum_classe_altitude_id;
+  const th = calc_th(dpe.logement.caracteristique_generale.enum_methode_application_dpe_log_id);
+
+  let Sh;
+  if (th === 'maison' || th === 'appartement')
+    Sh = dpe.logement.caracteristique_generale.surface_habitable_logement;
+  else if (th === 'immeuble') Sh = dpe.logement.caracteristique_generale.surface_habitable_immeuble;
+
+  return {
+    dpeClass: classe_bilan_dpe(dpe.logement.sortie.ep_conso.ep_conso_5_usages_m2, zc_id, ca_id, Sh),
+    gesClass: classe_emission_ges(
+      dpe.logement.sortie.emission_ges.emission_ges_5_usages_m2,
+      zc_id,
+      ca_id,
+      Sh
+    )
+  };
 }
