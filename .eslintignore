@@ -1,1 +1,3 @@
 src/output.js
+test/corpus/*.js
+dist/reports/**/*.js

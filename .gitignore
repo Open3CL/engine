@@ -10,3 +10,5 @@ scripts/assets/tv.js
 /coverage/
 /test/fixtures/*.json
 .npmrc
+dist/reports/unit/
+src/output.js

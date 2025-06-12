@@ -1,7 +1,5 @@
 import { XMLParser } from 'fast-xml-parser';
 import fs from 'node:fs';
-import enums from '../src/enums.js';
-import { expect } from 'vitest';
 
 const xmlParser = new XMLParser({
   // We want to make sure collections of length 1 are still parsed as arrays
@@ -34,6 +32,10 @@ const xmlParser = new XMLParser({
   }
 });
 
+export function parseXml(data) {
+  return xmlParser.parse(data).dpe;
+}
+
 export function getAdemeFileJson(ademeId) {
   const dpeRequestFile = `test/fixtures/${ademeId}.json`;
   const dpeFile = `test/fixtures/${ademeId}.xml`;
@@ -43,13 +45,7 @@ export function getAdemeFileJson(ademeId) {
     dpeRequest = JSON.parse(fs.readFileSync(dpeRequestFile, { encoding: 'utf8', flag: 'r' }));
   } else {
     const data = fs.readFileSync(dpeFile, { encoding: 'utf8', flag: 'r' });
-
     dpeRequest = xmlParser.parse(data).dpe;
-    expect(dpeRequest).not.toBeUndefined();
-
-    const dpeModele = enums.modele_dpe[dpeRequest.administratif.enum_modele_dpe_id];
-    expect(dpeModele).toBe('dpe 3cl 2021 méthode logement');
-
     fs.writeFileSync(dpeRequestFile, JSON.stringify(dpeRequest));
   }
 

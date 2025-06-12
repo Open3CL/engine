@@ -156,7 +156,14 @@ export default function calc_ventilation(
   const Hsp = cg.hsp;
 
   tv_debits_ventilation(di, de, du);
-  tv_q4pa_conv(di, de, cg, mur_list, ph_list, porte_list, bv_list);
+
+  // Pour les bâtiments qui ont fait l’objet d’une mesure d’étanchéité à l’air moins de deux ans avant le diagnostic, la valeur
+  // mesurée de Q4Paconv/m² peut être saisie.
+  if (de.q4pa_conv_saisi) {
+    di.q4pa_conv = de.q4pa_conv_saisi;
+  } else {
+    tv_q4pa_conv(di, de, cg, mur_list, ph_list, porte_list, bv_list);
+  }
 
   di.hvent = 0.34 * di.qvarep_conv * surface_ventile;
 
