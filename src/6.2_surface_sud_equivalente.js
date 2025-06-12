@@ -10,7 +10,7 @@ export function calc_sse_j(bv_list, ets, ca, zc, mois) {
      * 6.3 Traitement des espaces tampons solarisés
      * 10 - 'espace tampon solarisé (véranda,loggia fermée)'
      */
-    if (typeAdjacence === 10 && ets) {
+    if (typeAdjacence === 10 && ets && ets.length > 0) {
       // Certaines vérandas sont dupliqués dans les DPE.
       if (Array.isArray(ets)) {
         ets = ets[0];
