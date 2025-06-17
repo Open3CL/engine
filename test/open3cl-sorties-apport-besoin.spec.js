@@ -63,7 +63,7 @@ describe('Test Open3CL engine compliance on corpus', () => {
   describe.each(['besoin_ecs', 'besoin_ecs_depensier', 'besoin_ch', 'besoin_ch_depensier'])(
     'check "%s" value',
     (attr) => {
-      test.each(corpus)('dpe %s', (ademeId) => {
+      test.each(corpus)('dpe %s, attribut:' + attr, (ademeId) => {
         const exceptedDpe = getAdemeFileJson(ademeId);
         const calculatedDpe = getResultFile(ademeId);
 
@@ -75,10 +75,11 @@ describe('Test Open3CL engine compliance on corpus', () => {
         const diff1 = Math.abs(expectedValue - calculatedValue * 1000) / (expectedValue || 1);
         const diff2 = Math.abs(expectedValue - calculatedValue / 1000) / (expectedValue || 1);
 
+        const expectMessage = `${attr}: expected: ${expectedValue}, calculated: ${calculatedValue}`;
         expect_or(
-          () => expect(diff).toBeLessThan(PRECISION_PERCENT),
-          () => expect(diff1).toBeLessThan(PRECISION_PERCENT),
-          () => expect(diff2).toBeLessThan(PRECISION_PERCENT)
+          () => expect(diff, `${expectMessage}, diff: ${diff}`).toBeLessThan(PRECISION_PERCENT),
+          () => expect(diff1, `${expectMessage}, diff: ${diff1}`).toBeLessThan(PRECISION_PERCENT),
+          () => expect(diff2, `${expectMessage}, diff: ${diff2}`).toBeLessThan(PRECISION_PERCENT)
         );
       });
     }
