@@ -95,7 +95,7 @@ export function calc_Qdw_j(instal_ecs, becs_j) {
   }
 
   instal_ecs.donnee_utilisateur = du;
-  return Qdw_col_vc_j + Qdw_ind_vc_j;
+  return (Qdw_ind_vc_j * de.rdim + Qdw_col_vc_j) * 0.48;
 }
 
 function calc_Qgw(di, de, du, ecs_de) {

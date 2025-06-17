@@ -3,11 +3,11 @@ import { TvsStore } from './core/tv/infrastructure/tvs.store.js';
 
 const tvsStore = new TvsStore();
 
-export function rendement_emission(em) {
+export function rendement_emission(em, rg = 1) {
   const re = em.donnee_intermediaire.rendement_emission;
   const rd = em.donnee_intermediaire.rendement_distribution;
   const rr = em.donnee_intermediaire.rendement_regulation;
-  return re * rd * rr;
+  return rg * re * rd * rr;
 }
 
 function tv_rendement_distribution_ch(di, de) {
