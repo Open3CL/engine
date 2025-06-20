@@ -138,7 +138,7 @@ export default function calc_pb(pb, zc, pc_id, effetJoule, pb_list) {
   const de = pb.donnee_entree;
   const du = {};
   const di = {};
-  di.upb0 = pb.donnee_intermediaire.upb0;
+  di.upb0 = pb.donnee_intermediaire?.upb0;
 
   b(di, de, du, zc);
 

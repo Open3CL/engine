@@ -16,7 +16,7 @@ export default function getFicheTechnique(
   field = 'description'
 ) {
   /** @type {FicheTechniqueItem[]} */
-  let fichesTechniques = dpe.fiche_technique_collection.fiche_technique;
+  let fichesTechniques = dpe.fiche_technique_collection?.fiche_technique || [];
 
   if (!Array.isArray(fichesTechniques)) {
     fichesTechniques = [fichesTechniques];
