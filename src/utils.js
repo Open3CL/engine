@@ -288,7 +288,7 @@ export function useEnumAsString(jsonObj) {
   for (const key in jsonObj) {
     if (jsonObj.hasOwnProperty(key)) {
       if (key.startsWith('enum_')) {
-        jsonObj[key] = jsonObj[key].toString();
+        if (jsonObj[key] !== null) jsonObj[key] = jsonObj[key].toString();
       } else if (typeof jsonObj[key] === 'object') {
         useEnumAsString(jsonObj[key]);
       }
