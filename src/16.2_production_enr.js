@@ -36,7 +36,7 @@ export class ProductionENR {
       conso_elec_ac_autre_usage: 0
     };
 
-    if (productionElecEnr && productionElecEnr.donnee_entree.presence_production_pv === 1) {
+    if (productionElecEnr && productionElecEnr.donnee_entree?.presence_production_pv === 1) {
       // Calcul de l'électricité auto-consommée pour chaque enveloppe
       this.calculateConsoElecAc(productionElectricite, productionElecEnr, conso, zc_id, th, Sh);
 

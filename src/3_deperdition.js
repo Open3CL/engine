@@ -106,8 +106,8 @@ function verifyMursEquality(calculatedMurs, declaredMurs) {
   const uMurForDeclaredMurs = declaredMurs.map(
     (declaredMur) =>
       declaredMur.donnee_entree.surface_paroi_opaque *
-      declaredMur.donnee_intermediaire.umur *
-      declaredMur.donnee_intermediaire.b
+      declaredMur.donnee_intermediaire?.umur *
+      declaredMur.donnee_intermediaire?.b
   );
 
   return (
@@ -124,6 +124,15 @@ function verifyMursEquality(calculatedMurs, declaredMurs) {
  * @return {number}
  */
 function totalDeperditionPontThermique(dpe, calculatedPontsThermiques, declaredPontsThermiques) {
+  const calculatedDeperditionPT = calculatedPontsThermiques.reduce(
+    (acc, pt) => acc + Upt(pt) || 0,
+    0
+  );
+
+  if (!dpe.logement.sortie?.deperdition?.deperdition_pont_thermique) {
+    return calculatedDeperditionPT;
+  }
+
   // Total déclaré des déperditions des ponts thermiques
   const declaredDeperditionPT = dpe.logement.sortie.deperdition.deperdition_pont_thermique;
 
@@ -134,11 +143,6 @@ function totalDeperditionPontThermique(dpe, calculatedPontsThermiques, declaredP
   const sameValues = verifyPontsThermiquesEquality(
     calculatedPontsThermiques,
     declaredPontsThermiques
-  );
-
-  const calculatedDeperditionPT = calculatedPontsThermiques.reduce(
-    (acc, pt) => acc + Upt(pt) || 0,
-    0
   );
 
   /**
@@ -164,7 +168,7 @@ function totalDeperditionPontThermique(dpe, calculatedPontsThermiques, declaredP
  */
 function totalDeperditionMurs(dpe, calculatedMurs, declaredMurs) {
   // Total déclaré des déperditions des murs
-  const declaredDeperditionMurs = dpe.logement.sortie.deperdition.deperdition_mur;
+  const declaredDeperditionMurs = dpe.logement.sortie?.deperdition?.deperdition_mur;
 
   /**
    * Comparaison des valeurs intermédiaires calculées et déclarées pour chacun des murs
