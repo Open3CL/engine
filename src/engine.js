@@ -269,6 +269,15 @@ export function calcul_3cl(dpe) {
   let becs = apport_et_besoin.besoin_ecs;
   let becs_dep = apport_et_besoin.besoin_ecs_depensier;
 
+  /**
+   * 11.4 Plusieurs systèmes d’ECS (limité à 2 systèmes différents par logement)
+   * Les besoins en ECS pour chaque générateur sont / 2
+   */
+  if (ecs.length > 1) {
+    becs /= 2;
+    becs_dep /= 2;
+  }
+
   ecs.forEach((ecs) => {
     if (bug_for_bug_compat) {
       /**
