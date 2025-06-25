@@ -268,14 +268,26 @@ export function calcul_3cl(dpe) {
 
   let becs = apport_et_besoin.besoin_ecs;
   let becs_dep = apport_et_besoin.besoin_ecs_depensier;
+  let isImmeubleSystemEcsIndividuels = false;
 
   /**
    * 11.4 Plusieurs systèmes d’ECS (limité à 2 systèmes différents par logement)
    * Les besoins en ECS pour chaque générateur sont / 2
    */
   if (ecs.length > 1) {
-    becs /= 2;
-    becs_dep /= 2;
+    // Immeuble avec 2 systèmes collectifs
+    const isImmeubleSystemEcsCollectif =
+      th === 'immeuble' && ecs.every((e) => e.donnee_entree.enum_type_installation_id !== '1');
+    // Logement individuel avec 2 systèmes ECS individuel
+    const isLogementIndSystemEcsInd =
+      th !== 'immeuble' && ecs.every((e) => e.donnee_entree.enum_type_installation_id === '1');
+    // Immeuble avec différents systèmes individuels
+    isImmeubleSystemEcsIndividuels =
+      th === 'immeuble' && ecs.every((e) => e.donnee_entree.enum_type_installation_id === '1');
+    if (isImmeubleSystemEcsCollectif || isLogementIndSystemEcsInd) {
+      becs /= 2;
+      becs_dep /= 2;
+    }
   }
 
   ecs.forEach((ecs) => {
@@ -364,7 +376,20 @@ export function calcul_3cl(dpe) {
         }
       });
     }
-    calc_ecs(dpe, ecs, becs, becs_dep, GV, ca_id, zc_id, th, virtualisationECS);
+    calc_ecs(
+      dpe,
+      ecs,
+      becs,
+      becs_dep,
+      GV,
+      ca_id,
+      zc_id,
+      th,
+      virtualisationECS,
+      dpe.logement.caracteristique_generale.surface_habitable_immeuble,
+      dpe.logement.caracteristique_generale.nombre_appartement,
+      isImmeubleSystemEcsIndividuels
+    );
   });
 
   /**

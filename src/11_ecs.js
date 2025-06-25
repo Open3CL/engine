@@ -58,7 +58,10 @@ export default function calc_ecs(
   ca_id,
   zc_id,
   th,
-  virtualisationECS
+  virtualisationECS,
+  surfaceImmeuble,
+  nombreAppartements,
+  isImmeubleSystemEcsIndividuels
 ) {
   const de = ecs.donnee_entree;
   const di = {};
@@ -68,6 +71,10 @@ export default function calc_ecs(
   di.ratio_besoin_ecs = 1;
   if (virtualisationECS) {
     di.ratio_besoin_ecs = de.cle_repartition_ecs || 1;
+  } else if (isImmeubleSystemEcsIndividuels) {
+    di.ratio_besoin_ecs =
+      ((de.surface_habitable / (surfaceImmeuble || 1)) * (de.rdim || 1)) /
+      (de.nombre_logement * nombreAppartements);
   } else if (de.rdim) {
     di.ratio_besoin_ecs = 1 / de.rdim || 1;
   }
