@@ -16,6 +16,12 @@ describe('DPE immeuble unit tests', () => {
           .besoin_ecs,
         5
       );
+
+      expect(installation.donnee_intermediaire.conso_ecs).toBeCloseTo(
+        input.logement.installation_ecs_collection.installation_ecs[index].donnee_intermediaire
+          .conso_ecs,
+        5
+      );
     });
   });
 });
