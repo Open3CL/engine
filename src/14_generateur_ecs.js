@@ -75,27 +75,35 @@ function tv_facteur_couverture_solaire(di, de, zc_id, th) {
   }
 }
 
-// 15.2.3
 export function calc_Qdw_j(instal_ecs, becs_j) {
   const de = instal_ecs.donnee_entree;
   const du = instal_ecs.donnee_utilisateur || {};
 
   const type_installation = requestInput(de, du, 'type_installation');
 
-  let Qdw_ind_vc_j;
-  let Qdw_col_vc_j = 0;
+  const Qdw_ind_vc = calc_Qdw_ind_j(becs_j) / 8760.0;
+  const Qdw_coll_vc = calc_Qdw_col_j(instal_ecs, becs_j, type_installation) / 8760.0;
 
+  if (type_installation.includes('installation collective')) {
+    return (Qdw_ind_vc + Qdw_coll_vc) * 0.48;
+  }
+
+  return (Qdw_ind_vc * (instal_ecs.donnee_entree.rdim || 1) + Qdw_coll_vc) * 0.48;
+}
+
+// 15.2.3
+export function calc_Qdw_ind_j(becs_j) {
   const Rat_ecs = 1;
   const Lvc = 0.2 * Rat_ecs;
 
-  Qdw_ind_vc_j = 0.5 * Lvc * becs_j;
+  return 0.5 * Lvc * becs_j;
+}
 
+export function calc_Qdw_col_j(instal_ecs, becs_j, type_installation) {
   if (type_installation.includes('installation collective')) {
-    Qdw_col_vc_j = 0.112 * becs_j;
+    return 0.112 * becs_j;
   }
-
-  instal_ecs.donnee_utilisateur = du;
-  return (Qdw_ind_vc_j * de.rdim + Qdw_col_vc_j) * 0.48;
+  return 0;
 }
 
 function calc_Qgw(di, de, du, ecs_de) {

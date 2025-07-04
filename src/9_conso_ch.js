@@ -96,6 +96,9 @@ export function conso_ch(
     );
   }
 
+  /**
+   * 9.8 Installation de chauffage collectif avec base + appoint
+   */
   if (cfg_ch !== 'installation de chauffage collectif avec base + appoint') {
     const hasMultipleEmetteur = em_filt.length > 1;
 

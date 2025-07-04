@@ -5,7 +5,7 @@ import { calc_besoin_ecs_j } from './11_besoin_ecs.js';
 import { calc_Qrec_gen_j } from './9_generateur_ch.js';
 import { calc_ai_j, calc_as_j } from './6.1_apport_gratuit.js';
 import { calc_sse_j } from './6.2_surface_sud_equivalente.js';
-import { mois_liste, Njj, requestInput } from './utils.js';
+import { mois_liste } from './utils.js';
 
 export default function calc_besoin_ch(
   ilpa,
@@ -36,7 +36,6 @@ export default function calc_besoin_ch(
   let sumNref21 = 0;
   let sumDh19 = 0;
   let sumDh21 = 0;
-  let QrecDistrDepensier = 0;
   const e = tvs.e[ilpa];
 
   let pertes_distribution_ecs_recup = 0;
@@ -60,34 +59,15 @@ export default function calc_besoin_ch(
   instal_ecs.forEach((instal_ecs) => {
     let becs_inst_ecs = 0;
     let becs_inst_ecs_dep = 0;
-    const type_installation = requestInput(
-      instal_ecs.donnee_entree,
-      instal_ecs.donnee_utilisateur,
-      'type_installation'
-    );
     for (const mois of mois_liste) {
       const becsj = calc_besoin_ecs_j(ca, mois, zc, nadeq, false) * prorataEcs;
       const becs_j_dep = calc_besoin_ecs_j(ca, mois, zc, nadeq, true) * prorataEcs;
       becs_inst_ecs += becsj;
       becs_inst_ecs_dep += becs_j_dep;
     }
-    let Qdw_coll_vc = 0;
-    let Qdw_coll_vc_dep = 0;
-    const Qdw_ind_vc = (0.1 * becs_inst_ecs) / 8760.0;
-    const Qdw_ind_vc_dep = (0.1 * becs_inst_ecs_dep) / 8760.0;
-    if (type_installation.includes('installation collective')) {
-      Qdw_coll_vc = (0.112 * becs_inst_ecs) / 8760.0;
-      Qdw_coll_vc_dep = (0.112 * becs_inst_ecs_dep) / 8760.0;
-    }
 
-    if (type_installation.includes('installation collective')) {
-      Qdw_total_ecs += (Qdw_ind_vc + Qdw_coll_vc) * 0.48;
-      Qdw_total_ecs_dep += (Qdw_ind_vc_dep + Qdw_coll_vc_dep) * 0.48;
-    } else {
-      Qdw_total_ecs += (Qdw_ind_vc * (instal_ecs.donnee_entree.rdim || 1) + Qdw_coll_vc) * 0.48;
-      Qdw_total_ecs_dep +=
-        (Qdw_ind_vc_dep * (instal_ecs.donnee_entree.rdim || 1) + Qdw_coll_vc_dep) * 0.48;
-    }
+    Qdw_total_ecs += calc_Qdw_j(instal_ecs, becs_inst_ecs);
+    Qdw_total_ecs_dep += calc_Qdw_j(instal_ecs, becs_inst_ecs_dep);
 
     let Qgw;
     const gen_ecs = instal_ecs.generateur_ecs_collection.generateur_ecs;
