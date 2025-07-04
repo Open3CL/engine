@@ -6,14 +6,15 @@ import { calc_generateur_combustion_ch } from './13.2_generateur_combustion_ch.j
 import { scopOrCop } from './12.4_pac.js';
 import { updateGenerateurCombustion } from './13.2_generateur_combustion.js';
 
+const ENUM_MATERIAUX_STRUCTURE_MUR_ANCIEN_IDS = ['2', '3', '4', '6', '8', '9', '14', '21'];
+const ENUM_CLASSES_INERTIE_LOURDES_IDS = ['1', '2'];
+
 function pertes_gen_ch(Bch_hp_j, pn) {
-  const pertes = (1.3 * Bch_hp_j) / (0.3 * pn);
-  return pertes;
+  return (1.3 * Bch_hp_j) / (0.3 * pn);
 }
 
 function pertes_gen_ecs(nrefj) {
-  const pertes = (nrefj * 1790) / 8760;
-  return pertes;
+  return (nrefj * 1790) / 8760;
 }
 
 export function calc_Qrec_gen_j(gen_ch, nrefj, Bch_hp_j) {
@@ -40,8 +41,7 @@ export function calc_Qrec_gen_j(gen_ch, nrefj, Bch_hp_j) {
   }
 
   gen_ch.donnee_utilisateur = du;
-  const Qrec_gen_j = 0.48 * Cper * di.qp0 * Dperj || 0;
-  return Qrec_gen_j;
+  return 0.48 * Cper * di.qp0 * Dperj || 0;
 }
 
 function tv_rendement_generation(di, de, du) {
@@ -159,7 +159,11 @@ export function calc_generateur_ch(
   hsp,
   ca_id,
   zc_id,
-  ilpa
+  ilpa,
+  tbase,
+  besoin_ch_mois,
+  s_chauffee_inst,
+  gen_ch_list
 ) {
   const de = gen_ch.donnee_entree;
   const du = gen_ch.donnee_utilisateur || {};
@@ -201,8 +205,27 @@ export function calc_generateur_ch(
   if (hasConsoForAuxDistribution(de.enum_type_generateur_ch_id)) {
     conso_aux_distribution_ch(em_ch, de, di, du, Sh, zc_id, ca_id, ilpa, GV);
   }
-
-  conso_ch(di, de, du, _pos, cfg_ch, em_ch, GV, Sh, hsp, bch, bch_dep);
+  const paroi_ancienne = isParoisAncienneInertieLourde(dpe);
+  conso_ch(
+    di,
+    de,
+    du,
+    _pos,
+    cfg_ch,
+    em_ch,
+    GV,
+    Sh,
+    hsp,
+    bch,
+    bch_dep,
+    tbase,
+    paroi_ancienne,
+    ca_id,
+    zc_id,
+    besoin_ch_mois,
+    s_chauffee_inst,
+    gen_ch_list
+  );
 
   gen_ch.donnee_intermediaire = di;
   gen_ch.donnee_utilisateur = du;
@@ -227,4 +250,33 @@ export function hasConsoForAuxDistribution(enum_type_generateur_ch_id) {
     [48, 49, 50, 51, 52].includes(enum_type_generateur_ch_id) ||
     (enum_type_generateur_ch_id >= 4 && enum_type_generateur_ch_id <= 19)
   );
+}
+
+/**
+ * 18.3 Cas des bâtiments à inertie lourde, constitués de parois anciennes
+ *
+ * Afin d’être considéré comme un bâtiment à inertie lourde, constitués de parois anciennes, le bâtiment doit :
+ * * Etre constitué de murs en matériaux anciens : terre, pierre, brique ancienne, colombage, … ;
+ * * Avoir une inertie lourde.
+ *
+ * En présence de plusieurs types de parois, le bâtiment sera considéré comme constitué de parois anciennes si la surface
+ * de parois anciennes est majoritaire.
+ * @param dpe {FullDpe}
+ */
+function isParoisAncienneInertieLourde(dpe) {
+  const murs = dpe.logement.enveloppe.mur_collection.mur.filter(
+    (mur) => mur.donnee_intermediaire.b > 0
+  );
+  const nbTotalMurs = murs.length;
+  const nbMursAnciens = murs.filter((mur) =>
+    ENUM_MATERIAUX_STRUCTURE_MUR_ANCIEN_IDS.includes(
+      mur.donnee_entree.enum_materiaux_structure_mur_id
+    )
+  ).length;
+
+  const isInertieLourde = ENUM_CLASSES_INERTIE_LOURDES_IDS.includes(
+    dpe.logement.enveloppe.inertie.enum_classe_inertie_id
+  );
+
+  return isInertieLourde && nbMursAnciens / nbTotalMurs >= 0.5;
 }
