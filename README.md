@@ -104,6 +104,19 @@ const dpeData = {
 const result = calcul_3cl(dpeData);
 ```
 
+## Variables d'environnements
+
+| Nom                     | Description                         |
+| ----------------------- | ----------------------------------- |
+| ADEME_API_CLIENT_ID     | Client id pour l'api de l'ademe     |
+| ADEME_API_CLIENT_SECRET | Client secret pour l'api de l'ademe |
+
+Attention aux quotas sur l'api:
+
+- 100 requêtes / seconde
+- 1000 requêtes / minute
+- 10000 requêtes / jour
+
 <p align="right">(<a href="#readme-top">Retour sommaire</a>)</p>
 
 ## Rapports
