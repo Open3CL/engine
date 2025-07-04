@@ -1,9 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { getAdemeFileJson } from './test-helpers.js';
 import { calcul_3cl } from '../src/index.js';
-import { diff } from 'deep-object-diff';
-import tv from '../src/tv.js';
-import { tvs } from '../src/tv-v2.js';
 import { set_bug_for_bug_compat, set_tv_match_optimized_version } from '../src/utils.js';
 
 describe('DPE Chauffage unit tests', () => {

@@ -4,8 +4,6 @@ import { calc_intermittence } from './8_intermittence.js';
 import tvs from './tv.js';
 import enums from './enums.js';
 
-const RADIATEURS_ELECTRIQUE_IDS = ['98', '99', '100', '101', '102', '103', '104', '105', '106'];
-
 function coef_ch(Fch) {
   return {
     'installation de chauffage simple': {
@@ -95,10 +93,6 @@ export function conso_ch(
       (em) => em.donnee_entree.enum_lien_generateur_emetteur_id === gen_lge_id
     );
   }
-
-  /**
-   * 9.8 Installation de chauffage collectif avec base + appoint
-   */
   if (cfg_ch !== 'installation de chauffage collectif avec base + appoint') {
     const hasMultipleEmetteur = em_filt.length > 1;
 
@@ -127,6 +121,10 @@ export function conso_ch(
     di.conso_ch = conso_ch;
     di.conso_ch_depensier = conso_ch_dep;
   } else if (bch > 0) {
+    /**
+     * 9.8 Installation de chauffage collectif avec base + appoint
+     */
+
     let bch_base = 0;
 
     const zc = enums.zone_climatique[zc_id];

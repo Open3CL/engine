@@ -32,8 +32,6 @@ export default function calc_besoin_ch(
   const Nref21 = tvs.nref21[ilpa];
   const Nref19 = tvs.nref19[ilpa];
 
-  let sumNref19 = 0;
-  let sumNref21 = 0;
   let sumDh19 = 0;
   let sumDh21 = 0;
   const e = tvs.e[ilpa];
@@ -116,9 +114,6 @@ export default function calc_besoin_ch(
     const nref19 = Nref19[ca][mois][zc];
     const nref21 = Nref21[ca][mois][zc];
 
-    sumNref19 += nref19;
-    sumNref21 += nref21;
-
     // bvj
     const dh19j = dh19[ca][mois][zc];
     sumDh19 += dh19j * GV;
@@ -156,7 +151,7 @@ export default function calc_besoin_ch(
     pertes_distribution_ecs_recup_depensier += nref21 * Qdw_total_ecs_dep;
 
     pertes_stockage_ecs_recup += (nref19 * Qgw_total_ecs) / 1000;
-    pertes_stockage_ecs_recup_depensier = (nref21 * Qgw_total_ecs) / 1000;
+    //pertes_stockage_ecs_recup_depensier = (nref21 * Qgw_total_ecs) / 1000;
 
     besoin_ch_mois[mois] = bvj * dh19j;
     besoin_ch_mois_dep[mois] = bvj_dep * dh21j;
