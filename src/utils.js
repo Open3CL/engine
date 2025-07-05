@@ -1,6 +1,6 @@
 import enums from './enums.js';
 import tvs from './tv.js';
-import _ from 'lodash';
+import { set, has } from 'lodash-es';
 
 export let bug_for_bug_compat = false;
 export function set_bug_for_bug_compat() {
@@ -327,7 +327,7 @@ export function useEnumAsString(jsonObj) {
   for (const key in jsonObj) {
     if (jsonObj.hasOwnProperty(key)) {
       if (key.startsWith('enum_')) {
-        jsonObj[key] = jsonObj[key].toString();
+        if (jsonObj[key] !== null) jsonObj[key] = jsonObj[key].toString();
       } else if (typeof jsonObj[key] === 'object') {
         useEnumAsString(jsonObj[key]);
       }
@@ -338,7 +338,7 @@ export function useEnumAsString(jsonObj) {
 export function clean_dpe(dpe_in) {
   // skip generateur_[ecs|chauffage] because some input data is contained in donnee_intermediaire (e.g. pn, qp0, ...)
   removeKeyFromJSON(dpe_in, 'donnee_intermediaire', ['generateur_ecs', 'generateur_chauffage']);
-  _.set(dpe_in, 'logement.sortie', null);
+  set(dpe_in, 'logement.sortie', null);
 }
 
 export function sanitize_dpe(dpe_in) {
@@ -352,8 +352,8 @@ export function sanitize_dpe(dpe_in) {
     'logement.enveloppe.pont_thermique_collection.pont_thermique'
   ];
   for (const path of collection_paths) {
-    if (!_.has(dpe_in, path)) {
-      _.set(dpe_in, path, []);
+    if (!has(dpe_in, path)) {
+      set(dpe_in, path, []);
     }
   }
   if (use_enum_as_string) {

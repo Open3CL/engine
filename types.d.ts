@@ -77,6 +77,7 @@ interface Caracteristique_generale {
   enum_periode_construction_id: string;
   enum_methode_application_dpe_log_id: string;
   surface_habitable_logement: number;
+  surface_habitable_immeuble?: number;
   nombre_niveau_logement: number;
   hsp: number;
   nombre_appartement: number;

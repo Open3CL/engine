@@ -320,8 +320,8 @@ function checkDoublageWithMinUmur0(type_doublage, di, de, umur0_avant, umur_avan
   }
 
   if (
-    umur0_avant.toFixed(3) === umur0Doublage.toFixed(3) ||
-    umur_avant.toFixed(3) === umur0Doublage.toFixed(3)
+    umur0_avant?.toFixed(3) === umur0Doublage?.toFixed(3) ||
+    umur_avant?.toFixed(3) === umur0Doublage?.toFixed(3)
   ) {
     console.error(`
       Le calcul Umur0 pour le mur ${de.description} utilise Umur0 minoré à 2.5 pour l'application du doublage alors qu'il est de ${di.umur0}.

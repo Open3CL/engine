@@ -1,5 +1,6 @@
 test/ademe.db
 *.csv
+!test/corpus/corpus_dpe.csv
 bun.lockb
 /.idea/
 *.iml
@@ -12,3 +13,5 @@ scripts/assets/tv.js
 .npmrc
 dist/reports/unit/
 src/output.js
+test/corpus/dpes/*
+!test/corpus/dpes/.gitkeep

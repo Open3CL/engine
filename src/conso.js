@@ -297,7 +297,7 @@ export default function calc_conso(
   return ret;
 }
 
-function classe_bilan_dpe(ep_conso_5_usages_m2, zc_id, ca_id, Sh) {
+export function classe_bilan_dpe(ep_conso_5_usages_m2, zc_id, ca_id, Sh) {
   const ca = enums.classe_altitude[ca_id];
 
   const cut = tvs.dpe_class_limit[ca][Math.round(Sh)] ?? [];
@@ -320,7 +320,7 @@ function classe_bilan_dpe(ep_conso_5_usages_m2, zc_id, ca_id, Sh) {
   return 'G';
 }
 
-function classe_emission_ges(emission_ges_5_usages_m2, zc_id, ca_id, Sh) {
+export function classe_emission_ges(emission_ges_5_usages_m2, zc_id, ca_id, Sh) {
   const ca = enums.classe_altitude[ca_id];
 
   const cut = tvs.ges_class_limit[ca][Math.round(Sh)] ?? [];
