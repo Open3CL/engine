@@ -73,40 +73,73 @@ export const mois_liste = [
 ];
 
 export function add_references(enveloppe) {
-  let i = 0;
-  for (const mur of enveloppe.mur_collection.mur || []) {
-    if (!mur.donnee_entree.reference) {
-      mur.donnee_entree.reference = `mur_${i}`;
-    }
-    i += 1;
+  // Early return if enveloppe doesn't exist
+  if (!enveloppe) {
+    return;
   }
-  i = 0;
-  for (const ph of enveloppe.plancher_haut_collection.plancher_haut || []) {
-    if (!ph.donnee_entree.reference) {
-      ph.donnee_entree.reference = `plancher_haut_${i}`;
+
+  // Handle mur collection
+  if (enveloppe.mur_collection && Array.isArray(enveloppe.mur_collection.mur)) {
+    let i = 0;
+    for (const mur of enveloppe.mur_collection.mur) {
+      if (mur && mur.donnee_entree && !mur.donnee_entree.reference) {
+        mur.donnee_entree.reference = `mur_${i}`;
+      }
+      i += 1;
     }
-    i += 1;
   }
-  i = 0;
-  for (const pb of enveloppe.plancher_bas_collection.plancher_bas || []) {
-    if (!pb.donnee_entree.reference) {
-      pb.donnee_entree.reference = `plancher_bas_${i}`;
+
+  // Handle plancher_haut collection
+  if (
+    enveloppe.plancher_haut_collection &&
+    Array.isArray(enveloppe.plancher_haut_collection.plancher_haut)
+  ) {
+    let i = 0;
+    for (const ph of enveloppe.plancher_haut_collection.plancher_haut) {
+      if (ph && ph.donnee_entree && !ph.donnee_entree.reference) {
+        ph.donnee_entree.reference = `plancher_haut_${i}`;
+      }
+      i += 1;
     }
-    i += 1;
   }
-  i = 0;
-  for (const bv of enveloppe.baie_vitree_collection.baie_vitree || []) {
-    if (!bv.donnee_entree.reference) {
-      bv.donnee_entree.reference = `baie_vitree_${i}`;
+
+  // Handle plancher_bas collection
+  if (
+    enveloppe.plancher_bas_collection &&
+    Array.isArray(enveloppe.plancher_bas_collection.plancher_bas)
+  ) {
+    let i = 0;
+    for (const pb of enveloppe.plancher_bas_collection.plancher_bas) {
+      if (pb && pb.donnee_entree && !pb.donnee_entree.reference) {
+        pb.donnee_entree.reference = `plancher_bas_${i}`;
+      }
+      i += 1;
     }
-    i += 1;
   }
-  i = 0;
-  for (const porte of enveloppe.porte_collection.porte || []) {
-    if (!porte.donnee_entree.reference) {
-      porte.donnee_entree.reference = `porte_${i}`;
+
+  // Handle baie_vitree collection
+  if (
+    enveloppe.baie_vitree_collection &&
+    Array.isArray(enveloppe.baie_vitree_collection.baie_vitree)
+  ) {
+    let i = 0;
+    for (const bv of enveloppe.baie_vitree_collection.baie_vitree) {
+      if (bv && bv.donnee_entree && !bv.donnee_entree.reference) {
+        bv.donnee_entree.reference = `baie_vitree_${i}`;
+      }
+      i += 1;
     }
-    i += 1;
+  }
+
+  // Handle porte collection
+  if (enveloppe.porte_collection && Array.isArray(enveloppe.porte_collection.porte)) {
+    let i = 0;
+    for (const porte of enveloppe.porte_collection.porte) {
+      if (porte && porte.donnee_entree && !porte.donnee_entree.reference) {
+        porte.donnee_entree.reference = `porte_${i}`;
+      }
+      i += 1;
+    }
   }
 }
 
@@ -119,6 +152,12 @@ export function requestInputID(de, du, field, type) {
 }
 
 export function requestInput(de, du, field, type) {
+  // Check if de and du are defined
+  if (!de || !du) {
+    console.error(`requestInput: de or du is undefined for field ${field}`);
+    return null;
+  }
+
   if (enums.hasOwnProperty(field)) {
     // enums
     const enum_name = `enum_${field}_id`;
@@ -407,11 +446,42 @@ export function compareReferences(reference1, reference2) {
  * @returns {string} 1 if effet joule, 0 otherwise
  */
 export function isEffetJoule(instal_ch) {
-  const { surfaceEffetJoule, surfaceTotale } = instal_ch.reduce(
+  // Early return if instal_ch is falsy
+  if (!instal_ch) {
+    return '0';
+  }
+
+  // Make sure instal_ch is an array
+  const installations = Array.isArray(instal_ch) ? instal_ch : [instal_ch];
+
+  // Skip empty arrays
+  if (installations.length === 0) {
+    return '0';
+  }
+
+  const { surfaceEffetJoule, surfaceTotale } = installations.reduce(
     (acc, item) => {
+      // Safety check for empty or malformed items
+      if (
+        !item ||
+        !item.generateur_chauffage_collection ||
+        !item.generateur_chauffage_collection.generateur_chauffage ||
+        !Array.isArray(item.generateur_chauffage_collection.generateur_chauffage) ||
+        !item.donnee_entree
+      ) {
+        return acc;
+      }
+
       const generatorIds = item.generateur_chauffage_collection.generateur_chauffage.reduce(
         (acc, generateur) => {
-          return [...acc, generateur.donnee_entree.enum_type_generateur_ch_id];
+          if (
+            generateur &&
+            generateur.donnee_entree &&
+            generateur.donnee_entree.enum_type_generateur_ch_id
+          ) {
+            return [...acc, generateur.donnee_entree.enum_type_generateur_ch_id];
+          }
+          return acc;
         },
         []
       );
@@ -434,15 +504,22 @@ export function isEffetJoule(instal_ch) {
           ['98', '99', '100', '101', '102', '103', '104', '105', '106'].includes(value)
         ).length > 0;
 
+      const surfaceChauffee = Number(item.donnee_entree.surface_chauffee) || 0;
+
       if (isEffetJoule) {
-        acc.surfaceEffetJoule += item.donnee_entree.surface_chauffee;
+        acc.surfaceEffetJoule += surfaceChauffee;
       }
 
-      acc.surfaceTotale += item.donnee_entree.surface_chauffee;
+      acc.surfaceTotale += surfaceChauffee;
       return acc;
     },
     { surfaceEffetJoule: 0, surfaceTotale: 0 }
   );
+
+  // Avoid division by zero and return appropriate value
+  if (surfaceTotale === 0) {
+    return '0';
+  }
 
   // Si la surface chauffée par une résistance électrique est majoritaire => effet_joule = 1
   return surfaceEffetJoule / surfaceTotale >= 0.5 ? '1' : '0';

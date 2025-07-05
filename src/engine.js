@@ -47,10 +47,10 @@ export function calcul_3cl(dpe) {
 
   if (logement.enveloppe === undefined) {
     console.warn('vide: logement.enveloppe');
-    return null;
+    //return null;
   } else if (!logement.enveloppe.mur_collection) {
     console.warn('vide: logement.enveloppe.mur_collection');
-    return null;
+    //return null;
   } else if (
     !logement.enveloppe.plancher_haut_collection ||
     !logement.enveloppe.plancher_haut_collection.plancher_haut.length
@@ -67,7 +67,7 @@ export function calcul_3cl(dpe) {
       };
     } else {
       console.error('plancher_bas_collection should not be empty');
-      return null;
+      //return null;
     }
   } else if (
     !logement.enveloppe.plancher_bas_collection ||
@@ -85,7 +85,7 @@ export function calcul_3cl(dpe) {
       };
     } else {
       console.error('plancher_bas_collection should not be empty');
-      return null;
+      //return null;
     }
   }
 
@@ -152,7 +152,11 @@ export function calcul_3cl(dpe) {
   const zc_id = logement.meteo.enum_zone_climatique_id;
   const ca_id = logement.meteo.enum_classe_altitude_id;
 
-  const instal_ch = logement.installation_chauffage_collection.installation_chauffage;
+  const instal_ch = Array.isArray(
+    logement.installation_chauffage_collection?.installation_chauffage
+  )
+    ? logement.installation_chauffage_collection.installation_chauffage
+    : [];
   const bv_list = env.baie_vitree_collection.baie_vitree;
 
   bv_list.forEach((baieVitree) => {
@@ -200,10 +204,24 @@ export function calcul_3cl(dpe) {
     'valeur'
   );
 
-  logement.ventilation_collection.ventilation.forEach((ventilation) => {
-    ventilation.donnee_entree.ficheTechniqueFacadesExposees = ficheTechniqueFacadesExposees;
-    ventilation.donnee_entree.ficheTechniqueVentilationPost2012 = ficheTechniqueVentilationPost2012;
-  });
+  // Ensure ventilation collection is properly initialized
+  if (!logement.ventilation_collection) {
+    logement.ventilation_collection = { ventilation: [] };
+  }
+
+  // Check if ventilation is an array before using forEach
+  if (logement.ventilation_collection.ventilation) {
+    if (!Array.isArray(logement.ventilation_collection.ventilation)) {
+      // If it's an object but not an array, convert it to an array with this object as its only element
+      logement.ventilation_collection.ventilation = [logement.ventilation_collection.ventilation];
+    }
+
+    logement.ventilation_collection.ventilation.forEach((ventilation) => {
+      ventilation.donnee_entree.ficheTechniqueFacadesExposees = ficheTechniqueFacadesExposees;
+      ventilation.donnee_entree.ficheTechniqueVentilationPost2012 =
+        ficheTechniqueVentilationPost2012;
+    });
+  }
 
   const deperdition = calc_deperdition(
     cg,
@@ -273,12 +291,15 @@ export function calcul_3cl(dpe) {
    * 11.4 Plusieurs systèmes d’ECS (limité à 2 systèmes différents par logement)
    * Les besoins en ECS pour chaque générateur sont / 2
    */
-  if (ecs.length > 1) {
+  // Make sure ecs is an array before using length
+  const ecsArray = Array.isArray(ecs) ? ecs : ecs ? [ecs] : [];
+
+  if (ecsArray.length > 1) {
     becs /= 2;
     becs_dep /= 2;
   }
 
-  ecs.forEach((ecs) => {
+  ecsArray.forEach((ecs) => {
     if (bug_for_bug_compat) {
       /**
        * Réalignement si besoin de la variable position_volume_chauffe
@@ -376,6 +397,7 @@ export function calcul_3cl(dpe) {
 
   const ac = cg.annee_construction;
   // needed for apport_et_besoin
+
   instal_ch.forEach((ch) => {
     ch.donnee_entree.ficheTechniqueComptage = ficheTechniqueComptage;
     calc_chauffage(
@@ -395,7 +417,7 @@ export function calcul_3cl(dpe) {
     );
   });
 
-  const ets = env.ets_collection.ets;
+  const ets = env.ets_collection?.ets || [];
 
   const besoin_ch = calc_besoin_ch(
     ilpa,

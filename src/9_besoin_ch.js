@@ -49,6 +49,11 @@ export default function calc_besoin_ch(
   let fraction_apport_gratuit_ch = 0;
   let fraction_apport_gratuit_depensier_ch = 0;
 
+  // Ensure instal_ecs is always an array
+  instal_ecs = Array.isArray(instal_ecs) ? instal_ecs : [];
+  // Ensure instal_ch is always an array
+  instal_ch = Array.isArray(instal_ch) ? instal_ch : [];
+
   const Qgw_total = instal_ecs.reduce((acc, instal_ecs) => {
     const gen_ecs = instal_ecs.generateur_ecs_collection.generateur_ecs;
 

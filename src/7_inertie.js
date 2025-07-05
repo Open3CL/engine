@@ -142,7 +142,9 @@ export class Inertie {
         this.calculateInertiePhLourd
       ),
       inertie_paroi_verticale_lourd: this.#calculateInertieForCollection(
-        enveloppe.mur_collection.mur || [],
+        enveloppe && enveloppe.mur_collection && Array.isArray(enveloppe.mur_collection.mur)
+          ? enveloppe.mur_collection.mur
+          : [],
         this.calculateInertieMurLourd
       )
     };
@@ -168,11 +170,23 @@ export class Inertie {
    * @returns {number}
    */
   #calculateInertieForCollection(collection, method) {
+    // Check if collection exists and is an array
+    if (!collection || !Array.isArray(collection) || collection.length === 0) {
+      return 0; // Return 0 for empty or non-array collections
+    }
+
     const s_lourd = collection.reduce((acc, item) => {
       const de = item.donnee_entree;
       return acc + de.surface_paroi_opaque * method(de);
     }, 0);
+
     const s_total = collection.reduce((acc, pb) => acc + pb.donnee_entree.surface_paroi_opaque, 0);
+
+    // Prevent division by zero
+    if (s_total === 0) {
+      return 0;
+    }
+
     return s_lourd / s_total >= 0.5 ? 1 : 0;
   }
 }
