@@ -1,5 +1,6 @@
 test/ademe.db
 *.csv
+test/corpus/reports/*.json
 !test/corpus/corpus_dpe.csv
 !test/corpus/dpe_immeuble_chauffage_individuel.csv
 !test/corpus/dpe_immeuble_chauffage_collectif.csv
