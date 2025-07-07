@@ -190,8 +190,13 @@ const waitFor = (milliseconds) => {
   });
 };
 
-const downloadDpe = (dpeCode) => {
-  const filePath = `${import.meta.dirname}/dpes/${dpeCode}.xml`;
+/**
+ * @param dpeCode {string}
+ * @param dpesFilePath {string}
+ * @return {Promise<string>}
+ */
+const downloadDpe = (dpeCode, dpesFilePath) => {
+  const filePath = `${dpesFilePath}/${dpeCode}.xml`;
   return waitFor(process.env.API_ADEME_DONWLOAD_WAIT || 1000).then(() => {
     return fetch(
       `https://prd-x-ademe-externe-api.de-c1.eu1.cloudhub.io/api/v1/pub/dpe/${dpeCode}/xml`,
@@ -219,12 +224,13 @@ const downloadDpe = (dpeCode) => {
 
 /**
  * @param dpeCode {string}
+ * @param dpesFilePath {string}
  * @return {Promise<string>}
  */
-const readOrDownloadDpe = (dpeCode) => {
-  const filePath = `${import.meta.dirname}/dpes/${dpeCode}.xml`;
+const readOrDownloadDpe = (dpeCode, dpesFilePath) => {
+  const filePath = `${dpesFilePath}/${dpeCode}.xml`;
   if (!existsSync(filePath)) {
-    return downloadDpe(dpeCode);
+    return downloadDpe(dpeCode, dpesFilePath);
   } else {
     return Promise.resolve(readFileSync(filePath, { encoding: 'utf8' }));
   }
@@ -234,15 +240,16 @@ const readOrDownloadDpe = (dpeCode) => {
  *
  * @param chunk {{dpeCode: string}[]}
  * @param dpesToExclude {string[]}
+ * @param dpesFilePath {string}
  * @return {Promise<any[]>}
  */
-export default async function ({ chunk, dpesToExclude = [] }) {
+export default async function ({ chunk, dpesToExclude, dpesFilePath = [] }) {
   const dpeOutputs = [];
 
   for (const data of chunk) {
     try {
       /** @type {string} **/
-      const dpeXmlContent = await readOrDownloadDpe(data.dpeCode).then((result) => {
+      const dpeXmlContent = await readOrDownloadDpe(data.dpeCode, dpesFilePath).then((result) => {
         parentPort.postMessage({ action: 'fileProcessed' });
         return result;
       });
