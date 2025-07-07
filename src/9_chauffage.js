@@ -9,6 +9,9 @@ import { tv_generateur_combustion } from './13.2_generateur_combustion.js';
 import { tv_temp_fonc_30_100 } from './13.2_generateur_combustion_ch.js';
 import enums from './enums.js';
 
+/**
+ * @param dpe {FullDpe}
+ */
 export default function calc_chauffage(
   dpe,
   ch,
@@ -22,7 +25,8 @@ export default function calc_chauffage(
   Sh,
   hsp,
   ac,
-  ilpa
+  ilpa,
+  besoin_ch_mois
 ) {
   const de = ch.donnee_entree;
   const di = {};
@@ -150,7 +154,11 @@ export default function calc_chauffage(
       hsp,
       ca_id,
       zc_id,
-      ilpa
+      ilpa,
+      tbase,
+      besoin_ch_mois,
+      ch.donnee_entree.surface_chauffee,
+      gen_ch
     );
 
     // Si plusieurs générateurs de chauffage, la consommation des auxiliaires est répartie sur chacun d'eux
