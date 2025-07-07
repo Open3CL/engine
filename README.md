@@ -12,7 +12,7 @@
   </a>
 
 <h3 align="center">Open3CL</h3>
-  Implémentation open source du moteur Open3CL de l'ADEME.
+Implémentation open source du moteur Open3CL de l'ADEME.
   <p align="center">
 
 ![Javascript][Javascript]
@@ -50,8 +50,12 @@
 
 ## A propos du projet
 
-Open3CL est une librairie JavaScript open source, spécialement conçue pour faciliter le calcul des Diagnostics de Performance Énergétique (DPE).
-Elle implémente la norme définie dans [l'annexe 1 de l'arrêté du 31 mars 2021](https://rt-re-batiment.developpement-durable.gouv.fr/IMG/pdf/consolide_annexe_1_arrete_du_31_03_2021_relatif_aux_methodes_et_procedures_applicables.pdf). Elle est destinée aux développeurs qui souhaitent intégrer des calculs énergétiques précis et conformes à la réglementation dans leurs applications.
+Open3CL est une librairie JavaScript open source, spécialement conçue pour faciliter le calcul des Diagnostics de
+Performance Énergétique (DPE).
+Elle implémente la norme définie
+dans [l'annexe 1 de l'arrêté du 31 mars 2021](https://rt-re-batiment.developpement-durable.gouv.fr/IMG/pdf/consolide_annexe_1_arrete_du_31_03_2021_relatif_aux_methodes_et_procedures_applicables.pdf).
+Elle est destinée aux développeurs qui souhaitent intégrer des calculs énergétiques précis et conformes à la
+réglementation dans leurs applications.
 
 <p align="right">(<a href="#readme-top">Retour sommaire</a>)</p>
 
@@ -106,10 +110,11 @@ const result = calcul_3cl(dpeData);
 
 ## Variables d'environnements
 
-| Nom                     | Description                         |
-| ----------------------- | ----------------------------------- |
-| ADEME_API_CLIENT_ID     | Client id pour l'api de l'ademe     |
-| ADEME_API_CLIENT_SECRET | Client secret pour l'api de l'ademe |
+| Nom                     | Description                                                |
+| ----------------------- | ---------------------------------------------------------- |
+| ADEME_API_CLIENT_ID     | Client id pour l'api de l'ademe                            |
+| ADEME_API_CLIENT_SECRET | Client secret pour l'api de l'ademe                        |
+| CORPUS_DPES_FILE_PATH   | Chemin vers le dossier contenant tous les DPES téléchargés |
 
 Attention aux quotas sur l'api:
 
@@ -119,9 +124,49 @@ Attention aux quotas sur l'api:
 
 <p align="right">(<a href="#readme-top">Retour sommaire</a>)</p>
 
-## Rapports
+## Lancement des tests sur des corpus de DPE
 
-Lister ici les rapports de tests avec stats sur le CORPUS DPE.
+Les tests de corpus consistent à analyser une liste de numéro de DPE présent dans un fichier CSV.
+Pour chaque DPE, le fichier est téléchargé si pas déjà présent en local, et il est envoyé à la librairie Open3CL.
+On analyse en sortie de la lib certaines valeurs que l'on compare aux valeurs du DPE initial. Le seuil de tolérance est fixé par défaut à 5%.
+La liste des valeurs analysées est la suivante:
+
+```javascript
+deperdition_mur,
+  deperdition_baie_vitree,
+  deperdition_plancher_bas,
+  deperdition_plancher_haut,
+  deperdition_porte,
+  deperdition_renouvellement_air,
+  hperm,
+  deperdition_pont_thermique,
+  surface_sud_equivalente,
+  besoin_ecs,
+  besoin_ch,
+  conso_auxiliaire_distribution_ecs,
+  conso_auxiliaire_generation_ch,
+  conso_auxiliaire_generation_ecs,
+  conso_ecs,
+  conso_ch,
+  conso_auxiliaire_distribution_ch,
+  conso_auxiliaire_ventilation,
+  ep_conso_5_usages,
+  ep_conso_5_usages_m2,
+  emission_ges_5_usages,
+  emission_ges_5_usages_m2;
+```
+
+- `npm run test:corpus`. Va générer 2 rapports de sortie au format csv (détaillé) et json (global)
+- `npm run test:corpus -- corpus-file-path=corpus.csv`. Chemin relatif vers le fichier de corpus à analyser
+  Par défaut, le corpus utilisé est présent ici : [test/corpus/corpus_dpe.csv](test/corpus/corpus_dpe.csv)
+- `npm run test:corpus -- dpes-folder-path=/home/user/dpes`. Chemin vers le dossier où les DPE seront téléchargés. Si un
+  fichier DPE est déjà présent dans ce dossier, il ne sera pas retéléchargé.
+
+### Résultats corpus
+
+| Version librairie / corpus | Taux d'erreur | Nb de DPES analysés | Nb en dessous tu taux d'erreur | Taux de réussite | Détail des valeurs                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| :------------------------- | :------------ | ------------------- | ------------------------------ | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1.2.3                      | 5%            | 9980                | 4489                           | 45%              | `"checks":{"deperdition_mur":{"nbBelowThreshold":9480,"successRatio":"94.80 %"},"deperdition_baie_vitree":{"nbBelowThreshold":9739,"successRatio":"97.39 %"},"deperdition_plancher_bas":{"nbBelowThreshold":9213,"successRatio":"92.13 %"},"deperdition_plancher_haut":{"nbBelowThreshold":9893,"successRatio":"98.93 %"},"deperdition_porte":{"nbBelowThreshold":9848,"successRatio":"98.48 %"},"deperdition_renouvellement_air":{"nbBelowThreshold":9534,"successRatio":"95.34 %"},"hperm":{"nbBelowThreshold":9285,"successRatio":"92.85 %"},"deperdition_pont_thermique":{"nbBelowThreshold":8668,"successRatio":"86.68 %"},"surface_sud_equivalente":{"nbBelowThreshold":9092,"successRatio":"90.92 %"},"besoin_ecs":{"nbBelowThreshold":9766,"successRatio":"97.66 %"},"besoin_ch":{"nbBelowThreshold":8401,"successRatio":"84.01 %"},"conso_auxiliaire_distribution_ecs":{"nbBelowThreshold":9385,"successRatio":"93.85 %"},"conso_auxiliaire_generation_ch":{"nbBelowThreshold":6403,"successRatio":"64.03 %"},"conso_auxiliaire_generation_ecs":{"nbBelowThreshold":7575,"successRatio":"75.75 %"},"conso_ecs":{"nbBelowThreshold":7338,"successRatio":"73.38 %"},"conso_ch":{"nbBelowThreshold":6392,"successRatio":"63.92 %"},"conso_auxiliaire_distribution_ch":{"nbBelowThreshold":5440,"successRatio":"54.40 %"},"conso_auxiliaire_ventilation":{"nbBelowThreshold":5838,"successRatio":"58.38 %"},"ep_conso_5_usages":{"nbBelowThreshold":6012,"successRatio":"60.12 %"},"ep_conso_5_usages_m2":{"nbBelowThreshold":6027,"successRatio":"60.27 %"},"emission_ges_5_usages":{"nbBelowThreshold":5147,"successRatio":"51.47 %"},"emission_ges_5_usages_m2":{"nbBelowThreshold":5729,"successRatio":"57.29 %"}}}` |
 
 ## Roadmap
 
@@ -133,7 +178,8 @@ Lister ici les rapports de tests avec stats sur le CORPUS DPE.
   - [ ] DPE à l'immeuble
   - [ ] Photovoltaïque
 
-Voir la liste des [issues](https://github.com/Open3CL/engine/issues) pour avoir le détail complet des bugs et fonctionnalités en cours de réalisation.
+Voir la liste des [issues](https://github.com/Open3CL/engine/issues) pour avoir le détail complet des bugs et
+fonctionnalités en cours de réalisation.
 
 <p align="right">(<a href="#readme-top">Retour sommaire</a>)</p>
 

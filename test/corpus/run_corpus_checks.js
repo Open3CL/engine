@@ -1,4 +1,4 @@
-import { createReadStream, createWriteStream, writeFileSync } from 'node:fs';
+import { createReadStream, createWriteStream, writeFileSync, existsSync } from 'node:fs';
 import { format } from 'fast-csv';
 import { chunk } from 'lodash-es';
 import Piscina from 'piscina';
@@ -67,6 +67,8 @@ piscina.on('message', (event) => {
         globalReport.checks[event.property] = { nbBelowThreshold: 0 };
       }
       globalReport.checks[event.property].nbBelowThreshold++;
+      globalReport.checks[event.property].successRatio =
+        `${Number((globalReport.checks[event.property].nbBelowThreshold / globalReport.totalDpesInFile) * 100).toFixed(2)} %`;
       break;
     }
   }
@@ -81,6 +83,8 @@ const globalReport = {
   threshold: `${DIFF_VALUE_THRESHOLD}%`,
   dpeRunFailed: [],
   total: 0,
+  successRatio: '',
+  totalDpesInFile: 0,
   nbInvalidDpeVersion: 0,
   nbExcludedDpe: 0,
   nbAllChecksBelowThreshold: 0,
@@ -93,6 +97,10 @@ const corpusFilePathArg = process.argv.find((arg) => arg.includes('corpus-file-p
 const corpusFilePath = corpusFilePathArg
   ? corpusFilePathArg.split('=').pop()
   : 'test/corpus/corpus_dpe.csv';
+
+if (!corpusFilePath.endsWith('.csv')) {
+  throw new Error('The corpus file should be a CSV file !');
+}
 
 const noDpePositionArg = process.argv.find((arg) => arg.includes('no-dpe-pos'));
 const noDpePosition = noDpePositionArg ? Number(noDpePositionArg.split('=').pop()) : 2;
@@ -118,7 +126,11 @@ const createCsv = (rows, headers, filename) => {
   return `Finished writing data to: ${filename}`;
 };
 
-export const validateCorpus = () => {
+/**
+ * @param dpesFilePath {string}
+ * @return {Promise<void>}
+ */
+export const validateCorpus = (dpesFilePath) => {
   return store
     .parseFromStream(
       readableStream,
@@ -136,6 +148,7 @@ export const validateCorpus = () => {
         const dpesToAnalyze = dpeCodes;
 
         totalDpes = dpesToAnalyze.length;
+        globalReport.totalDpesInFile = totalDpes;
 
         console.log(`${totalDpes} DPE to analyze from corpus: ${corpusFilePath}`);
         corpusBar = multibar.create(totalDpes, 0, { action: 'analysés' });
@@ -152,7 +165,7 @@ export const validateCorpus = () => {
         /** @type {any[][]} **/
         const results = await Promise.all(
           chunks.map((chunk) => {
-            return piscina.run({ chunk, dpesToExclude }).then((data) => {
+            return piscina.run({ chunk, dpesToExclude, dpesFilePath }).then((data) => {
               nbAnalyzedDpe += chunks.length;
               corpusBar.increment(chunk.length, { action: 'analysés' });
               return data;
@@ -167,8 +180,25 @@ export const validateCorpus = () => {
     );
 };
 
+if (!process.env.ADEME_API_CLIENT_ID) {
+  throw new Error('Environment variable ADEME_API_CLIENT_ID not set');
+}
+if (!process.env.ADEME_API_CLIENT_SECRET) {
+  throw new Error('Environment variable ADEME_API_CLIENT_SECRET not set');
+}
+if (!process.argv.find((arg) => arg.includes('dpes-folder-path'))) {
+  throw new Error('Argument dpes-folder-path not found !');
+}
+const dpesFilePath = process.argv
+  .find((arg) => arg.includes('dpes-folder-path'))
+  .split('=')
+  .pop();
+if (!existsSync(dpesFilePath)) {
+  throw new Error(`File path ${dpesFilePath} does not exists !`);
+}
+
 console.time('validateCorpus');
-validateCorpus().then(() => {
+validateCorpus(dpesFilePath).then(() => {
   multibar.stop();
   console.timeEnd('validateCorpus');
   createCsv(
@@ -176,6 +206,7 @@ validateCorpus().then(() => {
     OUTPUT_CSV_HEADERS,
     `${import.meta.dirname}/reports/corpus_detailed_report.csv`
   );
+  globalReport.successRatio = `${Number((globalReport.nbAllChecksBelowThreshold / globalReport.totalDpesInFile) * 100).toFixed(2)} %`;
   writeFileSync(
     `${import.meta.dirname}/reports/corpus_global_report.json`,
     JSON.stringify(globalReport),
