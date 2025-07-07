@@ -275,16 +275,11 @@ export function calcul_3cl(dpe) {
    * Les besoins en ECS pour chaque générateur sont / 2
    */
   if (ecs.length > 1) {
-    // Immeuble avec 2 systèmes collectifs
-    const isImmeubleSystemEcsCollectif =
-      th === 'immeuble' && ecs.every((e) => e.donnee_entree.enum_type_installation_id !== '1');
-    // Logement individuel avec 2 systèmes ECS individuel
-    const isLogementIndSystemEcsInd =
-      th !== 'immeuble' && ecs.every((e) => e.donnee_entree.enum_type_installation_id === '1');
     // Immeuble avec différents systèmes individuels
     isImmeubleSystemEcsIndividuels =
       th === 'immeuble' && ecs.every((e) => e.donnee_entree.enum_type_installation_id === '1');
-    if (isImmeubleSystemEcsCollectif || isLogementIndSystemEcsInd) {
+
+    if (!isImmeubleSystemEcsIndividuels) {
       becs /= 2;
       becs_dep /= 2;
     }

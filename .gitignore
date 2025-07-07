@@ -1,5 +1,6 @@
 test/ademe.db
 *.csv
+test/corpus/reports/*.json
 !test/corpus/corpus_dpe.csv
 bun.lockb
 /.idea/
