@@ -499,6 +499,9 @@ export function calcul_3cl(dpe) {
     ...conso
   };
 
+  const conso_coeff_1_9 = get_conso_coeff_1_9_2026(dpe);
+  logement.sortie.ep_conso = { ...logement.sortie.ep_conso, ...conso_coeff_1_9 };
+
   return dpe;
 }
 
@@ -526,4 +529,36 @@ export function get_classe_ges_dpe(dpe) {
       Sh
     )
   };
+}
+
+/**
+ * Calcul de la nouvelle conso suite à la modification du coefficient pour le chauffage électrique
+ * Applicable uniquement à partir de janvier 2026
+ *
+ * {@link https://www.ecologie.gouv.fr/actualites/evolutions-du-calcul-du-dpe-reponses-vos-questions#:~:text=Les%20DPE%20r%C3%A9alis%C3%A9s%20avant%20le,%2DAudit%20de%20l'Ademe.}
+ *
+ * @param dpe {FullDpe}
+ * @returns {{ep_conso_5_usages_2026: number; ep_conso_5_usages_2026_m2: number; classe_bilan_dpe_2026: string}}
+ */
+export function get_conso_coeff_1_9_2026(dpe) {
+  const zc_id = dpe.logement.meteo.enum_zone_climatique_id;
+  const ca_id = dpe.logement.meteo.enum_classe_altitude_id;
+  const th = calc_th(dpe.logement.caracteristique_generale.enum_methode_application_dpe_log_id);
+
+  const ep_conso_5_usages_2026 =
+    (0.9 / 1.3) *
+      (Number(dpe.logement.sortie.ep_conso.ep_conso_5_usages) -
+        Number(dpe.logement.sortie.ef_conso.conso_5_usages)) +
+    Number(dpe.logement.sortie.ef_conso.conso_5_usages);
+
+  let Sh;
+  if (th === 'maison' || th === 'appartement')
+    Sh = Number(dpe.logement.caracteristique_generale.surface_habitable_logement);
+  else if (th === 'immeuble')
+    Sh = Number(dpe.logement.caracteristique_generale.surface_habitable_immeuble);
+
+  const ep_conso_5_usages_2026_m2 = Math.floor(ep_conso_5_usages_2026 / Sh);
+  const classe_bilan_dpe_2026 = classe_bilan_dpe(ep_conso_5_usages_2026_m2, zc_id, ca_id, Sh);
+
+  return { classe_bilan_dpe_2026, ep_conso_5_usages_2026_m2, ep_conso_5_usages_2026 };
 }
