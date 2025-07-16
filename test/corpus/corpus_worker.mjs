@@ -211,7 +211,9 @@ const downloadDpe = (dpeCode, dpesFilePath) => {
         if (resp.status !== 200) {
           /** @type {{error: string}} **/
           const errorPayload = await resp.json();
-          throw new Error(`Could not retrieve DPE: ${dpeCode}, error: ${errorPayload.error}`);
+          throw new Error(
+            `Could not retrieve DPE: ${dpeCode}, code: ${resp.status}, error: ${errorPayload.error}`
+          );
         }
         return resp.text();
       })

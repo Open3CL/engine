@@ -1,6 +1,7 @@
 test/ademe.db
 *.csv
 !test/corpus/corpus_dpe.csv
+!test/corpus/chauffage_individuel.csv
 bun.lockb
 /.idea/
 *.iml
