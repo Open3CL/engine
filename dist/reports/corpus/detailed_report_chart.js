@@ -19,8 +19,8 @@ function updateDetailedChart(dataReport) {
   detailedReportChart.update();
 }
 
-function loadDetailReportData() {
-  const reportFile = `corpus_global_report${showStatsCompat ? '_compatibility' : ''}_threshold_${threshold}.json`;
+function loadDetailReportData(corpus) {
+  const reportFile = `${corpus}/global_report.json`;
   $.get(reportFile, (data) => {
     if (!detailedReportData) {
       detailedReportData = data;
@@ -50,7 +50,7 @@ function loadDetailReportData() {
               },
               position: 'bottom'
             },
-            title: { display: true, text: `Résultats détaillés sur ${data.nbDpe} DPE analysés` }
+            title: { display: true, text: `Résultats détaillés sur ${data.total} DPE analysés` }
           }
         }
       });

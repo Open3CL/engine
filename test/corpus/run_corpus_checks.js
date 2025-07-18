@@ -7,6 +7,7 @@ import { MultiBar } from 'cli-progress';
 import colors from 'ansi-colors';
 import CsvParserStore from '../../src/core/file/infrastructure/adapter/csv-parser.store.js';
 import { OUTPUT_CSV_HEADERS } from './corpus_utils.js';
+import { mkdirSync, readFileSync } from 'fs';
 
 const DIFF_VALUE_THRESHOLD = 5;
 
@@ -103,7 +104,7 @@ if (!corpusFilePath.endsWith('.csv')) {
 }
 
 const noDpePositionArg = process.argv.find((arg) => arg.includes('no-dpe-pos'));
-const noDpePosition = noDpePositionArg ? Number(noDpePositionArg.split('=').pop()) : 2;
+const noDpePosition = noDpePositionArg ? Number(noDpePositionArg.split('=').pop()) : 0;
 
 const store = new CsvParserStore();
 const readableStream = createReadStream(corpusFilePath);
@@ -209,6 +210,27 @@ validateCorpus(dpesFilePath).then(() => {
   globalReport.successRatio = `${Number((globalReport.nbAllChecksBelowThreshold / globalReport.totalDpesInFile) * 100).toFixed(2)} %`;
   writeFileSync(
     `${import.meta.dirname}/reports/corpus_global_report.json`,
+    JSON.stringify(globalReport),
+    { encoding: 'utf8' }
+  );
+
+  const fileName = corpusFilePath.split('/').pop();
+
+  /** @type {{files: string[]}} **/
+  const corpusList = JSON.parse(
+    readFileSync('dist/reports/corpus/corpus_list.json', { encoding: 'utf8' }).toString()
+  );
+
+  if (!corpusList.files.includes(fileName)) {
+    corpusList.files.push(fileName);
+  }
+  writeFileSync('dist/reports/corpus/corpus_list.json', JSON.stringify(corpusList), {
+    encoding: 'utf8'
+  });
+
+  mkdirSync(`dist/reports/corpus/${fileName}`, { recursive: true });
+  writeFileSync(
+    `dist/reports/corpus/${fileName}/global_report.json`,
     JSON.stringify(globalReport),
     { encoding: 'utf8' }
   );
