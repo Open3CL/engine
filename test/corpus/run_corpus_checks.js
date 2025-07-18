@@ -104,7 +104,7 @@ if (!corpusFilePath.endsWith('.csv')) {
 }
 
 const noDpePositionArg = process.argv.find((arg) => arg.includes('no-dpe-pos'));
-const noDpePosition = noDpePositionArg ? Number(noDpePositionArg.split('=').pop()) : 2;
+const noDpePosition = noDpePositionArg ? Number(noDpePositionArg.split('=').pop()) : 0;
 
 const store = new CsvParserStore();
 const readableStream = createReadStream(corpusFilePath);

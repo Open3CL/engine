@@ -14,5 +14,5 @@ scripts/assets/tv.js
 .npmrc
 dist/reports/unit/
 src/output.js
-test/corpus/dpes/*
-!test/corpus/dpes/.gitkeep
+!dist/reports/corpus/corpus_dpe.csv
+!dist/reports/corpus/dpe_immeuble_chauffage_individuel.csv
