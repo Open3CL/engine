@@ -2,6 +2,8 @@ test/ademe.db
 *.csv
 !test/corpus/corpus_dpe.csv
 !test/corpus/dpe_immeuble_chauffage_individuel.csv
+!test/corpus/dpe_immeuble_chauffage_collectif.csv
+!test/corpus/dpe_immeuble_chauffage_mixte.csv
 bun.lockb
 /.idea/
 *.iml
@@ -16,3 +18,5 @@ dist/reports/unit/
 src/output.js
 !dist/reports/corpus/corpus_dpe.csv
 !dist/reports/corpus/dpe_immeuble_chauffage_individuel.csv
+!dist/reports/corpus/dpe_immeuble_chauffage_collectif.csv
+!dist/reports/corpus/dpe_immeuble_chauffage_mixte.csv
