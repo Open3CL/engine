@@ -165,10 +165,14 @@ deperdition_mur,
 
 ### Résultats corpus
 
+Résultats des tests de corpus avec le mode de compatibilité activé
+
 | Version librairie | corpus                                | Taux d'erreur | Nb de DPES analysés | Nb en dessous tu taux d'erreur | Taux de réussite | Détail des valeurs                                                                                                  |
 | :---------------- | :------------------------------------ | :------------ | ------------------- | ------------------------------ | ---------------- | ------------------------------------------------------------------------------------------------------------------- |
 | 1.2.3             | corpus_dpe.csv                        | 5%            | 9980                | 4489                           | 45%              | [Voir le détail](https://open3cl.github.io/engine/reports/corpus?corpus_file=corpus_dpe.csv)                        |
 | 1.2.3             | dpe_immeuble_chauffage_individuel.csv | 5%            | 9998                | 3257                           | 32%              | [Voir le détail](https://open3cl.github.io/engine/reports/corpus?corpus_file=dpe_immeuble_chauffage_individuel.csv) |
+| 1.2.3             | dpe_immeuble_chauffage_collectif.csv  | 5%            | 10000               | 5279                           | 53%              | [Voir le détail](https://open3cl.github.io/engine/reports/corpus?corpus_file=dpe_immeuble_chauffage_collectif.csv)  |
+| 1.2.3             | dpe_immeuble_chauffage_mixte.csv      | 5%            | 10000               | 2728                           | 27%              | [Voir le détail](https://open3cl.github.io/engine/reports/corpus?corpus_file=dpe_immeuble_chauffage_mixte.csv)      |
 
 ## Roadmap
 
