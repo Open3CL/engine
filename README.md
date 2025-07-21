@@ -165,7 +165,7 @@ deperdition_mur,
 
 ### Résultats corpus
 
-Résultats des tests de corpus avec le mode de compatibilité activé
+Résultats des tests de corpus avec le mode de compatibilité activé.
 
 | Version librairie | corpus                                | Taux d'erreur | Nb de DPES analysés | Nb en dessous tu taux d'erreur | Taux de réussite | Détail des valeurs                                                                                                  |
 | :---------------- | :------------------------------------ | :------------ | ------------------- | ------------------------------ | ---------------- | ------------------------------------------------------------------------------------------------------------------- |
