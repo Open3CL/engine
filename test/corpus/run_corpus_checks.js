@@ -256,9 +256,9 @@ validateCorpus(dpesFilePath).then(() => {
     );
   }
 
-  /*writeFileSync(
+  writeFileSync(
     `dist/reports/corpus/${fileName}/corpus_dpe_list_under_threshold_${current_git_branch}.json`,
     JSON.stringify(globalReport.dpeUnderThreshold),
     { encoding: 'utf8' }
-  );*/
+  );
 });
