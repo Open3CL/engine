@@ -70,6 +70,11 @@ piscina.on('message', (event) => {
       globalReport.checks[event.property].nbBelowThreshold++;
       globalReport.checks[event.property].successRatio =
         `${Number((globalReport.checks[event.property].nbBelowThreshold / globalReport.totalDpesInFile) * 100).toFixed(2)} %`;
+
+      if (!globalReport.dpeUnderThreshold.includes(event.dpeCode)) {
+        globalReport.dpeUnderThreshold.push(event.dpeCode);
+      }
+
       break;
     }
   }
@@ -89,7 +94,8 @@ const globalReport = {
   nbInvalidDpeVersion: 0,
   nbExcludedDpe: 0,
   nbAllChecksBelowThreshold: 0,
-  checks: {}
+  checks: {},
+  dpeUnderThreshold: []
 };
 
 const INPUT_CSV_HEADERS = [];
@@ -210,7 +216,7 @@ validateCorpus(dpesFilePath).then(() => {
   globalReport.successRatio = `${Number((globalReport.nbAllChecksBelowThreshold / globalReport.totalDpesInFile) * 100).toFixed(2)} %`;
   writeFileSync(
     `${import.meta.dirname}/reports/corpus_global_report.json`,
-    JSON.stringify(globalReport),
+    JSON.stringify({ ...globalReport, dpeUnderThreshold: undefined }),
     { encoding: 'utf8' }
   );
 
@@ -231,7 +237,13 @@ validateCorpus(dpesFilePath).then(() => {
   mkdirSync(`dist/reports/corpus/${fileName}`, { recursive: true });
   writeFileSync(
     `dist/reports/corpus/${fileName}/global_report.json`,
-    JSON.stringify(globalReport),
+    JSON.stringify({ ...globalReport, dpeUnderThreshold: undefined }),
+    { encoding: 'utf8' }
+  );
+
+  writeFileSync(
+    `dist/reports/corpus/${fileName}/dpe_list_under_threshold.json`,
+    JSON.stringify(globalReport.dpeUnderThreshold),
     { encoding: 'utf8' }
   );
 });

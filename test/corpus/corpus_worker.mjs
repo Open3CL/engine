@@ -157,7 +157,11 @@ const runEngineAndVerifyOutput = (inputDpe, dpeOutputs) => {
 
     const diff = getDpeOutputValueDiff(inputDpe, outputDpe, propertyPath, csvOutputDpe);
     if (diff < DIFF_VALUE_THRESHOLD) {
-      parentPort.postMessage({ action: 'incrementCheckPropertyThreshold', property });
+      parentPort.postMessage({
+        action: 'incrementCheckPropertyThreshold',
+        property,
+        dpeCode: inputDpe.numero_dpe
+      });
     }
   });
 
