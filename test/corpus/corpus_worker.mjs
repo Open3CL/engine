@@ -159,8 +159,7 @@ const runEngineAndVerifyOutput = (inputDpe, dpeOutputs) => {
     if (diff < DIFF_VALUE_THRESHOLD) {
       parentPort.postMessage({
         action: 'incrementCheckPropertyThreshold',
-        property,
-        dpeCode: inputDpe.numero_dpe
+        property
       });
     }
   });
@@ -183,6 +182,7 @@ const runEngineAndVerifyOutput = (inputDpe, dpeOutputs) => {
     parentPort.postMessage({ action: 'incrementAllChecksThreshold' });
   } else {
     csvOutputDpe.push('KO');
+    parentPort.postMessage({ action: 'addDpeUnderThresholdInList', dpeCode: inputDpe.numero_dpe });
   }
 
   dpeOutputs.push(csvOutputDpe);
@@ -236,6 +236,12 @@ const downloadDpe = (dpeCode, dpesFilePath) => {
 const readOrDownloadDpe = (dpeCode, dpesFilePath) => {
   const filePath = `${dpesFilePath}/${dpeCode}.xml`;
   if (!existsSync(filePath)) {
+    if (!process.env.ADEME_API_CLIENT_ID) {
+      throw new Error('Environment variable ADEME_API_CLIENT_ID not set');
+    }
+    if (!process.env.ADEME_API_CLIENT_SECRET) {
+      throw new Error('Environment variable ADEME_API_CLIENT_SECRET not set');
+    }
     return downloadDpe(dpeCode, dpesFilePath);
   } else {
     return Promise.resolve(readFileSync(filePath, { encoding: 'utf8' }));
@@ -272,6 +278,8 @@ export default async function ({ chunk, dpesToExclude, dpesFilePath = [] }) {
         } else {
           runEngineAndVerifyOutput(dpe, dpeOutputs);
         }
+      } else {
+        parentPort.postMessage({ action: 'incrementInvalidDpeVersion' });
       }
     } catch (ex) {
       console.error(ex);

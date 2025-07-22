@@ -17,7 +17,7 @@
       const urlSearchParams = new URLSearchParams(location.search);
       const corpusFileFromUrl = urlSearchParams.get('corpus_file');
       $(document).ready(() => {
-        $.get('corpus_list.json', (data) => {
+        $.get('corpus_list_main.json', (data) => {
           files = data.files;
           files.forEach((file) => {
             const option = document.createElement('option');

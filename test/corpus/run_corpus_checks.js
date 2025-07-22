@@ -8,6 +8,9 @@ import colors from 'ansi-colors';
 import CsvParserStore from '../../src/core/file/infrastructure/adapter/csv-parser.store.js';
 import { OUTPUT_CSV_HEADERS } from './corpus_utils.js';
 import { mkdirSync, readFileSync } from 'fs';
+import { execSync } from 'child_process';
+
+const current_git_branch = execSync('git rev-parse --abbrev-ref HEAD').toString().trim();
 
 const DIFF_VALUE_THRESHOLD = 5;
 
@@ -40,11 +43,11 @@ piscina.on('message', (event) => {
       break;
     }
     case 'incrementTotalReport': {
-      globalReport.total++;
+      globalReport.nbValidDpe++;
       break;
     }
     case 'decrementTotalReport': {
-      globalReport.total--;
+      globalReport.nbValidDpe--;
       break;
     }
     case 'incrementExcludedDpe': {
@@ -63,6 +66,12 @@ piscina.on('message', (event) => {
       globalReport.nbAllChecksBelowThreshold++;
       break;
     }
+    case 'addDpeUnderThresholdInList': {
+      if (!globalReport.dpeUnderThreshold.includes(event.dpeCode)) {
+        globalReport.dpeUnderThreshold.push(event.dpeCode);
+      }
+      break;
+    }
     case 'incrementCheckPropertyThreshold': {
       if (!globalReport.checks[event.property]) {
         globalReport.checks[event.property] = { nbBelowThreshold: 0 };
@@ -70,11 +79,6 @@ piscina.on('message', (event) => {
       globalReport.checks[event.property].nbBelowThreshold++;
       globalReport.checks[event.property].successRatio =
         `${Number((globalReport.checks[event.property].nbBelowThreshold / globalReport.totalDpesInFile) * 100).toFixed(2)} %`;
-
-      if (!globalReport.dpeUnderThreshold.includes(event.dpeCode)) {
-        globalReport.dpeUnderThreshold.push(event.dpeCode);
-      }
-
       break;
     }
   }
@@ -87,13 +91,13 @@ let dpeOutputs = [];
 
 const globalReport = {
   threshold: `${DIFF_VALUE_THRESHOLD}%`,
-  dpeRunFailed: [],
-  total: 0,
-  successRatio: '',
   totalDpesInFile: 0,
+  nbValidDpe: 0,
   nbInvalidDpeVersion: 0,
   nbExcludedDpe: 0,
   nbAllChecksBelowThreshold: 0,
+  successRatio: '',
+  dpeRunFailed: [],
   checks: {},
   dpeUnderThreshold: []
 };
@@ -187,12 +191,6 @@ export const validateCorpus = (dpesFilePath) => {
     );
 };
 
-if (!process.env.ADEME_API_CLIENT_ID) {
-  throw new Error('Environment variable ADEME_API_CLIENT_ID not set');
-}
-if (!process.env.ADEME_API_CLIENT_SECRET) {
-  throw new Error('Environment variable ADEME_API_CLIENT_SECRET not set');
-}
 if (!process.argv.find((arg) => arg.includes('dpes-folder-path'))) {
   throw new Error('Argument dpes-folder-path not found !');
 }
@@ -208,41 +206,43 @@ console.time('validateCorpus');
 validateCorpus(dpesFilePath).then(() => {
   multibar.stop();
   console.timeEnd('validateCorpus');
-  createCsv(
-    dpeOutputs,
-    OUTPUT_CSV_HEADERS,
-    `${import.meta.dirname}/reports/corpus_detailed_report.csv`
-  );
+
   globalReport.successRatio = `${Number((globalReport.nbAllChecksBelowThreshold / globalReport.totalDpesInFile) * 100).toFixed(2)} %`;
-  writeFileSync(
-    `${import.meta.dirname}/reports/corpus_global_report.json`,
-    JSON.stringify({ ...globalReport, dpeUnderThreshold: undefined }),
-    { encoding: 'utf8' }
-  );
 
   const fileName = corpusFilePath.split('/').pop();
 
   /** @type {{files: string[]}} **/
   const corpusList = JSON.parse(
-    readFileSync('dist/reports/corpus/corpus_list.json', { encoding: 'utf8' }).toString()
+    readFileSync(`dist/reports/corpus/corpus_list_${current_git_branch}.json`, {
+      encoding: 'utf8'
+    }).toString()
   );
 
   if (!corpusList.files.includes(fileName)) {
     corpusList.files.push(fileName);
   }
-  writeFileSync('dist/reports/corpus/corpus_list.json', JSON.stringify(corpusList), {
-    encoding: 'utf8'
-  });
+  writeFileSync(
+    `dist/reports/corpus/corpus_list_${current_git_branch}.json`,
+    JSON.stringify(corpusList),
+    {
+      encoding: 'utf8'
+    }
+  );
 
   mkdirSync(`dist/reports/corpus/${fileName}`, { recursive: true });
   writeFileSync(
-    `dist/reports/corpus/${fileName}/global_report.json`,
+    `dist/reports/corpus/${fileName}/corpus_global_report_${current_git_branch}.json`,
     JSON.stringify({ ...globalReport, dpeUnderThreshold: undefined }),
     { encoding: 'utf8' }
   );
+  createCsv(
+    dpeOutputs,
+    OUTPUT_CSV_HEADERS,
+    `dist/reports/corpus/${fileName}/corpus_detailed_report_${current_git_branch}.csv`
+  );
 
   writeFileSync(
-    `dist/reports/corpus/${fileName}/dpe_list_under_threshold.json`,
+    `dist/reports/corpus/${fileName}/corpus_dpe_list_under_threshold_${current_git_branch}.json`,
     JSON.stringify(globalReport.dpeUnderThreshold),
     { encoding: 'utf8' }
   );

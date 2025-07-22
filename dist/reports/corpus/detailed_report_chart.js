@@ -20,7 +20,7 @@ function updateDetailedChart(dataReport) {
 }
 
 function loadDetailReportData(corpus) {
-  const reportFile = `${corpus}/global_report.json`;
+  const reportFile = `${corpus}/corpus_global_report_main.json`;
   $.get(reportFile, (data) => {
     if (!detailedReportData) {
       detailedReportData = data;

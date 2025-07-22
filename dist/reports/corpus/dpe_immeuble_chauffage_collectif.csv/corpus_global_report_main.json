@@ -1,12 +1,12 @@
 {
   "threshold": "5%",
-  "dpeRunFailed": ["2291E3237230K", "2368E3643180A", "2359E2821117W", "2291E3237200G"],
-  "total": 10000,
-  "successRatio": "52.79 %",
   "totalDpesInFile": 10000,
+  "nbValidDpe": 10000,
   "nbInvalidDpeVersion": 0,
   "nbExcludedDpe": 0,
   "nbAllChecksBelowThreshold": 5279,
+  "successRatio": "52.79 %",
+  "dpeRunFailed": ["2291E3237230K", "2368E3643180A", "2359E2821117W", "2291E3237200G"],
   "checks": {
     "deperdition_mur": { "nbBelowThreshold": 9710, "successRatio": "97.10 %" },
     "deperdition_baie_vitree": { "nbBelowThreshold": 9865, "successRatio": "98.65 %" },
