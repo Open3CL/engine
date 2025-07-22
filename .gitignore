@@ -1,5 +1,6 @@
 test/ademe.db
 *.csv
+test/corpus/reports/*.json
 !test/corpus/corpus_dpe.csv
 !test/corpus/dpe_immeuble_chauffage_individuel.csv
 !test/corpus/dpe_immeuble_chauffage_collectif.csv
@@ -37,3 +38,4 @@ dist/reports/corpus/dpe_immeuble_chauffage_mixte.csv/*.json
 !dist/reports/corpus/dpe_immeuble_chauffage_mixte.csv/corpus_global_report_main.json
 !dist/reports/corpus/dpe_immeuble_chauffage_mixte.csv/corpus_dpe_list_under_threshold_main.json
 
+*.db

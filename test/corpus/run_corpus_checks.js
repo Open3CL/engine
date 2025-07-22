@@ -1,6 +1,6 @@
 import { createReadStream, createWriteStream, writeFileSync, existsSync } from 'node:fs';
 import { format } from 'fast-csv';
-import { chunk } from 'lodash-es';
+import { chunk, difference } from 'lodash-es';
 import Piscina from 'piscina';
 import { resolve } from 'path';
 import { MultiBar } from 'cli-progress';
@@ -213,7 +213,7 @@ validateCorpus(dpesFilePath).then(() => {
 
   /** @type {{files: string[]}} **/
   const corpusList = JSON.parse(
-    readFileSync(`dist/reports/corpus/corpus_list_${current_git_branch}.json`, {
+    readFileSync(`dist/reports/corpus/corpus_list_main.json`, {
       encoding: 'utf8'
     }).toString()
   );
@@ -221,13 +221,9 @@ validateCorpus(dpesFilePath).then(() => {
   if (!corpusList.files.includes(fileName)) {
     corpusList.files.push(fileName);
   }
-  writeFileSync(
-    `dist/reports/corpus/corpus_list_${current_git_branch}.json`,
-    JSON.stringify(corpusList),
-    {
-      encoding: 'utf8'
-    }
-  );
+  writeFileSync(`dist/reports/corpus/corpus_list_main.json`, JSON.stringify(corpusList), {
+    encoding: 'utf8'
+  });
 
   mkdirSync(`dist/reports/corpus/${fileName}`, { recursive: true });
   writeFileSync(
@@ -240,6 +236,25 @@ validateCorpus(dpesFilePath).then(() => {
     OUTPUT_CSV_HEADERS,
     `dist/reports/corpus/${fileName}/corpus_detailed_report_${current_git_branch}.csv`
   );
+
+  /** @type {string[]} **/
+  const currentDpeUnderThreshold = JSON.parse(
+    readFileSync(`dist/reports/corpus/${fileName}/corpus_dpe_list_under_threshold_main.json`, {
+      encoding: 'utf8'
+    }).toString()
+  );
+
+  /** @type {string[]} **/
+  const diffDpeThreshold = globalReport.dpeUnderThreshold.filter(
+    (dpe) => !currentDpeUnderThreshold.includes(dpe)
+  );
+  if (diffDpeThreshold.length > 0) {
+    writeFileSync(
+      `dist/reports/corpus/${fileName}/corpus_dpe_list_under_threshold_diff_main_${current_git_branch}.json`,
+      JSON.stringify(diffDpeThreshold),
+      { encoding: 'utf8' }
+    );
+  }
 
   writeFileSync(
     `dist/reports/corpus/${fileName}/corpus_dpe_list_under_threshold_${current_git_branch}.json`,
