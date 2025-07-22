@@ -4,5 +4,6 @@
     "dpe_immeuble_chauffage_individuel.csv",
     "dpe_immeuble_chauffage_collectif.csv",
     "dpe_immeuble_chauffage_mixte.csv"
-  ]
+  ],
+  "banches": ["main", "fix_issue_60_part2"]
 }

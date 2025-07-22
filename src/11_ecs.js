@@ -72,9 +72,13 @@ export default function calc_ecs(
   if (virtualisationECS) {
     di.ratio_besoin_ecs = de.cle_repartition_ecs || 1;
   } else if (isImmeubleSystemEcsIndividuels) {
-    di.ratio_besoin_ecs =
-      ((de.surface_habitable / (surfaceImmeuble || 1)) * (de.rdim || 1)) /
-      (de.nombre_logement * nombreAppartements);
+    if (nombreAppartements) {
+      di.ratio_besoin_ecs = 1 / nombreAppartements;
+    } else {
+      di.ratio_besoin_ecs =
+        ((de.surface_habitable / (surfaceImmeuble || 1)) * (de.rdim || 1)) /
+        (de.nombre_logement * nombreAppartements);
+    }
   } else if (de.rdim) {
     di.ratio_besoin_ecs = 1 / de.rdim || 1;
   }
