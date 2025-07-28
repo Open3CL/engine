@@ -32,8 +32,6 @@ export default function calc_besoin_ch(
   const Nref21 = tvs.nref21[ilpa];
   const Nref19 = tvs.nref19[ilpa];
 
-  let sumNref19 = 0;
-  let sumNref21 = 0;
   let sumDh19 = 0;
   let sumDh21 = 0;
   const e = tvs.e[ilpa];
@@ -41,7 +39,6 @@ export default function calc_besoin_ch(
   let pertes_distribution_ecs_recup = 0;
   let pertes_distribution_ecs_recup_depensier = 0;
   let pertes_stockage_ecs_recup = 0;
-  let pertes_stockage_ecs_recup_depensier = 0;
   let pertes_generateur_ch_recup = 0;
   let pertes_generateur_ch_recup_depensier = 0;
   let fraction_apport_gratuit_ch = 0;
@@ -57,17 +54,6 @@ export default function calc_besoin_ch(
   let Qdw_total_ecs_dep = 0;
   let Qgw_total_ecs = 0;
   instal_ecs.forEach((instal_ecs) => {
-    let becs_inst_ecs = 0;
-    let becs_inst_ecs_dep = 0;
-    for (const mois of mois_liste) {
-      // en kw/h
-      const becsj = calc_besoin_ecs_j(ca, mois, zc, nadeq, false) * prorataEcs;
-      // en kw/h
-      const becs_j_dep = calc_besoin_ecs_j(ca, mois, zc, nadeq, true) * prorataEcs;
-      becs_inst_ecs += becsj;
-      becs_inst_ecs_dep += becs_j_dep;
-    }
-
     let Qgw;
     const gen_ecs = instal_ecs.generateur_ecs_collection.generateur_ecs;
 
@@ -124,9 +110,6 @@ export default function calc_besoin_ch(
   for (const mois of mois_liste) {
     const nref19 = Nref19[ca][mois][zc];
     const nref21 = Nref21[ca][mois][zc];
-
-    sumNref19 += nref19;
-    sumNref21 += nref21;
 
     // bvj
     const dh19j = dh19[ca][mois][zc];

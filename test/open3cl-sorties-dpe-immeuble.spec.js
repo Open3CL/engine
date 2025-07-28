@@ -17,7 +17,7 @@ describe('DPE immeuble unit tests', () => {
     '2238E0520237Q',
     '2274E1403983G'
   ])(
-    '9.8 - Installation de chauffage collectif avec base + appoint, dpe: %s with ratio: 1',
+    '9.8 - Installation de chauffage collectif avec base + appoint, dpe: %s with ratio: 5%',
     (dpe) => {
       const diffRatio = 5;
 
