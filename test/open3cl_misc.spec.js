@@ -101,4 +101,13 @@ describe('Open3cl misc unit tests', () => {
         .tv_rendement_distribution_ch_id
     );
   });
+
+  test('2369E1440431Y', () => {
+    /** @type {FullDpe} **/
+    const input = getAdemeFileJson('2369E1440431Y');
+
+    /** @type {FullDpe} **/
+    const output = calcul_3cl(structuredClone(input));
+    expect(input.logement.sortie.apport_et_besoin).toEqual(output.logement.sortie.apport_et_besoin);
+  });
 });

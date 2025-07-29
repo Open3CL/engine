@@ -182,7 +182,7 @@ const runEngineAndVerifyOutput = (inputDpe, dpeOutputs) => {
     parentPort.postMessage({ action: 'incrementAllChecksThreshold' });
   } else {
     csvOutputDpe.push('KO');
-    parentPort.postMessage({ action: 'addDpeUnderThresholdInList', dpeCode: inputDpe.numero_dpe });
+    parentPort.postMessage({ action: 'addDpeExceedThresholdInList', dpeCode: inputDpe.numero_dpe });
   }
 
   dpeOutputs.push(csvOutputDpe);

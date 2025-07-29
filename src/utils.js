@@ -57,6 +57,7 @@ export const Njj = {
 // sum all Njj values
 export const Njj_sum = Object.values(Njj).reduce((acc, val) => acc + val, 0);
 
+/** @type {string[]} **/
 export const mois_liste = [
   'Janvier',
   'Février',

@@ -14,11 +14,31 @@
     ></script>
     <script>
       let files = [];
+      let corpusFile;
+      let branchName;
+      let branches = [];
+      let showOnlyDifferentValues = false;
       const urlSearchParams = new URLSearchParams(location.search);
       const corpusFileFromUrl = urlSearchParams.get('corpus_file');
+
+      const populateBranchesSelect = () => {
+        const branchListSelect = document.getElementById('branch-list');
+        branches.forEach((branch) => {
+          const option = document.createElement('option');
+          option.text = branch;
+          option.value = branch;
+          branchListSelect.appendChild(option);
+        });
+      };
+
       $(document).ready(() => {
+        branchName = 'main';
+
+        const corpusListSelect = document.getElementById('corpus-list');
         $.get('corpus_list_main.json', (data) => {
           files = data.files;
+          branches = data.branches;
+          populateBranchesSelect();
           files.forEach((file) => {
             const option = document.createElement('option');
             option.text = file;
@@ -26,36 +46,70 @@
             if (corpusFileFromUrl === file) {
               option.setAttribute('selected', '');
             }
-            const select = document.getElementById('corpus-list');
-            select.appendChild(option);
+            corpusListSelect.appendChild(option);
           });
-
-          loadDetailReportData(corpusFileFromUrl || files[0]);
+          corpusFile = corpusFileFromUrl || files[0];
+          loadDetailReportData(corpusFile, 'main', 'mainBranchChart');
         });
 
         document.getElementById('corpus-list').addEventListener('change', (event) => {
-          const corpusFile = event.target.value;
-          loadDetailReportData(corpusFile);
+          corpusFile = event.target.value;
+          loadDetailReportData(corpusFile, 'main', 'mainBranchChart', showOnlyDifferentValues).then(
+            () =>
+              loadDetailReportData(corpusFile, branchName, 'branchChart', showOnlyDifferentValues)
+          );
+        });
+
+        document.getElementById('branch-list').addEventListener('change', (event) => {
+          branchName = event.target.value;
+          if (branchName !== 'main') {
+            loadDetailReportData(corpusFile, branchName, 'branchChart', showOnlyDifferentValues);
+          }
+        });
+
+        document.getElementById('showOnlyDiffValuesCheckbox').addEventListener('click', (event) => {
+          showOnlyDifferentValues = event.target.checked;
+          loadDetailReportData(corpusFile, branchName, 'branchChart', showOnlyDifferentValues);
         });
       });
     </script>
     <script src="detailed_report_chart.js"></script>
   </head>
   <body>
-    <div>
+    <div id="container">
       <div class="w-full">
-        <form class="flex justify-center gap-2 pt-3">
-          <div class="text-center">
-            <select
-              id="corpus-list"
-              class="mt-2 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-            ></select>
+        <form class="pt-3">
+          <div class="w-auto">
+            <div class="text-center flex justify-center gap-8">
+              <div>
+                <select
+                  id="corpus-list"
+                  class="mt-2 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                ></select>
+              </div>
+              <div class="flex">
+                <label for="branch-list" class="pt-3" style="width: 20rem"
+                  >Compare with branch</label
+                >
+                <select
+                  id="branch-list"
+                  class="mt-2 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                ></select>
+              </div>
+            </div>
           </div>
         </form>
       </div>
+      <div class="w-full flex justify-center p-3">
+        <input id="showOnlyDiffValuesCheckbox" type="checkbox" class="mt-1" />
+        <span class="ml-2">Afficher que les valeurs différentes</span>
+      </div>
       <div id="charts" class="p-6 flex justify-center">
         <div style="width: 800px">
-          <canvas id="detailedChart"></canvas>
+          <canvas id="mainBranchChart"></canvas>
+        </div>
+        <div style="width: 800px">
+          <canvas id="branchChart"></canvas>
         </div>
       </div>
     </div>
