@@ -12,8 +12,9 @@ function createDatasetAndLabels(data, branch) {
       const previousPercentage = Math.round(
         (Number(previousCheck.nbBelowThreshold) / data.nbValidDpe) * 100
       );
-      if (percentage - previousPercentage > 0) {
-        label = `${label} (${percentage}%) => +${percentage - previousPercentage}%`;
+      const diffPercentage = percentage - previousPercentage;
+      if (diffPercentage !== 0) {
+        label = `${label} (${percentage}%) => ${percentage - previousPercentage > 0 ? '+' : ''} ${percentage - previousPercentage}%`;
       } else {
         label = `${label} (${percentage}%)`;
       }
@@ -42,7 +43,7 @@ function updateDetailedChart(branch, data) {
   if (branch !== 'main') {
     const diffNbAllChecksBelowThreshold =
       data.nbAllChecksBelowThreshold - dataByBranch['main'].nbAllChecksBelowThreshold;
-    legendText += `, + ${diffNbAllChecksBelowThreshold} DPE)`;
+    legendText += `, ${diffNbAllChecksBelowThreshold > 0 ? '+' : ''} ${diffNbAllChecksBelowThreshold} DPE)`;
   } else {
     legendText += ')';
   }
@@ -78,7 +79,7 @@ function loadDetailReportData(corpus, branch, chartId, showOnlyDifferentValues) 
         if (branch !== 'main') {
           const diffNbAllChecksBelowThreshold =
             data.nbAllChecksBelowThreshold - dataByBranch['main'].nbAllChecksBelowThreshold;
-          legendText += `, + ${diffNbAllChecksBelowThreshold} DPE)`;
+          legendText += `,${diffNbAllChecksBelowThreshold > 0 ? '+' : ''} ${diffNbAllChecksBelowThreshold} DPE)`;
         } else {
           legendText += ')';
         }
