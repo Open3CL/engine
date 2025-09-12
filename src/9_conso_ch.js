@@ -115,10 +115,6 @@ export function conso_ch(
       );
       break;
     }
-    case 'installation de chauffage avec chaudière en relève de pac avec insert ou poêle bois en appoint': {
-      calc_ch_pac_insert_bois(di, de, em_list, _pos, bch, GV, Sh, hsp, gen_ch_list);
-      break;
-    }
     default: {
       const hasMultipleEmetteur = em_filt.length > 1;
 
