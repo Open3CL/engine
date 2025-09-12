@@ -93,38 +93,85 @@ export function conso_ch(
       (em) => em.donnee_entree.enum_lien_generateur_emetteur_id === gen_lge_id
     );
   }
-  if (cfg_ch !== 'installation de chauffage collectif avec base + appoint') {
-    const hasMultipleEmetteur = em_filt.length > 1;
 
-    const emetteur_eq = em_filt.reduce((acc, em) => {
-      const int = calc_intermittence(GV, Sh, hsp, em.donnee_intermediaire.i0);
-      const r_em = rendement_emission(em);
+  switch (cfg_ch) {
+    case 'installation de chauffage collectif avec base + appoint': {
+      calc_ch_base_appoint(
+        di,
+        de,
+        bch,
+        besoin_ch_mois,
+        zc_id,
+        ca_id,
+        em_list,
+        gen_ch_list,
+        _pos,
+        GV,
+        Sh,
+        hsp,
+        s_chauffee_inst,
+        ilpa,
+        tbase
+      );
+      break;
+    }
+    case 'installation de chauffage avec chaudière en relève de pac avec insert ou poêle bois en appoint': {
+      calc_ch_pac_insert_bois(di, de, em_list, _pos, bch, GV, Sh, hsp, gen_ch_list);
+      break;
+    }
+    default: {
+      const hasMultipleEmetteur = em_filt.length > 1;
 
-      /**
-       * 9.1.3 Installation avec plusieurs émissions pour un même générateur
-       * La part de la consommation traitée par chaque émetteur est proratisé par le ratio des surfaces habitables.
-       * @type {number|number}
-       */
-      const ratio_s = hasMultipleEmetteur
-        ? em.donnee_entree.surface_chauffee / de.surface_chauffee
-        : 1;
+      const emetteur_eq = em_filt.reduce((acc, em) => {
+        const int = calc_intermittence(GV, Sh, hsp, em.donnee_intermediaire.i0);
+        const r_em = rendement_emission(em);
 
-      const Ich = 1 / r_em;
-      return acc + ratio_s * int * Ich;
-    }, 0);
+        /**
+         * 9.1.3 Installation avec plusieurs émissions pour un même générateur
+         * La part de la consommation traitée par chaque émetteur est proratisé par le ratio des surfaces habitables.
+         * @type {number|number}
+         */
+        const ratio_s = hasMultipleEmetteur
+          ? em.donnee_entree.surface_chauffee / de.surface_chauffee
+          : 1;
 
-    const Ich = emetteur_eq / di.rg;
-    const Ich_dep = emetteur_eq / di.rg_dep;
-    conso_ch = coef * Ich * bch;
-    conso_ch_dep = coef * Ich_dep * bch_dep;
+        const Ich = 1 / r_em;
+        return acc + ratio_s * int * Ich;
+      }, 0);
 
-    di.conso_ch = conso_ch;
-    di.conso_ch_depensier = conso_ch_dep;
-  } else if (bch > 0) {
-    /**
-     * 9.8 Installation de chauffage collectif avec base + appoint
-     */
+      const Ich = emetteur_eq / di.rg;
+      const Ich_dep = emetteur_eq / di.rg_dep;
+      conso_ch = coef * Ich * bch;
+      conso_ch_dep = coef * Ich_dep * bch_dep;
 
+      di.conso_ch = conso_ch;
+      di.conso_ch_depensier = conso_ch_dep;
+      break;
+    }
+  }
+}
+
+/**
+ * 9.8 Installation de chauffage collectif avec base + appoint
+ */
+function calc_ch_base_appoint(
+  di,
+  de,
+  bch,
+  besoin_ch_mois,
+  zc_id,
+  ca_id,
+  em_list,
+  gen_ch_list,
+  _pos,
+  GV,
+  Sh,
+  hsp,
+  s_chauffee_inst,
+  ilpa,
+  tbase
+) {
+  if (bch > 0) {
     let bch_base = 0;
 
     const zc = enums.zone_climatique[zc_id];
@@ -204,5 +251,46 @@ export function conso_ch(
     }
 
     di.conso_ch = Math.max(di.conso_ch, 0);
+  }
+}
+
+/**
+ * 9.7 Installation de chauffage avec chaudière en relève de PAC avec insert ou
+ * poêle bois en appoint
+ *
+ * @param di {Donnee_intermediaire}
+ * @param de {Donnee_entree}
+ * @param em_list {EmetteurChauffageItem[]}
+ * @param bch {number}
+ * @param _pos {number}
+ * @param GV {number}
+ * @param Sh {number}
+ * @param hsp {number}
+ * @param gen_ch_list {GenerateurChauffageItem[]}
+ */
+function calc_ch_pac_insert_bois(di, de, em_list, _pos, bch, GV, Sh, hsp, gen_ch_list) {
+  if (bch > 0) {
+    const Ich1 = 1 / (gen_ch_list[0].donnee_intermediaire.rendement_generation || 1);
+    const Ich2 = 1 / (gen_ch_list[1].donnee_intermediaire.rendement_generation || 1);
+    const Ich3 = 1 / (gen_ch_list[2].donnee_intermediaire.rendement_generation || 1);
+
+    em_list.forEach((em) => {
+      const ratio_s_em = em.donnee_entree.surface_chauffee / de.surface_chauffee;
+      const Int = calc_intermittence(GV, Sh, hsp, em.donnee_intermediaire.i0);
+      const Rend = rendement_emission(em);
+
+      if (em.donnee_entree.enum_lien_generateur_emetteur_id === '1' && (_pos === 0 || _pos === 1)) {
+        if (_pos === 0) {
+          di.conso_ch = (ratio_s_em * Ich1 * bch * Int * 0.8 * 0.75) / Rend;
+        }
+        if (_pos === 1) {
+          di.conso_ch = (ratio_s_em * Ich2 * bch * Int * 0.8 * 0.25) / Rend;
+        }
+      } else if (_pos === 2) {
+        di.conso_ch = ratio_s_em * ((Ich3 * bch * Int * 0.25) / Rend);
+      }
+    });
+
+    console.log(di.conso_ch);
   }
 }

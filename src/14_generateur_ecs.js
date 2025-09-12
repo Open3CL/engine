@@ -84,10 +84,6 @@ export function calc_Qdw_j(instal_ecs, becs_j) {
   const Qdw_ind_vc = calc_Qdw_ind_j(becs_j);
   const Qdw_coll_vc = calc_Qdw_col_j(instal_ecs, becs_j, type_installation);
 
-  if (type_installation.includes('installation collective')) {
-    return (Qdw_ind_vc + Qdw_coll_vc) * 0.48;
-  }
-
   return (Qdw_ind_vc + Qdw_coll_vc) * 0.48;
 }
 
