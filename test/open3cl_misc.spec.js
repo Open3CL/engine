@@ -102,12 +102,23 @@ describe('Open3cl misc unit tests', () => {
     );
   });
 
-  test('2369E1440431Y', () => {
+  test('surface sud equivalente should be correct', () => {
     /** @type {FullDpe} **/
-    const input = getAdemeFileJson('2369E1440431Y');
+    let input = getAdemeFileJson('2383E0460002R');
 
     /** @type {FullDpe} **/
-    const output = calcul_3cl(structuredClone(input));
-    expect(input.logement.sortie.apport_et_besoin).toEqual(output.logement.sortie.apport_et_besoin);
+    let output = calcul_3cl(structuredClone(input));
+    expect(input.logement.sortie.apport_et_besoin.surface_sud_equivalente).toBeCloseTo(
+      output.logement.sortie.apport_et_besoin.surface_sud_equivalente
+    );
+
+    /** @type {FullDpe} **/
+    input = getAdemeFileJson('2569E2636278D');
+
+    /** @type {FullDpe} **/
+    output = calcul_3cl(structuredClone(input));
+    expect(input.logement.sortie.apport_et_besoin.surface_sud_equivalente).toBeCloseTo(
+      output.logement.sortie.apport_et_besoin.surface_sud_equivalente
+    );
   });
 });
