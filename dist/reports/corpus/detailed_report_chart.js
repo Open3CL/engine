@@ -1,64 +1,132 @@
-let detailedReportData;
-let detailedReportChart;
+const chartsByBranch = {};
+const dataByBranch = {};
 
-/**
- * @param dataReport {object}
- */
-function updateDetailedChart(dataReport) {
-  detailedReportChart.data.labels = [];
-  detailedReportChart.data.datasets[0].labels = [];
-  detailedReportChart.update();
+function createDatasetAndLabels(data, branch) {
+  let labels = Object.keys(data.checks).sort();
+  const dataset = [];
+  labels = labels.map((label) => {
+    const check = data.checks[label];
+    const percentage = Math.round((Number(check.nbBelowThreshold) / data.nbValidDpe) * 100);
+    if (branch !== 'main') {
+      const previousCheck = dataByBranch['main'].checks[label];
+      const previousPercentage = Math.round(
+        (Number(previousCheck.nbBelowThreshold) / data.nbValidDpe) * 100
+      );
+      const diffPercentage = percentage - previousPercentage;
+      if (diffPercentage !== 0) {
+        label = `${label} (${percentage}%) => ${percentage - previousPercentage > 0 ? '+' : ''} ${percentage - previousPercentage}%`;
+      } else {
+        label = `${label} (${percentage}%)`;
+      }
+    } else {
+      label = `${label} (${percentage}%)`;
+    }
 
-  const labels = Object.keys(dataReport.checks);
-  const dataset = Object.values(dataReport.checks).flatMap((check) => {
-    return Math.round((Number(check.nbBelowThreshold) / dataReport.nbValidDpe) * 100);
+    dataset.push(percentage);
+    return label;
   });
 
-  detailedReportChart.data.labels = labels;
-  detailedReportChart.data.datasets[0].data = dataset;
-  detailedReportChart.update();
+  return { labels, dataset };
 }
 
-function loadDetailReportData(corpus) {
-  const reportFile = `${corpus}/corpus_global_report_main.json`;
-  $.get(reportFile, (data) => {
-    if (!detailedReportData) {
-      detailedReportData = data;
+/**
+ * @param branch {string}
+ * @param dataReport {object}
+ */
+function updateDetailedChart(branch, data) {
+  dataByBranch[branch] = data;
+  chartsByBranch[branch].data.labels = [];
+  chartsByBranch[branch].data.datasets[0].labels = [];
+  chartsByBranch[branch].update();
 
-      const labels = Object.keys(data.checks);
-      const dataset = Object.values(data.checks).flatMap((check) => {
-        return Math.round((Number(check.nbBelowThreshold) / data.nbValidDpe) * 100);
-      });
+  let legendText = `${data.nbValidDpe}/${data.totalDpesInFile} DPE analysés (${data.nbAllChecksBelowThreshold} sous le seuil de ${data.threshold}, ratio: ${data.successRatio}`;
+  if (branch !== 'main') {
+    const diffNbAllChecksBelowThreshold =
+      data.nbAllChecksBelowThreshold - dataByBranch['main'].nbAllChecksBelowThreshold;
+    legendText += `, ${diffNbAllChecksBelowThreshold > 0 ? '+' : ''} ${diffNbAllChecksBelowThreshold} DPE)`;
+  } else {
+    legendText += ')';
+  }
 
-      detailedReportChart = new Chart(document.getElementById('detailedChart'), {
-        type: 'polarArea',
-        data: {
-          labels,
-          datasets: [
-            {
-              data: dataset
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          plugins: {
-            legend: {
+  chartsByBranch[branch].options.plugins.title.text = legendText;
+
+  const { dataset, labels } = createDatasetAndLabels(data, branch);
+
+  chartsByBranch[branch].data.labels = labels;
+  chartsByBranch[branch].data.datasets[0].data = dataset;
+  chartsByBranch[branch].options.plugins.legend.labels.filter = (item, chart) => {
+    if (showOnlyDifferentValues && branch !== 'main') {
+      const property = item.text.split(' ').shift();
+      const value = data.checks[property].nbBelowThreshold;
+      const previousValue = dataByBranch['main'].checks[property].nbBelowThreshold;
+      return value !== previousValue;
+    }
+    return true;
+  };
+  chartsByBranch[branch].update();
+}
+
+function loadDetailReportData(corpus, branch, chartId, showOnlyDifferentValues) {
+  return new Promise((resolve, reject) => {
+    const reportFile = `${corpus}/corpus_global_report_${branch}.json`;
+    $.get(reportFile, (data) => {
+      if (!chartsByBranch[branch]) {
+        dataByBranch[branch] = data;
+
+        const { dataset, labels } = createDatasetAndLabels(data, branch);
+
+        let legendText = `${data.nbValidDpe}/${data.totalDpesInFile} DPE analysés (${data.nbAllChecksBelowThreshold} sous le seuil de ${data.threshold}, ratio: ${data.successRatio}`;
+        if (branch !== 'main') {
+          const diffNbAllChecksBelowThreshold =
+            data.nbAllChecksBelowThreshold - dataByBranch['main'].nbAllChecksBelowThreshold;
+          legendText += `,${diffNbAllChecksBelowThreshold > 0 ? '+' : ''} ${diffNbAllChecksBelowThreshold} DPE)`;
+        } else {
+          legendText += ')';
+        }
+
+        chartsByBranch[branch] = new Chart(document.getElementById(chartId), {
+          type: 'polarArea',
+          data: {
+            labels,
+            datasets: [
+              {
+                data: dataset
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: {
+                labels: {
+                  filter: (item, chart) => {
+                    if (showOnlyDifferentValues && branch !== 'main') {
+                      const property = item.text.split(' ').shift();
+                      const value = data.checks[property].nbBelowThreshold;
+                      const previousValue = dataByBranch['main'].checks[property].nbBelowThreshold;
+                      return value !== previousValue;
+                    }
+                    return true;
+                  }
+                },
+                title: {
+                  display: true,
+                  text: 'Valeurs du DPE testés'
+                },
+                position: 'left'
+              },
               title: {
                 display: true,
-                text: 'Valeurs du DPE testés'
-              },
-              position: 'bottom'
-            },
-            title: {
-              display: true,
-              text: `Résultats détaillés sur ${data.nbValidDpe} DPE analysés`
+                text: legendText
+              }
             }
           }
-        }
-      });
-    } else {
-      updateDetailedChart(data);
-    }
+        });
+        resolve();
+      } else {
+        updateDetailedChart(branch, data);
+        resolve();
+      }
+    });
   });
 }

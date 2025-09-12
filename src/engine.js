@@ -434,6 +434,8 @@ export function calcul_3cl(dpe) {
 
   const bch = apport_et_besoin.besoin_ch;
   const bch_dep = apport_et_besoin.besoin_ch_depensier;
+  const besoin_ch_mois = { ...apport_et_besoin.besoin_ch_mois };
+  delete apport_et_besoin.besoin_ch_mois;
 
   /**
    * 13.2.1.2 Présence d’un ou plusieurs générateurs à combustion indépendants
@@ -455,7 +457,8 @@ export function calcul_3cl(dpe) {
       ShChauffageAndEcs,
       hsp,
       ac,
-      ilpa
+      ilpa,
+      besoin_ch_mois
     );
   });
 

@@ -32,35 +32,37 @@ export default function calc_besoin_ch(
   const Nref21 = tvs.nref21[ilpa];
   const Nref19 = tvs.nref19[ilpa];
 
-  let sumNref19 = 0;
-  let sumNref21 = 0;
   let sumDh19 = 0;
   let sumDh21 = 0;
-  let QrecDistr = 0;
-  let QrecDistrDepensier = 0;
   const e = tvs.e[ilpa];
 
   let pertes_distribution_ecs_recup = 0;
   let pertes_distribution_ecs_recup_depensier = 0;
   let pertes_stockage_ecs_recup = 0;
-  let pertes_stockage_ecs_recup_depensier = 0;
   let pertes_generateur_ch_recup = 0;
   let pertes_generateur_ch_recup_depensier = 0;
   let fraction_apport_gratuit_ch = 0;
   let fraction_apport_gratuit_depensier_ch = 0;
 
-  const Qgw_total = instal_ecs.reduce((acc, instal_ecs) => {
+  /**
+   * 11.4 Plusieurs systèmes d’ECS (limité à 2 systèmes différents par logement)
+   * Les besoins en ECS pour chaque générateur sont / 2
+   */
+  const prorataEcs = instal_ecs.length > 1 ? 0.5 : 1;
+
+  let Qdw_total_ecs = 0;
+  let Qdw_total_ecs_dep = 0;
+  let Qgw_total_ecs = 0;
+  instal_ecs.forEach((instal_ecs) => {
+    let Qgw;
     const gen_ecs = instal_ecs.generateur_ecs_collection.generateur_ecs;
 
     // 17.2.1.1 Calcul des consommations de chauffage, de refroidissement, d’ECS et d’auxiliaires
     // Pour les installations ECS collectives, pas de récupération de stockage d'ECS
     if (Number.parseInt(instal_ecs.donnee_entree.enum_type_installation_id) !== 1) {
-      return acc;
-    }
-
-    return (
-      acc +
-      gen_ecs.reduce((acc, gen_ecs) => {
+      Qgw = 0;
+    } else {
+      Qgw = gen_ecs.reduce((acc, gen_ecs) => {
         // Pas de récupération de stockage si le ballon est hors volume chauffé
         if (
           gen_ecs.donnee_entree.position_volume_chauffe_stockage === 0 ||
@@ -70,15 +72,21 @@ export default function calc_besoin_ch(
         }
 
         return acc + (gen_ecs.donnee_intermediaire.Qgw || 0);
-      }, 0)
-    );
-  }, 0);
+      }, 0);
+    }
 
-  /**
-   * 11.4 Plusieurs systèmes d’ECS (limité à 2 systèmes différents par logement)
-   * Les besoins en ECS pour chaque générateur sont / 2
-   */
-  const prorataEcs = instal_ecs.length > 1 ? 0.5 : 1;
+    Qgw_total_ecs += (0.48 * Qgw * (instal_ecs.donnee_entree.rdim || 1)) / 8760;
+  });
+
+  for (const mois of mois_liste) {
+    // en kw/h
+    const becsj = calc_besoin_ecs_j(ca, mois, zc, nadeq, false) * prorataEcs;
+    // en kw/h
+    const becs_j_dep = calc_besoin_ecs_j(ca, mois, zc, nadeq, true) * prorataEcs;
+
+    Qdw_total_ecs += instal_ecs.reduce((acc, ecs) => acc + calc_Qdw_j(ecs, becsj), 0);
+    Qdw_total_ecs_dep += instal_ecs.reduce((acc, ecs) => acc + calc_Qdw_j(ecs, becs_j_dep), 0);
+  }
 
   /**
    * Création de la liste des générateurs de chauffage pour lesquels il y a une récupération d'énergie
@@ -97,29 +105,17 @@ export default function calc_besoin_ch(
     )
   );
 
+  const besoin_ch_mois = {};
+  const besoin_ch_mois_dep = {};
   for (const mois of mois_liste) {
     const nref19 = Nref19[ca][mois][zc];
     const nref21 = Nref21[ca][mois][zc];
 
-    const Qrec_stock_19 = (0.48 * nref19 * Qgw_total) / (24 * 365);
-    const Qrec_stock_21 = (0.48 * nref21 * Qgw_total) / (24 * 365);
-    pertes_stockage_ecs_recup += Qrec_stock_19 / 1000;
-    pertes_stockage_ecs_recup_depensier += Qrec_stock_21 / 1000;
-
-    // pertes distribution
-    const becs_j = calc_besoin_ecs_j(ca, mois, zc, nadeq, false) * prorataEcs;
-    const becs_j_dep = calc_besoin_ecs_j(ca, mois, zc, nadeq, true) * prorataEcs;
-    sumNref19 += nref19;
-    sumNref21 += nref21;
-
-    QrecDistr += instal_ecs.reduce((acc, ecs) => acc + calc_Qdw_j(ecs, becs_j), 0);
-    QrecDistrDepensier += instal_ecs.reduce((acc, ecs) => acc + calc_Qdw_j(ecs, becs_j_dep), 0);
-
     // bvj
     const dh19j = dh19[ca][mois][zc];
-    sumDh19 += dh19j;
+    sumDh19 += dh19j * GV;
     const dh21j = dh21[ca][mois][zc];
-    sumDh21 += dh21j;
+    sumDh21 += dh21j * GV;
     const aij = calc_ai_j(Sh, nadeq, nref19);
     const aij_dep = calc_ai_j(Sh, nadeq, nref21);
     const ssej = calc_sse_j(bv, ets, ca, zc, mois);
@@ -128,38 +124,46 @@ export default function calc_besoin_ch(
     const Fj = calc_Fj(GV, asj, aij, dh19j, inertie);
     const Fj_dep = calc_Fj(GV, asj, aij_dep, dh21j, inertie);
 
-    fraction_apport_gratuit_ch += Fj * dh19j;
-    fraction_apport_gratuit_depensier_ch += Fj_dep * dh21j;
+    fraction_apport_gratuit_ch += Fj * GV * dh19j;
+    fraction_apport_gratuit_depensier_ch += Fj_dep * GV * dh21j;
 
     const bvj = dh19j === 0 ? 0 : calc_bvj(GV, Fj);
     const bvj_dep = dh21j === 0 ? 0 : calc_bvj(GV, Fj_dep);
 
-    // pertes generation
     const Bch_hp_j = bvj * dh19j;
     const Bch_hp_j_dep = bvj_dep * dh21j;
 
+    let gen_recup = 0;
+    let gen_recup_dep = 0;
+
     gen_ch_recup.forEach((gen_ch) => {
-      pertes_generateur_ch_recup += calc_Qrec_gen_j(gen_ch, nref19, Bch_hp_j) / (1000 * 1000);
-      pertes_generateur_ch_recup_depensier +=
-        calc_Qrec_gen_j(gen_ch, nref21, Bch_hp_j_dep) / (1000 * 1000);
+      gen_recup += calc_Qrec_gen_j(gen_ch, nref19, Bch_hp_j);
+      gen_recup_dep += calc_Qrec_gen_j(gen_ch, nref21, Bch_hp_j_dep);
     });
 
-    besoin_ch += Bch_hp_j / 1000;
-    besoin_ch_depensier += Bch_hp_j_dep / 1000;
+    pertes_generateur_ch_recup += gen_recup;
+    pertes_generateur_ch_recup_depensier += gen_recup_dep;
+
+    const pertes_distribution_ecs_recup_j = nref19 * Qdw_total_ecs * 1000;
+    const pertes_distribution_ecs_recup_j_dep = nref21 * Qdw_total_ecs_dep * 1000;
+    pertes_distribution_ecs_recup += pertes_distribution_ecs_recup_j;
+    pertes_distribution_ecs_recup_depensier += pertes_distribution_ecs_recup_j_dep;
+
+    const pertes_stockage_ecs_recup_j = nref19 * Qgw_total_ecs;
+    pertes_stockage_ecs_recup += pertes_stockage_ecs_recup_j;
+    const pertes_stockage_ecs_recup_j_dep = nref21 * Qgw_total_ecs;
+
+    besoin_ch_mois[mois] = bvj * dh19j;
+    besoin_ch_mois_dep[mois] = bvj_dep * dh21j;
+    besoin_ch_mois[mois] -=
+      pertes_distribution_ecs_recup_j + pertes_stockage_ecs_recup_j + gen_recup;
+    besoin_ch_mois_dep[mois] -=
+      pertes_distribution_ecs_recup_j_dep + pertes_stockage_ecs_recup_j_dep + gen_recup_dep;
+    besoin_ch_mois[mois] = Math.max(besoin_ch_mois[mois], 0);
+    besoin_ch += besoin_ch_mois[mois] / 1000;
+
+    besoin_ch_depensier += besoin_ch_mois_dep[mois] / 1000;
   }
-
-  pertes_distribution_ecs_recup = (0.48 * sumNref19 * QrecDistr) / 8760;
-  pertes_distribution_ecs_recup_depensier = (0.48 * sumNref21 * QrecDistrDepensier) / 8760;
-
-  const recup =
-    pertes_distribution_ecs_recup + pertes_stockage_ecs_recup + pertes_generateur_ch_recup;
-  const recup_depensier =
-    pertes_distribution_ecs_recup_depensier +
-    pertes_stockage_ecs_recup_depensier +
-    pertes_generateur_ch_recup_depensier;
-
-  besoin_ch -= recup;
-  besoin_ch_depensier -= recup_depensier;
 
   fraction_apport_gratuit_ch /= sumDh19;
   fraction_apport_gratuit_depensier_ch /= sumDh21;
@@ -167,10 +171,10 @@ export default function calc_besoin_ch(
   return {
     besoin_ch,
     besoin_ch_depensier,
+    besoin_ch_mois,
     pertes_distribution_ecs_recup,
     pertes_distribution_ecs_recup_depensier,
     pertes_stockage_ecs_recup,
-    /* pertes_stockage_ecs_recup_depensier: pertes_stockage_ecs_recup_depensier, */
     pertes_generateur_ch_recup,
     pertes_generateur_ch_recup_depensier,
     fraction_apport_gratuit_ch,
@@ -179,20 +183,17 @@ export default function calc_besoin_ch(
 }
 
 function calc_Fj(GV, asj, aij, dhj, inertie) {
-  if (dhj == 0) return 0;
+  if (dhj === 0) return 0;
 
-  let pow;
-  if (inertie === 'très lourde' || inertie === 'lourde') pow = 3.6;
-  else if (inertie === 'moyenne') pow = 2.9;
-  else if (inertie === 'légère') pow = 2.5;
+  let alpha;
+  if (inertie === 'très lourde' || inertie === 'lourde') alpha = 3.6;
+  else if (inertie === 'moyenne') alpha = 2.9;
+  else if (inertie === 'légère') alpha = 2.5;
 
   const Xj = (asj + aij) / (GV * dhj);
-  const Fj = (Xj - Xj ** pow) / (1 - Xj ** pow);
-  /* console.warn(Fj) */
-  return Fj;
+  return (Xj - Xj ** alpha) / (1 - Xj ** alpha);
 }
 
 function calc_bvj(GV, Fj) {
-  const bvj = GV * (1 - Fj);
-  return bvj;
+  return GV * (1 - Fj);
 }
