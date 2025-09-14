@@ -406,8 +406,11 @@ interface Ep_conso {
   ep_conso_fr: number;
   ep_conso_fr_depensier: number;
   ep_conso_5_usages: number;
+  ep_conso_5_usages_2026?: number;
   ep_conso_5_usages_m2: number;
+  ep_conso_5_usages_2026_m2?: number;
   classe_bilan_dpe: string;
+  classe_bilan_dpe_2026?: string;
 }
 interface Emission_ges {
   emission_ges_ch: number;

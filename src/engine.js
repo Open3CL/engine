@@ -286,17 +286,21 @@ export function calcul_3cl(dpe) {
 
   let becs = apport_et_besoin.besoin_ecs;
   let becs_dep = apport_et_besoin.besoin_ecs_depensier;
+  let isImmeubleSystemEcsIndividuels = false;
 
   /**
    * 11.4 Plusieurs systèmes d’ECS (limité à 2 systèmes différents par logement)
    * Les besoins en ECS pour chaque générateur sont / 2
    */
-  // Make sure ecs is an array before using length
-  const ecsArray = Array.isArray(ecs) ? ecs : ecs ? [ecs] : [];
+  if (ecs.length > 1) {
+    // Immeuble avec différents systèmes individuels
+    isImmeubleSystemEcsIndividuels =
+      th === 'immeuble' && ecs.every((e) => e.donnee_entree.enum_type_installation_id === '1');
 
-  if (ecsArray.length > 1) {
-    becs /= 2;
-    becs_dep /= 2;
+    if (!isImmeubleSystemEcsIndividuels) {
+      becs /= 2;
+      becs_dep /= 2;
+    }
   }
 
   ecsArray.forEach((ecs) => {
@@ -385,7 +389,20 @@ export function calcul_3cl(dpe) {
         }
       });
     }
-    calc_ecs(dpe, ecs, becs, becs_dep, GV, ca_id, zc_id, th, virtualisationECS);
+    calc_ecs(
+      dpe,
+      ecs,
+      becs,
+      becs_dep,
+      GV,
+      ca_id,
+      zc_id,
+      th,
+      virtualisationECS,
+      dpe.logement.caracteristique_generale.surface_habitable_immeuble,
+      dpe.logement.caracteristique_generale.nombre_appartement,
+      isImmeubleSystemEcsIndividuels
+    );
   });
 
   /**
@@ -436,6 +453,8 @@ export function calcul_3cl(dpe) {
 
   const bch = apport_et_besoin.besoin_ch;
   const bch_dep = apport_et_besoin.besoin_ch_depensier;
+  const besoin_ch_mois = { ...apport_et_besoin.besoin_ch_mois };
+  delete apport_et_besoin.besoin_ch_mois;
 
   /**
    * 13.2.1.2 Présence d’un ou plusieurs générateurs à combustion indépendants
@@ -457,7 +476,8 @@ export function calcul_3cl(dpe) {
       ShChauffageAndEcs,
       hsp,
       ac,
-      ilpa
+      ilpa,
+      besoin_ch_mois
     );
   });
 
@@ -521,6 +541,9 @@ export function calcul_3cl(dpe) {
     ...conso
   };
 
+  const conso_coeff_1_9 = get_conso_coeff_1_9_2026(dpe);
+  logement.sortie.ep_conso = { ...logement.sortie.ep_conso, ...conso_coeff_1_9 };
+
   return dpe;
 }
 
@@ -548,4 +571,36 @@ export function get_classe_ges_dpe(dpe) {
       Sh
     )
   };
+}
+
+/**
+ * Calcul de la nouvelle conso suite à la modification du coefficient pour le chauffage électrique
+ * Applicable uniquement à partir de janvier 2026
+ *
+ * {@link https://www.ecologie.gouv.fr/actualites/evolutions-du-calcul-du-dpe-reponses-vos-questions#:~:text=Les%20DPE%20r%C3%A9alis%C3%A9s%20avant%20le,%2DAudit%20de%20l'Ademe.}
+ *
+ * @param dpe {FullDpe}
+ * @returns {{ep_conso_5_usages_2026: number; ep_conso_5_usages_2026_m2: number; classe_bilan_dpe_2026: string}}
+ */
+export function get_conso_coeff_1_9_2026(dpe) {
+  const zc_id = dpe.logement.meteo.enum_zone_climatique_id;
+  const ca_id = dpe.logement.meteo.enum_classe_altitude_id;
+  const th = calc_th(dpe.logement.caracteristique_generale.enum_methode_application_dpe_log_id);
+
+  const ep_conso_5_usages_2026 =
+    (0.9 / 1.3) *
+      (Number(dpe.logement.sortie.ep_conso.ep_conso_5_usages) -
+        Number(dpe.logement.sortie.ef_conso.conso_5_usages)) +
+    Number(dpe.logement.sortie.ef_conso.conso_5_usages);
+
+  let Sh;
+  if (th === 'maison' || th === 'appartement')
+    Sh = Number(dpe.logement.caracteristique_generale.surface_habitable_logement);
+  else if (th === 'immeuble')
+    Sh = Number(dpe.logement.caracteristique_generale.surface_habitable_immeuble);
+
+  const ep_conso_5_usages_2026_m2 = Math.floor(ep_conso_5_usages_2026 / Sh);
+  const classe_bilan_dpe_2026 = classe_bilan_dpe(ep_conso_5_usages_2026_m2, zc_id, ca_id, Sh);
+
+  return { classe_bilan_dpe_2026, ep_conso_5_usages_2026_m2, ep_conso_5_usages_2026 };
 }

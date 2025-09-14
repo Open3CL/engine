@@ -7,6 +7,10 @@ import { MultiBar } from 'cli-progress';
 import colors from 'ansi-colors';
 import CsvParserStore from '../../src/core/file/infrastructure/adapter/csv-parser.store.js';
 import { OUTPUT_CSV_HEADERS } from './corpus_utils.js';
+import { mkdirSync, readFileSync } from 'fs';
+import { execSync } from 'child_process';
+
+const current_git_branch = execSync('git rev-parse --abbrev-ref HEAD').toString().trim();
 
 const DIFF_VALUE_THRESHOLD = 5;
 
@@ -39,11 +43,11 @@ piscina.on('message', (event) => {
       break;
     }
     case 'incrementTotalReport': {
-      globalReport.total++;
+      globalReport.nbValidDpe++;
       break;
     }
     case 'decrementTotalReport': {
-      globalReport.total--;
+      globalReport.nbValidDpe--;
       break;
     }
     case 'incrementExcludedDpe': {
@@ -60,6 +64,12 @@ piscina.on('message', (event) => {
     }
     case 'incrementAllChecksThreshold': {
       globalReport.nbAllChecksBelowThreshold++;
+      break;
+    }
+    case 'addDpeExceedThresholdInList': {
+      if (!globalReport.dpeExceedThreshold.includes(event.dpeCode)) {
+        globalReport.dpeExceedThreshold.push(event.dpeCode);
+      }
       break;
     }
     case 'incrementCheckPropertyThreshold': {
@@ -81,14 +91,15 @@ let dpeOutputs = [];
 
 const globalReport = {
   threshold: `${DIFF_VALUE_THRESHOLD}%`,
-  dpeRunFailed: [],
-  total: 0,
-  successRatio: '',
   totalDpesInFile: 0,
+  nbValidDpe: 0,
   nbInvalidDpeVersion: 0,
   nbExcludedDpe: 0,
   nbAllChecksBelowThreshold: 0,
-  checks: {}
+  successRatio: '',
+  dpeRunFailed: [],
+  checks: {},
+  dpeExceedThreshold: []
 };
 
 const INPUT_CSV_HEADERS = [];
@@ -103,7 +114,7 @@ if (!corpusFilePath.endsWith('.csv')) {
 }
 
 const noDpePositionArg = process.argv.find((arg) => arg.includes('no-dpe-pos'));
-const noDpePosition = noDpePositionArg ? Number(noDpePositionArg.split('=').pop()) : 2;
+const noDpePosition = noDpePositionArg ? Number(noDpePositionArg.split('=').pop()) : 0;
 
 const store = new CsvParserStore();
 const readableStream = createReadStream(corpusFilePath);
@@ -180,12 +191,6 @@ export const validateCorpus = (dpesFilePath) => {
     );
 };
 
-if (!process.env.ADEME_API_CLIENT_ID) {
-  throw new Error('Environment variable ADEME_API_CLIENT_ID not set');
-}
-if (!process.env.ADEME_API_CLIENT_SECRET) {
-  throw new Error('Environment variable ADEME_API_CLIENT_SECRET not set');
-}
 if (!process.argv.find((arg) => arg.includes('dpes-folder-path'))) {
   throw new Error('Argument dpes-folder-path not found !');
 }
@@ -201,15 +206,63 @@ console.time('validateCorpus');
 validateCorpus(dpesFilePath).then(() => {
   multibar.stop();
   console.timeEnd('validateCorpus');
+
+  globalReport.successRatio = `${Number((globalReport.nbAllChecksBelowThreshold / globalReport.totalDpesInFile) * 100).toFixed(2)} %`;
+
+  const fileName = corpusFilePath.split('/').pop();
+
+  /** @type {{files: string[], branches: string[]}} **/
+  const corpusList = JSON.parse(
+    readFileSync(`dist/reports/corpus/corpus_list_main.json`, {
+      encoding: 'utf8'
+    }).toString()
+  );
+
+  if (!corpusList.files.includes(fileName)) {
+    corpusList.files.push(fileName);
+  }
+  if (!corpusList.branches.includes(current_git_branch)) {
+    corpusList.branches.push(current_git_branch);
+  }
+
+  writeFileSync(`dist/reports/corpus/corpus_list_main.json`, JSON.stringify(corpusList), {
+    encoding: 'utf8'
+  });
+
+  mkdirSync(`dist/reports/corpus/${fileName}`, { recursive: true });
+  writeFileSync(
+    `dist/reports/corpus/${fileName}/corpus_global_report_${current_git_branch}.json`,
+    JSON.stringify({ ...globalReport, dpeExceedThreshold: undefined }),
+    { encoding: 'utf8' }
+  );
   createCsv(
     dpeOutputs,
     OUTPUT_CSV_HEADERS,
-    `${import.meta.dirname}/reports/corpus_detailed_report.csv`
+    `dist/reports/corpus/${fileName}/corpus_detailed_report_${current_git_branch}.csv`
   );
-  globalReport.successRatio = `${Number((globalReport.nbAllChecksBelowThreshold / globalReport.totalDpesInFile) * 100).toFixed(2)} %`;
+
+  /** @type {string[]} **/
+  const currentDpeExceedThreshold = JSON.parse(
+    readFileSync(`dist/reports/corpus/${fileName}/corpus_dpe_list_under_threshold_main.json`, {
+      encoding: 'utf8'
+    }).toString()
+  );
+
+  /** @type {string[]} **/
+  const diffDpeThreshold = globalReport.dpeExceedThreshold.filter(
+    (dpe) => !currentDpeExceedThreshold.includes(dpe)
+  );
+  if (diffDpeThreshold.length > 0) {
+    writeFileSync(
+      `dist/reports/corpus/${fileName}/corpus_dpe_list_under_threshold_diff_main_${current_git_branch}.json`,
+      JSON.stringify(diffDpeThreshold),
+      { encoding: 'utf8' }
+    );
+  }
+
   writeFileSync(
-    `${import.meta.dirname}/reports/corpus_global_report.json`,
-    JSON.stringify(globalReport),
+    `dist/reports/corpus/${fileName}/corpus_dpe_list_under_threshold_${current_git_branch}.json`,
+    JSON.stringify(globalReport.dpeExceedThreshold),
     { encoding: 'utf8' }
   );
 });

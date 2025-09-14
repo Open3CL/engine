@@ -157,7 +157,10 @@ const runEngineAndVerifyOutput = (inputDpe, dpeOutputs) => {
 
     const diff = getDpeOutputValueDiff(inputDpe, outputDpe, propertyPath, csvOutputDpe);
     if (diff < DIFF_VALUE_THRESHOLD) {
-      parentPort.postMessage({ action: 'incrementCheckPropertyThreshold', property });
+      parentPort.postMessage({
+        action: 'incrementCheckPropertyThreshold',
+        property
+      });
     }
   });
 
@@ -179,6 +182,7 @@ const runEngineAndVerifyOutput = (inputDpe, dpeOutputs) => {
     parentPort.postMessage({ action: 'incrementAllChecksThreshold' });
   } else {
     csvOutputDpe.push('KO');
+    parentPort.postMessage({ action: 'addDpeExceedThresholdInList', dpeCode: inputDpe.numero_dpe });
   }
 
   dpeOutputs.push(csvOutputDpe);
@@ -211,7 +215,9 @@ const downloadDpe = (dpeCode, dpesFilePath) => {
         if (resp.status !== 200) {
           /** @type {{error: string}} **/
           const errorPayload = await resp.json();
-          throw new Error(`Could not retrieve DPE: ${dpeCode}, error: ${errorPayload.error}`);
+          throw new Error(
+            `Could not retrieve DPE: ${dpeCode}, code: ${resp.status}, error: ${errorPayload.error}`
+          );
         }
         return resp.text();
       })
@@ -230,6 +236,12 @@ const downloadDpe = (dpeCode, dpesFilePath) => {
 const readOrDownloadDpe = (dpeCode, dpesFilePath) => {
   const filePath = `${dpesFilePath}/${dpeCode}.xml`;
   if (!existsSync(filePath)) {
+    if (!process.env.ADEME_API_CLIENT_ID) {
+      throw new Error('Environment variable ADEME_API_CLIENT_ID not set');
+    }
+    if (!process.env.ADEME_API_CLIENT_SECRET) {
+      throw new Error('Environment variable ADEME_API_CLIENT_SECRET not set');
+    }
     return downloadDpe(dpeCode, dpesFilePath);
   } else {
     return Promise.resolve(readFileSync(filePath, { encoding: 'utf8' }));
@@ -266,6 +278,8 @@ export default async function ({ chunk, dpesToExclude, dpesFilePath = [] }) {
         } else {
           runEngineAndVerifyOutput(dpe, dpeOutputs);
         }
+      } else {
+        parentPort.postMessage({ action: 'incrementInvalidDpeVersion' });
       }
     } catch (ex) {
       console.error(ex);

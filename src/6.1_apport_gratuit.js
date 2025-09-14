@@ -7,7 +7,7 @@ export function calc_ai_j(Sh, nadeq, nrefj) {
    * L'unité retenue est le Wh conformément à la spécification, cependant
    * il est possible de rencontrer des valeurs avec une unité en kWh dans les DPE.
    */
-  return ((3.18 + 0.34) * Sh + 90 * (132 / 168) * nadeq) * nrefj;
+  return ((3.18 + 0.34) * Sh + (132 / 168) * nadeq * 90) * nrefj;
 }
 
 export function calc_as_j(ssej, ej) {

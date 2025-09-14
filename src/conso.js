@@ -302,7 +302,7 @@ export function classe_bilan_dpe(ep_conso_5_usages_m2, zc_id, ca_id, Sh) {
 
   const cut = tvs.dpe_class_limit[ca][Math.round(Sh)] ?? [];
 
-  if (!ep_conso_5_usages_m2) return null;
+  if (ep_conso_5_usages_m2 == null) return null;
   if (ep_conso_5_usages_m2 < (cut['A'] ?? 70)) return 'A';
   if (ep_conso_5_usages_m2 < (cut['B'] ?? 110)) return 'B';
   if (ep_conso_5_usages_m2 < (cut['C'] ?? 180)) return 'C';
@@ -325,7 +325,7 @@ export function classe_emission_ges(emission_ges_5_usages_m2, zc_id, ca_id, Sh) 
 
   const cut = tvs.ges_class_limit[ca][Math.round(Sh)] ?? [];
 
-  if (!emission_ges_5_usages_m2) return null;
+  if (emission_ges_5_usages_m2 == null) return null;
   if (emission_ges_5_usages_m2 < (cut['A'] ?? 6)) return 'A';
   if (emission_ges_5_usages_m2 < (cut['B'] ?? 11)) return 'B';
   if (emission_ges_5_usages_m2 < (cut['C'] ?? 30)) return 'C';
