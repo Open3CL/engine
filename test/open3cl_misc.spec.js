@@ -122,9 +122,21 @@ describe('Open3cl misc unit tests', () => {
     );
   });
 
-  test('chauffage bi jonction should be correct', () => {
+  test('conso chauffage bi jonction should be correct', () => {
     /** @type {FullDpe} **/
     let input = getAdemeFileJson('2569E2636278D');
+
+    /** @type {FullDpe} **/
+    let output = calcul_3cl(structuredClone(input));
+    expect(input.logement.sortie.ep_conso.ep_conso_ch).toBeCloseTo(
+      output.logement.sortie.ep_conso.ep_conso_ch,
+      1
+    );
+  });
+
+  test('conso chauffage releve de PAC should be correct', () => {
+    /** @type {FullDpe} **/
+    let input = getAdemeFileJson('2595E0377407M');
 
     /** @type {FullDpe} **/
     let output = calcul_3cl(structuredClone(input));
