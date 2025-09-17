@@ -12,6 +12,11 @@ export function calc_sse_j(bv_list, ets, ca, zc, mois) {
     }, 0);
   }
 
+  // Certaines vérandas sont dupliqués dans les DPE.
+  if (Array.isArray(ets)) {
+    ets = ets[0];
+  }
+
   const bver = ets.donnee_intermediaire.bver;
   const T = ets.donnee_intermediaire.coef_transparence_ets;
 
