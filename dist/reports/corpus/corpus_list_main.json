@@ -5,5 +5,5 @@
     "dpe_immeuble_chauffage_collectif.csv",
     "dpe_immeuble_chauffage_mixte.csv"
   ],
-  "branches": ["main", "fix_issue_88_pac_hybride"]
+  "branches": ["main"]
 }
