@@ -178,7 +178,7 @@ function calc_conso_ch_default(di, de, bch, bch_dep, coeff, em_filt, GV, Sh, hsp
 
   const Ich = emetteur_eq / di.rg;
   const Ich_dep = emetteur_eq / di.rg_dep;
-  const conso_ch = Ich * bch;
+  const conso_ch = coeff * Ich * bch;
   const conso_ch_dep = coeff * Ich_dep * bch_dep;
 
   return { conso_ch, conso_ch_dep };
