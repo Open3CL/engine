@@ -18,6 +18,8 @@ scripts/assets/tv.js
 dist/reports/unit/
 src/output.js
 
+dist/reports/corpus/corpus_list_main.json
+
 !dist/reports/corpus/corpus_dpe.csv
 dist/reports/corpus/corpus_dpe.csv/*.json
 !dist/reports/corpus/corpus_dpe.csv/corpus_detailed_report_main.csv
