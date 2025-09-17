@@ -191,13 +191,18 @@ export const validateCorpus = (dpesFilePath) => {
     );
 };
 
-if (!process.argv.find((arg) => arg.includes('dpes-folder-path'))) {
-  throw new Error('Argument dpes-folder-path not found !');
+let dpesFilePath = process.env.DPE_FOLDER_PATH;
+
+if (!dpesFilePath) {
+  if (!process.argv.find((arg) => arg.includes('dpes-folder-path'))) {
+    throw new Error('Argument dpes-folder-path not found !');
+  }
+  dpesFilePath = process.argv
+    .find((arg) => arg.includes('dpes-folder-path'))
+    .split('=')
+    .pop();
 }
-const dpesFilePath = process.argv
-  .find((arg) => arg.includes('dpes-folder-path'))
-  .split('=')
-  .pop();
+
 if (!existsSync(dpesFilePath)) {
   throw new Error(`File path ${dpesFilePath} does not exists !`);
 }

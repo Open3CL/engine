@@ -81,9 +81,6 @@ export function conso_ch(
   const gen_lge_id = requestInputID(de, du, 'lien_generateur_emetteur');
   const coef = coef_ch(de.fch || 0.5)[cfg_ch][_pos] || 1;
 
-  let conso_ch = 0;
-  let conso_ch_dep;
-
   let em_filt;
 
   if (em_list.length === 1) {
@@ -117,9 +114,23 @@ export function conso_ch(
     }
     case 'convecteurs bi-jonction': {
       // Installation individuelle
-      const consoInd = calc_conso_ch_default(di, de, bch, bch_dep, 0.4, em_filt, Sh, GV, hsp);
+      const coeffInd = coef_ch(de.fch)[cfg_ch][1];
+      const consoInd = calc_conso_ch_default(di, de, bch, bch_dep, coeffInd, em_filt, GV, Sh, hsp);
+
       // Installation collective
-      const consoColl = calc_conso_ch_default(di, de, bch, bch_dep, 0.6, em_filt, Sh, GV, hsp, 1.3);
+      const coeffColl = coef_ch(de.fch)[cfg_ch][0];
+      const consoColl = calc_conso_ch_default(
+        di,
+        de,
+        bch,
+        bch_dep,
+        coeffColl,
+        em_filt,
+        GV,
+        Sh,
+        hsp,
+        1.03
+      );
 
       di.conso_ch = consoInd.conso_ch + consoColl.conso_ch;
       di.conso_ch_depensier = consoInd.conso_ch_dep + consoColl.conso_ch_dep;
@@ -129,6 +140,7 @@ export function conso_ch(
     default: {
       const { conso_ch, conso_ch_dep } = calc_conso_ch_default(
         di,
+        de,
         bch,
         bch_dep,
         coef,
