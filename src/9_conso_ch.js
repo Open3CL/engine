@@ -1,4 +1,4 @@
-import { mois_liste, requestInput, requestInputID } from './utils.js';
+import { mois_liste, requestInputID } from './utils.js';
 import { rendement_emission } from './9_emetteur_ch.js';
 import { calc_intermittence } from './8_intermittence.js';
 import tvs from './tv.js';
