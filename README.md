@@ -110,10 +110,11 @@ const result = calcul_3cl(dpeData);
 
 ## Variables d'environnements
 
-| Nom                     | Description                         |
-| ----------------------- | ----------------------------------- |
-| ADEME_API_CLIENT_ID     | Client id pour l'api de l'ademe     |
-| ADEME_API_CLIENT_SECRET | Client secret pour l'api de l'ademe |
+| Nom                     | Description                                                                                                             |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| ADEME_API_CLIENT_ID     | Client id pour l'api de l'ademe                                                                                         |
+| ADEME_API_CLIENT_SECRET | Client secret pour l'api de l'ademe                                                                                     |
+| DPE_FOLDER_PATH         | Chemin vers lequel sont stockés les fichiers DPE (si non précisé, utiliser `dpes-folder-path` dans la ligne de commande |
 
 Attention aux quotas sur l'api:
 
