@@ -145,4 +145,13 @@ describe('Open3cl misc unit tests', () => {
       1
     );
   });
+
+  test('perte distribution ecs dpe immeuble', () => {
+    /** @type {FullDpe} **/
+    let input = getAdemeFileJson('2574E0561248M');
+
+    /** @type {FullDpe} **/
+    let output = calcul_3cl(structuredClone(input));
+    expect(input.logement.sortie.apport_et_besoin).toEqual(output.logement.sortie.apport_et_besoin);
+  });
 });
