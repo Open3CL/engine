@@ -18,7 +18,8 @@ export default function calc_besoin_ch(
   instal_ecs,
   instal_ch,
   bv,
-  ets
+  ets,
+  th
 ) {
   const ca = enums.classe_altitude[ca_id];
   const zc = enums.zone_climatique[zc_id];
@@ -48,10 +49,8 @@ export default function calc_besoin_ch(
    * 11.4 Plusieurs systèmes d’ECS (limité à 2 systèmes différents par logement)
    * Les besoins en ECS pour chaque générateur sont / 2
    */
-  const prorataEcs = instal_ecs.length > 1 ? 0.5 : 1;
+  const prorataEcs = instal_ecs.length > 1 ? 1 / instal_ecs.length : 1;
 
-  let Qdw_total_ecs = 0;
-  let Qdw_total_ecs_dep = 0;
   let Qgw_total_ecs = 0;
   instal_ecs.forEach((instal_ecs) => {
     let Qgw;
@@ -78,15 +77,15 @@ export default function calc_besoin_ch(
     Qgw_total_ecs += (0.48 * Qgw * (instal_ecs.donnee_entree.rdim || 1)) / 8760;
   });
 
-  for (const mois of mois_liste) {
-    // en kw/h
-    const becsj = calc_besoin_ecs_j(ca, mois, zc, nadeq, false) * prorataEcs;
-    // en kw/h
-    const becs_j_dep = calc_besoin_ecs_j(ca, mois, zc, nadeq, true) * prorataEcs;
-
-    Qdw_total_ecs += instal_ecs.reduce((acc, ecs) => acc + calc_Qdw_j(ecs, becsj), 0);
-    Qdw_total_ecs_dep += instal_ecs.reduce((acc, ecs) => acc + calc_Qdw_j(ecs, becs_j_dep), 0);
-  }
+  const { Qrec, Qrec_dep, sumNref19, sumNref21 } = calc_qrec(
+    instal_ecs,
+    nadeq,
+    prorataEcs,
+    ilpa,
+    ca,
+    zc,
+    th
+  );
 
   /**
    * Création de la liste des générateurs de chauffage pour lesquels il y a une récupération d'énergie
@@ -144,8 +143,8 @@ export default function calc_besoin_ch(
     pertes_generateur_ch_recup += gen_recup;
     pertes_generateur_ch_recup_depensier += gen_recup_dep;
 
-    const pertes_distribution_ecs_recup_j = nref19 * Qdw_total_ecs * 1000;
-    const pertes_distribution_ecs_recup_j_dep = nref21 * Qdw_total_ecs_dep * 1000;
+    const pertes_distribution_ecs_recup_j = (Qrec * nref19) / sumNref19;
+    const pertes_distribution_ecs_recup_j_dep = (Qrec_dep * nref21) / sumNref21;
     pertes_distribution_ecs_recup += pertes_distribution_ecs_recup_j;
     pertes_distribution_ecs_recup_depensier += pertes_distribution_ecs_recup_j_dep;
 
@@ -153,6 +152,7 @@ export default function calc_besoin_ch(
     pertes_stockage_ecs_recup += pertes_stockage_ecs_recup_j;
     const pertes_stockage_ecs_recup_j_dep = nref21 * Qgw_total_ecs;
 
+    // Normalement en wh
     besoin_ch_mois[mois] = bvj * dh19j;
     besoin_ch_mois_dep[mois] = bvj_dep * dh21j;
     besoin_ch_mois[mois] -=
@@ -160,8 +160,9 @@ export default function calc_besoin_ch(
     besoin_ch_mois_dep[mois] -=
       pertes_distribution_ecs_recup_j_dep + pertes_stockage_ecs_recup_j_dep + gen_recup_dep;
     besoin_ch_mois[mois] = Math.max(besoin_ch_mois[mois], 0);
-    besoin_ch += besoin_ch_mois[mois] / 1000;
 
+    // Besoin de chauffage final en kwh
+    besoin_ch += besoin_ch_mois[mois] / 1000;
     besoin_ch_depensier += besoin_ch_mois_dep[mois] / 1000;
   }
 
@@ -180,6 +181,54 @@ export default function calc_besoin_ch(
     fraction_apport_gratuit_ch,
     fraction_apport_gratuit_depensier_ch
   };
+}
+
+function calc_qrec(instal_ecs, nadeq, prorataEcs, ilpa, ca, zc, th) {
+  const Nref21 = tvs.nref21[ilpa];
+  const Nref19 = tvs.nref19[ilpa];
+
+  let sumNref19 = 0;
+  let sumNref21 = 0;
+
+  for (const mois of mois_liste) {
+    const nref19 = Nref19[ca][mois][zc];
+    const nref21 = Nref21[ca][mois][zc];
+    sumNref19 += nref19;
+    sumNref21 += nref21;
+  }
+
+  let Qrec = 0;
+  let Qrec_dep = 0;
+  let total_becs_rdim = 0;
+  let total_becs_dep_rdim = 0;
+  instal_ecs.forEach((ecs) => {
+    let becs_int = 0;
+    let becs_dep_int = 0;
+    const isInstallationSimple = ecs.donnee_entree.enum_type_installation_id === '1';
+    const Tau = isInstallationSimple ? 0.1 : 0.212;
+    for (const mois of mois_liste) {
+      // en kwh
+      becs_int += calc_besoin_ecs_j(ca, mois, zc, nadeq, false) * prorataEcs;
+
+      // en kwh
+      becs_dep_int += calc_besoin_ecs_j(ca, mois, zc, nadeq, true) * prorataEcs;
+    }
+
+    if (th !== 'immeuble') {
+      Qrec += ((0.48 * sumNref19 * Tau * becs_int) / 8760) * 1000;
+      Qrec_dep += ((0.48 * sumNref21 * Tau * becs_dep_int) / 8760) * 1000;
+    } else {
+      total_becs_rdim += Tau * becs_int * 1000;
+      total_becs_dep_rdim += Tau * becs_dep_int * 1000;
+    }
+  });
+
+  if (th === 'immeuble') {
+    Qrec = ((0.48 * sumNref19) / 8760) * total_becs_rdim;
+    Qrec_dep = ((0.48 * sumNref21) / 8760) * total_becs_dep_rdim;
+  }
+
+  return { Qrec, Qrec_dep, sumNref19, sumNref21 };
 }
 
 function calc_Fj(GV, asj, aij, dhj, inertie) {

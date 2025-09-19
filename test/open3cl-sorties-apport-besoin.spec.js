@@ -3,6 +3,7 @@ import corpus from './corpus.json';
 import { getAdemeFileJson, getResultFile, saveResultFile } from './test-helpers.js';
 import { describe, expect, test, beforeAll, vi } from 'vitest';
 import { PRECISION, PRECISION_PERCENT } from './constant.js';
+import { expect_or } from './utils.js';
 
 describe('Test Open3CL engine compliance on corpus', () => {
   /**
@@ -49,16 +50,6 @@ describe('Test Open3CL engine compliance on corpus', () => {
       );
     });
   });
-
-  function expect_or(...tests) {
-    if (!tests || !Array.isArray(tests)) return;
-    try {
-      tests.shift()?.();
-    } catch (e) {
-      if (tests.length) expect_or(...tests);
-      else throw e;
-    }
-  }
 
   describe.each(['besoin_ecs', 'besoin_ecs_depensier', 'besoin_ch', 'besoin_ch_depensier'])(
     'check "%s" value',
