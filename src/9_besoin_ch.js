@@ -18,7 +18,8 @@ export default function calc_besoin_ch(
   instal_ecs,
   instal_ch,
   bv,
-  ets
+  ets,
+  th
 ) {
   const ca = enums.classe_altitude[ca_id];
   const zc = enums.zone_climatique[zc_id];
@@ -48,7 +49,7 @@ export default function calc_besoin_ch(
    * 11.4 Plusieurs systèmes d’ECS (limité à 2 systèmes différents par logement)
    * Les besoins en ECS pour chaque générateur sont / 2
    */
-  const prorataEcs = instal_ecs.length > 1 ? 0.5 : 1;
+  const prorataEcs = instal_ecs.length > 1 ? 1 / instal_ecs.length : 1;
 
   let Qgw_total_ecs = 0;
   instal_ecs.forEach((instal_ecs) => {
@@ -82,7 +83,8 @@ export default function calc_besoin_ch(
     prorataEcs,
     ilpa,
     ca,
-    zc
+    zc,
+    th
   );
 
   /**
@@ -179,38 +181,49 @@ export default function calc_besoin_ch(
   };
 }
 
-function calc_qrec(instal_ecs, nadeq, prorataEcs, ilpa, ca, zc) {
+function calc_qrec(instal_ecs, nadeq, prorataEcs, ilpa, ca, zc, th) {
   const Nref21 = tvs.nref21[ilpa];
   const Nref19 = tvs.nref19[ilpa];
 
   let sumNref19 = 0;
   let sumNref21 = 0;
-  let Qdw_total_ecs = 0;
-  let Qdw_total_ecs_dep = 0;
 
-  let becs_inst = 0;
-  let bes_dep_inst = 0;
   for (const mois of mois_liste) {
     const nref19 = Nref19[ca][mois][zc];
     const nref21 = Nref21[ca][mois][zc];
-
     sumNref19 += nref19;
     sumNref21 += nref21;
-
-    // en kw/h
-    const becsj = calc_besoin_ecs_j(ca, mois, zc, nadeq, false) * prorataEcs;
-    becs_inst += becsj;
-
-    // en kw/h
-    const becs_j_dep = calc_besoin_ecs_j(ca, mois, zc, nadeq, true) * prorataEcs;
-    bes_dep_inst += becs_j_dep;
-
-    Qdw_total_ecs += instal_ecs.reduce((acc, ecs) => acc + calc_Qdw_j(ecs, becsj), 0);
-    Qdw_total_ecs_dep += instal_ecs.reduce((acc, ecs) => acc + calc_Qdw_j(ecs, becs_j_dep), 0);
   }
 
-  const Qrec = (0.48 * sumNref19 * Qdw_total_ecs) / 8760;
-  const Qrec_dep = (0.48 * sumNref21 * Qdw_total_ecs_dep) / 8760;
+  let Qrec = 0;
+  let Qrec_dep = 0;
+  let total_becs_rdim = 0;
+  let total_becs_dep_rdim = 0;
+  instal_ecs.forEach((ecs) => {
+    let becs_int = 0;
+    let becs_dep_int = 0;
+    const Tau = ecs.donnee_entree.enum_type_installation_id === '1' ? 0.1 : 0.212;
+    for (const mois of mois_liste) {
+      // en kw/h
+      becs_int += calc_besoin_ecs_j(ca, mois, zc, nadeq, false) * prorataEcs;
+
+      // en kw/h
+      becs_dep_int += calc_besoin_ecs_j(ca, mois, zc, nadeq, true) * prorataEcs;
+    }
+
+    if (th !== 'immeuble') {
+      Qrec += 0.48 * sumNref19 * Tau * becs_int;
+      Qrec_dep += 0.48 * sumNref21 * Tau * becs_dep_int;
+    } else {
+      total_becs_rdim += Tau * becs_int * (ecs.donnee_entree.rdim || 1);
+      total_becs_dep_rdim += Tau * becs_dep_int * (ecs.donnee_entree.rdim || 1);
+    }
+  });
+
+  if (th === 'immeuble') {
+    Qrec = ((0.48 * sumNref19) / 8760) * total_becs_rdim;
+    Qrec_dep = ((0.48 * sumNref21) / 8760) * total_becs_dep_rdim;
+  }
 
   return { Qrec, Qrec_dep, sumNref19, sumNref21 };
 }
