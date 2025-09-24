@@ -428,7 +428,8 @@ export function calcul_3cl(dpe) {
     ecs,
     instal_ch,
     bv_list,
-    ets
+    ets,
+    th
   );
   apport_et_besoin = { ...apport_et_besoin, ...besoin_ch };
 
