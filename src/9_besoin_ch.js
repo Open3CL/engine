@@ -152,6 +152,7 @@ export default function calc_besoin_ch(
     pertes_stockage_ecs_recup += pertes_stockage_ecs_recup_j;
     const pertes_stockage_ecs_recup_j_dep = nref21 * Qgw_total_ecs;
 
+    // Normalement en wh
     besoin_ch_mois[mois] = bvj * dh19j;
     besoin_ch_mois_dep[mois] = bvj_dep * dh21j;
     besoin_ch_mois[mois] -=
@@ -159,8 +160,9 @@ export default function calc_besoin_ch(
     besoin_ch_mois_dep[mois] -=
       pertes_distribution_ecs_recup_j_dep + pertes_stockage_ecs_recup_j_dep + gen_recup_dep;
     besoin_ch_mois[mois] = Math.max(besoin_ch_mois[mois], 0);
-    besoin_ch += besoin_ch_mois[mois] / 1000;
 
+    // Besoin de chauffage final en kwh
+    besoin_ch += besoin_ch_mois[mois] / 1000;
     besoin_ch_depensier += besoin_ch_mois_dep[mois] / 1000;
   }
 
@@ -202,21 +204,22 @@ function calc_qrec(instal_ecs, nadeq, prorataEcs, ilpa, ca, zc, th) {
   instal_ecs.forEach((ecs) => {
     let becs_int = 0;
     let becs_dep_int = 0;
-    const Tau = ecs.donnee_entree.enum_type_installation_id === '1' ? 0.1 : 0.212;
+    const isInstallationSimple = ecs.donnee_entree.enum_type_installation_id === '1';
+    const Tau = isInstallationSimple ? 0.1 : 0.212;
     for (const mois of mois_liste) {
-      // en kw/h
+      // en kwh
       becs_int += calc_besoin_ecs_j(ca, mois, zc, nadeq, false) * prorataEcs;
 
-      // en kw/h
+      // en kwh
       becs_dep_int += calc_besoin_ecs_j(ca, mois, zc, nadeq, true) * prorataEcs;
     }
 
     if (th !== 'immeuble') {
-      Qrec += 0.48 * sumNref19 * Tau * becs_int;
-      Qrec_dep += 0.48 * sumNref21 * Tau * becs_dep_int;
+      Qrec += ((0.48 * sumNref19 * Tau * becs_int) / 8760) * 1000;
+      Qrec_dep += ((0.48 * sumNref21 * Tau * becs_dep_int) / 8760) * 1000;
     } else {
-      total_becs_rdim += Tau * becs_int * (ecs.donnee_entree.rdim || 1);
-      total_becs_dep_rdim += Tau * becs_dep_int * (ecs.donnee_entree.rdim || 1);
+      total_becs_rdim += Tau * becs_int * 1000;
+      total_becs_dep_rdim += Tau * becs_dep_int * 1000;
     }
   });
 
