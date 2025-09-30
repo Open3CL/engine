@@ -1,6 +1,8 @@
 const chartsByBranch = {};
 const dataByBranch = {};
 
+let branchChartInstance;
+
 function createDatasetAndLabels(data, branch) {
   let labels = Object.keys(data.checks).sort();
   const dataset = [];
@@ -84,6 +86,15 @@ function loadDetailReportData(corpus, branch, chartId, showOnlyDifferentValues) 
           legendText += ')';
         }
 
+        if (branchChartInstance) {
+          branchChartInstance.destroy();
+          Object.keys(dataByBranch)
+            .filter((b) => b !== 'main' && b !== branch)
+            .forEach((b) => {
+              chartsByBranch[b] = undefined;
+            });
+        }
+
         chartsByBranch[branch] = new Chart(document.getElementById(chartId), {
           type: 'polarArea',
           data: {
@@ -122,6 +133,9 @@ function loadDetailReportData(corpus, branch, chartId, showOnlyDifferentValues) 
             }
           }
         });
+        if (branch !== 'main') {
+          branchChartInstance = chartsByBranch[branch];
+        }
         resolve();
       } else {
         updateDetailedChart(branch, data);

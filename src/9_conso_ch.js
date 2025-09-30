@@ -81,9 +81,6 @@ export function conso_ch(
   const gen_lge_id = requestInputID(de, du, 'lien_generateur_emetteur');
   const coef = coef_ch(de.fch || 0.5)[cfg_ch][_pos] || 1;
 
-  let conso_ch = 0;
-  let conso_ch_dep;
-
   let em_filt;
 
   if (em_list.length === 1) {
@@ -115,36 +112,76 @@ export function conso_ch(
       );
       break;
     }
+    case 'convecteurs bi-jonction': {
+      // Installation individuelle
+      const coeffInd = coef_ch(de.fch)[cfg_ch][1];
+      const consoInd = calc_conso_ch_default(di, de, bch, bch_dep, coeffInd, em_filt, GV, Sh, hsp);
+
+      // Installation collective
+      const coeffColl = coef_ch(de.fch)[cfg_ch][0];
+      const consoColl = calc_conso_ch_default(
+        di,
+        de,
+        bch,
+        bch_dep,
+        coeffColl,
+        em_filt,
+        GV,
+        Sh,
+        hsp,
+        1.03
+      );
+
+      di.conso_ch = consoInd.conso_ch + consoColl.conso_ch;
+      di.conso_ch_depensier = consoInd.conso_ch_dep + consoColl.conso_ch_dep;
+
+      break;
+    }
     default: {
-      const hasMultipleEmetteur = em_filt.length > 1;
-
-      const emetteur_eq = em_filt.reduce((acc, em) => {
-        const int = calc_intermittence(GV, Sh, hsp, em.donnee_intermediaire.i0);
-        const r_em = rendement_emission(em);
-
-        /**
-         * 9.1.3 Installation avec plusieurs émissions pour un même générateur
-         * La part de la consommation traitée par chaque émetteur est proratisé par le ratio des surfaces habitables.
-         * @type {number|number}
-         */
-        const ratio_s = hasMultipleEmetteur
-          ? em.donnee_entree.surface_chauffee / de.surface_chauffee
-          : 1;
-
-        const Ich = 1 / r_em;
-        return acc + ratio_s * int * Ich;
-      }, 0);
-
-      const Ich = emetteur_eq / di.rg;
-      const Ich_dep = emetteur_eq / di.rg_dep;
-      conso_ch = coef * Ich * bch;
-      conso_ch_dep = coef * Ich_dep * bch_dep;
-
+      const { conso_ch, conso_ch_dep } = calc_conso_ch_default(
+        di,
+        de,
+        bch,
+        bch_dep,
+        coef,
+        em_filt,
+        GV,
+        Sh,
+        hsp
+      );
       di.conso_ch = conso_ch;
       di.conso_ch_depensier = conso_ch_dep;
       break;
     }
   }
+}
+
+function calc_conso_ch_default(di, de, bch, bch_dep, coeff, em_filt, GV, Sh, hsp, i0) {
+  const hasMultipleEmetteur = em_filt.length > 1;
+
+  const emetteur_eq = em_filt.reduce((acc, em) => {
+    const int = calc_intermittence(GV, Sh, hsp, i0 ? i0 : em.donnee_intermediaire.i0);
+    const r_em = rendement_emission(em);
+
+    /**
+     * 9.1.3 Installation avec plusieurs émissions pour un même générateur
+     * La part de la consommation traitée par chaque émetteur est proratisé par le ratio des surfaces habitables.
+     * @type {number|number}
+     */
+    const ratio_s = hasMultipleEmetteur
+      ? em.donnee_entree.surface_chauffee / de.surface_chauffee
+      : 1;
+
+    const Ich = 1 / r_em;
+    return acc + ratio_s * int * Ich;
+  }, 0);
+
+  const Ich = emetteur_eq / di.rg;
+  const Ich_dep = emetteur_eq / di.rg_dep;
+  const conso_ch = coeff * Ich * bch;
+  const conso_ch_dep = coeff * Ich_dep * bch_dep;
+
+  return { conso_ch, conso_ch_dep };
 }
 
 /**
