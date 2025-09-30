@@ -5,7 +5,7 @@ import { SynchronizeC1Tables } from './synchronize-c1-tables.js';
 import { SynchronizeSolicitationsTables } from './synchronize-solicitations-tables.js';
 import { ValeurTablesFixture } from '../../../../test/fixtures/core/assets/valeur-tables.fixture.js';
 import { SynchronizeDpeGesLimitValuesTables } from './synchronize-dpe-ges-limit-values-tables.js';
-import { AddAdditionnalUeValuesTables } from './add-additionnal-ue-values-tables.js';
+import { AddTvAdditionalValuesTables } from './add-tv-additional-values-tables.js';
 import { describe, expect, test, vi } from 'vitest';
 
 describe('SynchronizeValeurTables unit tests', () => {
@@ -18,7 +18,7 @@ describe('SynchronizeValeurTables unit tests', () => {
       fileStore,
       appConfig
     );
-    const addAdditionnalUeValuesTables = new AddAdditionnalUeValuesTables(fileStore, appConfig);
+    const addAdditionnalUeValuesTables = new AddTvAdditionalValuesTables(fileStore, appConfig);
     const synchronizeValeurTables = new SynchronizeValeurTables(
       fileStore,
       appConfig,

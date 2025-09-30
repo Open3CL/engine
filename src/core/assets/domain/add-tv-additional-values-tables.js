@@ -1,17 +1,13 @@
 import { UPB_ADDITIONAL_VALUES } from '../../tv/infrastructure/assets/additional-ue-values.js';
 
 /**
- * Add additional values for ue
+ * Add additional values for tv file
  */
-export class AddAdditionnalUeValuesTables {
-  /**
-   * @type {FileStore}
-   */
+export class AddTvAdditionalValuesTables {
+  /** @type {FileStore} **/
   #fileStore;
 
-  /**
-   * @type {ApplicationConfig}
-   */
+  /** @type {ApplicationConfig} **/
   #appConfig;
 
   /**
@@ -29,6 +25,11 @@ export class AddAdditionnalUeValuesTables {
    * @returns {*}
    */
   execute(tableValues) {
+    this.#addUpbValues(tableValues);
+    return tableValues;
+  }
+
+  #addUpbValues(tableValues) {
     UPB_ADDITIONAL_VALUES.forEach(
       ({
         type_adjacence_plancher,
@@ -51,7 +52,5 @@ export class AddAdditionnalUeValuesTables {
         });
       }
     );
-
-    return tableValues;
   }
 }

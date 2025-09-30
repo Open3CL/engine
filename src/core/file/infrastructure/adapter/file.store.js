@@ -26,9 +26,13 @@ export class FileStore {
           resolve(data);
         }
       });
-    }).then((fileContent) =>
-      this.#excelWorkBookToJson(XLSX.read(fileContent, { type: 'buffer', raw: false }))
-    );
+    })
+      .then((fileContent) =>
+        this.#excelWorkBookToJson(XLSX.read(fileContent, { type: 'buffer', raw: false }))
+      )
+      .catch((error) => {
+        console.error(`Could not parse file: ${filePath}, reason: ${error.message}`);
+      });
   }
 
   /**
