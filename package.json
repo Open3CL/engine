@@ -19,6 +19,7 @@
     "test:corpus:ch-col": "node test/corpus/run_corpus_checks.js --corpus-file-path=test/corpus/dpe_immeuble_chauffage_collectif.csv",
     "test:corpus:ch-mix": "node test/corpus/run_corpus_checks.js --corpus-file-path=test/corpus/dpe_immeuble_chauffage_mixte.csv",
     "test:corpus:all": "npm run test:corpus && npm run test:corpus:ch-ind && npm run test:corpus:ch-col && npm run test:corpus:ch-mix",
+    "test:corpus:all+database": "npm run test:corpus:all && node test/corpus/corpus_database.js",
     "qa:lint": "eslint .",
     "qa:lint:fix": "npm run qa:lint -- --fix",
     "qa:duplication": "jscpd",

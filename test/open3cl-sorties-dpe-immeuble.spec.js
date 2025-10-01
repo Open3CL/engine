@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { getAdemeFileJson } from './test-helpers.js';
 import { calcul_3cl } from '../src/index.js';
+import { expect_or } from './utils.js';
 
 describe('DPE immeuble unit tests', () => {
   test.each([
@@ -62,4 +63,19 @@ describe('DPE immeuble unit tests', () => {
       );
     }
   );
+
+  test('perte distribution ecs recup dpe immeuble', () => {
+    /** @type {FullDpe} **/
+    let input = getAdemeFileJson('2574E0561248M');
+
+    /** @type {FullDpe} **/
+    let output = calcul_3cl(structuredClone(input));
+
+    const inputEcsRecup = input.logement.sortie.apport_et_besoin.pertes_distribution_ecs_recup;
+    const outputEcsRecup = output.logement.sortie.apport_et_besoin.pertes_distribution_ecs_recup;
+    expect_or(
+      () => expect(inputEcsRecup).toBeCloseTo(outputEcsRecup),
+      () => expect(inputEcsRecup).toBeCloseTo(outputEcsRecup / 1000)
+    );
+  });
 });
