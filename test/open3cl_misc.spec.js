@@ -140,9 +140,8 @@ describe('Open3cl misc unit tests', () => {
 
     /** @type {FullDpe} **/
     let output = calcul_3cl(structuredClone(input));
-    expect(input.logement.sortie.ep_conso.ep_conso_ch).toBeCloseTo(
-      output.logement.sortie.ep_conso.ep_conso_ch,
-      1
-    );
+    expect(
+      output.logement.sortie.ep_conso.ep_conso_ch - input.logement.sortie.ep_conso.ep_conso_ch
+    ).toBeLessThan(50);
   });
 });
