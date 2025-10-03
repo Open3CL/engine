@@ -1,6 +1,6 @@
 export class ApplicationConfig {
   get ademeRepositoryVersion() {
-    return 'dpe-mdd-v8.2.1-controle-1.21.8-audit-mdd-v4.4.0-controle-1.9.9-ajout-nom-organisme-qualification';
+    return 'fix-pont-thermique-et-warning-audit-copro';
   }
 
   get ademeRepositoryUrl() {

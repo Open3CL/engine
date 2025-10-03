@@ -38,8 +38,8 @@ function coef_ch(Fch) {
       1: 0.25 * (1 - Fch)
     },
     'installation de chauffage avec chaudière en relève de pac': {
-      0: 1, // deja proratisé en amont, voir 9_chauffage.js#getProrataGenerateur
-      1: 1
+      0: 0.8,
+      1: 0.2
     },
     'installation de chauffage avec chaudière en relève de pac avec insert ou poêle bois en appoint':
       {

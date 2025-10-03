@@ -191,6 +191,7 @@ interface Donnee_entree {
   enum_methode_saisie_carac_sys_id?: string;
   tv_pertes_stockage_id?: number;
   identifiant_reseau_chaleur?: string;
+  date_arrete_reseau_chaleur?: string;
   enum_type_stockage_ecs_id?: string;
   position_volume_chauffe?: number;
   volume_stockage?: number;

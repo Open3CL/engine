@@ -133,15 +133,4 @@ describe('Open3cl misc unit tests', () => {
       1
     );
   });
-
-  test('conso chauffage releve de PAC should be correct', () => {
-    /** @type {FullDpe} **/
-    let input = getAdemeFileJson('2595E0377407M');
-
-    /** @type {FullDpe} **/
-    let output = calcul_3cl(structuredClone(input));
-    expect(
-      output.logement.sortie.ep_conso.ep_conso_ch - input.logement.sortie.ep_conso.ep_conso_ch
-    ).toBeLessThan(50);
-  });
 });

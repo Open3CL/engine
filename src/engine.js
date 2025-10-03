@@ -35,6 +35,7 @@ const productionENR = new ProductionENR();
 export function calcul_3cl(dpe) {
   sanitize_dpe(dpe);
   const modele = enums.modele_dpe[dpe.administratif.enum_modele_dpe_id];
+  const dateDpe = dpe.administratif.date_etablissement_dpe;
   if (modele !== 'dpe 3cl 2021 méthode logement') {
     console.error('Moteur dpe non implémenté pour le modèle: ' + modele);
     return null;
@@ -500,7 +501,8 @@ export function calcul_3cl(dpe) {
     ecs,
     clim,
     prorataECS,
-    prorataChauffage
+    prorataChauffage,
+    dateDpe
   );
 
   const production_electricite = productionENR.calculateEnr(
