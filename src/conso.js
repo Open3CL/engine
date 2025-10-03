@@ -103,10 +103,28 @@ function getConso(coef, type_energie, conso) {
  * Récupération du coefficient d'émission GES pour le générateur
  * @param gen_ch {GenerateurChauffageItem||GenerateurEcsItem}
  * @param suffix {'ch'|'ecs'}
+ * @param dateDpe {string} date d'établissement du DPE
  * @returns {number}
  */
-function getGesCoeffForGenerateur(gen_ch, suffix) {
+function getGesCoeffForGenerateur(gen_ch, suffix, dateDpe) {
   const typeEnergie = getTypeEnergie(gen_ch.donnee_entree, suffix);
+
+  let anneeDpe;
+  try {
+    if (gen_ch.donnee_entree.date_arrete_reseau_chaleur) {
+      anneeDpe = new Date(gen_ch.donnee_entree.date_arrete_reseau_chaleur).getFullYear() - 1;
+    } else {
+      anneeDpe = new Date(dateDpe).getFullYear() - 1;
+    }
+
+    if (anneeDpe < 2024) {
+      anneeDpe = 2022;
+    }
+  } catch (e) {
+    anneeDpe = 2022;
+  }
+
+  const key_reseau_chaleur = `reseau_chaleur_${anneeDpe}`;
 
   /**
    * Cas spécifique des réseaux de chaleur urbain qui ont des coefficients différents en fonction de réseau de distribution
@@ -115,7 +133,7 @@ function getGesCoeffForGenerateur(gen_ch, suffix) {
     const identifiant_reseau = gen_ch.donnee_entree.identifiant_reseau_chaleur;
 
     if (identifiant_reseau) {
-      const row = tv('reseau_chaleur_2022', { identifiant_reseau });
+      const row = tv(key_reseau_chaleur, { identifiant_reseau });
 
       if (row) {
         return row.contenu_co2_acv;
@@ -142,7 +160,8 @@ export default function calc_conso(
   ecs,
   fr,
   prorataECS,
-  prorataChauffage
+  prorataChauffage,
+  dateDpe
 ) {
   const gen_ch = ch.reduce((acc, ch) => {
     const generateur_chauffage = ch.generateur_chauffage_collection.generateur_chauffage;
@@ -158,7 +177,7 @@ export default function calc_conso(
         ch.donnee_entree.enum_methode_calcul_conso_id;
       value.donnee_entree.enum_type_installation_id = ch.donnee_entree.enum_type_installation_id;
       (value.donnee_utilisateur = value.donnee_utilisateur || {}).coeffEmissionGes =
-        getGesCoeffForGenerateur(value, 'ch');
+        getGesCoeffForGenerateur(value, 'ch', dateDpe);
     });
     return acc.concat(generateur_chauffage);
   }, []);
@@ -171,7 +190,7 @@ export default function calc_conso(
         value.donnee_entree.cle_repartition_ecs =
           (ecs.donnee_entree.cle_repartition_ecs || 1) * (ecs.donnee_entree.rdim || 1);
         (value.donnee_utilisateur = value.donnee_utilisateur || {}).coeffEmissionGes =
-          getGesCoeffForGenerateur(value, 'ecs');
+          getGesCoeffForGenerateur(value, 'ecs', dateDpe);
       });
     }
     return acc.concat(generateur_ecs);
