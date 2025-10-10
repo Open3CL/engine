@@ -64,18 +64,21 @@ describe('DPE immeuble unit tests', () => {
     }
   );
 
-  test('perte distribution ecs recup dpe immeuble', () => {
-    /** @type {FullDpe} **/
-    let input = getAdemeFileJson('2574E0561248M');
+  test.each([{ code: '2574E0561248M' }, { code: '2431E1275871H' }, { code: '2592E0472851H' }])(
+    'perte distribution ecs recup dpe immeuble: $code',
+    ({ code }) => {
+      /** @type {FullDpe} **/
+      let input = getAdemeFileJson(code);
 
-    /** @type {FullDpe} **/
-    let output = calcul_3cl(structuredClone(input));
+      /** @type {FullDpe} **/
+      let output = calcul_3cl(structuredClone(input));
 
-    const inputEcsRecup = input.logement.sortie.apport_et_besoin.pertes_distribution_ecs_recup;
-    const outputEcsRecup = output.logement.sortie.apport_et_besoin.pertes_distribution_ecs_recup;
-    expect_or(
-      () => expect(inputEcsRecup).toBeCloseTo(outputEcsRecup),
-      () => expect(inputEcsRecup).toBeCloseTo(outputEcsRecup / 1000)
-    );
-  });
+      const inputEcsRecup = input.logement.sortie.apport_et_besoin.pertes_distribution_ecs_recup;
+      const outputEcsRecup = output.logement.sortie.apport_et_besoin.pertes_distribution_ecs_recup;
+      expect_or(
+        () => expect(inputEcsRecup).toBeCloseTo(outputEcsRecup),
+        () => expect(inputEcsRecup).toBeCloseTo(outputEcsRecup / 1000)
+      );
+    }
+  );
 });

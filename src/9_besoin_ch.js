@@ -19,7 +19,8 @@ export default function calc_besoin_ch(
   instal_ch,
   bv,
   ets,
-  th
+  th,
+  nbLogements
 ) {
   const ca = enums.classe_altitude[ca_id];
   const zc = enums.zone_climatique[zc_id];
@@ -84,7 +85,8 @@ export default function calc_besoin_ch(
     ilpa,
     ca,
     zc,
-    th
+    th,
+    nbLogements
   );
 
   /**
@@ -183,7 +185,7 @@ export default function calc_besoin_ch(
   };
 }
 
-function calc_qrec(instal_ecs, nadeq, prorataEcs, ilpa, ca, zc, th) {
+function calc_qrec(instal_ecs, nadeq, prorataEcs, ilpa, ca, zc, th, nbLogements) {
   const Nref21 = tvs.nref21[ilpa];
   const Nref19 = tvs.nref19[ilpa];
 
@@ -206,6 +208,9 @@ function calc_qrec(instal_ecs, nadeq, prorataEcs, ilpa, ca, zc, th) {
     let becs_dep_int = 0;
     const isInstallationSimple = ecs.donnee_entree.enum_type_installation_id === '1';
     const Tau = isInstallationSimple ? 0.1 : 0.212;
+    if (th === 'immeuble' && ecs.donnee_entree.rdim > 1) {
+      prorataEcs = ecs.donnee_entree.rdim / nbLogements;
+    }
     for (const mois of mois_liste) {
       // en kwh
       becs_int += calc_besoin_ecs_j(ca, mois, zc, nadeq, false) * prorataEcs;

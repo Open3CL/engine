@@ -429,7 +429,8 @@ export function calcul_3cl(dpe) {
     instal_ch,
     bv_list,
     ets,
-    th
+    th,
+    dpe.logement.caracteristique_generale.nombre_appartement
   );
   apport_et_besoin = { ...apport_et_besoin, ...besoin_ch };
 
