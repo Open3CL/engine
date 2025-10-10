@@ -1,6 +1,5 @@
 import enums from './enums.js';
 import tvs from './tv.js';
-import { calc_Qdw_j } from './14_generateur_ecs.js';
 import { calc_besoin_ecs_j } from './11_besoin_ecs.js';
 import { calc_Qrec_gen_j } from './9_generateur_ch.js';
 import { calc_ai_j, calc_as_j } from './6.1_apport_gratuit.js';
