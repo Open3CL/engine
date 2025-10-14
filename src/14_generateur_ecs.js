@@ -81,20 +81,25 @@ export function calc_Qdw_j(instal_ecs, becs_j) {
 
   const type_installation = requestInput(de, du, 'type_installation');
 
-  const Qdw_ind_vc = calc_Qdw_ind_j(becs_j);
+  const Qdw_ind_vc = calc_Qdw_ind_j(instal_ecs, becs_j);
   const Qdw_coll_vc = calc_Qdw_col_j(instal_ecs, becs_j, type_installation);
 
-  return (Qdw_ind_vc + Qdw_coll_vc) * 0.48;
+  return Qdw_ind_vc + Qdw_coll_vc;
 }
 
 // 15.2.3
-export function calc_Qdw_ind_j(becs_j) {
-  return (0.1 * becs_j) / 8760.0;
+/**
+ * @param instal_ecs {InstallationEcsItem}
+ * @param becs_j {number}
+ */
+export function calc_Qdw_ind_j(instal_ecs, becs_j) {
+  const Rat_ecs = instal_ecs.generateur_ecs_collection.generateur_ecs.length > 1 ? 0.5 : 1;
+  return 0.1 * Rat_ecs * becs_j;
 }
 
 export function calc_Qdw_col_j(instal_ecs, becs_j, type_installation) {
   if (type_installation.includes('installation collective')) {
-    return (0.112 * becs_j) / 8760.0;
+    return 0.112 * becs_j;
   }
   return 0;
 }
