@@ -185,10 +185,14 @@ Résultats des tests de corpus avec le mode de compatibilité activé.
 | 1.3.2               | dpe_immeuble_chauffage_individuel.csv | 5476 (+17)                     | 55%               |                                                                                                                     |
 | 1.3.2               | dpe_immeuble_chauffage_collectif.csv  | 5869 (+21)                     | 58%               |                                                                                                                     |
 | 1.3.2               | dpe_immeuble_chauffage_mixte.csv      | 4040 (+22)                     | 40%               |                                                                                                                     |
-| <ins>**1.3.5**<ins> | <ins>**corpus_dpe.csv**<ins>          | <ins>**4522 (+3)**<ins>        | <ins>**45%**<ins> | [Voir le détail](https://open3cl.github.io/engine/reports/corpus?corpus_file=corpus_dpe.csv)                        |
-| 1.3.5               | dpe_immeuble_chauffage_individuel.csv | 5488 (+12)                     | 55%               | [Voir le détail](https://open3cl.github.io/engine/reports/corpus?corpus_file=dpe_immeuble_chauffage_individuel.csv) |
-| 1.3.5               | dpe_immeuble_chauffage_collectif.csv  | 5869                           | 58%               | [Voir le détail](https://open3cl.github.io/engine/reports/corpus?corpus_file=dpe_immeuble_chauffage_collectif.csv)  |
-| 1.3.5               | dpe_immeuble_chauffage_mixte.csv      | 4082 (+42)                     | 40%               | [Voir le détail](https://open3cl.github.io/engine/reports/corpus?corpus_file=dpe_immeuble_chauffage_mixte.csv)      |
+| <ins>**1.3.5**<ins> | <ins>**corpus_dpe.csv**<ins>          | <ins>**4522 (+3)**<ins>        | <ins>**45%**<ins> |                                                                                                                     |
+| 1.3.5               | dpe_immeuble_chauffage_individuel.csv | 5488 (+12)                     | 55%               |
+| 1.3.5               | dpe_immeuble_chauffage_collectif.csv  | 5869                           | 58%               |                                                                                                                     |
+| 1.3.5               | dpe_immeuble_chauffage_mixte.csv      | 4082 (+42)                     | 40%               |                                                                                                                     |
+| <ins>**1.3.6**<ins> | <ins>**corpus_dpe.csv**<ins>          | <ins>**4522**<ins>             | <ins>**45%**<ins> | [Voir le détail](https://open3cl.github.io/engine/reports/corpus?corpus_file=corpus_dpe.csv)                        |
+| 1.3.6               | dpe_immeuble_chauffage_individuel.csv | 5650 (+162)                    | 56%               | [Voir le détail](https://open3cl.github.io/engine/reports/corpus?corpus_file=dpe_immeuble_chauffage_individuel.csv) |
+| 1.3.6               | dpe_immeuble_chauffage_collectif.csv  | 5894 (+25)                     | 59% (+1%)         | [Voir le détail](https://open3cl.github.io/engine/reports/corpus?corpus_file=dpe_immeuble_chauffage_collectif.csv)  |
+| 1.3.6               | dpe_immeuble_chauffage_mixte.csv      | 4082 (+59)                     | 41% (+1%)         | [Voir le détail](https://open3cl.github.io/engine/reports/corpus?corpus_file=dpe_immeuble_chauffage_mixte.csv)      |
 
 ## Roadmap
 
