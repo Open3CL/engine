@@ -36,17 +36,45 @@ export function parseXml(data) {
   return xmlParser.parse(data).dpe;
 }
 
-export function getAdemeFileJson(ademeId) {
-  const dpeRequestFile = `test/fixtures/${ademeId}.json`;
-  const dpeFile = `test/fixtures/${ademeId}.xml`;
+export async function getAdemeFileJsonOrDownload(dpeCode) {
+  if (!process.env.ADEME_CLIENT_ID || !process.env.ADEME_CLIENT_SECRET) {
+    throw new Error(`ADEME_CLIENT_ID and ADEME_CLIENT_SECRET environment variables are not set !`);
+  }
+  const dpeJsonFilePath = `test/fixtures/${dpeCode}.json`;
+  const dpeXmlFilePath = `test/fixtures/${dpeCode}.xml`;
+  let dpe = getAdemeFileJson(dpeCode);
+  if (!dpe) {
+    const response = await fetch(
+      `https://prd-x-ademe-externe-api.de-c1.eu1.cloudhub.io/api/v1/pub/dpe/${dpeCode}/xml`,
+      {
+        headers: {
+          client_id: process.env.ADEME_CLIENT_ID,
+          client_secret: process.env.ADEME_CLIENT_SECRET
+        }
+      }
+    );
+    if (response.status !== 200) {
+      throw new Error(`Fail to retrieve DPE from ademe: ${dpeCode}`);
+    }
+    const body = await response.text();
+    fs.writeFileSync(dpeXmlFilePath, body, { encoding: 'utf-8' });
+    dpe = xmlParser.parse(body).dpe;
+    fs.writeFileSync(dpeJsonFilePath, JSON.stringify(dpe));
+  }
+  return dpe;
+}
+
+export function getAdemeFileJson(dpeCode) {
+  const dpeJsonFilePath = `test/fixtures/${dpeCode}.json`;
+  const dpeXmlFilePath = `test/fixtures/${dpeCode}.xml`;
   let dpeRequest;
 
-  if (fs.existsSync(dpeRequestFile)) {
-    dpeRequest = JSON.parse(fs.readFileSync(dpeRequestFile, { encoding: 'utf8', flag: 'r' }));
-  } else {
-    const data = fs.readFileSync(dpeFile, { encoding: 'utf8', flag: 'r' });
+  if (fs.existsSync(dpeJsonFilePath)) {
+    dpeRequest = JSON.parse(fs.readFileSync(dpeJsonFilePath, { encoding: 'utf8', flag: 'r' }));
+  } else if (fs.existsSync(dpeXmlFilePath)) {
+    const data = fs.readFileSync(dpeXmlFilePath, { encoding: 'utf8', flag: 'r' });
     dpeRequest = xmlParser.parse(data).dpe;
-    fs.writeFileSync(dpeRequestFile, JSON.stringify(dpeRequest));
+    fs.writeFileSync(dpeJsonFilePath, JSON.stringify(dpeRequest));
   }
 
   return dpeRequest;
