@@ -262,8 +262,6 @@ function tv_ch_facteur_couverture_solaire(de, zc_id) {
  * @param caId {string} id de la classe d'altitude du bien
  */
 export function tauxChargeForGenerator(installationChauffage, GV, caId, zcId) {
-  // const GV_ratio = GV * deperditionRatio;
-
   // Récupération des installations de chauffage avec générateur à combustion
   const installChauffageWithCombustion = [];
   installationChauffage.forEach((ch) => {
