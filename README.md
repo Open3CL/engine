@@ -192,7 +192,7 @@ Résultats des tests de corpus avec le mode de compatibilité activé.
 | <ins>**1.3.6**<ins> | <ins>**corpus_dpe.csv**<ins>          | <ins>**4522**<ins>             | <ins>**45%**<ins> | [Voir le détail](https://open3cl.github.io/engine/reports/corpus?corpus_file=corpus_dpe.csv)                        |
 | 1.3.6               | dpe_immeuble_chauffage_individuel.csv | 5650 (+162)                    | 56%               | [Voir le détail](https://open3cl.github.io/engine/reports/corpus?corpus_file=dpe_immeuble_chauffage_individuel.csv) |
 | 1.3.6               | dpe_immeuble_chauffage_collectif.csv  | 5894 (+25)                     | 59% (+1%)         | [Voir le détail](https://open3cl.github.io/engine/reports/corpus?corpus_file=dpe_immeuble_chauffage_collectif.csv)  |
-| 1.3.6               | dpe_immeuble_chauffage_mixte.csv      | 4082 (+59)                     | 41% (+1%)         | [Voir le détail](https://open3cl.github.io/engine/reports/corpus?corpus_file=dpe_immeuble_chauffage_mixte.csv)      |
+| 1.3.6               | dpe_immeuble_chauffage_mixte.csv      | 4141 (+59)                     | 41% (+1%)         | [Voir le détail](https://open3cl.github.io/engine/reports/corpus?corpus_file=dpe_immeuble_chauffage_mixte.csv)      |
 
 ## Roadmap
 
