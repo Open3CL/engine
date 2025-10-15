@@ -206,9 +206,6 @@ export function calcul_3cl(dpe) {
     ventilation.donnee_entree.ficheTechniqueVentilationPost2012 = ficheTechniqueVentilationPost2012;
   });
 
-  const deperditionRatio =
-    th === 'immeuble' ? 1 / dpe.logement.caracteristique_generale.nombre_appartement : 1;
-
   const deperdition = calc_deperdition(
     cg,
     zc_id,
@@ -447,7 +444,7 @@ export function calcul_3cl(dpe) {
    * 13.2.1.2 Présence d’un ou plusieurs générateurs à combustion indépendants
    * Calcul des taux de charge pour chacun des générateurs de chauffage
    */
-  tauxChargeForGenerator(instal_ch, GV, ca_id, zc_id, deperditionRatio);
+  tauxChargeForGenerator(instal_ch, GV, ca_id, zc_id);
 
   instal_ch.forEach((ch) => {
     calc_chauffage(

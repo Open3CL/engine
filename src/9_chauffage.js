@@ -260,9 +260,8 @@ function tv_ch_facteur_couverture_solaire(de, zc_id) {
  * @param GV {number} déperdition de l'enveloppe
  * @param zcId {string} id de la zone climatique du bien
  * @param caId {string} id de la classe d'altitude du bien
- * @param deperditionRatio {number} ratio à appliquer sur les déperditions {@link GV}
  */
-export function tauxChargeForGenerator(installationChauffage, GV, caId, zcId, deperditionRatio) {
+export function tauxChargeForGenerator(installationChauffage, GV, caId, zcId) {
   // const GV_ratio = GV * deperditionRatio;
 
   // Récupération des installations de chauffage avec générateur à combustion
