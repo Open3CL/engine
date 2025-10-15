@@ -1,7 +1,5 @@
 import { calcul_3cl } from '../src/engine.js';
-import corpus from './corpus.json';
 import { getAdemeFileJson } from './test-helpers.js';
-import { set_tv_match_optimized_version, unset_tv_match_optimized_version } from '../src/utils.js';
 import { describe, expect, test } from 'vitest';
 
 describe('Ponts thermiques unit tests', () => {
