@@ -133,4 +133,13 @@ describe('Open3cl misc unit tests', () => {
       1
     );
   });
+
+  test('2375E3009989U', () => {
+    /** @type {FullDpe} **/
+    let input = getAdemeFileJson('2375E3009989U');
+
+    /** @type {FullDpe} **/
+    let output = calcul_3cl(structuredClone(input));
+    expect(input.logement.sortie.ep_conso).toEqual(output.logement.sortie.ep_conso);
+  });
 });

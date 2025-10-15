@@ -81,4 +81,25 @@ describe('DPE immeuble unit tests', () => {
       );
     }
   );
+
+  test.each([{ code: '2577E0639687M' }, { code: '2359E4024310N' }])(
+    'rendement generation should be proratise for dpe immeuble: $code',
+    ({ code }) => {
+      /** @type {FullDpe} **/
+      let input = getAdemeFileJson(code);
+      const inputGenerateurChauffage =
+        input.logement.installation_chauffage_collection.installation_chauffage[0]
+          .generateur_chauffage_collection.generateur_chauffage[0];
+
+      /** @type {FullDpe} **/
+      let output = calcul_3cl(structuredClone(input));
+      const outputGenerateurChauffage =
+        output.logement.installation_chauffage_collection.installation_chauffage[0]
+          .generateur_chauffage_collection.generateur_chauffage[0];
+
+      expect(inputGenerateurChauffage.donnee_intermediaire.rendement_generation).toBeCloseTo(
+        outputGenerateurChauffage.donnee_intermediaire.rendement_generation
+      );
+    }
+  );
 });
