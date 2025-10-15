@@ -1,4 +1,5 @@
 import enums from './enums.js';
+import { isNil } from 'lodash-es';
 import { tv, requestInput, compareReferences, bug_for_bug_compat } from './utils.js';
 
 function defaultValue(type_liaison, pt_di, de) {
@@ -431,7 +432,7 @@ export default function calc_pont_thermique(pt, pc_id, logement) {
   if (methode_saisie_pont_thermique === 1) {
     tv_k(pt.donnee_intermediaire, di, de, du, pc_id, logement);
   } else if (methode_saisie_pont_thermique === 2 || methode_saisie_pont_thermique === 3) {
-    if (de.k_saisi) {
+    if (!isNil(de.k_saisi)) {
       di.k = de.k_saisi;
     } else {
       console.error(
