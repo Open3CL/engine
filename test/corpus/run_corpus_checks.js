@@ -248,7 +248,7 @@ validateCorpus(dpesFilePath).then(() => {
 
   /** @type {string[]} **/
   const currentDpeExceedThreshold = JSON.parse(
-    readFileSync(`dist/reports/corpus/${fileName}/corpus_dpe_list_under_threshold_main.json`, {
+    readFileSync(`dist/reports/corpus/${fileName}/corpus_dpe_list_above_threshold_main.json`, {
       encoding: 'utf8'
     }).toString()
   );
@@ -259,14 +259,14 @@ validateCorpus(dpesFilePath).then(() => {
   );
   if (diffDpeThreshold.length > 0) {
     writeFileSync(
-      `dist/reports/corpus/${fileName}/corpus_dpe_list_under_threshold_diff_main_${current_git_branch}.json`,
+      `dist/reports/corpus/${fileName}/corpus_dpe_list_above_threshold_diff_main_${current_git_branch}.json`,
       JSON.stringify(diffDpeThreshold),
       { encoding: 'utf8' }
     );
   }
 
   writeFileSync(
-    `dist/reports/corpus/${fileName}/corpus_dpe_list_under_threshold_${current_git_branch}.json`,
+    `dist/reports/corpus/${fileName}/corpus_dpe_list_above_threshold_${current_git_branch}.json`,
     JSON.stringify(globalReport.dpeExceedThreshold),
     { encoding: 'utf8' }
   );

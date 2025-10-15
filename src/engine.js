@@ -444,7 +444,7 @@ export function calcul_3cl(dpe) {
    * 13.2.1.2 Présence d’un ou plusieurs générateurs à combustion indépendants
    * Calcul des taux de charge pour chacun des générateurs de chauffage
    */
-  tauxChargeForGenerator(instal_ch, GV, ca_id, zc_id);
+  tauxChargeForGenerator(instal_ch, GV, ca_id, zc_id, th);
 
   instal_ch.forEach((ch) => {
     calc_chauffage(
