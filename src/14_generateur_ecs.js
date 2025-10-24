@@ -93,7 +93,12 @@ function calc_Qgw(di, de, du, ecs_de, th, dpe) {
   if (isInstCollectif) {
     let fiche = getFicheTechnique(dpe, '8', 'stockage');
     if (fiche) {
-      Vs = Number(fiche.valeur.toLowerCase().replace('l', '').replace('litres', ''));
+      const VsFiche = Number(
+        fiche.valeur.toLowerCase().substring(0, fiche.valeur.toLowerCase().indexOf('l')).trim()
+      );
+      if (!isNaN(VsFiche)) {
+        Vs = VsFiche;
+      }
     }
     if (!Vs) {
       Vs = Number.parseFloat(Vs) / ratio;
