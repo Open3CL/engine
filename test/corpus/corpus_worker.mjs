@@ -201,7 +201,7 @@ const waitFor = (milliseconds) => {
  */
 const downloadDpe = (dpeCode, dpesFilePath) => {
   const filePath = `${dpesFilePath}/${dpeCode}.xml`;
-  return waitFor(process.env.API_ADEME_DONWLOAD_WAIT || 1000).then(() => {
+  return waitFor(process.env.API_ADEME_DOWNLOAD_WAIT || 1000).then(() => {
     return fetch(
       `https://prd-x-ademe-externe-api.de-c1.eu1.cloudhub.io/api/v1/pub/dpe/${dpeCode}/xml`,
       {

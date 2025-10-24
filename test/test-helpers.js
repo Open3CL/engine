@@ -43,7 +43,7 @@ export async function getAdemeFileJsonOrDownload(dpeCode) {
   const dpeJsonFilePath = `test/fixtures/${dpeCode}.json`;
   const dpeXmlFilePath = `test/fixtures/${dpeCode}.xml`;
   let dpe = getAdemeFileJson(dpeCode);
-  if (!dpe) {
+  if (!dpe || !fs.existsSync(dpeXmlFilePath)) {
     const response = await fetch(
       `https://prd-x-ademe-externe-api.de-c1.eu1.cloudhub.io/api/v1/pub/dpe/${dpeCode}/xml`,
       {

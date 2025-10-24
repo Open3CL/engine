@@ -110,17 +110,26 @@ const result = calcul_3cl(dpeData);
 
 ## Variables d'environnements
 
-| Nom                     | Description                                                                                                             |
-| ----------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| ADEME_API_CLIENT_ID     | Client id pour l'api de l'ademe                                                                                         |
-| ADEME_API_CLIENT_SECRET | Client secret pour l'api de l'ademe                                                                                     |
-| DPE_FOLDER_PATH         | Chemin vers lequel sont stockés les fichiers DPE (si non précisé, utiliser `dpes-folder-path` dans la ligne de commande |
+| Nom                     | Description                                                                                                                              |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| DPE_FOLDER_PATH         | **Obligatoire**: Chemin vers lequel sont stockés les fichiers DPE (si non précisé, utiliser `dpes-folder-path` dans la ligne de commande |
+| ADEME_API_CLIENT_ID     | Client id pour l'api de l'ademe                                                                                                          |
+| ADEME_API_CLIENT_SECRET | Client secret pour l'api de l'ademe                                                                                                      |
+| MAX_WORKER_THREADS      | Nombre de threads maximum pour les tests de corpus, par défaut: os.availableParallelism \* 1.5                                           |
+| WORKER_THREADS_CHUNKS   | Nombre de dpe à analyser par thread, par défaut: 200                                                                                     |
+| API_ADEME_DOWNLOAD_WAIT | Temps d'attente en ms entre chaque dpe à télécharger via l'api de l'ademe, par défaut: 1s                                                |
 
 Attention aux quotas sur l'api:
 
 - 100 requêtes / seconde
 - 1000 requêtes / minute
 - 10000 requêtes / jour
+
+Dans le cas où un corpus est joué avec beaucoup de dpe à télécharger via l'api de l'ademe (car non présent en local), la meilleure configuration est:
+
+- `export MAX_WORKER_THREADS=10`
+- `export API_ADEME_DOWNLOAD_WAIT=1000`
+- `export WORKER_THREADS_CHUNKS=300`
 
 <p align="right">(<a href="#readme-top">Retour sommaire</a>)</p>
 
@@ -157,10 +166,11 @@ deperdition_mur,
   emission_ges_5_usages_m2;
 ```
 
-- `npm run test:corpus`. Va générer 2 rapports de sortie au format csv (détaillé) et json (global)
+- `npm run test:corpus:all`: Joue l'intégralité des corpus et génère les rapports associés.
+- `npm run test:corpus`. Joue le corpus [corpus_dpe.csv](test/corpus/corpus_dpe.csv) et génère les rapports associés.
 - `npm run test:corpus -- corpus-file-path=corpus.csv`. Chemin relatif vers le fichier de corpus à analyser
   Par défaut, le corpus utilisé est présent ici : [test/corpus/corpus_dpe.csv](test/corpus/corpus_dpe.csv)
-- `npm run test:corpus -- dpes-folder-path=/home/user/dpes`. Chemin vers le dossier où les DPE seront téléchargés. Si un
+- `npm run test:corpus -- dpes-folder-path=/home/user/dpes`. Chemin vers le dossier ou les DPE seront téléchargés. Si un
   fichier DPE est déjà présent dans ce dossier, il ne sera pas retéléchargé.
 
 ### Résultats corpus

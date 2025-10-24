@@ -28,7 +28,8 @@ let corpusBar;
 const fileName = resolve(process.cwd(), `${import.meta.dirname}/corpus_worker.mjs`);
 const piscina = new Piscina({
   filename: fileName,
-  maxQueue: 'auto'
+  maxQueue: 'auto',
+  maxThreads: process.env.MAX_WORKER_THREADS ? Number(process.env.MAX_WORKER_THREADS) : undefined
 });
 
 piscina.on('message', (event) => {
@@ -172,7 +173,7 @@ export const validateCorpus = (dpesFilePath) => {
         /**
          * @type {{dpeCode: string}[][]}
          */
-        const chunks = chunk(dpesToAnalyze, 100);
+        const chunks = chunk(dpesToAnalyze, process.env.WORKER_THREADS_CHUNKS || 200);
         /** @type {any[][]} **/
         const results = await Promise.all(
           chunks.map((chunk) => {
