@@ -167,40 +167,52 @@ deperdition_mur,
 
 Résultats des tests de corpus avec le mode de compatibilité activé.
 
-| Version librairie   | corpus                                | Nb en dessous du taux d'erreur | Taux de réussite  | Détail des valeurs                                                                                                  |
-| :------------------ | ------------------------------------- | ------------------------------ | ----------------- | ------------------------------------------------------------------------------------------------------------------- |
-| <ins>**1.2.3**<ins> | <ins>**corpus_dpe.csv**<ins>          | <ins>**4489**<ins>             | <ins>**45%**<ins> |                                                                                                                     |
-| 1.2.3               | dpe_immeuble_chauffage_individuel.csv | 3257                           | 32%               |                                                                                                                     |
-| 1.2.3               | dpe_immeuble_chauffage_collectif.csv  | 5279                           | 53%               |                                                                                                                     |
-| 1.2.3               | dpe_immeuble_chauffage_mixte.csv      | 2728                           | 27%               |                                                                                                                     |
-| <ins>**1.2.8**<ins> | <ins>**corpus_dpe.csv**<ins>          | <ins>**489**<ins>              | <ins>**45%**<ins> |                                                                                                                     |
-| 1.2.8               | dpe_immeuble_chauffage_individuel.csv | 5275 (+2018)                   | 53% (+21%)        |                                                                                                                     |
-| 1.2.8               | dpe_immeuble_chauffage_collectif.csv  | 5747 (+468)                    | 57% (+4%)         |                                                                                                                     |
-| 1.2.8               | dpe_immeuble_chauffage_mixte.csv      | 3142 (+414)                    | 31% (+4%)         |                                                                                                                     |
-| <ins>**1.3.1**<ins> | <ins>**corpus_dpe.csv**<ins>          | <ins>**4508 (+19)**<ins>       | <ins>**45%**<ins> |                                                                                                                     |
-| 1.3.1               | dpe_immeuble_chauffage_individuel.csv | 5459 (+184)                    | 55% (+2%)         |                                                                                                                     |
-| 1.3.1               | dpe_immeuble_chauffage_collectif.csv  | 5848 (+101)                    | 58% (+1%)         |                                                                                                                     |
-| 1.3.1               | dpe_immeuble_chauffage_mixte.csv      | 4018 (+876)                    | 40% (+9%)         |                                                                                                                     |
-| <ins>**1.3.2**<ins> | <ins>**corpus_dpe.csv**<ins>          | <ins>**4519 (+11)**<ins>       | <ins>**45%**<ins> |                                                                                                                     |
-| 1.3.2               | dpe_immeuble_chauffage_individuel.csv | 5476 (+17)                     | 55%               |                                                                                                                     |
-| 1.3.2               | dpe_immeuble_chauffage_collectif.csv  | 5869 (+21)                     | 58%               |                                                                                                                     |
-| 1.3.2               | dpe_immeuble_chauffage_mixte.csv      | 4040 (+22)                     | 40%               |                                                                                                                     |
-| <ins>**1.3.5**<ins> | <ins>**corpus_dpe.csv**<ins>          | <ins>**4522 (+3)**<ins>        | <ins>**45%**<ins> |                                                                                                                     |
-| 1.3.5               | dpe_immeuble_chauffage_individuel.csv | 5488 (+12)                     | 55%               |
-| 1.3.5               | dpe_immeuble_chauffage_collectif.csv  | 5869                           | 58%               |                                                                                                                     |
-| 1.3.5               | dpe_immeuble_chauffage_mixte.csv      | 4082 (+42)                     | 40%               |                                                                                                                     |
-| <ins>**1.3.6**<ins> | <ins>**corpus_dpe.csv**<ins>          | <ins>**4522**<ins>             | <ins>**45%**<ins> |                                                                                                                     |
-| 1.3.6               | dpe_immeuble_chauffage_individuel.csv | 5650 (+162)                    | 56%               |                                                                                                                     |
-| 1.3.6               | dpe_immeuble_chauffage_collectif.csv  | 5894 (+25)                     | 59% (+1%)         |                                                                                                                     |
-| 1.3.6               | dpe_immeuble_chauffage_mixte.csv      | 4141 (+59)                     | 41% (+1%)         |                                                                                                                     |
-| <ins>**1.3.7**<ins> | <ins>**corpus_dpe.csv**<ins>          | <ins>**4522**<ins>             | <ins>**45%**<ins> |                                                                                                                     |
-| 1.3.7               | dpe_immeuble_chauffage_individuel.csv | 6960 (+1310)                   | 69% (+13%)        |                                                                                                                     |
-| 1.3.7               | dpe_immeuble_chauffage_collectif.csv  | 6106 (+212)                    | 61% (+2%)         |                                                                                                                     |
-| 1.3.7               | dpe_immeuble_chauffage_mixte.csv      | 4730 (+589)                    | 47% (+6%)         |                                                                                                                     |
-| <ins>**1.3.8**<ins> | <ins>**corpus_dpe.csv**<ins>          | <ins>**4522**<ins>             | <ins>**45%**<ins> | [Voir le détail](https://open3cl.github.io/engine/reports/corpus?corpus_file=corpus_dpe.csv)                        |
-| 1.3.8               | dpe_immeuble_chauffage_individuel.csv | 6965 (+5)                      | 69%               | [Voir le détail](https://open3cl.github.io/engine/reports/corpus?corpus_file=dpe_immeuble_chauffage_individuel.csv) |
-| 1.3.8               | dpe_immeuble_chauffage_collectif.csv  | 6110 (+4)                      | 61%               | [Voir le détail](https://open3cl.github.io/engine/reports/corpus?corpus_file=dpe_immeuble_chauffage_collectif.csv)  |
-| 1.3.8               | dpe_immeuble_chauffage_mixte.csv      | 4735 (+5)                      | 47%               | [Voir le détail](https://open3cl.github.io/engine/reports/corpus?corpus_file=dpe_immeuble_chauffage_mixte.csv)      |
+<details>
+<summary>Voir les versions précédents</summary>
+
+| Version librairie   | corpus                                | Nb en dessous du taux d'erreur | Taux de réussite  | Description | Détail des valeurs |
+| :------------------ | ------------------------------------- | ------------------------------ | ----------------- | ----------- | ------------------ |
+| <ins>**1.2.3**<ins> | <ins>**corpus_dpe.csv**<ins>          | <ins>**4489**<ins>             | <ins>**45%**<ins> |             |                    |
+| 1.2.3               | dpe_immeuble_chauffage_individuel.csv | 3257                           | 32%               |             |                    |
+| 1.2.3               | dpe_immeuble_chauffage_collectif.csv  | 5279                           | 53%               |             |                    |
+| 1.2.3               | dpe_immeuble_chauffage_mixte.csv      | 2728                           | 27%               |             |                    |
+| <ins>**1.2.8**<ins> | <ins>**corpus_dpe.csv**<ins>          | <ins>**489**<ins>              | <ins>**45%**<ins> |             |                    |
+| 1.2.8               | dpe_immeuble_chauffage_individuel.csv | 5275 (+2018)                   | 53% (+21%)        |             |                    |
+| 1.2.8               | dpe_immeuble_chauffage_collectif.csv  | 5747 (+468)                    | 57% (+4%)         |             |                    |
+| 1.2.8               | dpe_immeuble_chauffage_mixte.csv      | 3142 (+414)                    | 31% (+4%)         |             |                    |
+| <ins>**1.3.1**<ins> | <ins>**corpus_dpe.csv**<ins>          | <ins>**4508 (+19)**<ins>       | <ins>**45%**<ins> |             |                    |
+| 1.3.1               | dpe_immeuble_chauffage_individuel.csv | 5459 (+184)                    | 55% (+2%)         |             |                    |
+| 1.3.1               | dpe_immeuble_chauffage_collectif.csv  | 5848 (+101)                    | 58% (+1%)         |             |                    |
+| 1.3.1               | dpe_immeuble_chauffage_mixte.csv      | 4018 (+876)                    | 40% (+9%)         |             |                    |
+| <ins>**1.3.2**<ins> | <ins>**corpus_dpe.csv**<ins>          | <ins>**4519 (+11)**<ins>       | <ins>**45%**<ins> |             |                    |
+| 1.3.2               | dpe_immeuble_chauffage_individuel.csv | 5476 (+17)                     | 55%               |             |                    |
+| 1.3.2               | dpe_immeuble_chauffage_collectif.csv  | 5869 (+21)                     | 58%               |             |                    |
+| 1.3.2               | dpe_immeuble_chauffage_mixte.csv      | 4040 (+22)                     | 40%               |             |                    |
+| <ins>**1.3.5**<ins> | <ins>**corpus_dpe.csv**<ins>          | <ins>**4522 (+3)**<ins>        | <ins>**45%**<ins> |             |                    |
+| 1.3.5               | dpe_immeuble_chauffage_individuel.csv | 5488 (+12)                     | 55%               |             |
+| 1.3.5               | dpe_immeuble_chauffage_collectif.csv  | 5869                           | 58%               |             |                    |
+| 1.3.5               | dpe_immeuble_chauffage_mixte.csv      | 4082 (+42)                     | 40%               |             |                    |
+| <ins>**1.3.6**<ins> | <ins>**corpus_dpe.csv**<ins>          | <ins>**4522**<ins>             | <ins>**45%**<ins> |             |                    |
+| 1.3.6               | dpe_immeuble_chauffage_individuel.csv | 5650 (+162)                    | 56%               |             |                    |
+| 1.3.6               | dpe_immeuble_chauffage_collectif.csv  | 5894 (+25)                     | 59% (+1%)         |             |                    |
+| 1.3.6               | dpe_immeuble_chauffage_mixte.csv      | 4141 (+59)                     | 41% (+1%)         |             |                    |
+| <ins>**1.3.7**<ins> | <ins>**corpus_dpe.csv**<ins>          | <ins>**4522**<ins>             | <ins>**45%**<ins> |             |                    |
+| 1.3.7               | dpe_immeuble_chauffage_individuel.csv | 6960 (+1310)                   | 69% (+13%)        |             |                    |
+| 1.3.7               | dpe_immeuble_chauffage_collectif.csv  | 6106 (+212)                    | 61% (+2%)         |             |                    |
+| 1.3.7               | dpe_immeuble_chauffage_mixte.csv      | 4730 (+589)                    | 47% (+6%)         |             |                    |
+
+</details>
+
+| Version librairie   | corpus                                | Nb en dessous du taux d'erreur | Taux de réussite        | Description                                       | Détail des valeurs                                                                                                  |
+| :------------------ | ------------------------------------- | ------------------------------ | ----------------------- | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| <ins>**1.3.8**<ins> | <ins>**corpus_dpe.csv**<ins>          | <ins>**4522**<ins>             | <ins>**45%**<ins>       |                                                   |                                                                                                                     |
+| 1.3.8               | dpe_immeuble_chauffage_individuel.csv | 6965 (+5)                      | 69%                     |                                                   |                                                                                                                     |
+| 1.3.8               | dpe_immeuble_chauffage_collectif.csv  | 6110 (+4)                      | 61%                     |                                                   |                                                                                                                     |
+| 1.3.8               | dpe_immeuble_chauffage_mixte.csv      | 4735 (+5)                      | 47%                     |                                                   |                                                                                                                     |
+| <ins>**1.3.9**<ins> | <ins>**corpus_dpe.csv**<ins>          | <ins>**4460**<ins> (-62)       | <ins>**44% (-1%)**<ins> | Pertes liés au fix bug tribu zone 2hd valeur dh19 | [Voir le détail](https://open3cl.github.io/engine/reports/corpus?corpus_file=corpus_dpe.csv)                        |
+| 1.3.9               | dpe_immeuble_chauffage_individuel.csv | 6901 (-64)                     | 69%                     | Pertes liés au fix bug tribu zone 2hd valeur dh19 | [Voir le détail](https://open3cl.github.io/engine/reports/corpus?corpus_file=dpe_immeuble_chauffage_individuel.csv) |
+| 1.3.9               | dpe_immeuble_chauffage_collectif.csv  | 6058 (-58)                     | 60% (-1%)               | Pertes liés au fix bug tribu zone 2hd valeur dh19 | [Voir le détail](https://open3cl.github.io/engine/reports/corpus?corpus_file=dpe_immeuble_chauffage_collectif.csv)  |
+| 1.3.9               | dpe_immeuble_chauffage_mixte.csv      | 4728 (-7)                      | 47%                     | Pertes liés au fix bug tribu zone 2hd valeur dh19 | [Voir le détail](https://open3cl.github.io/engine/reports/corpus?corpus_file=dpe_immeuble_chauffage_mixte.csv)      |
 
 ## Roadmap
 
