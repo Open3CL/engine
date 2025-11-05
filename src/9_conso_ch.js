@@ -3,6 +3,7 @@ import { rendement_emission } from './9_emetteur_ch.js';
 import { calc_intermittence } from './8_intermittence.js';
 import tvs from './tv.js';
 import enums from './enums.js';
+import { isNil } from 'lodash-es';
 
 function coef_ch(Fch) {
   return {
@@ -147,7 +148,10 @@ export function conso_ch(
         em_filt,
         GV,
         Sh,
-        hsp
+        hsp,
+        undefined,
+        _pos,
+        cfg_ch
       );
       di.conso_ch = conso_ch;
       di.conso_ch_depensier = conso_ch_dep;
@@ -156,10 +160,26 @@ export function conso_ch(
   }
 }
 
-function calc_conso_ch_default(di, de, bch, bch_dep, coeff, em_filt, GV, Sh, hsp, i0) {
+function calc_conso_ch_default(
+  di,
+  de,
+  bch,
+  bch_dep,
+  coeff,
+  em_filt,
+  GV,
+  Sh,
+  hsp,
+  i0,
+  _pos,
+  cfg_ch
+) {
   const hasMultipleEmetteur = em_filt.length > 1;
 
-  const emetteur_eq = em_filt.reduce((acc, em) => {
+  // On recherche les emetteurs en fonction de la configuration de l'installation et du type de chauffage
+  const emetteurs = getEmetteursFromGenerateur(de, em_filt, _pos, cfg_ch);
+
+  const emetteur_eq = emetteurs.reduce((acc, em) => {
     const int = calc_intermittence(GV, Sh, hsp, i0 ? i0 : em.donnee_intermediaire.i0);
     const r_em = rendement_emission(em);
 
@@ -285,4 +305,19 @@ function calc_ch_base_appoint(
 
     di.conso_ch = Math.max(di.conso_ch, 0);
   }
+}
+
+function getEmetteursFromGenerateur(de, em_filt, pos, cfg_ch) {
+  // Cas installation simple + generateurs electriques
+  if (
+    isChauffageElectrique(de.enum_type_generateur_ch_id) &&
+    cfg_ch === 'installation de chauffage simple'
+  ) {
+    return !isNil(pos) ? [em_filt[pos]] : em_filt;
+  }
+  return em_filt;
+}
+
+function isChauffageElectrique(id) {
+  return ['98', '99', '100', '101', '102', '103', '104'].includes(id);
 }

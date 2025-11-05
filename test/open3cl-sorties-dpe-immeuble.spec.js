@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { getAdemeFileJson } from './test-helpers.js';
+import { getAdemeFileJson, getAdemeFileJsonOrDownload } from './test-helpers.js';
 import { calcul_3cl } from '../src/index.js';
 import { expect_or } from './utils.js';
 
@@ -102,4 +102,16 @@ describe('DPE immeuble unit tests', () => {
       );
     }
   );
+
+  test('Calcul consommation de chauffage cas plusieurs systemes individuels independants', async () => {
+    /** @type {FullDpe} **/
+    let input = await getAdemeFileJsonOrDownload('2474E3798234X');
+
+    /** @type {FullDpe} **/
+    let output = calcul_3cl(structuredClone(input));
+
+    expect(input.logement.sortie.ep_conso.ep_conso_5_usages_m2).toBeCloseTo(
+      output.logement.sortie.ep_conso.ep_conso_5_usages_m2
+    );
+  });
 });
