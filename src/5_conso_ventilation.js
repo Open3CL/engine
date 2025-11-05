@@ -87,13 +87,11 @@ export default function calc_pvent(di, de, du, th) {
     case 'vmc sf auto réglable de 1982 à 2000':
     case 'vmc sf auto réglable de 2001 à 2012':
     case 'vmc sf auto réglable après 2012':
-      type = 'simple flux auto';
-      break;
     case 'vmc sf gaz avant  2001':
     case 'vmc sf gaz de 2001 à 2012':
     case 'vmc sf gaz après 2012':
-      console.error('vmc gaz ??');
-      return;
+      type = 'simple flux auto';
+      break;
     case 'vmc sf hygro b avant  2001':
     case 'vmc sf hygro b de 2001 à 2012':
     case 'vmc sf hygro b après 2012':

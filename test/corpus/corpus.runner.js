@@ -2,7 +2,11 @@ import { MultiBar } from 'cli-progress';
 import colors from 'ansi-colors';
 import Piscina from 'piscina';
 import { resolve } from 'path';
-import { DIFF_VALUE_THRESHOLD, OUTPUT_CSV_HEADERS } from './corpus_utils.js';
+import {
+  DIFF_VALUE_THRESHOLD,
+  DPE_PROPERTIES_TO_VALIDATE,
+  OUTPUT_CSV_HEADERS
+} from './corpus_utils.js';
 import { createReadStream, createWriteStream, existsSync, writeFileSync } from 'node:fs';
 import { chunk } from 'lodash-es';
 import { mkdirSync, readFileSync } from 'fs';
@@ -268,9 +272,18 @@ export class CorpusRunner {
         break;
       }
       case 'incrementCheckPropertyThreshold': {
+        const mandatoryProperties = DPE_PROPERTIES_TO_VALIDATE.flatMap((property) =>
+          property.split('#')
+        );
         if (!this.#globalReport.checks[event.property]) {
-          this.#globalReport.checks[event.property] = { nbBelowThreshold: 0 };
+          this.#globalReport.checks[event.property] = {
+            nbBelowThreshold: 0,
+            mandatory: mandatoryProperties.some((mandatoryProperty) =>
+              mandatoryProperty.includes(event.property)
+            )
+          };
         }
+
         this.#globalReport.checks[event.property].nbBelowThreshold++;
         this.#globalReport.checks[event.property].successRatio =
           `${Number((this.#globalReport.checks[event.property].nbBelowThreshold / this.#globalReport.totalDpesInFile) * 100).toFixed(2)} %`;

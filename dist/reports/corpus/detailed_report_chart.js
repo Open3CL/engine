@@ -4,7 +4,15 @@ const dataByBranch = {};
 let branchChartInstance;
 
 function createDatasetAndLabels(data, branch) {
-  let labels = Object.keys(data.checks).sort();
+  let labels = Object.keys(data.checks).sort((check1, check2) => {
+    if (data.checks[check1].mandatory > data.checks[check2].mandatory) {
+      return -1;
+    }
+    if (data.checks[check1].mandatory < data.checks[check2].mandatory) {
+      return 1;
+    }
+    return 0;
+  });
   const dataset = [];
   labels = labels.map((label) => {
     const check = data.checks[label];
@@ -22,6 +30,10 @@ function createDatasetAndLabels(data, branch) {
       }
     } else {
       label = `${label} (${percentage}%)`;
+    }
+
+    if (check.mandatory) {
+      label = `**${label}**`;
     }
 
     dataset.push(percentage);
@@ -52,15 +64,23 @@ function updateDetailedChart(branch, data) {
 
   chartsByBranch[branch].options.plugins.title.text = legendText;
 
-  const { dataset, labels } = createDatasetAndLabels(data, branch);
+  filterDatasetAndLabels(chartsByBranch, data, branch);
+  filterDatasetAndLabels(chartsByBranch, data, 'main');
+}
+
+function filterDatasetAndLabels(chartsByBranch, data, branch) {
+  const datasetAndLabels = createDatasetAndLabels(data, branch);
+  dataset = datasetAndLabels.dataset;
+  labels = datasetAndLabels.labels;
 
   chartsByBranch[branch].data.labels = labels;
   chartsByBranch[branch].data.datasets[0].data = dataset;
   chartsByBranch[branch].options.plugins.legend.labels.filter = (item, chart) => {
-    if (showOnlyDifferentValues && branch !== 'main') {
-      const property = item.text.split(' ').shift();
+    if (showOnlyDifferentValues) {
+      const property = item.text.split(' ').shift().replace(/\*/g, '');
       const value = data.checks[property].nbBelowThreshold;
-      const previousValue = dataByBranch['main'].checks[property].nbBelowThreshold;
+      const previousValue =
+        dataByBranch[branch === 'main' ? branch : 'main'].checks[property].nbBelowThreshold;
       return value !== previousValue;
     }
     return true;
@@ -68,7 +88,13 @@ function updateDetailedChart(branch, data) {
   chartsByBranch[branch].update();
 }
 
-function loadDetailReportData(corpus, branch, chartId, showOnlyDifferentValues) {
+function loadDetailReportData(
+  corpus,
+  branch,
+  chartId,
+  showOnlyDifferentValues,
+  showOnlyMandatoryValues
+) {
   return new Promise((resolve, reject) => {
     const reportFile = `${corpus}/corpus_global_report_${branch}.json`;
     $.get(reportFile, (data) => {
@@ -95,6 +121,9 @@ function loadDetailReportData(corpus, branch, chartId, showOnlyDifferentValues) 
             });
         }
 
+        const autocolors = window['chartjs-plugin-autocolors'];
+        Chart.register(autocolors);
+
         chartsByBranch[branch] = new Chart(document.getElementById(chartId), {
           type: 'polarArea',
           data: {
@@ -108,6 +137,10 @@ function loadDetailReportData(corpus, branch, chartId, showOnlyDifferentValues) 
           options: {
             responsive: true,
             plugins: {
+              autocolors: {
+                enabled: true,
+                mode: 'data'
+              },
               legend: {
                 labels: {
                   filter: (item, chart) => {
@@ -122,7 +155,7 @@ function loadDetailReportData(corpus, branch, chartId, showOnlyDifferentValues) 
                 },
                 title: {
                   display: true,
-                  text: 'Valeurs du DPE testés'
+                  text: 'Valeurs du dpe analysées'
                 },
                 position: 'left'
               },
