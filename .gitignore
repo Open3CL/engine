@@ -1,10 +1,12 @@
 test/ademe.db
 *.csv
 test/corpus/reports/*.json
-!test/corpus/corpus_dpe.csv
-!test/corpus/dpe_immeuble_chauffage_individuel.csv
-!test/corpus/dpe_immeuble_chauffage_collectif.csv
-!test/corpus/dpe_immeuble_chauffage_mixte.csv
+!test/corpus/files/corpus_dpe.csv
+!test/corpus/files/dpe_immeuble_chauffage_individuel.csv
+!test/corpus/files/dpe_immeuble_chauffage_collectif.csv
+!test/corpus/files/dpe_immeuble_chauffage_mixte.csv
+!test/corpus/files/dpe_logement_individuel_2025.csv
+
 bun.lockb
 /.idea/
 *.iml
@@ -43,5 +45,11 @@ dist/reports/corpus/dpe_immeuble_chauffage_mixte.csv/*.json
 !dist/reports/corpus/dpe_immeuble_chauffage_mixte.csv/corpus_detailed_report_main.csv
 !dist/reports/corpus/dpe_immeuble_chauffage_mixte.csv/corpus_global_report_main.json
 !dist/reports/corpus/dpe_immeuble_chauffage_mixte.csv/corpus_dpe_list_above_threshold_main.json
+
+!dist/reports/corpus/dpe_logement_individuel_2025.csv
+dist/reports/corpus/dpe_logement_individuel_2025.csv/*.json
+!dist/reports/corpus/dpe_logement_individuel_2025.csv/corpus_detailed_report_main.csv
+!dist/reports/corpus/dpe_logement_individuel_2025.csv/corpus_global_report_main.json
+!dist/reports/corpus/dpe_logement_individuel_2025.csv/corpus_dpe_list_above_threshold_main.json
 
 *.db

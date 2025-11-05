@@ -6,5 +6,5 @@
     "dpe_immeuble_chauffage_mixte.csv",
     "dpe_logement_individuel_2025.csv"
   ],
-  "branches": ["main", "fix_issue_67"]
+  "branches": ["main"]
 }

@@ -10,6 +10,7 @@ import { OUTPUT_CSV_HEADERS } from './corpus_utils.js';
 import { mkdirSync, readFileSync } from 'fs';
 import { execSync } from 'child_process';
 
+const REPORTS_FOLFER_PATH = 'dist/reports/corpus';
 const current_git_branch = execSync('git rev-parse --abbrev-ref HEAD').toString().trim();
 
 const DIFF_VALUE_THRESHOLD = 5;
@@ -103,27 +104,7 @@ const globalReport = {
   dpeExceedThreshold: []
 };
 
-const INPUT_CSV_HEADERS = [];
-
-const corpusFilePathArg = process.argv.find((arg) => arg.includes('corpus-file-path'));
-const corpusFilePath = corpusFilePathArg
-  ? corpusFilePathArg.split('=').pop()
-  : 'test/corpus/corpus_dpe.csv';
-
-if (!corpusFilePath.endsWith('.csv')) {
-  throw new Error('The corpus file should be a CSV file !');
-}
-
-const noDpePositionArg = process.argv.find((arg) => arg.includes('no-dpe-pos'));
-const noDpePosition = noDpePositionArg ? Number(noDpePositionArg.split('=').pop()) : 0;
-
 const store = new CsvParserStore();
-const readableStream = createReadStream(corpusFilePath);
-
-for (let i = 0; i < noDpePosition; i++) {
-  INPUT_CSV_HEADERS.push(undefined);
-}
-INPUT_CSV_HEADERS.push('dpeCode');
 
 const createCsv = (rows, headers, filename) => {
   const csvStream = format({ headers });
@@ -140,15 +121,18 @@ const createCsv = (rows, headers, filename) => {
 
 /**
  * @param dpesFilePath {string}
+ * @param corpusFilePath {string}
+ * @param csvHeaders {string[]}
  * @return {Promise<void>}
  */
-export const validateCorpus = (dpesFilePath) => {
+export const validateCorpus = (dpesFilePath, corpusFilePath, csvHeaders) => {
+  const readableStream = createReadStream(`test/corpus/files/${corpusFilePath}`);
   return store
     .parseFromStream(
       readableStream,
       {
         // Keep only interested headers + rename them
-        headers: INPUT_CSV_HEADERS,
+        headers: csvHeaders,
         ignoreEmpty: true,
         skipRows: 1,
         discardUnmappedColumns: true
@@ -192,83 +176,83 @@ export const validateCorpus = (dpesFilePath) => {
     );
 };
 
-let dpesFilePath = process.env.DPE_FOLDER_PATH;
+/**
+ * @param dpesFilePath {string}
+ * @param corpusFilePath {string}
+ * @param csvHeaders {string[]}
+ * @return {Promise<void>}
+ */
+export function runCorpusChecks(dpesFilePath, corpusFilePath, csvHeaders) {
+  console.time('validateCorpus');
+  return validateCorpus(dpesFilePath, corpusFilePath, csvHeaders).then(() => {
+    multibar.stop();
+    console.timeEnd('validateCorpus');
 
-if (!dpesFilePath) {
-  if (!process.argv.find((arg) => arg.includes('dpes-folder-path'))) {
-    throw new Error('Argument dpes-folder-path not found !');
-  }
-  dpesFilePath = process.argv
-    .find((arg) => arg.includes('dpes-folder-path'))
-    .split('=')
-    .pop();
-}
+    globalReport.successRatio = `${Number((globalReport.nbAllChecksBelowThreshold / globalReport.totalDpesInFile) * 100).toFixed(2)} %`;
 
-if (!existsSync(dpesFilePath)) {
-  throw new Error(`File path ${dpesFilePath} does not exists !`);
-}
+    const fileName = corpusFilePath.split('/').pop();
 
-console.time('validateCorpus');
-validateCorpus(dpesFilePath).then(() => {
-  multibar.stop();
-  console.timeEnd('validateCorpus');
+    /** @type {{files: string[], branches: string[]}} **/
+    const corpusList = JSON.parse(
+      readFileSync(`dist/reports/corpus/corpus_list_main.json`, {
+        encoding: 'utf8'
+      }).toString()
+    );
 
-  globalReport.successRatio = `${Number((globalReport.nbAllChecksBelowThreshold / globalReport.totalDpesInFile) * 100).toFixed(2)} %`;
+    if (!corpusList.files.includes(fileName)) {
+      corpusList.files.push(fileName);
+    }
+    if (!corpusList.branches.includes(current_git_branch)) {
+      corpusList.branches.push(current_git_branch);
+    }
 
-  const fileName = corpusFilePath.split('/').pop();
-
-  /** @type {{files: string[], branches: string[]}} **/
-  const corpusList = JSON.parse(
-    readFileSync(`dist/reports/corpus/corpus_list_main.json`, {
+    writeFileSync(`${REPORTS_FOLFER_PATH}/corpus_list_main.json`, JSON.stringify(corpusList), {
       encoding: 'utf8'
-    }).toString()
-  );
+    });
 
-  if (!corpusList.files.includes(fileName)) {
-    corpusList.files.push(fileName);
-  }
-  if (!corpusList.branches.includes(current_git_branch)) {
-    corpusList.branches.push(current_git_branch);
-  }
-
-  writeFileSync(`dist/reports/corpus/corpus_list_main.json`, JSON.stringify(corpusList), {
-    encoding: 'utf8'
-  });
-
-  mkdirSync(`dist/reports/corpus/${fileName}`, { recursive: true });
-  writeFileSync(
-    `dist/reports/corpus/${fileName}/corpus_global_report_${current_git_branch}.json`,
-    JSON.stringify({ ...globalReport, dpeExceedThreshold: undefined }),
-    { encoding: 'utf8' }
-  );
-  createCsv(
-    dpeOutputs,
-    OUTPUT_CSV_HEADERS,
-    `dist/reports/corpus/${fileName}/corpus_detailed_report_${current_git_branch}.csv`
-  );
-
-  /** @type {string[]} **/
-  const currentDpeExceedThreshold = JSON.parse(
-    readFileSync(`dist/reports/corpus/${fileName}/corpus_dpe_list_above_threshold_main.json`, {
-      encoding: 'utf8'
-    }).toString()
-  );
-
-  /** @type {string[]} **/
-  const diffDpeThreshold = globalReport.dpeExceedThreshold.filter(
-    (dpe) => !currentDpeExceedThreshold.includes(dpe)
-  );
-  if (diffDpeThreshold.length > 0) {
+    mkdirSync(`${REPORTS_FOLFER_PATH}/${fileName}`, { recursive: true });
     writeFileSync(
-      `dist/reports/corpus/${fileName}/corpus_dpe_list_above_threshold_diff_main_${current_git_branch}.json`,
-      JSON.stringify(diffDpeThreshold),
+      `${REPORTS_FOLFER_PATH}/${fileName}/corpus_global_report_${current_git_branch}.json`,
+      JSON.stringify({ ...globalReport, dpeExceedThreshold: undefined }),
       { encoding: 'utf8' }
     );
-  }
+    createCsv(
+      dpeOutputs,
+      OUTPUT_CSV_HEADERS,
+      `${REPORTS_FOLFER_PATH}/${fileName}/corpus_detailed_report_${current_git_branch}.csv`
+    );
 
-  writeFileSync(
-    `dist/reports/corpus/${fileName}/corpus_dpe_list_above_threshold_${current_git_branch}.json`,
-    JSON.stringify(globalReport.dpeExceedThreshold),
-    { encoding: 'utf8' }
-  );
-});
+    /** @type {string[]} **/
+    let currentDpeExceedThreshold = [];
+    if (
+      existsSync(`${REPORTS_FOLFER_PATH}/${fileName}/corpus_dpe_list_above_threshold_main.json`)
+    ) {
+      currentDpeExceedThreshold = JSON.parse(
+        readFileSync(
+          `${REPORTS_FOLFER_PATH}/${fileName}/corpus_dpe_list_above_threshold_main.json`,
+          {
+            encoding: 'utf8'
+          }
+        ).toString()
+      );
+    }
+
+    /** @type {string[]} **/
+    const diffDpeThreshold = globalReport.dpeExceedThreshold.filter(
+      (dpe) => !currentDpeExceedThreshold.includes(dpe)
+    );
+    if (diffDpeThreshold.length > 0) {
+      writeFileSync(
+        `${REPORTS_FOLFER_PATH}/${fileName}/corpus_dpe_list_above_threshold_diff_main_${current_git_branch}.json`,
+        JSON.stringify(diffDpeThreshold),
+        { encoding: 'utf8' }
+      );
+    }
+
+    writeFileSync(
+      `${REPORTS_FOLFER_PATH}/${fileName}/corpus_dpe_list_above_threshold_${current_git_branch}.json`,
+      JSON.stringify(globalReport.dpeExceedThreshold),
+      { encoding: 'utf8' }
+    );
+  });
+}
