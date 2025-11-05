@@ -134,38 +134,37 @@ meilleure configuration est:
 
 <p align="right">(<a href="#readme-top">Retour sommaire</a>)</p>
 
-## Lancement des tests sur des corpus de DPE
+## Corpus
+
+### Introduction
 
 Les tests de corpus consistent à analyser une liste de numéro de DPE présent dans un fichier CSV.
-Pour chaque DPE, le fichier est téléchargé si pas déjà présent en local, et il est envoyé à la librairie Open3CL.
-On analyse en sortie de la lib certaines valeurs que l'on compare aux valeurs du DPE initial. Le seuil de tolérance est
-fixé par défaut à 5%.
-La liste des valeurs analysées est la suivante:
 
-```javascript
-deperdition_mur,
-  deperdition_baie_vitree,
-  deperdition_plancher_bas,
-  deperdition_plancher_haut,
-  deperdition_porte,
-  deperdition_renouvellement_air,
-  hperm,
-  deperdition_pont_thermique,
-  surface_sud_equivalente,
-  besoin_ecs,
-  besoin_ch,
-  conso_auxiliaire_distribution_ecs,
-  conso_auxiliaire_generation_ch,
-  conso_auxiliaire_generation_ecs,
-  conso_ecs,
-  conso_ch,
-  conso_auxiliaire_distribution_ch,
-  conso_auxiliaire_ventilation,
-  ep_conso_5_usages,
-  ep_conso_5_usages_m2,
-  emission_ges_5_usages,
-  emission_ges_5_usages_m2;
-```
+- Pour chaque DPE, le fichier est téléchargé si pas déjà présent en local, et il est envoyé à la librairie Open3CL.
+- On analyse en sortie de la lib certaines valeurs que l'on compare aux valeurs du DPE initial.
+- **Le seuil de tolérance est fixé par défaut à 5%**.
+
+### Qu'est-ce qui est contrôlé ?
+
+Les informations contrôlées et qui doivent obligatoirement ne pas dépasser
+le seuil des **5%** entre le dpe d'origine et le dpe proposé par la librairie Open3CL sont :
+
+- logement.sortie.ef_conso.conso_ecs
+- logement.sortie.ef_conso.conso_ch
+- logement.sortie.ep_conso.ep_conso_5_usages ou logement.sortie.ep_conso.ep_conso_5_usages_m2
+- logement.sortie.emission_ges.emission_ges_5_usages ou logement.sortie.emission_ges.emission_ges_5_usages_m2
+
+### Liste des corpus
+
+Il existe actuellement 5 corpus (avec 10000 dpe analysés dans chaque corpus) :
+
+- `corpus.csv`: Corpus généraliste
+- `dpe_logement_individuel_2025.csv`: Corpus avec uniquement des dpe individuels réalisés en 2025
+- `dpe_immeuble_chauffage_individuel.csv`: Corpus avec uniquement des dpe immeuble pour des logements avec chauffage individuel
+- `dpe_immeuble_chauffage_collectif.csv`: Corpus avec uniquement des dpe immeuble pour des logements avec chauffage collectif
+- `dpe_immeuble_chauffage_mixte.csv`: Corpus avec uniquement des dpe immeuble pour des logements avec chauffage mixte
+
+### Comment lancer les corpus ?
 
 - `npm run test:corpus:all`: Joue l'intégralité des corpus et génère les rapports associés.
 - `npm run test:corpus`. Joue le corpus [corpus_dpe.csv](test/corpus/files/corpus_dpe.csv) et génère les rapports

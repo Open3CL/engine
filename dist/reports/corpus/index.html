@@ -33,7 +33,6 @@
 
       $(document).ready(() => {
         branchName = 'main';
-
         const corpusListSelect = document.getElementById('corpus-list');
         $.get('corpus_list_main.json', (data) => {
           files = data.files;
@@ -102,7 +101,14 @@
       </div>
       <div class="w-full flex justify-center p-3">
         <input id="showOnlyDiffValuesCheckbox" type="checkbox" class="mt-1" />
-        <span class="ml-2">Afficher que les valeurs différentes</span>
+        <div class="ml-2">Afficher que les valeurs différentes</div>
+      </div>
+      <div class="w-full text-center">
+        <div class="ml-2 text-sm">
+          Seules les valeurs affichées dans la légende entourées de <b>**</b> sont bloquantes
+          <b>si le seuil de 5% n'est pas respecté</b>
+        </div>
+        <div class="ml-2 text-sm">Les autres valeurs sont affichés purement à titre informatif</div>
       </div>
       <div id="charts" class="p-6 flex justify-center">
         <div style="width: 800px">
@@ -114,6 +120,7 @@
       </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-autocolors"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.js"></script>
   </body>
