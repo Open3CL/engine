@@ -114,4 +114,40 @@ describe('DPE immeuble unit tests', () => {
       output.logement.sortie.ep_conso.ep_conso_5_usages_m2
     );
   });
+
+  test('ecs qp0 des chaudières bois erroné', async () => {
+    /** @type {FullDpe} **/
+    let input = await getAdemeFileJsonOrDownload('2313E0178624T');
+
+    /** @type {FullDpe} **/
+    let output = calcul_3cl(structuredClone(input));
+
+    const inputGenerateurChauffage =
+      input.logement.installation_ecs_collection.installation_ecs[0].generateur_ecs_collection
+        .generateur_ecs[0].donnee_intermediaire;
+
+    const outputGenerateurChauffage =
+      output.logement.installation_ecs_collection.installation_ecs[0].generateur_ecs_collection
+        .generateur_ecs[0].donnee_intermediaire;
+
+    expect(inputGenerateurChauffage.qp0).toBeCloseTo(outputGenerateurChauffage.qp0 / 1000);
+  });
+
+  test('chauffage qpo des chaudières bois erroné', async () => {
+    /** @type {FullDpe} **/
+    let input = await getAdemeFileJsonOrDownload('2574E3388253L');
+
+    /** @type {FullDpe} **/
+    let output = calcul_3cl(structuredClone(input));
+
+    const inputGenerateurChauffage =
+      input.logement.installation_chauffage_collection.installation_chauffage[0]
+        .generateur_chauffage_collection.generateur_chauffage[0].donnee_intermediaire;
+
+    const outputGenerateurChauffage =
+      output.logement.installation_chauffage_collection.installation_chauffage[0]
+        .generateur_chauffage_collection.generateur_chauffage[0].donnee_intermediaire;
+
+    expect(inputGenerateurChauffage.qp0).toBeCloseTo(outputGenerateurChauffage.qp0);
+  });
 });
