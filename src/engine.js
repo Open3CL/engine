@@ -20,6 +20,8 @@ import { Inertie } from './7_inertie.js';
 import getFicheTechnique from './ficheTechnique.js';
 import { ProductionENR } from './16.2_production_enr.js';
 
+import { version } from 'package.json';
+
 function calc_th(map_id) {
   const map = enums.methode_application_dpe_log[map_id];
   if (map.includes('maison')) return 'maison';
@@ -31,6 +33,10 @@ function calc_th(map_id) {
 
 const inertie = new Inertie();
 const productionENR = new ProductionENR();
+
+export function getVersion() {
+  return version;
+}
 
 export function calcul_3cl(dpe) {
   sanitize_dpe(dpe);
@@ -92,10 +98,7 @@ export function calcul_3cl(dpe) {
 
   add_references(logement.enveloppe);
 
-  // TODO commit version to package.json during release process
-  /* const package_version = require('../package.json').version; */
-  const package_version = 'alpha';
-  dpe.administratif.diagnostiqueur = { version_moteur_calcul: `Open3CL ${package_version}` };
+  dpe.administratif.diagnostiqueur = { version_moteur_calcul: `Open3CL ${version}` };
   const env = logement.enveloppe;
   let Sh;
   let ShChauffageAndEcs;
