@@ -156,10 +156,11 @@ le seuil des **5%** entre le dpe d'origine et le dpe proposé par la librairie O
 
 ### Liste des corpus
 
-Il existe actuellement 5 corpus (avec 10000 dpe analysés dans chaque corpus) :
+Il existe actuellement 6 corpus (avec 10000 dpe analysés dans chaque corpus) :
 
 - `corpus.csv`: Corpus généraliste
 - `dpe_logement_individuel_2025.csv`: Corpus avec uniquement des dpe individuels réalisés en 2025
+- `dpe_maison_individuelle_2025.csv`: Corpus avec uniquement des dpe maison individuelle réalisés en 2025
 - `dpe_immeuble_chauffage_individuel.csv`: Corpus avec uniquement des dpe immeuble pour des logements avec chauffage
   individuel
 - `dpe_immeuble_chauffage_collectif.csv`: Corpus avec uniquement des dpe immeuble pour des logements avec chauffage
