@@ -4,8 +4,8 @@
   "nbValidDpe": 9996,
   "nbInvalidDpeVersion": 0,
   "nbExcludedDpe": 0,
-  "nbAllChecksBelowThreshold": 8453,
-  "successRatio": "84.53 %",
+  "nbAllChecksBelowThreshold": 8459,
+  "successRatio": "84.59 %",
   "dpeRunFailed": [],
   "checks": {
     "deperdition_mur": { "nbBelowThreshold": 9834, "mandatory": false, "successRatio": "98.34 %" },
@@ -46,9 +46,9 @@
       "successRatio": "98.17 %"
     },
     "besoin_ecs": { "nbBelowThreshold": 9998, "mandatory": false, "successRatio": "99.98 %" },
-    "besoin_ch": { "nbBelowThreshold": 9239, "mandatory": false, "successRatio": "92.39 %" },
-    "conso_ecs": { "nbBelowThreshold": 9527, "mandatory": true, "successRatio": "95.27 %" },
-    "conso_ch": { "nbBelowThreshold": 9018, "mandatory": true, "successRatio": "90.18 %" },
+    "besoin_ch": { "nbBelowThreshold": 9244, "mandatory": false, "successRatio": "92.44 %" },
+    "conso_ecs": { "nbBelowThreshold": 9533, "mandatory": true, "successRatio": "95.33 %" },
+    "conso_ch": { "nbBelowThreshold": 9024, "mandatory": true, "successRatio": "90.24 %" },
     "conso_auxiliaire_distribution_ch": {
       "nbBelowThreshold": 8892,
       "mandatory": false,
@@ -69,21 +69,21 @@
       "mandatory": false,
       "successRatio": "97.28 %"
     },
-    "ep_conso_5_usages": { "nbBelowThreshold": 9203, "mandatory": true, "successRatio": "92.03 %" },
+    "ep_conso_5_usages": { "nbBelowThreshold": 9209, "mandatory": true, "successRatio": "92.09 %" },
     "ep_conso_5_usages_m2": {
-      "nbBelowThreshold": 9192,
+      "nbBelowThreshold": 9198,
       "mandatory": true,
-      "successRatio": "91.92 %"
+      "successRatio": "91.98 %"
     },
     "emission_ges_5_usages": {
-      "nbBelowThreshold": 9044,
+      "nbBelowThreshold": 9050,
       "mandatory": true,
-      "successRatio": "90.44 %"
+      "successRatio": "90.50 %"
     },
     "emission_ges_5_usages_m2": {
-      "nbBelowThreshold": 8897,
+      "nbBelowThreshold": 8904,
       "mandatory": true,
-      "successRatio": "88.97 %"
+      "successRatio": "89.04 %"
     },
     "conso_auxiliaire_generation_ch": {
       "nbBelowThreshold": 8413,

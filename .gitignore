@@ -1,11 +1,7 @@
 test/ademe.db
 *.csv
 test/corpus/reports/*.json
-!test/corpus/files/corpus_dpe.csv
-!test/corpus/files/dpe_immeuble_chauffage_individuel.csv
-!test/corpus/files/dpe_immeuble_chauffage_collectif.csv
-!test/corpus/files/dpe_immeuble_chauffage_mixte.csv
-!test/corpus/files/dpe_logement_individuel_2025.csv
+!test/corpus/files/**/*.csv
 
 bun.lockb
 /.idea/

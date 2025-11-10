@@ -14,7 +14,7 @@
   "scripts": {
     "test": "vitest run",
     "test:ci": "vitest run --coverage",
-    "test:corpus": "node test/corpus/run_corpus_checks.js",
+    "test:corpus": "node test/corpus/run_all_corpus_checks.js",
     "test:corpus:all": "node test/corpus/run_all_corpus_checks.js",
     "test:corpus:all+database": "npm run test:corpus:all && node test/corpus/corpus_database.js",
     "qa:lint": "eslint .",
