@@ -213,6 +213,7 @@ interface Donnee_entree {
   ref_produit_generateur_ch?: string;
   enum_type_generateur_ch_id?: string;
   tv_rendement_generation_id?: number;
+  ratio_virtualisation?: number;
 }
 interface Donnee_intermediaire {
   b?: number;
@@ -250,6 +251,8 @@ interface Donnee_intermediaire {
   i0?: number;
   rendement_emission?: number;
   rendement_regulation?: number;
+  qp0?: number;
+  pn?: number;
 }
 interface Plancher_bas_collection {
   plancher_bas: PlancherBasItem[];

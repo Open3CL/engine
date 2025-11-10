@@ -24899,8 +24899,8 @@ export const tvs = {
       enum_type_generateur_ecs_id: '45|92',
       type_generateur: 'Chaudière gaz  classique avant 1981',
       pn: 'Pn',
-      rpn: '84 + 2 logPn',
-      rpint: '80 + 3 logPn',
+      rpn: '84+2*log10(Pn)',
+      rpint: '80+3*log10(Pn)',
       qp0_perc: '4%',
       pveil: '240'
     },
@@ -24910,8 +24910,8 @@ export const tvs = {
       enum_type_generateur_ecs_id: '46|93',
       type_generateur: 'Chaudière gaz  classique 1981-1985',
       pn: 'Pn',
-      rpn: '84 + 2 logPn',
-      rpint: '80 + 3 logPn',
+      rpn: '84+2*log10(Pn)',
+      rpint: '80+3*log10(Pn)',
       qp0_perc: '2%',
       pveil: '150'
     },
@@ -24921,8 +24921,8 @@ export const tvs = {
       enum_type_generateur_ecs_id: '47|94',
       type_generateur: 'Chaudière gaz  classique 1986-1990',
       pn: 'Pn',
-      rpn: '84 + 2 logPn',
-      rpint: '80 + 3 logPn',
+      rpn: '84+2*log10(Pn)',
+      rpint: '80+3*log10(Pn)',
       qp0_perc: '1.50%',
       pveil: '150'
     },
@@ -24932,8 +24932,8 @@ export const tvs = {
       enum_type_generateur_ecs_id: '48|95',
       type_generateur: 'Chaudière gaz standard 1991-2000',
       pn: 'Pn',
-      rpn: '84 + 2 logPn',
-      rpint: '80 + 3 logPn',
+      rpn: '84+2*log10(Pn)',
+      rpint: '80+3*log10(Pn)',
       qp0_perc: '1.20%',
       pveil: '120'
     },
@@ -24943,8 +24943,8 @@ export const tvs = {
       enum_type_generateur_ecs_id: '49|96',
       type_generateur: 'Chaudière gaz standard 2001-2015',
       pn: 'Pn',
-      rpn: '84 + 2 logPn',
-      rpint: '80 + 3 logPn',
+      rpn: '84+2*log10(Pn)',
+      rpint: '80+3*log10(Pn)',
       qp0_perc: '1%'
     },
     {
@@ -24953,9 +24953,9 @@ export const tvs = {
       enum_type_generateur_ecs_id: '50|97',
       type_generateur: 'Chaudière gaz standard après 2015',
       pn: 'Pn',
-      rpn: '84 + 2 logPn',
-      rpint: '80 + 3 logPn',
-      qp0_perc: 'Pn * (E + F * logPn) / 100'
+      rpn: '84+2*log10(Pn)',
+      rpint: '80+3*log10(Pn)',
+      qp0_perc: 'Pn*(E+F*log10(Pn))/100'
     },
     {
       tv_generateur_combustion_id: '7',
@@ -24963,8 +24963,8 @@ export const tvs = {
       enum_type_generateur_ecs_id: '51|98',
       type_generateur: 'Chaudière gaz basse température 1991-2000',
       pn: 'Pn',
-      rpn: '87,5 + 1,5logPn',
-      rpint: '87,5 + 1,5logPn',
+      rpn: '87.5+1.5*log10(Pn)',
+      rpint: '87.5+1.5*log10(Pn)',
       qp0_perc: '1.20%',
       pveil: '120'
     },
@@ -24974,8 +24974,8 @@ export const tvs = {
       enum_type_generateur_ecs_id: '52|99',
       type_generateur: 'Chaudière gaz basse température 2001-2015',
       pn: 'Pn',
-      rpn: '87,5 + 1,5logPn',
-      rpint: '87,5 + 1,5logPn',
+      rpn: '87.5+1.5*log10(Pn)',
+      rpint: '87.5+1.5*log10(Pn)',
       qp0_perc: '1%'
     },
     {
@@ -24984,9 +24984,9 @@ export const tvs = {
       enum_type_generateur_ecs_id: '53|100',
       type_generateur: 'Chaudière gaz basse température après 2015',
       pn: 'Pn',
-      rpn: '87,5 + 1,5logPn',
-      rpint: '87,5 + 1,5logPn',
-      qp0_perc: 'Pn * (E + F * logPn) / 100'
+      rpn: '87.5+1.5*log10(Pn)',
+      rpint: '87.5+1.5*log10(Pn)',
+      qp0_perc: 'Pn*(E+F*log10(Pn))/100'
     },
     {
       tv_generateur_combustion_id: '10',
@@ -24994,8 +24994,8 @@ export const tvs = {
       enum_type_generateur_ecs_id: '54|101',
       type_generateur: 'Chaudière gaz à condensation 1981-1985',
       pn: 'Pn',
-      rpn: '91 + logPn',
-      rpint: '97 + logPn',
+      rpn: '91+log10(Pn)',
+      rpint: '97+log10(Pn)',
       qp0_perc: '1%',
       pveil: '150'
     },
@@ -25005,8 +25005,8 @@ export const tvs = {
       enum_type_generateur_ecs_id: '55|102',
       type_generateur: 'Chaudière gaz à condensation 1986-2000',
       pn: 'Pn',
-      rpn: '91 + logPn',
-      rpint: '97 + logPn',
+      rpn: '91+log10(Pn)',
+      rpint: '97+log10(Pn)',
       qp0_perc: '1%',
       pveil: '120'
     },
@@ -25016,8 +25016,8 @@ export const tvs = {
       enum_type_generateur_ecs_id: '56|103|120|132',
       type_generateur: 'Chaudière gaz à condensation 2001-2015',
       pn: 'Pn',
-      rpn: '91 + logPn',
-      rpint: '97 + logPn',
+      rpn: '91+log10(Pn)',
+      rpint: '97+log10(Pn)',
       qp0_perc: '1%'
     },
     {
@@ -25027,8 +25027,8 @@ export const tvs = {
       type_generateur: 'Chaudière gaz à condensation après 2015',
       critere_pn: 'Pn≤70',
       pn: 'Pn',
-      rpn: '91 + 3 logPn',
-      rpint: '103 + 2,5logPn',
+      rpn: '91+3*log10(Pn)',
+      rpint: '103+2.5*log10(Pn)',
       qp0_perc: '0.50%'
     },
     {
@@ -25038,8 +25038,8 @@ export const tvs = {
       type_generateur: 'Chaudière gaz à condensation après 2015',
       critere_pn: '70<Pn≤400',
       pn: 'Pn',
-      rpn: '94 + logPn',
-      rpint: '105 + 0,5logPn',
+      rpn: '94+log10(Pn)',
+      rpint: '105+0.5*log10(Pn)',
       qp0_perc: '0.30%'
     },
     {
@@ -25059,8 +25059,8 @@ export const tvs = {
       enum_type_generateur_ecs_id: '35|84',
       type_generateur: 'Chaudière fioul  classique avant 1970',
       pn: 'Pn',
-      rpn: '84 + 2 logPn',
-      rpint: '80 + 3 logPn',
+      rpn: '84+2*log10(Pn)',
+      rpint: '80+3*log10(Pn)',
       qp0_perc: '4%'
     },
     {
@@ -25069,8 +25069,8 @@ export const tvs = {
       enum_type_generateur_ecs_id: '36|84',
       type_generateur: 'Chaudière fioul  classique 1970-1975',
       pn: 'Pn',
-      rpn: '84 + 2 logPn',
-      rpint: '80 + 3 logPn',
+      rpn: '84+2*log10(Pn)',
+      rpint: '80+3*log10(Pn)',
       qp0_perc: '3%'
     },
     {
@@ -25079,8 +25079,8 @@ export const tvs = {
       enum_type_generateur_ecs_id: '37|84',
       type_generateur: 'Chaudière fioul  classique 1976-1980',
       pn: 'Pn',
-      rpn: '84 + 2 logPn',
-      rpint: '80 + 3 logPn',
+      rpn: '84+2*log10(Pn)',
+      rpint: '80+3*log10(Pn)',
       qp0_perc: '2%'
     },
     {
@@ -25089,8 +25089,8 @@ export const tvs = {
       enum_type_generateur_ecs_id: '38|84',
       type_generateur: 'Chaudière fioul  classique 1981-1990',
       pn: 'Pn',
-      rpn: '84 + 2 logPn',
-      rpint: '80 + 3 logPn',
+      rpn: '84+2*log10(Pn)',
+      rpint: '80+3*log10(Pn)',
       qp0_perc: '1%'
     },
     {
@@ -25099,8 +25099,8 @@ export const tvs = {
       enum_type_generateur_ecs_id: '39|84',
       type_generateur: 'Chaudière fioul standard 1991-2015',
       pn: 'Pn',
-      rpn: '84 + 2 logPn',
-      rpint: '80 + 3 logPn',
+      rpn: '84+2*log10(Pn)',
+      rpint: '80+3*log10(Pn)',
       qp0_perc: '1%'
     },
     {
@@ -25109,9 +25109,9 @@ export const tvs = {
       enum_type_generateur_ecs_id: '40|84',
       type_generateur: 'Chaudière fioul standard après 2015',
       pn: 'Pn',
-      rpn: '84 + 2 logPn',
-      rpint: '80 + 3 logPn',
-      qp0_perc: 'Pn * (E + F * logPn) / 100'
+      rpn: '84+2*log10(Pn)',
+      rpint: '80+3*log10(Pn)',
+      qp0_perc: 'Pn*(E+F*log10(Pn))/100'
     },
     {
       tv_generateur_combustion_id: '22',
@@ -25119,8 +25119,8 @@ export const tvs = {
       enum_type_generateur_ecs_id: '41',
       type_generateur: 'Chaudière fioul basse température 1991-2015',
       pn: 'Pn',
-      rpn: '87,5 + 1,5 logPn',
-      rpint: '87,5 + 1,5 logPn',
+      rpn: '87.5+1.5*log10(Pn)',
+      rpint: '87.5+1.5*log10(Pn)',
       qp0_perc: '1%'
     },
     {
@@ -25129,9 +25129,9 @@ export const tvs = {
       enum_type_generateur_ecs_id: '42',
       type_generateur: 'Chaudière fioul basse température après 2015',
       pn: 'Pn',
-      rpn: '87,5 + 1,5 logPn',
-      rpint: '87,5 + 1,5 logPn',
-      qp0_perc: 'Pn * (E + F * logPn) / 100'
+      rpn: '87.5+1.5*log10(Pn)',
+      rpint: '87.5+1.5*log10(Pn)',
+      qp0_perc: 'Pn*(E+F*log10(Pn))/100'
     },
     {
       tv_generateur_combustion_id: '24',
@@ -25139,8 +25139,8 @@ export const tvs = {
       enum_type_generateur_ecs_id: '43|122',
       type_generateur: 'Chaudière fioul à condensation 1996-2015',
       pn: 'Pn',
-      rpn: '91 + logPn',
-      rpint: '97 + logPn',
+      rpn: '91+log10(Pn)',
+      rpint: '97+log10(Pn)',
       qp0_perc: '1%'
     },
     {
@@ -25150,8 +25150,8 @@ export const tvs = {
       type_generateur: 'Chaudière fioul à condensation après 2015',
       critere_pn: 'Pn≤70',
       pn: 'Pn',
-      rpn: '91 + 3 logPn',
-      rpint: '98 + 3 logPn',
+      rpn: '91+3*log10(Pn)',
+      rpint: '98+3*log10(Pn)',
       qp0_perc: '0.50%'
     },
     {
@@ -25161,8 +25161,8 @@ export const tvs = {
       type_generateur: 'Chaudière fioul à condensation après 2015',
       critere_pn: '70<Pn≤400',
       pn: 'Pn',
-      rpn: '94 + logPn',
-      rpint: '100 + logPn',
+      rpn: '94+log10(Pn)',
+      rpint: '100+log10(Pn)',
       qp0_perc: '0.60%'
     },
     {
@@ -25183,9 +25183,9 @@ export const tvs = {
       type_generateur: 'Chaudière bois bûche ou plaquette <1978',
       critere_pn: 'Pn≤70',
       pn: 'Pn',
-      rpn: '47 + 6logPn',
-      rpint: '48+6logPn',
-      qp0_perc: '0,08*Pn*(Pn)^-0,27'
+      rpn: '47+6*log10(Pn)',
+      rpint: '48+6*log10(Pn)',
+      qp0_perc: '0.08*Pn*(Pn)^-0.27'
     },
     {
       tv_generateur_combustion_id: '29',
@@ -25216,9 +25216,9 @@ export const tvs = {
       type_generateur: 'Chaudière bois bûche ou plaquette 1978-1994',
       critere_pn: 'Pn≤70',
       pn: 'Pn',
-      rpn: '47 + 6logPn',
-      rpint: '48+6logPn',
-      qp0_perc: '0,07*Pn*(Pn)^-0,3'
+      rpn: '47+6*log10(Pn)',
+      rpint: '48+6*log10(Pn)',
+      qp0_perc: '0.07*Pn*(Pn)^-0.3'
     },
     {
       tv_generateur_combustion_id: '32',
@@ -25248,9 +25248,9 @@ export const tvs = {
       enum_type_generateur_ecs_id: '17|24|87',
       type_generateur: 'Chaudière bois bûche ou plaquette 1995-2003',
       critere_pn: 'Pn≤70',
-      rpn: '47 + 6logPn',
-      rpint: '48+6logPn',
-      qp0_perc: '0,085*Pn*(Pn)^-0,4'
+      rpn: '47+6*log10(Pn)',
+      rpint: '48+6*log10(Pn)',
+      qp0_perc: '0.085*Pn*(Pn)^-0.4'
     },
     {
       tv_generateur_combustion_id: '35',
@@ -25280,9 +25280,9 @@ export const tvs = {
       enum_type_generateur_ecs_id: '18|25|88|14',
       type_generateur: 'Chaudière bois bûche ou plaquette 2004-2012',
       critere_pn: 'Pn≤70',
-      rpn: '57 + 6logPn',
-      rpint: '58+6logPn',
-      qp0_perc: '0,085*Pn*(Pn)^-0,4'
+      rpn: '57+6*log10(Pn)',
+      rpint: '58+6*log10(Pn)',
+      qp0_perc: '0.085*Pn*(Pn)^-0.4'
     },
     {
       tv_generateur_combustion_id: '38',
@@ -25312,9 +25312,9 @@ export const tvs = {
       enum_type_generateur_ecs_id: '19|26|89|126|129',
       type_generateur: 'Chaudière bois bûche ou plaquette 2013-2017',
       critere_pn: 'Pn≤70',
-      rpn: '67 + 6logPn',
-      rpint: '68+6logPn',
-      qp0_perc: '0,085*Pn*(Pn)^-0,4'
+      rpn: '67+6*log10(Pn)',
+      rpint: '68+6*log10(Pn)',
+      qp0_perc: '0.085*Pn*(Pn)^-0.4'
     },
     {
       tv_generateur_combustion_id: '41',
@@ -25344,9 +25344,9 @@ export const tvs = {
       enum_type_generateur_ecs_id: '20|27|90|127|130',
       type_generateur: 'Chaudière bois bûche ou plaquette 2018-2019',
       critere_pn: 'Pn≤70',
-      rpn: '80 + 2logPn',
-      rpint: '77+3logPn',
-      qp0_perc: '0,085*Pn*(Pn)^-0,4'
+      rpn: '80+2*log10(Pn)',
+      rpint: '77+3*log10(Pn)',
+      qp0_perc: '0.085*Pn*(Pn)^-0.4'
     },
     {
       tv_generateur_combustion_id: '44',
@@ -25376,9 +25376,9 @@ export const tvs = {
       enum_type_generateur_ecs_id: '21|28|91|128|131',
       type_generateur: 'Chaudière bois bûche ou plaquette >2019',
       critere_pn: 'Pn≤20',
-      rpn: '89 + 2logPn',
-      rpint: '84+2logPn',
-      qp0_perc: '0,085*Pn*(Pn)^-0,4'
+      rpn: '89+2*log10(Pn)',
+      rpint: '84+2*log10(Pn)',
+      qp0_perc: '0.085*Pn*(Pn)^-0.4'
     },
     {
       tv_generateur_combustion_id: '47',
@@ -25386,9 +25386,9 @@ export const tvs = {
       enum_type_generateur_ecs_id: '21|28|91|128|131',
       type_generateur: 'Chaudière bois bûche ou plaquette >2019',
       critere_pn: '20<Pn≤70',
-      rpn: '90 + 2logPn',
-      rpint: '85+2logPn',
-      qp0_perc: '0,085*Pn*(Pn)^-0,4'
+      rpn: '90+2*log10(Pn)',
+      rpint: '85+2*log10(Pn)',
+      qp0_perc: '0.085*Pn*(Pn)^-0.4'
     },
     {
       tv_generateur_combustion_id: '48',
@@ -25418,9 +25418,9 @@ export const tvs = {
       enum_type_generateur_ecs_id: '29',
       type_generateur: 'Chaudière bois granulés <1978',
       critere_pn: 'Pn≤70',
-      rpn: '47 + 6logPn',
-      rpint: '48+6logPn',
-      qp0_perc: '0,08*Pn*(Pn)^-0,27'
+      rpn: '47+6*log10(Pn)',
+      rpint: '48+6*log10(Pn)',
+      qp0_perc: '0.08*Pn*(Pn)^-0.27'
     },
     {
       tv_generateur_combustion_id: '51',
@@ -25450,9 +25450,9 @@ export const tvs = {
       enum_type_generateur_ecs_id: '30|115',
       type_generateur: 'Chaudière bois granulés 1978-1994',
       critere_pn: 'Pn≤70',
-      rpn: '47 + 6logPn',
-      rpint: '48+6logPn',
-      qp0_perc: '0,08*Pn*(Pn)^-0,3'
+      rpn: '47+6*log10(Pn)',
+      rpint: '48+6*log10(Pn)',
+      qp0_perc: '0.08*Pn*(Pn)^-0.3'
     },
     {
       tv_generateur_combustion_id: '54',
@@ -25482,9 +25482,9 @@ export const tvs = {
       enum_type_generateur_ecs_id: '31',
       type_generateur: 'Chaudière bois granulés 1995-2003',
       critere_pn: 'Pn≤70',
-      rpn: '57 + 6logPn',
-      rpint: '58+6logPn',
-      qp0_perc: '0,085*Pn*(Pn)^-0,4'
+      rpn: '57+6*log10(Pn)',
+      rpint: '58+6*log10(Pn)',
+      qp0_perc: '0.085*Pn*(Pn)^-0.4'
     },
     {
       tv_generateur_combustion_id: '57',
@@ -25514,9 +25514,9 @@ export const tvs = {
       enum_type_generateur_ecs_id: '32|116',
       type_generateur: 'Chaudière bois granulés 2004-2012',
       critere_pn: 'Pn≤70',
-      rpn: '67 + 6logPn',
-      rpint: '68+6logPn',
-      qp0_perc: '0,085*Pn*(Pn)^-0,4'
+      rpn: '67+6*log10(Pn)',
+      rpint: '68+6*log10(Pn)',
+      qp0_perc: '0.085*Pn*(Pn)^-0.4'
     },
     {
       tv_generateur_combustion_id: '60',
@@ -25546,9 +25546,9 @@ export const tvs = {
       enum_type_generateur_ecs_id: '33|124',
       type_generateur: 'Chaudière bois granulés 2013-2019',
       critere_pn: 'Pn≤70',
-      rpn: '80 + 2logPn',
-      rpint: '77+3logPn',
-      qp0_perc: '0,085*Pn*(Pn)^-0,4'
+      rpn: '80+2*log10(Pn)',
+      rpint: '77+3*log10(Pn)',
+      qp0_perc: '0.085*Pn*(Pn)^-0.4'
     },
     {
       tv_generateur_combustion_id: '63',
@@ -25578,9 +25578,9 @@ export const tvs = {
       enum_type_generateur_ecs_id: '34|125',
       type_generateur: 'Chaudière bois granulés >2019',
       critere_pn: 'Pn≤20',
-      rpn: '91 + 2logPn',
-      rpint: '88+2logPn',
-      qp0_perc: '0,085*Pn*(Pn)^-0,4'
+      rpn: '91+2*log10(Pn)',
+      rpint: '88+2*log10(Pn)',
+      qp0_perc: '0.085*Pn*(Pn)^-0.4'
     },
     {
       tv_generateur_combustion_id: '66',
@@ -25588,9 +25588,9 @@ export const tvs = {
       enum_type_generateur_ecs_id: '34|125',
       type_generateur: 'Chaudière bois granulés >2019',
       critere_pn: '20<Pn≤70',
-      rpn: '92 + 2logPn',
-      rpint: '89+2logPn',
-      qp0_perc: '0,085*Pn*(Pn)^-0,4'
+      rpn: '92+2*log10(Pn)',
+      rpint: '89+2*log10(Pn)',
+      qp0_perc: '0.085*Pn*(Pn)^-0.4'
     },
     {
       tv_generateur_combustion_id: '67',
@@ -25621,7 +25621,7 @@ export const tvs = {
       critere_pn: 'Pn≤300',
       rpn: '77',
       rpint: '74',
-      qp0_perc: 'Pn*(1.75-0.55*logPn)'
+      qp0_perc: 'Pn*(1.75-0.55*log10(Pn))'
     },
     {
       tv_generateur_combustion_id: '70',
@@ -25631,7 +25631,7 @@ export const tvs = {
       pn: '300',
       rpn: '77',
       rpint: '74',
-      qp0_perc: 'Pn*(1.75-0.55*logPn)'
+      qp0_perc: 'Pn*(1.75-0.55*log10(Pn))'
     },
     {
       tv_generateur_combustion_id: '71',
@@ -25640,7 +25640,7 @@ export const tvs = {
       critere_pn: 'Pn≤300',
       rpn: '84',
       rpint: '77',
-      qp0_perc: 'Pn*(1.75-0.55*logPn)'
+      qp0_perc: 'Pn*(1.75-0.55*log10(Pn))'
     },
     {
       tv_generateur_combustion_id: '72',
@@ -25650,7 +25650,7 @@ export const tvs = {
       pn: '300',
       rpn: '84',
       rpint: '77',
-      qp0_perc: 'Pn*(1.75-0.55*logPn)'
+      qp0_perc: 'Pn*(1.75-0.55*log10(Pn))'
     },
     {
       tv_generateur_combustion_id: '73',
@@ -25659,7 +25659,7 @@ export const tvs = {
       critere_pn: 'Pn≤300',
       rpn: '90',
       rpint: '83',
-      qp0_perc: 'Pn*(1.75-0.55*logPn)'
+      qp0_perc: 'Pn*(1.75-0.55*log10(Pn))'
     },
     {
       tv_generateur_combustion_id: '74',
@@ -25669,7 +25669,7 @@ export const tvs = {
       pn: '300',
       rpn: '90',
       rpint: '83',
-      qp0_perc: 'Pn*(1.75-0.55*logPn)'
+      qp0_perc: 'Pn*(1.75-0.55*log10(Pn))'
     },
     {
       tv_generateur_combustion_id: '75',
@@ -25738,7 +25738,7 @@ export const tvs = {
       type_generateur: 'Chauffe-eau gaz à production instantanée avant 1980',
       critere_pn: 'Pn≤10',
       rpn: '70',
-      qp0_perc: '4.0 %',
+      qp0_perc: '4.0%',
       pveil: '150'
     },
     {
@@ -25747,7 +25747,7 @@ export const tvs = {
       type_generateur: 'Chauffe-eau gaz à production instantanée 1981-1989',
       critere_pn: 'Pn≤10',
       rpn: '75',
-      qp0_perc: '2.0 %',
+      qp0_perc: '2.0%',
       pveil: '120'
     },
     {
@@ -25756,7 +25756,7 @@ export const tvs = {
       type_generateur: 'Chauffe-eau gaz à production instantanée 1990-2000',
       critere_pn: 'Pn≤10',
       rpn: '81',
-      qp0_perc: '1.2 %',
+      qp0_perc: '1.2%',
       pveil: '120'
     },
     {
@@ -25765,7 +25765,7 @@ export const tvs = {
       type_generateur: 'Chauffe-eau gaz à production instantanée 2001-2015',
       critere_pn: 'Pn≤10',
       rpn: '82',
-      qp0_perc: '1.0 %',
+      qp0_perc: '1.0%',
       pveil: '100'
     },
     {
@@ -25774,7 +25774,7 @@ export const tvs = {
       type_generateur: 'Chauffe-eau gaz à production instantanée après  2015',
       critere_pn: 'Pn≤10',
       rpn: '82',
-      qp0_perc: '1.0 %'
+      qp0_perc: '1.0%'
     },
     {
       tv_generateur_combustion_id: '89',
@@ -25782,7 +25782,7 @@ export const tvs = {
       type_generateur: 'Chauffe-eau gaz à production instantanée avant 1980',
       critere_pn: 'Pn>10',
       rpn: '70',
-      qp0_perc: '4.0 %',
+      qp0_perc: '4.0%',
       pveil: '150'
     },
     {
@@ -25791,7 +25791,7 @@ export const tvs = {
       type_generateur: 'Chauffe-eau gaz à production instantanée 1981-1989',
       critere_pn: 'Pn>10',
       rpn: '75',
-      qp0_perc: '2.0 %',
+      qp0_perc: '2.0%',
       pveil: '120'
     },
     {
@@ -25800,7 +25800,7 @@ export const tvs = {
       type_generateur: 'Chauffe-eau gaz à production instantanée 1990-2000',
       critere_pn: 'Pn>10',
       rpn: '82',
-      qp0_perc: '1.2 %',
+      qp0_perc: '1.2%',
       pveil: '120'
     },
     {
@@ -25809,7 +25809,7 @@ export const tvs = {
       type_generateur: 'Chauffe-eau gaz à production instantanée 2001-2015',
       critere_pn: 'Pn>10',
       rpn: '84',
-      qp0_perc: '1.0 %',
+      qp0_perc: '1.0%',
       pveil: '100'
     },
     {
@@ -25818,7 +25818,7 @@ export const tvs = {
       type_generateur: 'Chauffe-eau gaz à production instantanée après  2015',
       critere_pn: 'Pn>10',
       rpn: '84',
-      qp0_perc: '0.6 %'
+      qp0_perc: '0.6%'
     }
   ],
   pertes_stockage: [

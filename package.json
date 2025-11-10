@@ -38,6 +38,7 @@
     "dioma": "^0.4.6",
     "fast-xml-parser": "^4.5.0",
     "lodash-es": "4.17.21",
+    "mathjs": "^15.1.0",
     "winston": "3.13.0"
   },
   "devDependencies": {
