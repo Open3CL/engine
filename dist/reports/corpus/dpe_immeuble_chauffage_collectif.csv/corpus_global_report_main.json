@@ -6,7 +6,7 @@
   "nbExcludedDpe": 0,
   "nbAllChecksBelowThreshold": 6083,
   "successRatio": "60.83 %",
-  "dpeRunFailed": ["2359E2821117W", "2291E3237230K", "2368E3643180A", "2291E3237200G"],
+  "dpeRunFailed": ["2291E3237230K", "2359E2821117W", "2368E3643180A", "2291E3237200G"],
   "checks": {
     "deperdition_mur": { "nbBelowThreshold": 9710, "mandatory": false, "successRatio": "97.10 %" },
     "deperdition_baie_vitree": {

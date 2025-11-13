@@ -14,11 +14,6 @@
       "mandatory": false,
       "successRatio": "99.81 %"
     },
-    "deperdition_plancher_bas": {
-      "nbBelowThreshold": 9493,
-      "mandatory": false,
-      "successRatio": "94.93 %"
-    },
     "deperdition_plancher_haut": {
       "nbBelowThreshold": 9939,
       "mandatory": false,
@@ -59,6 +54,11 @@
       "mandatory": false,
       "successRatio": "92.40 %"
     },
+    "conso_auxiliaire_generation_ch": {
+      "nbBelowThreshold": 8413,
+      "mandatory": false,
+      "successRatio": "84.13 %"
+    },
     "conso_auxiliaire_generation_ecs": {
       "nbBelowThreshold": 9622,
       "mandatory": false,
@@ -85,10 +85,10 @@
       "mandatory": true,
       "successRatio": "89.04 %"
     },
-    "conso_auxiliaire_generation_ch": {
-      "nbBelowThreshold": 8413,
+    "deperdition_plancher_bas": {
+      "nbBelowThreshold": 9493,
       "mandatory": false,
-      "successRatio": "84.13 %"
+      "successRatio": "94.93 %"
     }
   }
 }
