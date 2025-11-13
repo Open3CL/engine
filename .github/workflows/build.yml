@@ -57,6 +57,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
+          sed -i "s|import { version } from '\.\./package\.json';|import { version } from '\./package\.json';|" ./src/engine.js
           cp package.json src/
           cp README.md src/
           npm run release -- --r git@github.com:Open3CL/engine.git

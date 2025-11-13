@@ -20,9 +20,7 @@ import { Inertie } from './7_inertie.js';
 import getFicheTechnique from './ficheTechnique.js';
 import { ProductionENR } from './16.2_production_enr.js';
 
-import { createRequire } from 'module';
-const require = createRequire(import.meta.url);
-const version = require('../package.json').version;
+import { version } from '../package.json';
 
 function calc_th(map_id) {
   const map = enums.methode_application_dpe_log[map_id];
