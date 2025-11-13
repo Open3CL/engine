@@ -20,7 +20,7 @@ import { Inertie } from './7_inertie.js';
 import getFicheTechnique from './ficheTechnique.js';
 import { ProductionENR } from './16.2_production_enr.js';
 
-import { version } from '../package.json';
+const LIB_VERSION = 'OPEN3CL_VERSION';
 
 function calc_th(map_id) {
   const map = enums.methode_application_dpe_log[map_id];
@@ -35,7 +35,7 @@ const inertie = new Inertie();
 const productionENR = new ProductionENR();
 
 export function getVersion() {
-  return version;
+  return LIB_VERSION;
 }
 
 export function calcul_3cl(dpe) {
@@ -98,7 +98,7 @@ export function calcul_3cl(dpe) {
 
   add_references(logement.enveloppe);
 
-  dpe.administratif.diagnostiqueur = { version_moteur_calcul: `Open3CL ${version}` };
+  dpe.administratif.diagnostiqueur = { version_moteur_calcul: `Open3CL ${getVersion()}` };
   const env = logement.enveloppe;
   let Sh;
   let ShChauffageAndEcs;

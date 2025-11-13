@@ -22,6 +22,12 @@
       }
     ],
     "@semantic-release/release-notes-generator",
+    [
+      "@semantic-release/exec",
+      {
+        "publishCmd": "npm run version:update"
+      }
+    ],
     ["@semantic-release/npm", {
       "npmPublish": true,
       "pkgRoot": "src"
