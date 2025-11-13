@@ -18,41 +18,12 @@ src/output.js
 
 dist/reports/corpus/corpus_list_main.json
 
-!dist/reports/corpus/corpus_dpe.csv
-dist/reports/corpus/corpus_dpe.csv/*.json
-!dist/reports/corpus/corpus_dpe.csv/corpus_detailed_report_main.csv
-!dist/reports/corpus/corpus_dpe.csv/corpus_global_report_main.json
-!dist/reports/corpus/corpus_dpe.csv/corpus_dpe_list_above_threshold_main.json
+!dist/reports/corpus/*
+dist/reports/corpus/**/*.json
+dist/reports/corpus/*/*.csv
 
-!dist/reports/corpus/dpe_immeuble_chauffage_individuel.csv
-dist/reports/corpus/dpe_immeuble_chauffage_individuel.csv/*.json
-!dist/reports/corpus/dpe_immeuble_chauffage_individuel.csv/corpus_detailed_report_main.csv
-!dist/reports/corpus/dpe_immeuble_chauffage_individuel.csv/corpus_global_report_main.json
-!dist/reports/corpus/dpe_immeuble_chauffage_individuel.csv/corpus_dpe_list_above_threshold_main.json
-
-!dist/reports/corpus/dpe_immeuble_chauffage_collectif.csv
-dist/reports/corpus/dpe_immeuble_chauffage_collectif.csv/*.json
-!dist/reports/corpus/dpe_immeuble_chauffage_collectif.csv/corpus_detailed_report_main.csv
-!dist/reports/corpus/dpe_immeuble_chauffage_collectif.csv/corpus_global_report_main.json
-!dist/reports/corpus/dpe_immeuble_chauffage_collectif.csv/corpus_dpe_list_above_threshold_main.json
-
-!dist/reports/corpus/dpe_immeuble_chauffage_mixte.csv
-dist/reports/corpus/dpe_immeuble_chauffage_mixte.csv/*.json
-!dist/reports/corpus/dpe_immeuble_chauffage_mixte.csv/corpus_detailed_report_main.csv
-!dist/reports/corpus/dpe_immeuble_chauffage_mixte.csv/corpus_global_report_main.json
-!dist/reports/corpus/dpe_immeuble_chauffage_mixte.csv/corpus_dpe_list_above_threshold_main.json
-
-!dist/reports/corpus/dpe_logement_individuel_2025.csv
-dist/reports/corpus/dpe_logement_individuel_2025.csv/*.json
-!dist/reports/corpus/dpe_logement_individuel_2025.csv/corpus_detailed_report_main.csv
-!dist/reports/corpus/dpe_logement_individuel_2025.csv/corpus_global_report_main.json
-!dist/reports/corpus/dpe_logement_individuel_2025.csv/corpus_dpe_list_above_threshold_main.json
-
-!dist/reports/corpus/dpe_maison_individuelle_2025.csv
-dist/reports/corpus/dpe_maison_individuelle_2025.csv/*.json
-!dist/reports/corpus/dpe_maison_individuelle_2025.csv/corpus_detailed_report_main.csv
-!dist/reports/corpus/dpe_maison_individuelle_2025.csv/corpus_global_report_main.json
-!dist/reports/corpus/dpe_maison_individuelle_2025.csv/corpus_dpe_list_above_threshold_main.json
-
+!dist/reports/corpus/**/corpus_detailed_report_main.csv
+!dist/reports/corpus/**/corpus_global_report_main.json
+!dist/reports/corpus/**/corpus_dpe_list_above_threshold_main.json
 
 *.db
