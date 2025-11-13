@@ -25,7 +25,7 @@
     [
       "@semantic-release/exec",
       {
-        "publishCmd": "npm run version:update"
+        "publishCmd": "npm run version:update ${nextRelease.version}"
       }
     ],
     ["@semantic-release/npm", {

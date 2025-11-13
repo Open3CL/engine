@@ -1,4 +1,4 @@
-const nextVersion = process.env.SEMANTIC_RELEASE_NEXT_RELEASE_VERSION;
+const nextVersion = process.argv[2];
 
 import fs from 'node:fs';
 

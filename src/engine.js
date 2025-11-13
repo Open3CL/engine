@@ -20,7 +20,7 @@ import { Inertie } from './7_inertie.js';
 import getFicheTechnique from './ficheTechnique.js';
 import { ProductionENR } from './16.2_production_enr.js';
 
-const LIB_VERSION = 'OPEN3CL_VERSION';
+const LIB_VERSION = '1.3.17';
 
 function calc_th(map_id) {
   const map = enums.methode_application_dpe_log[map_id];
