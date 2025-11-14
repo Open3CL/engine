@@ -165,8 +165,9 @@ const runEngineAndVerifyOutput = (inputDpe, dpeOutputs) => {
   });
 
   DPE_PROPERTIES_TO_VALIDATE.forEach((propertyPath) => {
-    // Si plusieurs champs à valider, au moins un d'entre eux doit être valide
     const propertySegments = propertyPath.split('#');
+
+    // Si plusieurs champs à valider, au moins un d'entre eux doit être valide
     const isDiffBelowThreshold = propertySegments.some((property) => {
       const diff = getDpeOutputValueDiff(inputDpe, outputDpe, property, null);
       return diff <= DIFF_VALUE_THRESHOLD;

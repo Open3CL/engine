@@ -44,7 +44,6 @@ function tv_umur0(di, de, du) {
 
         if (rowUmur0 && rowUmur0.epaisseur_structure) {
           matcher.epaisseur_structure = rowUmur0.epaisseur_structure;
-
           console.error(
             `Aucune valeur trouvée pour epaisseur_structure (ni saisie, ni présente dans la description) pour le mur '${de.description}'.
              Récupération et utilisation de la valeur ${rowUmur0.epaisseur_structure} depuis tv_umur0_id = ${de.tv_umur0_id}`
@@ -53,7 +52,24 @@ function tv_umur0(di, de, du) {
       }
     }
   }
-  const row = tv('umur0', matcher);
+  let row = tv('umur0', matcher);
+
+  if (bug_for_bug_compat) {
+    if (
+      Number(du.tv_umur0_id_avant) !== Number(row.tv_umur0_id) &&
+      matcher.epaisseur_structure > 80
+    ) {
+      console.error(
+        'Mauvais valeur de umur0 trouvé pour une epaisseur > 80, la valeur va être recalculée avec une epaisseur / 10. Il arrive que la valeur soit en millimètres dans le dpe'
+      );
+      matcher.epaisseur_structure /= 10;
+      row = tv('umur0', matcher);
+      if (Number(du.tv_umur0_id_avant) !== Number(row.tv_umur0_id)) {
+        row = undefined;
+      }
+    }
+  }
+
   if (row) {
     di.umur0 = Number(row.umur0);
     de.tv_umur0_id = Number(row.tv_umur0_id);
@@ -202,6 +218,7 @@ export default function calc_mur(mur, zc, pc_id, effetJoule) {
   const di = {};
   du.umur0_avant = mur.donnee_intermediaire?.umur0;
   du.umur_avant = mur.donnee_intermediaire?.umur;
+  du.tv_umur0_id_avant = mur.donnee_entree.tv_umur0_id;
 
   requestInput(de, du, 'surface_paroi_totale', 'float');
   requestInput(de, du, 'orientation');
