@@ -80,15 +80,15 @@
       "mandatory": true,
       "successRatio": "93.33 %"
     },
-    "emission_ges_5_usages_m2": {
-      "nbBelowThreshold": 8919,
-      "mandatory": true,
-      "successRatio": "89.19 %"
-    },
     "emission_ges_5_usages": {
       "nbBelowThreshold": 9188,
       "mandatory": true,
       "successRatio": "91.88 %"
+    },
+    "emission_ges_5_usages_m2": {
+      "nbBelowThreshold": 8919,
+      "mandatory": true,
+      "successRatio": "89.19 %"
     }
   }
 }

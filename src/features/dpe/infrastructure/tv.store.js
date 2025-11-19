@@ -1,4 +1,4 @@
-import { tvs as tv } from '../../../tv-v2.js';
+import { tvs as tv } from '../../../tv.js';
 import { getRange } from '../../../utils.js';
 import { logger } from '../../../core/util/logger/log-service.js';
 import { TypeHabitation } from '../domain/models/type-habitation.model.js';
