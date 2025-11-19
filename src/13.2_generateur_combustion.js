@@ -13,12 +13,10 @@ function criterePn(Pn, matcher) {
   if (critere_list.length === 0) {
     ret = null;
   } else {
-    // change ≤ to <= in all critere_list
-    critere_list = critere_list.map((c) => c.replace('≤', '<='));
     // find critere in critere_list that is true when executed
     for (const critere of critere_list) {
       if (eval(`let Pn=${Pn} ;${convertExpression(critere)}`)) {
-        ret = critere.replace('<=', '≤');
+        ret = critere;
         break;
       }
     }
@@ -129,7 +127,7 @@ export function tv_generateur_combustion(dpe, di, de, type, GV, tbase, methodeSa
       if (
         rowDpe &&
         (!rowDpe.enum_type_generateur_ecs_id ||
-          !rowDpe.enum_type_generateur_ecs_id.split('|').includes(de.enum_type_generateur_ecs_id))
+          !rowDpe.enum_type_generateur_ecs_id.includes(de.enum_type_generateur_ecs_id))
       ) {
         console.error(`
           Le DPE utilise les caractéristiques liées à tv_generateur_combustion_id = '${de.tv_generateur_combustion_id}' qui ne correspond pas au 

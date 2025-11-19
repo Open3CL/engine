@@ -31,10 +31,9 @@ export class ChTvStore extends TvStore {
     return [
       ...new Set(
         tv[tvType].flatMap((v) =>
-          (v.enum_type_generateur_ch_id
-            ? v.enum_type_generateur_ch_id.split('|').map(Number)
-            : []
-          ).filter(Number.isFinite)
+          (v.enum_type_generateur_ch_id ? v.enum_type_generateur_ch_id.map(Number) : []).filter(
+            Number.isFinite
+          )
         )
       )
     ].sort((a, b) => a - b);
@@ -50,9 +49,8 @@ export class ChTvStore extends TvStore {
     return tv['generateur_combustion'].find(
       (v) =>
         v.enum_type_generateur_ch_id &&
-        v.enum_type_generateur_ch_id.split('|').includes(enumTypeGenerateurId) &&
-        (!v.critere_pn ||
-          eval(`let Pn=${pn} ;${convertExpression(v.critere_pn.replace('≤', '<='))}`))
+        v.enum_type_generateur_ch_id.includes(enumTypeGenerateurId) &&
+        (!v.critere_pn || eval(`let Pn=${pn} ;${convertExpression(v.critere_pn)}`))
     );
   }
 
@@ -77,7 +75,7 @@ export class ChTvStore extends TvStore {
     const temperature = tv[`temp_fonc_${pourcentageFonctionnement}`].find(
       (v) =>
         (!v.enum_type_generateur_ch_id ||
-          v.enum_type_generateur_ch_id.split('|').includes(enumTypeGenerateurId)) &&
+          v.enum_type_generateur_ch_id.includes(enumTypeGenerateurId)) &&
         v.temp_distribution_ch.toLowerCase() === temperatureDistribution?.toLowerCase() &&
         v.periode_emetteurs.toLowerCase() === periodeEmetteur?.toLowerCase()
     );

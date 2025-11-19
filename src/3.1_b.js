@@ -60,14 +60,14 @@ export default function b(di, de, du, zc_id) {
 
       if (de.surface_aiu === de.surface_aue) {
         const defaultAiuAueMin = '0,75 <';
-        const defaultAiuAueMax = '≤ 1,00';
+        const defaultAiuAueMax = '<= 1,00';
 
         matcher.aiu_aue_min = defaultAiuAueMin;
         matcher.aiu_aue_max = defaultAiuAueMax;
 
         /**
-         * Certains DPE utilisent seulement aiu_aue_max = '≤ 0,25' alors que le ratio surface_aiu / surface_aue est 1 et donc
-         * on devrait avoir aiu_aue_min: '0,75 <' et aiu_aue_max: '≤ 1,00',
+         * Certains DPE utilisent seulement aiu_aue_max = '<= 0,25' alors que le ratio surface_aiu / surface_aue est 1 et donc
+         * on devrait avoir aiu_aue_min: '0,75 <' et aiu_aue_max: '<= 1,00',
          */
         if (bug_for_bug_compat && de.tv_coef_reduction_deperdition_id) {
           const rowCoeffReductionpertes = tv('coef_reduction_deperdition', {
@@ -83,7 +83,7 @@ export default function b(di, de, du, zc_id) {
               matcher.aiu_aue_max !== defaultAiuAueMax
             ) {
               console.error(
-                `Le calcul de b pour ${de.description} devrait se faire avec aiu_aue_min: '0,75 <' et aiu_aue_max: '≤ 1,00'
+                `Le calcul de b pour ${de.description} devrait se faire avec aiu_aue_min: '0,75 <' et aiu_aue_max: '<= 1,00'
                 car surface_aiu === surface_aue. aiu_aue_min = ${matcher.aiu_aue_min} et aiu_aue_max = ${matcher.aiu_aue_max}
                 sont cependant utilisés par le DPE. Prise en compte de ces valeurs pour la suite des calculs`
               );
@@ -97,35 +97,29 @@ export default function b(di, de, du, zc_id) {
           // et prise en compte de l'égalité
           if (ranges[0] === de.surface_aiu / de.surface_aue) {
             matcher.aiu_aue_max =
-              '≤ ' +
-              ranges[0]
-                .toLocaleString(undefined, {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                  useGrouping: false
-                })
-                .replace('.', ',');
+              '<= ' +
+              ranges[0].toLocaleString(undefined, {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+                useGrouping: false
+              });
           } else {
             matcher.aiu_aue_min =
-              ranges[0]
-                .toLocaleString(undefined, {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                  useGrouping: false
-                })
-                .replace('.', ',') + ' <';
+              ranges[0].toLocaleString(undefined, {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+                useGrouping: false
+              }) + ' <';
           }
         }
         if (ranges[1]) {
           matcher.aiu_aue_max =
-            '≤ ' +
-            ranges[1]
-              .toLocaleString(undefined, {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-                useGrouping: false
-              })
-              .replace('.', ',');
+            '<= ' +
+            ranges[1].toLocaleString(undefined, {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+              useGrouping: false
+            });
         }
       }
     }

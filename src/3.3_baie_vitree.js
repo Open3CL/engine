@@ -49,10 +49,8 @@ function tv_uw(di, de) {
     const ugValues = tvs.uw
       .filter((row) => {
         return (
-          row.enum_type_baie_id.split('|').includes(enum_type_baie_id) &&
-          row.enum_type_materiaux_menuiserie_id
-            .split('|')
-            .includes(enum_type_materiaux_menuiserie_id)
+          row.enum_type_baie_id.includes(enum_type_baie_id) &&
+          row.enum_type_materiaux_menuiserie_id.includes(enum_type_materiaux_menuiserie_id)
         );
       })
       .map((row) => parseFloat(row.ug));

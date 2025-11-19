@@ -32,14 +32,14 @@ export class EcsTvStore extends TvStore {
    */
   getPertesStockage(enumTypeGenerateurEcsId, volumeStockage) {
     let volumeBallon;
-    if (volumeStockage <= 100) volumeBallon = '≤ 100';
-    else if (volumeStockage <= 200) volumeBallon = '100 <   ≤ 200';
-    else if (volumeStockage <= 300) volumeBallon = '200 <   ≤ 300';
+    if (volumeStockage <= 100) volumeBallon = '<= 100';
+    else if (volumeStockage <= 200) volumeBallon = '100 <   <= 200';
+    else if (volumeStockage <= 300) volumeBallon = '200 <   <= 300';
     else volumeBallon = '> 300';
 
     const cr = tv['pertes_stockage'].find(
       (v) =>
-        v.enum_type_generateur_ecs_id.split('|').includes(enumTypeGenerateurEcsId) &&
+        v.enum_type_generateur_ecs_id.includes(enumTypeGenerateurEcsId) &&
         v.volume_ballon === volumeBallon
     )?.cr;
 
@@ -59,9 +59,7 @@ export class EcsTvStore extends TvStore {
    */
   getElectriqueEcsGenerateurs() {
     return [
-      ...new Set(
-        tv['pertes_stockage'].flatMap((v) => v.enum_type_generateur_ecs_id.split('|').map(Number))
-      )
+      ...new Set(tv['pertes_stockage'].flatMap((v) => v.enum_type_generateur_ecs_id.map(Number)))
     ];
   }
 }

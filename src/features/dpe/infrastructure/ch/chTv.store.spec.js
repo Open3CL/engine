@@ -44,7 +44,7 @@ describe('Lecture des tables de valeurs', () => {
       enum_type_generateur_ch_id: '84',
       enum_type_generateur_ecs_id: '44',
       type_generateur: 'Chaudière fioul à condensation après 2015',
-      critere_pn: '70<Pn≤400',
+      critere_pn: '70<Pn<=400',
       pn: 'Pn',
       rpn: '94 + logPn',
       rpint: '100 + logPn',

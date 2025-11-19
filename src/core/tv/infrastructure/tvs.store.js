@@ -15,9 +15,9 @@ export class TvsStore {
    */
   getRendementDistributionCh(enumTypeEmissionDistributionId, reseauDistributionIsole) {
     return RENDEMENT_DISTRIBUTION_CH_LIST.find((rendement) => {
-      const hasTypeEmissionId = rendement.enum_type_emission_distribution_id
-        .split('|')
-        .includes(enumTypeEmissionDistributionId);
+      const hasTypeEmissionId = rendement.enum_type_emission_distribution_id.includes(
+        enumTypeEmissionDistributionId
+      );
 
       if (hasTypeEmissionId && reseauDistributionIsole !== undefined) {
         return rendement.reseau_distribution_isole === reseauDistributionIsole.toString();

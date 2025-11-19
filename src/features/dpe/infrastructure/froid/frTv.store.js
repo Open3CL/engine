@@ -49,7 +49,7 @@ export class FrTvStore extends TvStore {
   getEer(zoneClimatiqueId, periodeInstallationId) {
     const eer = tv['seer'].find(
       (v) =>
-        v.enum_zone_climatique_id.split('|').includes(zoneClimatiqueId) &&
+        v.enum_zone_climatique_id.includes(zoneClimatiqueId) &&
         parseInt(v.enum_periode_installation_fr_id) === periodeInstallationId
     )?.eer;
 
