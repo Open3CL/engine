@@ -36,6 +36,7 @@ function tv_k(pt_di, di, de, du, pc_id, logement) {
   const mur_list = enveloppe.mur_collection.mur || [];
   const pb_list = enveloppe.plancher_bas_collection.plancher_bas || [];
   const ph_list = enveloppe.plancher_haut_collection.plancher_haut || [];
+  /** @type {BaieVitreeItem[]} **/
   const bv_list = enveloppe.baie_vitree_collection.baie_vitree || [];
   const porte_list = enveloppe.porte_collection.porte || [];
 
@@ -114,11 +115,29 @@ function tv_k(pt_di, di, de, du, pc_id, logement) {
     }
   }
 
-  const mur = mur_list.find(
-    (mur) =>
+  let mur = mur_list.find((mur, murIndex) => {
+    if (
       compareReferences(mur.donnee_entree.reference, de.reference_1) ||
       compareReferences(mur.donnee_entree.reference, de.reference_2)
-  );
+    ) {
+      return true;
+    }
+    if (bug_for_bug_compat) {
+      /**
+       * Si on ne trouve pas de mur associé au pont thermique, on vérifie si on trouve une baie vitrée associée
+       * au pont thermique et si cette dernière à une reference_paroi qui correspond à un mur existant.
+       */
+      /** @type {BaieVitreeItem} **/
+      const bvPt = bv_list.find((bv) => bv.donnee_entree.reference === de.reference_1);
+      if (bvPt && Number(bvPt.donnee_entree.reference_paroi) === murIndex) {
+        console.error(
+          `Aucun mur trouvé pour le pont thermique, le mur à été retrouvé en recherchant le référence du pont thermique sur les baie vitrée et la variable reference_paroi`
+        );
+        return true;
+      }
+    }
+    return false;
+  });
 
   const matcher = {
     enum_type_liaison_id: de.enum_type_liaison_id
