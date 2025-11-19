@@ -156,13 +156,15 @@ le seuil des **5%** entre le dpe d'origine et le dpe proposé par la librairie O
 
 ### Liste des corpus
 
-Il existe actuellement 7 corpus (avec 10000 dpe analysés dans chaque corpus) :
+Il existe actuellement 8 corpus (avec 10000 dpe analysés dans chaque corpus) :
 
 - `corpus.csv`: Corpus généraliste
 - `dpe_logement_individuel_2025.csv`: Corpus avec uniquement des dpe individuels réalisés en 2025
 - `dpe_maison_individuelle_2025.csv`: Corpus avec uniquement des dpe maison individuelle réalisés en 2025
 - `dpe_appartement_individuel_chauffage_individuel_2025.csv`: Corpus avec uniquement des dpe appartement avec chauffage
   individuel réalisés en 2025
+- `dpe_appartement_individuel_chauffage_collectif_2025.csv`: Corpus avec uniquement des dpe appartement avec chauffage
+  collectif réalisés en 2025
 - `dpe_immeuble_chauffage_individuel.csv`: Corpus avec uniquement des dpe immeuble pour des logements avec chauffage
   individuel
 - `dpe_immeuble_chauffage_collectif.csv`: Corpus avec uniquement des dpe immeuble pour des logements avec chauffage
@@ -254,6 +256,7 @@ Résultats des tests de corpus avec le mode de compatibilité activé.
 | 1.3.21               | dpe_logement_individuel_2025.csv                         | 8504 (+45)                     | 85% (+1%)         |             | <a href="https://open3cl.github.io/engine/reports/corpus?corpus_file=dpe_logement_individuel_2025.csv" target="_blank">Voir le détail</a>                         |
 | 1.3.21               | dpe_maison_individuelle_2025.csv                         | 8652 (+14)                     | 86%               |             | <a href="https://open3cl.github.io/engine/reports/corpus?corpus_file=dpe_maison_individuelle_2025.csv" target="_blank">Voir le détail</a>                         |
 | 1.3.21               | dpe_appartement_individuel_chauffage_individuel_2025.csv | 8578 (+17)                     | 86%               |             | <a href="https://open3cl.github.io/engine/reports/corpus?corpus_file=dpe_appartement_individuel_chauffage_individuel_2025.csv" target="_blank">Voir le détail</a> |
+| 1.3.21               | dpe_appartement_individuel_chauffage_collectif_2025.csv  | 6681                           | 67%               |             | <a href="https://open3cl.github.io/engine/reports/corpus?corpus_file=dpe_appartement_individuel_chauffage_collectif_2025.csv" target="_blank">Voir le détail</a>  |
 | 1.3.21               | dpe_immeuble_chauffage_individuel.csv                    | 7144 (+38)                     | 71%               |             | <a href="https://open3cl.github.io/engine/reports/corpus?corpus_file=dpe_immeuble_chauffage_individuel.csv" target="_blank">Voir le détail</a>                    |
 | 1.3.21               | dpe_immeuble_chauffage_collectif.csv                     | 6144 (+61)                     | 61%               |             | <a href="https://open3cl.github.io/engine/reports/corpus?corpus_file=dpe_immeuble_chauffage_collectif.csv" target="_blank">Voir le détail</a>                     |
 | 1.3.21               | dpe_immeuble_chauffage_mixte.csv                         | 4760 (+9)                      | 47%               |             | <a href="https://open3cl.github.io/engine/reports/corpus?corpus_file=dpe_immeuble_chauffage_mixte.csv" target="_blank">Voir le détail</a>                         |

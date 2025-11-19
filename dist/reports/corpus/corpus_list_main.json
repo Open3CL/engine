@@ -6,7 +6,8 @@
     "dpe_immeuble_chauffage_mixte.csv",
     "dpe_logement_individuel_2025.csv",
     "dpe_maison_individuelle_2025.csv",
-    "dpe_appartement_individuel_chauffage_individuel_2025.csv"
+    "dpe_appartement_individuel_chauffage_individuel_2025.csv",
+    "dpe_appartement_individuel_chauffage_collectif_2025.csv"
   ],
   "branches": ["main"]
 }
