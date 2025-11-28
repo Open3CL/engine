@@ -215,11 +215,16 @@ export class CorpusRunner {
           /** @type {any[][]} **/
           const results = await Promise.all(
             chunks.map((chunk) => {
-              return this.#piscina.run({ chunk, dpesToExclude, dpesFilePath }).then((data) => {
-                nbAnalyzedDpe += chunks.length;
-                this.#corpusBar.increment(chunk.length, { action: 'analysés' });
-                return data;
-              });
+              return this.#piscina
+                .run({ chunk, dpesToExclude, dpesFilePath })
+                .then((data) => {
+                  nbAnalyzedDpe += chunks.length;
+                  this.#corpusBar.increment(chunk.length, { action: 'analysés' });
+                  return data;
+                })
+                .catch((error) => {
+                  console.error(error);
+                });
             })
           );
 
