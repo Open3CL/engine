@@ -95,7 +95,7 @@ interface Enveloppe {
   baie_vitree_collection: Baie_vitree_collection;
   porte_collection: Porte_collection;
   ets_collection: string;
-  pont_thermique_collection: string;
+  pont_thermique_collection: PontThermique_collection;
 }
 interface Inertie {
   inertie_plancher_bas_lourd: number;
@@ -214,6 +214,7 @@ interface Donnee_entree {
   enum_type_generateur_ch_id?: string;
   tv_rendement_generation_id?: number;
   ratio_virtualisation?: number;
+  tv_pont_thermique_id?: number;
 }
 interface Donnee_intermediaire {
   b?: number;
@@ -253,6 +254,7 @@ interface Donnee_intermediaire {
   rendement_regulation?: number;
   qp0?: number;
   pn?: number;
+  k?: number;
 }
 interface Plancher_bas_collection {
   plancher_bas: PlancherBasItem[];
@@ -279,6 +281,13 @@ interface Porte_collection {
   porte: PorteItem[];
 }
 interface PorteItem {
+  donnee_entree: Donnee_entree;
+  donnee_intermediaire: Donnee_intermediaire;
+}
+interface PontThermique_collection {
+  pont_thermique: PontThermiqueItem[];
+}
+interface PontThermiqueItem {
   donnee_entree: Donnee_entree;
   donnee_intermediaire: Donnee_intermediaire;
 }
