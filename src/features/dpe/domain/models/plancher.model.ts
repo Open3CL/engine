@@ -58,5 +58,6 @@ export interface PlancherHautDE extends PlancherDE {
 }
 
 export interface PlancherHautDI extends PlancherDI {
-  b: number;
+  uph: number;
+  uph0: number;
 }
