@@ -52,6 +52,7 @@ jobs:
           npm run qa:duplication
 
       - name: Build pages
+        if: github.ref == 'refs/heads/main'
         env:
           PUBLIC_REPORTS_URL: https://open3cl.github.io/engine/reports/corpus
         run: |
