@@ -12,6 +12,7 @@
     "access": "public"
   },
   "scripts": {
+    "http-server": "http-server",
     "test": "vitest run",
     "test:ci": "vitest run --coverage",
     "test:corpus": "node test/corpus/run_all_corpus_checks.js",
@@ -25,7 +26,8 @@
     "release:dry": "semantic-release --dry-run",
     "prepare": "husky install",
     "assets:sync": "node scripts/synchronize_assets.js",
-    "version:update": "node scripts/update_version.js"
+    "version:update": "node scripts/update_version.js",
+    "reports:preview": "npm run http-server dist/reports/corpus -o"
   },
   "repository": {
     "type": "git",
@@ -38,6 +40,7 @@
   "dependencies": {
     "dioma": "^0.4.6",
     "fast-xml-parser": "^4.5.0",
+    "http-server": "^14.1.1",
     "lodash-es": "4.17.21",
     "mathjs": "^15.1.0",
     "winston": "3.13.0"

@@ -51,6 +51,17 @@ jobs:
           npm run qa:lint
           npm run qa:duplication
 
+      - name: Build pages
+        if: github.ref == 'refs/heads/main'
+        env:
+          PUBLIC_REPORTS_URL: https://open3cl.github.io/engine/reports/corpus
+        run: |
+          cd pages/open3CL
+          npm ci
+          npm run build
+          cd ../../
+          cp -R pages/open3CL/build dist
+
       - name: Release
         if: github.ref == 'refs/heads/main'
         env:
