@@ -3,9 +3,10 @@
   import { Accordion, AccordionItem, Badge, Dropzone, Label, Spinner,Button } from 'flowbite-svelte';
   import { calcul_3cl } from '@open3cl/engine';
   import { set_bug_for_bug_compat, set_tv_match_optimized_version } from '@open3cl/engine/utils.js';
+  import enums from '@open3cl/engine/enums.js';
   import { DpeXmlParserService } from '$services/dpe-xml-parser.service.js';
   import JsonDiff from '$components/JsonDiff.svelte';
-  import { setAnalyzedDpe } from '$lib/runes/dpe-analyzed.svelte.js';
+  import { getAnalyzedDpe, setAnalyzedDpe } from '$lib/runes/dpe-analyzed.svelte.js';
 
   set_tv_match_optimized_version();
 
@@ -16,6 +17,8 @@
   let outputJsonEditor;
 
   let filesInDropzone = $state(null);
+
+  let summaryDpeInfos = $state([]);
 
   /**
    * Ademe xml data (json format) input of the 3CL engine
@@ -72,8 +75,9 @@
    */
   const refreshOutputJsonEditor = (updatedContent) => {
     const jsonContent = JSON.parse(updatedContent.text);
-    setAnalyzedDpe({code: jsonContent.numero_dpe});
+    setAnalyzedDpe(jsonContent);
     outputDpeData = {text: JSON.stringify(calcul_3cl(jsonContent), null, 2)};
+    summarizeDpeInfos();
     beautifyJsonEditor(inputJsonEditor);
     beautifyJsonEditor(outputJsonEditor);
   };
@@ -94,7 +98,58 @@
   const clearAnalyzedDpe = (event) => {
     event.preventDefault();
     event.stopImmediatePropagation();
+    setAnalyzedDpe({numero_dpe: undefined});
+    summaryDpeInfos = [];
     filesInDropzone = null
+  }
+
+  const summarizeDpeInfos = () => {
+    const dpe = getAnalyzedDpe();
+    /** @type {string} **/
+    const methodeApplication = enums['methode_application_dpe_log'][dpe.logement.caracteristique_generale.enum_methode_application_dpe_log_id];
+    console.log(methodeApplication);
+    summaryDpeInfos = [];
+
+    if (methodeApplication.includes('immeuble')) {
+      summaryDpeInfos.push({label: 'Dpe immeuble', color: 'lime'});
+    }
+
+    if (methodeApplication.includes('individuel')) {
+      if (methodeApplication.includes('maison')) {
+        summaryDpeInfos.push({label: 'Maison individuelle', color: 'teal'});
+      }
+      if (methodeApplication.includes('appartement')) {
+        summaryDpeInfos.push({label: 'Appartement individuel', color: 'teal'});
+      }
+    }
+
+    if (methodeApplication.includes('chauffage')) {
+      if (methodeApplication.includes('chauffage mixte')) {
+        summaryDpeInfos.push({label: 'Chauffage mixte', color: 'indigo'});
+      }
+      if (methodeApplication.includes('chauffage collectif')) {
+        summaryDpeInfos.push({label: 'Chauffage collectif', color: 'indigo'});
+      }
+      if (methodeApplication.includes('chauffage individuel')) {
+        summaryDpeInfos.push({label: 'Chauffage individuel', color: 'indigo'});
+      }
+    }
+    summaryDpeInfos.push({label: `${dpe.logement.installation_chauffage_collection.installation_chauffage.length} installation(s) chauffage`, color: 'indigo'});
+
+    if (methodeApplication.includes('ecs')) {
+      if (methodeApplication.includes('ecs mixte')) {
+        summaryDpeInfos.push({label: 'Ecs mixte', color: 'fuchsia'});
+      }
+      if (methodeApplication.includes('ecs collectif')) {
+        summaryDpeInfos.push({label: 'Ecs collectif', color: 'fuchsia'});
+      }
+      if (methodeApplication.includes('ecs individuel')) {
+        summaryDpeInfos.push({label: 'Ecs individuel', color: 'fuchsia'});
+      }
+    }
+    summaryDpeInfos.push({label: `${dpe.logement.installation_ecs_collection.installation_ecs.length} installation(s) ecs`, color: 'fuchsia'});
+
+    summaryDpeInfos.push({label: `${dpe.logement.ventilation_collection.ventilation.length} installation(s) ventilation`, color: 'sky'});
   }
 
 </script>
@@ -103,8 +158,8 @@
     <AccordionItem open>
         {#snippet header()}
             <div class="flex justify-center gap-5 items-center">
-                {#if inputDpe?.numero_dpe}
-                    <div>Données dpe <Badge large color="green">{inputDpe?.numero_dpe}</Badge></div>
+                {#if getAnalyzedDpe().numero_dpe}
+                    <div>Données dpe <Badge large color="green">{getAnalyzedDpe().numero_dpe}</Badge></div>
                     <Button size="xs" onclick={clearAnalyzedDpe}>Analyser un autre DPE</Button>
                 {:else}
                     Données dpe
@@ -112,7 +167,7 @@
             </div>
         {/snippet}
         <div>
-            {#if (filesInDropzone && filesInDropzone[0]) && !inputDpe?.numero_dpe}
+            {#if (filesInDropzone && filesInDropzone[0]) && !getAnalyzedDpe().numero_dpe}
                 <div class="pb-3">
                     <Spinner type="orbit" color="rose" size="{6}" />
                     <span class="text-sm">Analyse du dpe en cours...</span>
@@ -129,11 +184,18 @@
                     </p>
                     <p class="text-xs text-gray-500 dark:text-gray-400">Format XML uniquement</p>
                 </Dropzone>
+            {:else}
+                <div class="flex gap-3">
+                    {#each summaryDpeInfos as info}
+                        <Badge large color="{info.color}">{info.label}</Badge>
+                    {/each}
+                </div>
+
             {/if}
         </div>
         <div class="grid gap-2 p-3 md:grid-cols-2">
             <div>
-                <Label
+                <Label class="pb-1"
                 >Données d'entrée
                     <Badge color="pink">Entrée</Badge>
                 </Label>
@@ -141,7 +203,7 @@
             </div>
             <div>
                 <div class="flex justify-between">
-                    <Label
+                    <Label class="pb-1"
                     >Données de sortie du moteur Open 3CL
                         <Badge color="green">Sortie</Badge>
                     </Label>

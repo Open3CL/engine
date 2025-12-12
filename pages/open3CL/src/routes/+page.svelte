@@ -20,10 +20,10 @@
             classes={{ nonactive: "p-2", active: "p-2" }}
     >
         <SidebarGroup>
-            <SidebarItem active="{menuSelected === 'analysis'}" onclick="{() => selectMenu('analysis')}" label="{getAnalyzedDpe().code ? 'Dpe analysé'  : 'Analyser un Dpe'}">
+            <SidebarItem active="{menuSelected === 'analysis'}" onclick="{() => selectMenu('analysis')}" label="{getAnalyzedDpe().numero_dpe ? 'Dpe analysé'  : 'Analyser un Dpe'}">
                 {#snippet subtext()}
-                    {#if getAnalyzedDpe().code}
-                        <Badge color="green" class="p-1 ml-2">{getAnalyzedDpe().code}</Badge>
+                    {#if getAnalyzedDpe().numero_dpe}
+                        <Badge color="green" class="p-1 ml-2">{getAnalyzedDpe().numero_dpe}</Badge>
                     {/if}
                 {/snippet}
             </SidebarItem>

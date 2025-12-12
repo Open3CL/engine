@@ -1,5 +1,8 @@
-let analyzedDpe = $state({ code: undefined });
+let analyzedDpe = $state({ numero_dpe: undefined });
 
+/**
+ * @return {FullDpe}
+ */
 export function getAnalyzedDpe() {
   return analyzedDpe;
 }

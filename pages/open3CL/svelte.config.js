@@ -18,7 +18,7 @@ const config = {
       $core: 'src/core'
     },
     paths: {
-      base: process.env.SVELTE_BASE_PATH || '/engine/build'
+      base: process.env.SVELTE_BASE_PATH || ''
     }
   }
 };
