@@ -102,7 +102,7 @@ describe('Calcul de déperdition des murs', () => {
       }
     );
 
-    test("Mur  1 Sud, Est, Ouest (p1) - Mur en blocs de béton pleins d'épaisseur <= 20 cm avec isolation intérieure (10 cm) donnant sur l'extérieur", () => {
+    test("Mur  1 Sud, Est, Ouest (p1) - Mur en blocs de béton pleins d'épaisseur ≤ 20 cm avec isolation intérieure (10 cm) donnant sur l'extérieur", () => {
       /** @type {Contexte} */
       const ctx = {
         effetJoule: false,

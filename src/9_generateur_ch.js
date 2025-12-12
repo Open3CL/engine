@@ -116,7 +116,7 @@ export function checkForGeneratorType(dpe, de, di, du) {
 
       if (row) {
         // On prend par défaut le premier type de générateur pour effectuer les calculs de rendement
-        const typeGenerateurCh = row.enum_type_generateur_ch_id;
+        const typeGenerateurCh = row.enum_type_generateur_ch_id?.split('|');
 
         if (typeGenerateurCh && typeGenerateurCh.length) {
           de.enum_type_generateur_ch_id = typeGenerateurCh[0];
@@ -133,7 +133,7 @@ export function checkForGeneratorType(dpe, de, di, du) {
 
       if (row) {
         // On prend par défaut le premier type de générateur pour effectuer les calculs de rendement
-        const typeGenerateurCh = row.enum_type_generateur_ch_id;
+        const typeGenerateurCh = row.enum_type_generateur_ch_id?.split('|');
 
         if (typeGenerateurCh && typeGenerateurCh.length) {
           de.enum_type_generateur_ch_id = typeGenerateurCh[0];

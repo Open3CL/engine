@@ -19,9 +19,9 @@ import getFicheTechnique from './ficheTechnique.js';
 function tv_pertes_stockage(di, de, VsCollectif) {
   let vb;
   const Vs = VsCollectif ? VsCollectif : de.volume_stockage;
-  if (Vs <= 100) vb = '<= 100';
-  else if (Vs <= 200) vb = '100 <   <= 200';
-  else if (Vs <= 300) vb = '200 <   <= 300';
+  if (Vs <= 100) vb = '≤ 100';
+  else if (Vs <= 200) vb = '100 <   ≤ 200';
+  else if (Vs <= 300) vb = '200 <   ≤ 300';
   else vb = '> 300';
 
   let matcher = {
@@ -244,7 +244,7 @@ export default function calc_gen_ecs(dpe, gen_ecs, ecs_di, ecs_de, GV, ca_id, zc
 
         if (row) {
           // On prend par défaut le premier type de générateur pour effectuer les calculs de rendement
-          const typeGenerateurEcs = row.enum_type_generateur_ecs_id;
+          const typeGenerateurEcs = row.enum_type_generateur_ecs_id?.split('|');
 
           if (typeGenerateurEcs && typeGenerateurEcs.length) {
             de.enum_type_generateur_ecs_id = typeGenerateurEcs[0];

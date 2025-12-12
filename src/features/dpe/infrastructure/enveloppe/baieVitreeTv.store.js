@@ -21,10 +21,10 @@ export class BaieVitreeTvStore extends TvStore {
   getUg(enumTypeVitrageId, enumTypeGazLameId, enumInclinaisonVitrageId, vitrageVir, epaisseurLame) {
     const ug = tv['ug'].find(
       (v) =>
-        v.enum_type_vitrage_id.includes(enumTypeVitrageId) &&
-        (!enumTypeGazLameId || v.enum_type_gaz_lame_id?.includes(enumTypeGazLameId)) &&
+        v.enum_type_vitrage_id.split('|').includes(enumTypeVitrageId) &&
+        (!enumTypeGazLameId || v.enum_type_gaz_lame_id?.split('|').includes(enumTypeGazLameId)) &&
         (!enumInclinaisonVitrageId ||
-          v.enum_inclinaison_vitrage_id?.includes(enumInclinaisonVitrageId)) &&
+          v.enum_inclinaison_vitrage_id?.split('|').includes(enumInclinaisonVitrageId)) &&
         (!vitrageVir || parseInt(vitrageVir) === parseInt(v.vitrage_vir)) &&
         (!epaisseurLame || parseFloat(v.epaisseur_lame) === epaisseurLame)
     )?.ug;
@@ -69,11 +69,12 @@ export class BaieVitreeTvStore extends TvStore {
   ) {
     const sw = tv['sw'].find(
       (v) =>
-        (!v.enum_type_vitrage_id || v.enum_type_vitrage_id.includes(enumTypeVitrageId)) &&
-        v.enum_type_baie_id.includes(enumTypeBaieId) &&
-        v.enum_type_materiaux_menuiserie_id.includes(enumTypeMateriauxMenuiserieId) &&
+        (!v.enum_type_vitrage_id ||
+          v.enum_type_vitrage_id.split('|').includes(enumTypeVitrageId)) &&
+        v.enum_type_baie_id.split('|').includes(enumTypeBaieId) &&
+        v.enum_type_materiaux_menuiserie_id.split('|').includes(enumTypeMateriauxMenuiserieId) &&
         (!vitrageVir || parseInt(vitrageVir) === parseInt(v.vitrage_vir)) &&
-        (!enumTypePoseId || v.enum_type_pose_id.includes(enumTypePoseId))
+        (!enumTypePoseId || v.enum_type_pose_id.split('|').includes(enumTypePoseId))
     )?.sw;
 
     if (!sw) {
@@ -106,7 +107,7 @@ export class BaieVitreeTvStore extends TvStore {
      * 3 - paroi en polycarbonnate
      */
     if (['1', '2', '3'].includes(enumTypeBaieId)) {
-      uw = tv['uw'].find((v) => v.enum_type_baie_id.includes(enumTypeBaieId))?.uw;
+      uw = tv['uw'].find((v) => v.enum_type_baie_id.split('|').includes(enumTypeBaieId))?.uw;
     } else {
       /**
        * 3.3.2 Coefficients Uw des fenêtres / portes-fenêtres
@@ -116,8 +117,8 @@ export class BaieVitreeTvStore extends TvStore {
       const ugValues =
         tv['uw'].filter(
           (v) =>
-            v.enum_type_baie_id.includes(enumTypeBaieId) &&
-            v.enum_type_materiaux_menuiserie_id.includes(enumTypeMateriauxMenuiserieId)
+            v.enum_type_baie_id.split('|').includes(enumTypeBaieId) &&
+            v.enum_type_materiaux_menuiserie_id.split('|').includes(enumTypeMateriauxMenuiserieId)
         ) || [];
 
       let ug1, ug2;
@@ -159,7 +160,7 @@ export class BaieVitreeTvStore extends TvStore {
    */
   getDeltar(enumTypeFermetureId) {
     const deltar = tv['deltar'].find((v) =>
-      v.enum_type_fermeture_id.includes(enumTypeFermetureId)
+      v.enum_type_fermeture_id.split('|').includes(enumTypeFermetureId)
     )?.deltar;
 
     if (!deltar) {

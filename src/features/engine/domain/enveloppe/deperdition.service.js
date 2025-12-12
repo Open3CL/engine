@@ -85,7 +85,7 @@ export class DeperditionService {
   /**
    * Si Année d'isolation connue alors on prend cette donnée.
    * Sinon
-   *   Si Année de construction <= 74 alors Année d’isolation = 75-77
+   *   Si Année de construction ≤74 alors Année d’isolation = 75-77
    *   Sinon Année d’isolation = Année de construction
    *
    * @param enumPeriodeIsolationId {number}

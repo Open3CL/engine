@@ -82,17 +82,6 @@ export class SynchronizeValeurTables {
             },
             (value, key) => {
               if (typeof value === 'string') {
-                if (value.includes('≤')) {
-                  value = value.replace('≤', '<=').replace(',', '.');
-                }
-                if (value.includes('≥')) {
-                  value = value.replace('≥', '>=').replace(',', '.');
-                }
-
-                if (value.includes('|')) {
-                  return value.split('|');
-                }
-
                 // Remove 'kW' to be compatible with the legacy `tv.js` file
                 if (value.endsWith('kW')) {
                   return value.replace(/kW/g, '').replace(/\s/g, '');

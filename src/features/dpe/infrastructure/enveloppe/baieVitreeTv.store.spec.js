@@ -323,12 +323,12 @@ describe('Lecture des tables de valeurs', () => {
   describe('lecture des valeurs des masques lointains homogènes', () => {
     test.each([
       {
-        label: 'Orientation nord, hauteur 15 <=….< 30',
+        label: 'Orientation nord, hauteur 15 ≤….< 30',
         tvCoefMasqueLointainHomogeneId: '2',
         expected: 0.82
       },
       {
-        label: 'Orientation sud, hauteur 60 <=….< 90',
+        label: 'Orientation sud, hauteur 60 ≤….< 90',
         tvCoefMasqueLointainHomogeneId: '8',
         expected: 0.1
       }

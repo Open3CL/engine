@@ -19,7 +19,9 @@ export class TvStore {
    * @return {number|undefined} Uporte si trouvé, sinon undefined
    */
   getUPorte(enumTypePorteId) {
-    const uPorte = tv['uporte'].find((v) => v.enum_type_porte_id.includes(enumTypePorteId))?.uporte;
+    const uPorte = tv['uporte'].find((v) =>
+      v.enum_type_porte_id.split('|').includes(enumTypePorteId)
+    )?.uporte;
 
     if (!uPorte) {
       logger.error(`Pas de valeur forfaitaire uPorte pour enumTypePorteId:${enumTypePorteId}`);
@@ -48,7 +50,8 @@ export class TvStore {
   ) {
     const b = tv['coef_reduction_deperdition'].find(
       (v) =>
-        (!enumTypeAdjacenceId || v.enum_type_adjacence_id.includes(enumTypeAdjacenceId)) &&
+        (!enumTypeAdjacenceId ||
+          v.enum_type_adjacence_id.split('|').includes(enumTypeAdjacenceId)) &&
         (!uVue || !v.uvue || parseFloat(v.uvue) === uVue) &&
         (!enumCfgIsolationLncId ||
           !v.enum_cfg_isolation_lnc_id ||
@@ -129,8 +132,8 @@ export class TvStore {
   getUmur(enumPeriodeConstructionId, enumZoneClimatiqueId, effetJoule = false) {
     const umur = tv['umur'].find(
       (v) =>
-        v.enum_periode_construction_id.includes(enumPeriodeConstructionId) &&
-        v.enum_zone_climatique_id.includes(enumZoneClimatiqueId) &&
+        v.enum_periode_construction_id.split('|').includes(enumPeriodeConstructionId) &&
+        v.enum_zone_climatique_id.split('|').includes(enumZoneClimatiqueId) &&
         effetJoule === (parseInt(v.effet_joule) === 1)
     )?.umur;
 
@@ -178,8 +181,8 @@ export class TvStore {
   getUpb(enumPeriodeConstructionId, enumZoneClimatiqueId, effetJoule = false) {
     const upb = tv['upb'].find(
       (v) =>
-        v.enum_zone_climatique_id.includes(enumZoneClimatiqueId) &&
-        v.enum_periode_construction_id.includes(enumPeriodeConstructionId) &&
+        v.enum_zone_climatique_id.split('|').includes(enumZoneClimatiqueId) &&
+        v.enum_periode_construction_id.split('|').includes(enumPeriodeConstructionId) &&
         effetJoule === (parseInt(v.effet_joule) === 1)
     )?.upb;
 
@@ -209,8 +212,8 @@ export class TvStore {
       tv['ue'].filter(
         (v) =>
           parseInt(v['2s_p']) === dsp &&
-          v.enum_type_adjacence_id.includes(enumTypeAdjacenceId) &&
-          v.enum_periode_construction_id.includes(enumPeriodeConstructionId)
+          v.enum_type_adjacence_id.split('|').includes(enumTypeAdjacenceId) &&
+          v.enum_periode_construction_id.split('|').includes(enumPeriodeConstructionId)
       ) || [];
 
     const ueRange = [...new Set(ueValues.map((value) => value.upb).sort())];
@@ -254,7 +257,7 @@ export class TvStore {
    */
   getUph0(enumTypePlancherHautId) {
     const uph0 = tv['uph0'].find((v) =>
-      v.enum_type_plancher_haut_id.includes(enumTypePlancherHautId)
+      v.enum_type_plancher_haut_id.split('|').includes(enumTypePlancherHautId)
     )?.uph0;
 
     if (!uph0) {
@@ -279,8 +282,8 @@ export class TvStore {
   getUph(enumPeriodeConstructionId, typeToiture, enumZoneClimatiqueId, effetJoule = false) {
     const uph = tv['uph'].find(
       (v) =>
-        v.enum_periode_construction_id.includes(enumPeriodeConstructionId) &&
-        v.enum_zone_climatique_id.includes(enumZoneClimatiqueId) &&
+        v.enum_periode_construction_id.split('|').includes(enumPeriodeConstructionId) &&
+        v.enum_zone_climatique_id.split('|').includes(enumZoneClimatiqueId) &&
         v.type_toiture === typeToiture &&
         effetJoule === (parseInt(v.effet_joule) === 1)
     )?.uph;
@@ -305,7 +308,7 @@ export class TvStore {
    */
   getDebitsVentilation(typeVentilation) {
     const debitsVentilation = tv['debits_ventilation'].find((v) =>
-      v.enum_type_ventilation_id.includes(typeVentilation)
+      v.enum_type_ventilation_id.split('|').includes(typeVentilation)
     );
 
     if (!debitsVentilation) {
@@ -332,8 +335,8 @@ export class TvStore {
   getQ4paConv(periodConstruction, typeHabitation, isolationSurface, presenceJointsMenuiserie) {
     const q4paConv = tv['q4pa_conv'].find(
       (v) =>
-        v.enum_periode_construction_id.includes(periodConstruction) &&
-        v.type_habitation.includes(TypeHabitation[typeHabitation].toLowerCase()) &&
+        v.enum_periode_construction_id.split('|').includes(periodConstruction) &&
+        v.type_habitation.split('/').includes(TypeHabitation[typeHabitation].toLowerCase()) &&
         (isolationSurface === undefined || v.isolation_surfaces === isolationSurface) &&
         (presenceJointsMenuiserie === undefined ||
           v.presence_joints_menuiserie === presenceJointsMenuiserie)

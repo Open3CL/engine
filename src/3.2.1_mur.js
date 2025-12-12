@@ -98,13 +98,13 @@ function tv_umur(di, de, du, pc_id, zc, effetJoule) {
       effetJoule = rowUmur.effet_joule;
     }
 
-    if (rowUmur && rowUmur.enum_periode_construction_id[0] !== pc_id) {
+    if (rowUmur && rowUmur.enum_periode_construction_id.split('|')[0] !== pc_id) {
       console.error(
         `L'année de construction du bâtiment ${pc_id} ne correspond pas à celle utilisée dans le DPE pour le calcul de Umur pour le mur '${de.description}'.
         Celle utilisée ${rowUmur.enum_periode_construction_id}. L'année de construction ${rowUmur.enum_periode_construction_id} est conservée dans la suite des calculs.`
       );
 
-      pc_id = rowUmur.enum_periode_construction_id[0];
+      pc_id = rowUmur.enum_periode_construction_id.split('|')[0];
     }
   }
 

@@ -1,6 +1,6 @@
 import enums from './enums.js';
 import tvs from './tv.js';
-import { set, has, isArray } from 'lodash-es';
+import { set, has } from 'lodash-es';
 
 export let bug_for_bug_compat = false;
 export function set_bug_for_bug_compat() {
@@ -53,6 +53,9 @@ export const Njj = {
   Novembre: 30,
   Décembre: 24
 };
+
+// sum all Njj values
+export const Njj_sum = Object.values(Njj).reduce((acc, val) => acc + val, 0);
 
 /** @type {string[]} **/
 export const mois_liste = [
@@ -193,16 +196,13 @@ function tvMatch(row, key, matcher) {
 
   if (key.startsWith('enum_')) match_value = `^${String(matcher[key]).toLowerCase()}$`;
 
-  if (isArray(row[key])) {
-    const values = row[key];
+  if (row[key].includes('|')) {
+    const values = row[key].split('|');
     if (!values.some((v) => v.toLowerCase().match(String(match_value)))) {
       return false;
     }
-  } else if (
-    Number.isInteger(matcher[key]) &&
-    ['>=', '<='].some((char) => row[key].includes(char))
-  ) {
-    return eval(match_value + row[key]);
+  } else if (Number.isInteger(matcher[key]) && ['≥', '≤'].some((char) => row[key].includes(char))) {
+    return eval(match_value + row[key].replace('≥', '>=').replace('≤', '<='));
   } else if (!row[key].toLowerCase().match(String(match_value))) {
     return false;
   }
@@ -216,13 +216,8 @@ function tvMatchOptimized(row, key, matcher) {
     return false;
   }
 
-  let match_value = String(matcher[key]).toLowerCase();
-
-  if (isArray(row[key])) {
-    return row[key].includes(match_value);
-  }
-
   let row_value = row[key].toLowerCase();
+  let match_value = String(matcher[key]).toLowerCase();
 
   if (row_value === match_value) {
     return true;
@@ -239,8 +234,12 @@ function tvMatchOptimized(row, key, matcher) {
     return true;
   }
 
-  if (Number.isInteger(matcher[key]) && ['>=', '<='].some((char) => row[key].includes(char))) {
-    return eval(match_value + row[key]);
+  if (row_value.includes('|')) {
+    return row_value.split('|').includes(match_value);
+  }
+
+  if (Number.isInteger(matcher[key]) && ['≥', '≤'].some((char) => row[key].includes(char))) {
+    return eval(match_value + row[key].replace('≥', '>=').replace('≤', '<='));
   }
 
   return row_value.includes(match_value);
@@ -260,12 +259,30 @@ export function tv(filePath, matcher) {
     // if match_count is same as matcher, we are done
     if (match_count === Object.keys(matcher).length) return row;
 
+    /* if (filePath === 'q4pa_conv') console.warn(match_count) */
     if (match_count > max_match_count) {
       max_match_count = match_count;
       match = row;
     }
   }
+  /* if (filePath === 'pont_thermique') { */
+  /* 	console.warn(matcher) */
+  /* 	console.warn(match) */
+  /* } */
   return match;
+}
+
+export function removeKeyFromJSON(jsonObj, keyToRemove, skipKeys) {
+  for (const key in jsonObj) {
+    if (skipKeys.includes(key)) continue;
+    if (jsonObj.hasOwnProperty(key)) {
+      if (key === keyToRemove) {
+        delete jsonObj[key];
+      } else if (typeof jsonObj[key] === 'object') {
+        removeKeyFromJSON(jsonObj[key], keyToRemove, skipKeys);
+      }
+    }
+  }
 }
 
 export function useEnumAsString(jsonObj) {
@@ -278,6 +295,12 @@ export function useEnumAsString(jsonObj) {
       }
     }
   }
+}
+
+export function clean_dpe(dpe_in) {
+  // skip generateur_[ecs|chauffage] because some input data is contained in donnee_intermediaire (e.g. pn, qp0, ...)
+  removeKeyFromJSON(dpe_in, 'donnee_intermediaire', ['generateur_ecs', 'generateur_chauffage']);
+  set(dpe_in, 'logement.sortie', null);
 }
 
 export function sanitize_dpe(dpe_in) {
