@@ -316,7 +316,7 @@ Nous accueillons les contributions avec plaisir ! Si vous souhaitez améliorer O
 
 ## Licence
 
-Distribué sous la license `GPL-3.0 license`. Lire le fichier `LICENSE` pour plus d'informations.
+Distribué sous la license `MIT`. Lire le fichier `LICENSE` pour plus d'informations.
 
 <p align="right">(<a href="#readme-top">Retour sommaire</a>)</p>
 

@@ -19,13 +19,19 @@ import {
   collectionCanBeEmpty,
   containsAnySubstring,
   isEffetJoule,
-  sanitize_dpe
+  sanitize_dpe,
+  xmlParser
 } from './utils.js';
 import { Inertie } from './7_inertie.js';
 import getFicheTechnique from './ficheTechnique.js';
 import { ProductionENR } from './16.2_production_enr.js';
+import { XMLParser } from 'fast-xml-parser';
+import DpeSanitizerService from './dpe-sanitizer.service.js';
+import fs from 'node:fs';
 
 const LIB_VERSION = 'OPEN3CL_VERSION';
+
+const dpeSanitizerService = new DpeSanitizerService();
 
 function calc_th(map_id) {
   const map = enums.methode_application_dpe_log[map_id];
@@ -44,11 +50,67 @@ export function getVersion() {
 }
 
 /**
+ * @param dpe {FullDpe} A plain object with exhaustive dpe info
+ * @return {FullDpe}
+ */
+export function run(dpe) {
+  return calcul_3cl(dpe);
+}
+
+/**
+ * @param xmlFilePath {string} A path to the dpe xml file to analyze
+ * @return {FullDpe}
+ */
+export function runFromXmlFile(xmlFilePath) {
+  /** @type {string} **/
+  const dpeXmlContent = fs.readFileSync(xmlFilePath, { encoding: 'utf8', flag: 'r' });
+  return runFromXmlString(dpeXmlContent);
+}
+
+/**
+ * @param dpeXmlContent {string} A full dpe xml content
+ * @return {FullDpe}
+ */
+export function runFromXmlString(dpeXmlContent) {
+  /** @type {{dpe: FullDpe}} **/
+  const xmlDpe = xmlParser.parse(dpeXmlContent);
+  return run(xmlDpe.dpe);
+}
+
+/**
+ * Will download the dpe by its code via ADEME apis, and it will run the engine.
+ * Environments variables `ADEME_CLIENT_ID` and `ADEME_CLIENT_SECRET` must be set.
+ *
+ * @param dpeCode {string} The dpe code to retrieve from ADEME and to analyze
+ * @return {Promise<FullDpe>}
+ */
+export async function runFromAdeme(dpeCode) {
+  if (!process.env.ADEME_CLIENT_ID || !process.env.ADEME_CLIENT_SECRET) {
+    throw new Error(`ADEME_CLIENT_ID and ADEME_CLIENT_SECRET environment variables are not set !`);
+  }
+
+  const response = await fetch(
+    `https://prd-x-ademe-externe-api.de-c1.eu1.cloudhub.io/api/v1/pub/dpe/${dpeCode}/xml`,
+    {
+      headers: {
+        client_id: process.env.ADEME_CLIENT_ID,
+        client_secret: process.env.ADEME_CLIENT_SECRET
+      }
+    }
+  );
+  if (response.status !== 200) {
+    throw new Error(`Fail to retrieve DPE from ADEME: ${dpeCode}`);
+  }
+  return runFromXmlString(await response.text());
+}
+
+/**
+ * @deprecated
  * @param dpe {FullDpe}
  * @return {FullDpe}
  */
 export function calcul_3cl(dpe) {
-  sanitize_dpe(dpe);
+  dpeSanitizerService.execute(dpe);
   const modele = enums.modele_dpe[dpe.administratif.enum_modele_dpe_id];
   const dateDpe = dpe.administratif.date_etablissement_dpe;
   if (modele !== 'dpe 3cl 2021 méthode logement') {
