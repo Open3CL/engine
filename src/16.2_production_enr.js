@@ -40,8 +40,11 @@ export class ProductionENR {
       // Calcul de l'électricité auto-consommée pour chaque enveloppe
       this.calculateConsoElecAc(productionElectricite, productionElecEnr, conso, zc_id, th, Sh);
 
-      // Mise à jour des consommations ef en minorant l'énergie consommée par l'énergie autoconsommée par le poste
+      // Mise à jour des consommations d'énergie finale en minorant l'énergie consommée par l'énergie autoconsommée par le poste
       this.updateEfConso(productionElectricite, conso, Sh);
+
+      // Mise à jour des consommations d'énergie primaire en minorant l'énergie consommée par l'énergie autoconsommée par le poste
+      this.updateEPConso(productionElectricite, conso, Sh);
     }
 
     return {
@@ -150,7 +153,7 @@ export class ProductionENR {
   }
 
   /**
-   * Mise à jour des consommations ef en minorant l'énergie consommée par l'énergie autoconsommée par chaque enveloppe
+   * Mise à jour des consommations ef en minorant l'énergie finale consommée par l'énergie autoconsommée par chaque enveloppe
    * @param productionElectricite
    * @param conso
    * @param Sh
@@ -170,6 +173,32 @@ export class ProductionENR {
       productionElectricite.conso_elec_ac_auxiliaire;
 
     conso.ef_conso.conso_5_usages_m2 = Math.floor(conso.ef_conso.conso_5_usages / Sh);
+  }
+
+  /**
+   * Mise à jour des consommations ef en minorant l'énergie primaire consommée par l'énergie autoconsommée par chaque enveloppe
+   * @param productionElectricite
+   * @param conso {{ep_conso: Ep_conso}}
+   * @param Sh
+   */
+  updateEPConso(productionElectricite, conso, Sh) {
+    conso.ep_conso.ep_conso_ecs -= 2.3 * productionElectricite.conso_elec_ac_ecs;
+    conso.ep_conso.ep_conso_ch -= 2.3 * productionElectricite.conso_elec_ac_ch;
+    conso.ep_conso.ep_conso_fr -= 2.3 * productionElectricite.conso_elec_ac_fr;
+    conso.ep_conso.ep_conso_eclairage -= 2.3 * productionElectricite.conso_elec_ac_eclairage;
+    conso.ep_conso.ep_conso_totale_auxiliaire -=
+      2.3 * productionElectricite.conso_elec_ac_auxiliaire;
+
+    const conso_elec =
+      productionElectricite.conso_elec_ac_ecs +
+      productionElectricite.conso_elec_ac_ch +
+      productionElectricite.conso_elec_ac_fr +
+      productionElectricite.conso_elec_ac_eclairage +
+      productionElectricite.conso_elec_ac_auxiliaire;
+
+    conso.ep_conso.ep_conso_5_usages -= 2.3 * conso_elec;
+
+    conso.ep_conso.ep_conso_5_usages_m2 = Math.floor(conso.ep_conso.ep_conso_5_usages / Sh);
   }
 
   /**
