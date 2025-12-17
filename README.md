@@ -71,7 +71,7 @@ Vous devez d'abord installer [NodeJS](https://nodejs.org/en) en version 20 ou su
   npm install @open3cl/engine
 ```
 
-### Démonstration
+## Démonstration
 
 Il est possible d'analyser un dpe pour tester la lib Open3CL: [https://open3cl.github.io/engine](https://open3cl.github.io/engine/build/).
 Un dpe au format XML peut être chargé, il sera envoyé à la lib Open3CL. Un visuel permet de voir les informations

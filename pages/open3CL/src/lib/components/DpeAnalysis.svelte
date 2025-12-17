@@ -18,7 +18,7 @@
 
   let filesInDropzone = $state(null);
 
-  let summaryDpeInfos = $state([]);
+  let dpeInfos = $state([]);
 
   /**
    * Ademe xml data (json format) input of the 3CL engine
@@ -99,7 +99,7 @@
     event.preventDefault();
     event.stopImmediatePropagation();
     setAnalyzedDpe({numero_dpe: undefined});
-    summaryDpeInfos = [];
+    dpeInfos = [];
     filesInDropzone = null
   }
 
@@ -107,49 +107,118 @@
     const dpe = getAnalyzedDpe();
     /** @type {string} **/
     const methodeApplication = enums['methode_application_dpe_log'][dpe.logement.caracteristique_generale.enum_methode_application_dpe_log_id];
-    console.log(methodeApplication);
-    summaryDpeInfos = [];
+    const chauffageDpeInfos = [];
+    const ecsDpeInfos = [];
+    const ventilationDpeInfos = [];
+    const generalInfos = [];
+    const logementInfos = [];
+    const meteoInfos = [];
+    generalInfos.push({label: toDpeInfoLabel('Version dpe', dpe.administratif.enum_version_id), color: 'teal'});
 
     if (methodeApplication.includes('immeuble')) {
-      summaryDpeInfos.push({label: 'Dpe immeuble', color: 'lime'});
+      generalInfos.push({label: 'Dpe immeuble', color: 'teal'});
     }
 
     if (methodeApplication.includes('individuel')) {
       if (methodeApplication.includes('maison')) {
-        summaryDpeInfos.push({label: 'Maison individuelle', color: 'teal'});
+        generalInfos.push({label: 'Maison individuelle', color: 'teal'});
       }
       if (methodeApplication.includes('appartement')) {
-        summaryDpeInfos.push({label: 'Appartement individuel', color: 'teal'});
+        generalInfos.push({label: 'Appartement individuel', color: 'teal'});
       }
     }
+
+    if (dpe.logement.caracteristique_generale.annee_construction) {
+      logementInfos.push({label: toDpeInfoLabel('Année de construction', dpe.logement.caracteristique_generale.annee_construction ), color: 'amber'});
+    }
+
+    logementInfos.push({label: toDpeInfoLabel('Période de construction', enums['periode_construction'][dpe.logement.caracteristique_generale.enum_periode_construction_id]), color: 'amber'});
+    if (dpe.logement.caracteristique_generale.surface_habitable_logement) {
+      logementInfos.push({label: toDpeInfoLabel('Surface logement', dpe.logement.caracteristique_generale.surface_habitable_logement, 'm²'), color: 'amber'});
+    }
+    if (dpe.logement.caracteristique_generale.surface_habitable_immeuble) {
+      logementInfos.push({label: toDpeInfoLabel('Surface immeuble', dpe.logement.caracteristique_generale.surface_habitable_immeuble, 'm²'), color: 'amber'});
+    }
+    if (dpe.logement.caracteristique_generale.nombre_appartement) {
+      logementInfos.push({label: toDpeInfoLabel('Nombre d\'appartements', dpe.logement.caracteristique_generale.nombre_appartement), color: 'amber'});
+    }
+    logementInfos.push({label: toDpeInfoLabel('Hauteur ss plafond', dpe.logement.caracteristique_generale.hsp, 'm'), color: 'amber'});
+
+    meteoInfos.push({label: toDpeInfoLabel('Zone climatique', enums['zone_climatique'][dpe.logement.meteo.enum_zone_climatique_id]), color: 'emerald'});
+    meteoInfos.push({label: toDpeInfoLabel('Altitude', enums['classe_altitude'][dpe.logement.meteo.enum_classe_altitude_id]), color: 'emerald'});
 
     if (methodeApplication.includes('chauffage')) {
       if (methodeApplication.includes('chauffage mixte')) {
-        summaryDpeInfos.push({label: 'Chauffage mixte', color: 'indigo'});
+        chauffageDpeInfos.push({label: 'Chauffage mixte', color: 'indigo'});
       }
       if (methodeApplication.includes('chauffage collectif')) {
-        summaryDpeInfos.push({label: 'Chauffage collectif', color: 'indigo'});
+        chauffageDpeInfos.push({label: 'Chauffage collectif', color: 'indigo'});
       }
       if (methodeApplication.includes('chauffage individuel')) {
-        summaryDpeInfos.push({label: 'Chauffage individuel', color: 'indigo'});
+        chauffageDpeInfos.push({label: 'Chauffage individuel', color: 'indigo'});
       }
     }
-    summaryDpeInfos.push({label: `${dpe.logement.installation_chauffage_collection.installation_chauffage.length} installation(s) chauffage`, color: 'indigo'});
+    chauffageDpeInfos.push({label: `${dpe.logement.installation_chauffage_collection?.installation_chauffage?.length || 0} installation(s) chauffage`, color: 'indigo'});
+    const chauffagesGenDescriptions = dpe.logement
+      .installation_chauffage_collection?.installation_chauffage?.flatMap(inst => inst.generateur_chauffage_collection
+        .generateur_chauffage.map(gen => `générateur: ${enums['type_generateur_ch'][gen.donnee_entree.enum_type_generateur_ch_id]} (id: ${gen.donnee_entree.enum_type_generateur_ch_id})`));
+
+    const chauffagesEmetteurDescriptions = dpe.logement
+      .installation_chauffage_collection?.installation_chauffage?.flatMap(inst => inst.emetteur_chauffage_collection
+        .emetteur_chauffage.map(emetteur => `émetteur: ${enums['equipement_intermittence'][emetteur.donnee_entree.enum_equipement_intermittence_id]} (id: ${emetteur.donnee_entree.enum_equipement_intermittence_id})`));
+
+    chauffagesGenDescriptions.forEach(chauffagesGenDescription => {
+      chauffageDpeInfos.push({label: chauffagesGenDescription, color: 'indigo'});
+    });
+
+    chauffagesEmetteurDescriptions.forEach(chauffagesEmetteurDescription => {
+      chauffageDpeInfos.push({label: chauffagesEmetteurDescription, color: 'indigo'});
+    });
 
     if (methodeApplication.includes('ecs')) {
       if (methodeApplication.includes('ecs mixte')) {
-        summaryDpeInfos.push({label: 'Ecs mixte', color: 'fuchsia'});
+        ecsDpeInfos.push({label: 'Ecs mixte', color: 'fuchsia'});
       }
       if (methodeApplication.includes('ecs collectif')) {
-        summaryDpeInfos.push({label: 'Ecs collectif', color: 'fuchsia'});
+        ecsDpeInfos.push({label: 'Ecs collectif', color: 'fuchsia'});
       }
       if (methodeApplication.includes('ecs individuel')) {
-        summaryDpeInfos.push({label: 'Ecs individuel', color: 'fuchsia'});
+        ecsDpeInfos.push({label: 'Ecs individuel', color: 'fuchsia'});
       }
     }
-    summaryDpeInfos.push({label: `${dpe.logement.installation_ecs_collection.installation_ecs.length} installation(s) ecs`, color: 'fuchsia'});
+    ecsDpeInfos.push({label: `${dpe.logement.installation_ecs_collection?.installation_ecs.length || 0} installation(s) ecs`, color: 'fuchsia'});
 
-    summaryDpeInfos.push({label: `${dpe.logement.ventilation_collection.ventilation.length} installation(s) ventilation`, color: 'sky'});
+    const ecsGenDescriptions = dpe.logement
+      .installation_ecs_collection?.installation_ecs?.flatMap(inst => inst.generateur_ecs_collection
+        .generateur_ecs.map(gen => `générateur: ${enums['type_generateur_ecs'][gen.donnee_entree.enum_type_generateur_ecs_id]} (id: ${gen.donnee_entree.enum_type_generateur_ecs_id})`));
+
+    ecsGenDescriptions.forEach(ecsGenDescription => {
+      ecsDpeInfos.push({label: ecsGenDescription, color: 'fuchsia'});
+    });
+
+    ventilationDpeInfos.push({label: `${dpe.logement.ventilation_collection?.ventilation.length || 0} installation(s) ventilation`, color: 'sky'});
+
+    const ventilationDescriptions = dpe.logement
+      .ventilation_collection?.ventilation?.map(ventilation => `${enums['type_ventilation'][ventilation.donnee_entree.enum_type_ventilation_id]} (id: ${ventilation.donnee_entree.enum_type_ventilation_id})`);
+    ventilationDescriptions.forEach(ventilationDescription => {
+      ventilationDpeInfos.push({label: ventilationDescription, color: 'sky'});
+    });
+
+    dpeInfos.push(generalInfos);
+    dpeInfos.push(logementInfos);
+    dpeInfos.push(meteoInfos);
+    dpeInfos.push(chauffageDpeInfos);
+    dpeInfos.push(ecsDpeInfos);
+    dpeInfos.push(ventilationDpeInfos);
+  }
+
+  /**
+   * @param label {string}
+   * @param value {any}
+   * @param suffix {string?}
+   */
+  function toDpeInfoLabel(label, value, suffix = '') {
+    return `${label} :&nbsp;<span class="font-bold underline">${value} ${suffix}</span>`;
   }
 
 </script>
@@ -185,9 +254,15 @@
                     <p class="text-xs text-gray-500 dark:text-gray-400">Format XML uniquement</p>
                 </Dropzone>
             {:else}
-                <div class="flex gap-3">
-                    {#each summaryDpeInfos as info}
-                        <Badge large color="{info.color}">{info.label}</Badge>
+                <div class="flex gap-3 justify-start">
+                    {#each dpeInfos as info}
+                        <div>
+                            {#each info as dpeInfo}
+                                <div class="pt-1">
+                                    <Badge large color="{dpeInfo.color}">{@html dpeInfo.label}</Badge>
+                                </div>
+                            {/each}
+                        </div>
                     {/each}
                 </div>
 
