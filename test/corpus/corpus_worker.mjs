@@ -171,8 +171,7 @@ const runEngineAndVerifyOutput = (inputDpe, dpeOutputs) => {
         'ep_conso_5_usages',
         'previous_ep_conso_5_usages'
       );
-    }
-    if (inputPropertyPath.includes('ep_conso_5_usages_m2') && isDpeBeforeJanvier2026) {
+    } else if (inputPropertyPath.includes('ep_conso_5_usages_m2') && isDpeBeforeJanvier2026) {
       outputPropertyPath = outputPropertyPath.replace(
         'ep_conso_5_usages_m2',
         'previous_ep_conso_5_usages_m2'
@@ -205,8 +204,7 @@ const runEngineAndVerifyOutput = (inputDpe, dpeOutputs) => {
           'ep_conso_5_usages',
           'previous_ep_conso_5_usages'
         );
-      }
-      if (inputPropertyPath.includes('ep_conso_5_usages_m2') && isDpeBeforeJanvier2026) {
+      } else if (inputPropertyPath.includes('ep_conso_5_usages_m2') && isDpeBeforeJanvier2026) {
         outputPropertyPath = outputPropertyPath.replace(
           'ep_conso_5_usages_m2',
           'previous_ep_conso_5_usages_m2'

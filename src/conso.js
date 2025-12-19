@@ -3,16 +3,30 @@ import calc_conso_eclairage from './16_conso_eclairage.js';
 import tvs from './tv.js';
 import { tv } from './utils.js';
 
+export const PREVIOUS_COEFF_EP = 2.3;
+export const COEFF_EP = 1.9;
+
 /**
- * Au 01/01/2026
+ * Coeff de chauffage 1.9 au 01/01/2026
  * @link {https://www.legifrance.gouv.fr/jorf/id/JORFTEXT000052134589}
  */
 export const coef_ep = {
-  'électricité ch': 1.9,
-  'électricité ecs': 1.9,
-  'électricité fr': 1.9,
-  'électricité éclairage': 1.9,
-  'électricité auxiliaire': 1.9
+  'électricité ch': COEFF_EP,
+  'électricité ecs': COEFF_EP,
+  'électricité fr': COEFF_EP,
+  'électricité éclairage': COEFF_EP,
+  'électricité auxiliaire': COEFF_EP
+};
+
+/**
+ * Coeff de chauffage 2.3 avant le 01/01/2026
+ */
+export const coef_ep_2_3 = {
+  'électricité ch': PREVIOUS_COEFF_EP,
+  'électricité ecs': PREVIOUS_COEFF_EP,
+  'électricité fr': PREVIOUS_COEFF_EP,
+  'électricité éclairage': PREVIOUS_COEFF_EP,
+  'électricité auxiliaire': PREVIOUS_COEFF_EP
 };
 
 /**
@@ -169,7 +183,8 @@ export default function calc_conso(
   fr,
   prorataECS,
   prorataChauffage,
-  dateDpe
+  dateDpe,
+  coeffEp
 ) {
   const gen_ch = ch.reduce((acc, ch) => {
     const generateur_chauffage = ch.generateur_chauffage_collection.generateur_chauffage;
@@ -225,7 +240,7 @@ export default function calc_conso(
       gen_ecs,
       fr,
       'ep_conso',
-      coef_ep,
+      coeffEp,
       prorataECS,
       prorataChauffage
     ),

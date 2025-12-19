@@ -7,7 +7,12 @@ import calc_besoin_ch from './9_besoin_ch.js';
 import calc_chauffage, { tauxChargeForGenerator } from './9_chauffage.js';
 import calc_confort_ete from './2021_04_13_confort_ete.js';
 import calc_qualite_isolation from './2021_04_13_qualite_isolation.js';
-import calc_conso, { classe_bilan_dpe, classe_emission_ges } from './conso.js';
+import calc_conso, {
+  classe_bilan_dpe,
+  classe_emission_ges,
+  coef_ep,
+  coef_ep_2_3
+} from './conso.js';
 import {
   add_references,
   bug_for_bug_compat,
@@ -55,10 +60,6 @@ export function calcul_3cl(dpe) {
   const cg = logement.caracteristique_generale;
   const map_id = cg.enum_methode_application_dpe_log_id;
   const th = calc_th(map_id);
-
-  const previous_classe_bilan_dpe = logement.sortie.ep_conso.classe_bilan_dpe;
-  const previous_ep_conso_5_usages = logement.sortie.ep_conso.ep_conso_5_usages;
-  const previous_ep_conso_5_usages_m2 = logement.sortie.ep_conso.ep_conso_5_usages_m2;
 
   if (logement.enveloppe === undefined) {
     console.warn('vide: logement.enveloppe');
@@ -515,7 +516,8 @@ export function calcul_3cl(dpe) {
     clim,
     prorataECS,
     prorataChauffage,
-    dateDpe
+    dateDpe,
+    coef_ep
   );
 
   const production_electricite = productionENR.calculateEnr(
@@ -523,8 +525,25 @@ export function calcul_3cl(dpe) {
     conso,
     Sh,
     th,
-    zc_id
+    zc_id,
+    false
   );
+
+  const conso2_3 = calc_conso(
+    Sh,
+    zc_id,
+    ca_id,
+    vt_list,
+    instal_ch,
+    ecs,
+    clim,
+    prorataECS,
+    prorataChauffage,
+    dateDpe,
+    coef_ep_2_3
+  );
+
+  productionENR.calculateEnr(dpe.logement.production_elec_enr, conso2_3, Sh, th, zc_id, true);
 
   // get all baie_vitree orientations
   const ph_list = env.plancher_haut_collection.plancher_haut || [];
@@ -539,9 +558,9 @@ export function calcul_3cl(dpe) {
 
   logement.sortie.ep_conso = {
     ...logement.sortie.ep_conso,
-    previous_classe_bilan_dpe,
-    previous_ep_conso_5_usages,
-    previous_ep_conso_5_usages_m2
+    previous_classe_bilan_dpe: conso2_3.ep_conso.classe_bilan_dpe,
+    previous_ep_conso_5_usages: conso2_3.ep_conso.ep_conso_5_usages,
+    previous_ep_conso_5_usages_m2: conso2_3.ep_conso.ep_conso_5_usages_m2
   };
 
   logement.sortie.ep_conso.classe_bilan_dpe_2026 = logement.sortie.ep_conso.classe_bilan_dpe;
