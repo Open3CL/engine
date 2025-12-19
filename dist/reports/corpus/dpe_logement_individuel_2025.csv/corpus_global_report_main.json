@@ -14,11 +14,6 @@
       "mandatory": false,
       "successRatio": "99.81 %"
     },
-    "deperdition_plancher_bas": {
-      "nbBelowThreshold": 9491,
-      "mandatory": false,
-      "successRatio": "94.93 %"
-    },
     "deperdition_plancher_haut": {
       "nbBelowThreshold": 9937,
       "mandatory": false,
@@ -80,15 +75,20 @@
       "mandatory": true,
       "successRatio": "92.45 %"
     },
+    "emission_ges_5_usages": {
+      "nbBelowThreshold": 9086,
+      "mandatory": true,
+      "successRatio": "90.88 %"
+    },
     "emission_ges_5_usages_m2": {
       "nbBelowThreshold": 8941,
       "mandatory": true,
       "successRatio": "89.43 %"
     },
-    "emission_ges_5_usages": {
-      "nbBelowThreshold": 9086,
-      "mandatory": true,
-      "successRatio": "90.88 %"
+    "deperdition_plancher_bas": {
+      "nbBelowThreshold": 9491,
+      "mandatory": false,
+      "successRatio": "94.93 %"
     }
   }
 }

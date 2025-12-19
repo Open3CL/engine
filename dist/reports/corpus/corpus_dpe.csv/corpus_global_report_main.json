@@ -35,11 +35,6 @@
       "successRatio": "95.33 %"
     },
     "hperm": { "nbBelowThreshold": 9284, "mandatory": false, "successRatio": "92.84 %" },
-    "deperdition_pont_thermique": {
-      "nbBelowThreshold": 8666,
-      "mandatory": false,
-      "successRatio": "86.66 %"
-    },
     "surface_sud_equivalente": {
       "nbBelowThreshold": 9098,
       "mandatory": false,
@@ -49,25 +44,20 @@
     "besoin_ch": { "nbBelowThreshold": 8551, "mandatory": false, "successRatio": "85.51 %" },
     "conso_ecs": { "nbBelowThreshold": 7368, "mandatory": true, "successRatio": "73.68 %" },
     "conso_ch": { "nbBelowThreshold": 6435, "mandatory": true, "successRatio": "64.35 %" },
-    "conso_auxiliaire_distribution_ch": {
-      "nbBelowThreshold": 5440,
-      "mandatory": false,
-      "successRatio": "54.40 %"
-    },
     "conso_auxiliaire_distribution_ecs": {
       "nbBelowThreshold": 9384,
       "mandatory": false,
       "successRatio": "93.84 %"
     },
+    "conso_auxiliaire_generation_ch": {
+      "nbBelowThreshold": 6365,
+      "mandatory": false,
+      "successRatio": "63.65 %"
+    },
     "conso_auxiliaire_generation_ecs": {
       "nbBelowThreshold": 7574,
       "mandatory": false,
       "successRatio": "75.74 %"
-    },
-    "conso_auxiliaire_ventilation": {
-      "nbBelowThreshold": 5859,
-      "mandatory": false,
-      "successRatio": "58.59 %"
     },
     "ep_conso_5_usages": { "nbBelowThreshold": 6043, "mandatory": true, "successRatio": "60.43 %" },
     "ep_conso_5_usages_m2": {
@@ -85,10 +75,20 @@
       "mandatory": true,
       "successRatio": "57.35 %"
     },
-    "conso_auxiliaire_generation_ch": {
-      "nbBelowThreshold": 6365,
+    "conso_auxiliaire_distribution_ch": {
+      "nbBelowThreshold": 5440,
       "mandatory": false,
-      "successRatio": "63.65 %"
+      "successRatio": "54.40 %"
+    },
+    "conso_auxiliaire_ventilation": {
+      "nbBelowThreshold": 5859,
+      "mandatory": false,
+      "successRatio": "58.59 %"
+    },
+    "deperdition_pont_thermique": {
+      "nbBelowThreshold": 8666,
+      "mandatory": false,
+      "successRatio": "86.66 %"
     }
   }
 }
