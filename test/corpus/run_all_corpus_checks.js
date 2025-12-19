@@ -5,6 +5,9 @@ import { CorpusRunner } from './corpus.runner.js';
 const corpusFileNameArg = process.argv.find((arg) => arg.includes('corpus-file-path'));
 const corpusFile = corpusFileNameArg ? corpusFileNameArg.split('=').pop() : undefined;
 
+const dpeCodeArg = process.argv.find((arg) => arg.includes('dpe-code'));
+const dpeCode = dpeCodeArg ? dpeCodeArg.split('=').pop() : undefined;
+
 const noDpePositionArg = process.argv.find((arg) => arg.includes('no-dpe-pos'));
 const noDpePosition = noDpePositionArg ? Number(noDpePositionArg.split('=').pop()) : 0;
 
@@ -30,14 +33,23 @@ if (!existsSync(dpesFilePath)) {
   throw new Error(`File path ${dpesFilePath} does not exists !`);
 }
 
-if (corpusFile) {
-  await CorpusRunner.getInstance().run(dpesFilePath, corpusFile, INPUT_CSV_HEADERS);
+if (dpeCode) {
+  await CorpusRunner.getInstance().runSingleDpeByCode(dpesFilePath, dpeCode);
 } else {
-  console.time('all corpus');
-  const corpusFiles = readdirSync('test/corpus/files');
+  if (corpusFile) {
+    await CorpusRunner.getInstance().run(dpesFilePath, corpusFile, undefined, INPUT_CSV_HEADERS);
+  } else {
+    console.time('all corpus');
+    const corpusFiles = readdirSync('test/corpus/files');
 
-  for (const corpusFileName of corpusFiles) {
-    await CorpusRunner.getInstance().run(dpesFilePath, corpusFileName, INPUT_CSV_HEADERS);
+    for (const corpusFileName of corpusFiles) {
+      await CorpusRunner.getInstance().run(
+        dpesFilePath,
+        corpusFileName,
+        undefined,
+        INPUT_CSV_HEADERS
+      );
+    }
+    console.timeEnd('all corpus');
   }
-  console.timeEnd('all corpus');
 }
