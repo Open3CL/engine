@@ -56,6 +56,10 @@ export function calcul_3cl(dpe) {
   const map_id = cg.enum_methode_application_dpe_log_id;
   const th = calc_th(map_id);
 
+  const previous_classe_bilan_dpe = logement.sortie.ep_conso.classe_bilan_dpe;
+  const previous_ep_conso_5_usages = logement.sortie.ep_conso.ep_conso_5_usages;
+  const previous_ep_conso_5_usages_m2 = logement.sortie.ep_conso.ep_conso_5_usages_m2;
+
   if (logement.enveloppe === undefined) {
     console.warn('vide: logement.enveloppe');
     return null;
@@ -533,18 +537,12 @@ export function calcul_3cl(dpe) {
     ...conso
   };
 
-  const conso_coeff_1_9 = get_conso_coeff_1_9_2026(dpe);
-  const dateJanvier2026 = new Date('2026-01-01');
-
-  if (new Date(dpe.administratif.date_etablissement_dpe) < dateJanvier2026) {
-    logement.sortie.ep_conso.classe_bilan_dpe_2025 = logement.sortie.ep_conso.classe_bilan_dpe;
-    logement.sortie.ep_conso.ep_conso_5_usages_2025 = logement.sortie.ep_conso.ep_conso_5_usages;
-    logement.sortie.ep_conso.ep_conso_5_usages_2025_m2 =
-      logement.sortie.ep_conso.ep_conso_5_usages_m2;
-  }
-
-  // Conso primaire avec le nouveau coefficient 1.9 (depuis janvier 2026)
-  logement.sortie.ep_conso = { ...logement.sortie.ep_conso, ...conso_coeff_1_9 };
+  logement.sortie.ep_conso = {
+    ...logement.sortie.ep_conso,
+    previous_classe_bilan_dpe,
+    previous_ep_conso_5_usages,
+    previous_ep_conso_5_usages_m2
+  };
 
   logement.sortie.ep_conso.classe_bilan_dpe_2026 = logement.sortie.ep_conso.classe_bilan_dpe;
   logement.sortie.ep_conso.ep_conso_5_usages_2026 = logement.sortie.ep_conso.ep_conso_5_usages;

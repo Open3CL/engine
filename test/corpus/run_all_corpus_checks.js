@@ -5,7 +5,7 @@ import { CorpusRunner } from './corpus.runner.js';
 const corpusFileNameArg = process.argv.find((arg) => arg.includes('corpus-file-path'));
 const corpusFile = corpusFileNameArg ? corpusFileNameArg.split('=').pop() : undefined;
 
-const dpeCodeArg = process.argv.find((arg) => arg.includes('dpe'));
+const dpeCodeArg = process.argv.find((arg) => arg.includes('dpe-code'));
 const dpeCode = dpeCodeArg ? dpeCodeArg.split('=').pop() : undefined;
 
 const noDpePositionArg = process.argv.find((arg) => arg.includes('no-dpe-pos'));

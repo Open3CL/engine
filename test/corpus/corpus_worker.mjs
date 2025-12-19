@@ -159,22 +159,23 @@ const runEngineAndVerifyOutput = (inputDpe, dpeOutputs) => {
 
   let isValid = true;
 
+  const isDpeBeforeJanvier2026 =
+    new Date(inputDpe.administratif.date_etablissement_dpe) < new Date('2026-01-01');
+
   DPE_PROPERTIES_TO_CHECK.forEach((inputPropertyPath) => {
     const properties = inputPropertyPath.split('.');
     const property = properties[properties.length - 1];
     let outputPropertyPath = inputPropertyPath;
-    if (
-      inputPropertyPath.includes('ep_conso_5_usages') &&
-      outputDpe.logement.sortie.ep_conso.ep_conso_5_usages_2025
-    ) {
-      outputPropertyPath = inputPropertyPath.replace('ep_conso_5_usages', 'ep_conso_5_usages_2025');
-    } else if (
-      inputPropertyPath.includes('ep_conso_5_usages_m2') &&
-      outputDpe.logement.sortie.ep_conso.ep_conso_5_usages_2025_m2
-    ) {
-      outputPropertyPath = inputPropertyPath.replace(
+    if (inputPropertyPath.includes('ep_conso_5_usages') && isDpeBeforeJanvier2026) {
+      outputPropertyPath = outputPropertyPath.replace(
+        'ep_conso_5_usages',
+        'previous_ep_conso_5_usages'
+      );
+    }
+    if (inputPropertyPath.includes('ep_conso_5_usages_m2') && isDpeBeforeJanvier2026) {
+      outputPropertyPath = outputPropertyPath.replace(
         'ep_conso_5_usages_m2',
-        'ep_conso_5_usages_2025_m2'
+        'previous_ep_conso_5_usages_m2'
       );
     }
 
@@ -199,21 +200,16 @@ const runEngineAndVerifyOutput = (inputDpe, dpeOutputs) => {
     // Si plusieurs champs à valider, au moins un d'entre eux doit être valide
     const isDiffBelowThreshold = propertySegments.some((inputPropertyPath) => {
       let outputPropertyPath = inputPropertyPath;
-      if (
-        inputPropertyPath.includes('ep_conso_5_usages') &&
-        outputDpe.logement.sortie.ep_conso.ep_conso_5_usages_2025
-      ) {
-        outputPropertyPath = inputPropertyPath.replace(
+      if (inputPropertyPath.includes('ep_conso_5_usages') && isDpeBeforeJanvier2026) {
+        outputPropertyPath = outputPropertyPath.replace(
           'ep_conso_5_usages',
-          'ep_conso_5_usages_2025'
+          'previous_ep_conso_5_usages'
         );
-      } else if (
-        inputPropertyPath.includes('ep_conso_5_usages_m2') &&
-        outputDpe.logement.sortie.ep_conso.ep_conso_5_usages_2025_m2
-      ) {
-        outputPropertyPath = inputPropertyPath.replace(
+      }
+      if (inputPropertyPath.includes('ep_conso_5_usages_m2') && isDpeBeforeJanvier2026) {
+        outputPropertyPath = outputPropertyPath.replace(
           'ep_conso_5_usages_m2',
-          'ep_conso_5_usages_2025_m2'
+          'previous_ep_conso_5_usages_m2'
         );
       }
 

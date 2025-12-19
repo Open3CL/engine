@@ -183,6 +183,8 @@ Il existe actuellement 8 corpus (avec 10000 dpe analysés dans chaque corpus) :
   Par défaut, le corpus utilisé est présent ici : [test/corpus/corpus_dpe.csv](test/corpus/files/corpus_dpe.csv)
 - `npm run test:corpus -- dpes-folder-path=/home/user/dpes`. Chemin vers le dossier ou les DPE seront téléchargés. Si un
   fichier DPE est déjà présent dans ce dossier, il ne sera pas retéléchargé.
+- `npm run test:corpus -- dpes-code=2592E1233185X`. Execution du corpus sur le dpe spécifié.
+- Si le dpe n'est pas présent en local, il sera téléchargé sur le site de l'ADEME.
 
 ### Résultats corpus
 

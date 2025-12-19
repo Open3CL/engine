@@ -1,6 +1,7 @@
 import enums from './enums.js';
 import { mois_liste, tv } from './utils.js';
 import tvs from './tv.js';
+import { coef_ep } from './conso.js';
 
 export class ProductionENR {
   #taplpi = {
@@ -182,12 +183,12 @@ export class ProductionENR {
    * @param Sh
    */
   updateEPConso(productionElectricite, conso, Sh) {
-    conso.ep_conso.ep_conso_ecs -= 2.3 * productionElectricite.conso_elec_ac_ecs;
-    conso.ep_conso.ep_conso_ch -= 2.3 * productionElectricite.conso_elec_ac_ch;
-    conso.ep_conso.ep_conso_fr -= 2.3 * productionElectricite.conso_elec_ac_fr;
-    conso.ep_conso.ep_conso_eclairage -= 2.3 * productionElectricite.conso_elec_ac_eclairage;
+    conso.ep_conso.ep_conso_ecs -= coef_ep * productionElectricite.conso_elec_ac_ecs;
+    conso.ep_conso.ep_conso_ch -= coef_ep * productionElectricite.conso_elec_ac_ch;
+    conso.ep_conso.ep_conso_fr -= coef_ep * productionElectricite.conso_elec_ac_fr;
+    conso.ep_conso.ep_conso_eclairage -= coef_ep * productionElectricite.conso_elec_ac_eclairage;
     conso.ep_conso.ep_conso_totale_auxiliaire -=
-      2.3 * productionElectricite.conso_elec_ac_auxiliaire;
+      coef_ep * productionElectricite.conso_elec_ac_auxiliaire;
 
     const conso_elec =
       productionElectricite.conso_elec_ac_ecs +
@@ -196,7 +197,7 @@ export class ProductionENR {
       productionElectricite.conso_elec_ac_eclairage +
       productionElectricite.conso_elec_ac_auxiliaire;
 
-    conso.ep_conso.ep_conso_5_usages -= 2.3 * conso_elec;
+    conso.ep_conso.ep_conso_5_usages -= coef_ep * conso_elec;
 
     conso.ep_conso.ep_conso_5_usages_m2 = Math.floor(conso.ep_conso.ep_conso_5_usages / Sh);
   }
