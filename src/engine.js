@@ -38,6 +38,10 @@ export function getVersion() {
   return LIB_VERSION;
 }
 
+/**
+ * @param dpe {FullDpe}
+ * @return {FullDpe}
+ */
 export function calcul_3cl(dpe) {
   sanitize_dpe(dpe);
   const modele = enums.modele_dpe[dpe.administratif.enum_modele_dpe_id];
@@ -530,7 +534,22 @@ export function calcul_3cl(dpe) {
   };
 
   const conso_coeff_1_9 = get_conso_coeff_1_9_2026(dpe);
+  const dateJanvier2026 = new Date('2026-01-01');
+
+  if (new Date(dpe.administratif.date_etablissement_dpe) < dateJanvier2026) {
+    logement.sortie.ep_conso.classe_bilan_dpe_2025 = logement.sortie.ep_conso.classe_bilan_dpe;
+    logement.sortie.ep_conso.ep_conso_5_usages_2025 = logement.sortie.ep_conso.ep_conso_5_usages;
+    logement.sortie.ep_conso.ep_conso_5_usages_2025_m2 =
+      logement.sortie.ep_conso.ep_conso_5_usages_m2;
+  }
+
+  // Conso primaire avec le nouveau coefficient 1.9 (depuis janvier 2026)
   logement.sortie.ep_conso = { ...logement.sortie.ep_conso, ...conso_coeff_1_9 };
+
+  logement.sortie.ep_conso.classe_bilan_dpe_2026 = logement.sortie.ep_conso.classe_bilan_dpe;
+  logement.sortie.ep_conso.ep_conso_5_usages_2026 = logement.sortie.ep_conso.ep_conso_5_usages;
+  logement.sortie.ep_conso.ep_conso_5_usages_2026_m2 =
+    logement.sortie.ep_conso.ep_conso_5_usages_m2;
 
   return dpe;
 }
@@ -568,14 +587,14 @@ export function get_classe_ges_dpe(dpe) {
  * {@link https://www.ecologie.gouv.fr/actualites/evolutions-du-calcul-du-dpe-reponses-vos-questions#:~:text=Les%20DPE%20r%C3%A9alis%C3%A9s%20avant%20le,%2DAudit%20de%20l'Ademe.}
  *
  * @param dpe {FullDpe}
- * @returns {{ep_conso_5_usages_2026: number; ep_conso_5_usages_2026_m2: number; classe_bilan_dpe_2026: string}}
+ * @returns {{ep_conso_5_usages: number; ep_conso_5_usages_m2: number; classe_bilan_dpe: string}}
  */
 export function get_conso_coeff_1_9_2026(dpe) {
   const zc_id = dpe.logement.meteo.enum_zone_climatique_id;
   const ca_id = dpe.logement.meteo.enum_classe_altitude_id;
   const th = calc_th(dpe.logement.caracteristique_generale.enum_methode_application_dpe_log_id);
 
-  const ep_conso_5_usages_2026 =
+  const ep_conso_5_usages =
     (0.9 / 1.3) *
       (Number(dpe.logement.sortie.ep_conso.ep_conso_5_usages) -
         Number(dpe.logement.sortie.ef_conso.conso_5_usages)) +
@@ -587,8 +606,8 @@ export function get_conso_coeff_1_9_2026(dpe) {
   else if (th === 'immeuble')
     Sh = Number(dpe.logement.caracteristique_generale.surface_habitable_immeuble);
 
-  const ep_conso_5_usages_2026_m2 = Math.floor(ep_conso_5_usages_2026 / Sh);
-  const classe_bilan_dpe_2026 = classe_bilan_dpe(ep_conso_5_usages_2026_m2, zc_id, ca_id, Sh);
+  const ep_conso_5_usages_m2 = Math.floor(ep_conso_5_usages / Sh);
+  const classe_dpe = classe_bilan_dpe(ep_conso_5_usages_m2, zc_id, ca_id, Sh);
 
-  return { classe_bilan_dpe_2026, ep_conso_5_usages_2026_m2, ep_conso_5_usages_2026 };
+  return { classe_bilan_dpe: classe_dpe, ep_conso_5_usages_m2, ep_conso_5_usages };
 }

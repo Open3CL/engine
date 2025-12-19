@@ -80,20 +80,30 @@ export class CorpusRunner {
 
   /**
    * @param dpesFilePath {string}
+   * @param dpeCode {string}
+   * @return {Promise<void>}
+   */
+  runSingleDpeByCode(dpesFilePath, dpeCode) {
+    return this.run(dpesFilePath, undefined, dpeCode, undefined);
+  }
+
+  /**
+   * @param dpesFilePath {string}
    * @param corpusFilePath {string}
+   * @param dpeCode {string}
    * @param csvHeaders {string[]}
    * @return {Promise<void>}
    */
-  run(dpesFilePath, corpusFilePath, csvHeaders) {
+  run(dpesFilePath, corpusFilePath, dpeCode, csvHeaders) {
     console.time(corpusFilePath);
-    return this.#validateCorpus(dpesFilePath, corpusFilePath, csvHeaders).then(() => {
+    return this.#validateCorpus(dpesFilePath, corpusFilePath, dpeCode, csvHeaders).then(() => {
       console.timeEnd(corpusFilePath);
       this.#piscina.off('message', this.#onWorkerMessage.bind(this));
       this.#multiBar.stop();
 
       this.#globalReport.successRatio = `${Number((this.#globalReport.nbAllChecksBelowThreshold / this.#globalReport.totalDpesInFile) * 100).toFixed(2)} %`;
 
-      const fileName = corpusFilePath.split('/').pop();
+      const fileName = corpusFilePath?.split('/').pop();
 
       /** @type {{files: string[], branches: string[]}} **/
       const corpusList = JSON.parse(
@@ -102,9 +112,12 @@ export class CorpusRunner {
         }).toString()
       );
 
-      if (!corpusList.files.includes(fileName)) {
-        corpusList.files.push(fileName);
+      if (fileName) {
+        if (!corpusList.files.includes(fileName)) {
+          corpusList.files.push(fileName);
+        }
       }
+
       if (!corpusList.branches.includes(this.#curentGitBranch)) {
         corpusList.branches.push(this.#curentGitBranch);
       }
@@ -113,50 +126,52 @@ export class CorpusRunner {
         encoding: 'utf8'
       });
 
-      mkdirSync(`${REPORTS_FOLFER_PATH}/${fileName}`, { recursive: true });
-      writeFileSync(
-        `${REPORTS_FOLFER_PATH}/${fileName}/corpus_global_report_${this.#curentGitBranch}.json`,
-        JSON.stringify({ ...this.#globalReport, dpeExceedThreshold: undefined }),
-        { encoding: 'utf8' }
-      );
-      this.#createCsv(
-        this.#dpeOutputs,
-        OUTPUT_CSV_HEADERS,
-        `${REPORTS_FOLFER_PATH}/${fileName}/corpus_detailed_report_${this.#curentGitBranch}.csv`
-      );
-
-      /** @type {string[]} **/
-      let currentDpeExceedThreshold = [];
-      if (
-        existsSync(`${REPORTS_FOLFER_PATH}/${fileName}/corpus_dpe_list_above_threshold_main.json`)
-      ) {
-        currentDpeExceedThreshold = JSON.parse(
-          readFileSync(
-            `${REPORTS_FOLFER_PATH}/${fileName}/corpus_dpe_list_above_threshold_main.json`,
-            {
-              encoding: 'utf8'
-            }
-          ).toString()
-        );
-      }
-
-      /** @type {string[]} **/
-      const diffDpeThreshold = this.#globalReport.dpeExceedThreshold.filter(
-        (dpe) => !currentDpeExceedThreshold.includes(dpe)
-      );
-      if (diffDpeThreshold.length > 0) {
+      if (fileName) {
+        mkdirSync(`${REPORTS_FOLFER_PATH}/${fileName}`, { recursive: true });
         writeFileSync(
-          `${REPORTS_FOLFER_PATH}/${fileName}/corpus_dpe_list_above_threshold_diff_main_${this.#curentGitBranch}.json`,
-          JSON.stringify(diffDpeThreshold),
+          `${REPORTS_FOLFER_PATH}/${fileName}/corpus_global_report_${this.#curentGitBranch}.json`,
+          JSON.stringify({ ...this.#globalReport, dpeExceedThreshold: undefined }),
+          { encoding: 'utf8' }
+        );
+        this.#createCsv(
+          this.#dpeOutputs,
+          OUTPUT_CSV_HEADERS,
+          `${REPORTS_FOLFER_PATH}/${fileName}/corpus_detailed_report_${this.#curentGitBranch}.csv`
+        );
+
+        /** @type {string[]} **/
+        let currentDpeExceedThreshold = [];
+        if (
+          existsSync(`${REPORTS_FOLFER_PATH}/${fileName}/corpus_dpe_list_above_threshold_main.json`)
+        ) {
+          currentDpeExceedThreshold = JSON.parse(
+            readFileSync(
+              `${REPORTS_FOLFER_PATH}/${fileName}/corpus_dpe_list_above_threshold_main.json`,
+              {
+                encoding: 'utf8'
+              }
+            ).toString()
+          );
+        }
+
+        /** @type {string[]} **/
+        const diffDpeThreshold = this.#globalReport.dpeExceedThreshold.filter(
+          (dpe) => !currentDpeExceedThreshold.includes(dpe)
+        );
+        if (diffDpeThreshold.length > 0) {
+          writeFileSync(
+            `${REPORTS_FOLFER_PATH}/${fileName}/corpus_dpe_list_above_threshold_diff_main_${this.#curentGitBranch}.json`,
+            JSON.stringify(diffDpeThreshold),
+            { encoding: 'utf8' }
+          );
+        }
+
+        writeFileSync(
+          `${REPORTS_FOLFER_PATH}/${fileName}/corpus_dpe_list_above_threshold_${this.#curentGitBranch}.json`,
+          JSON.stringify(this.#globalReport.dpeExceedThreshold),
           { encoding: 'utf8' }
         );
       }
-
-      writeFileSync(
-        `${REPORTS_FOLFER_PATH}/${fileName}/corpus_dpe_list_above_threshold_${this.#curentGitBranch}.json`,
-        JSON.stringify(this.#globalReport.dpeExceedThreshold),
-        { encoding: 'utf8' }
-      );
     });
   }
 
@@ -176,63 +191,75 @@ export class CorpusRunner {
   /**
    * @param dpesFilePath {string}
    * @param corpusFilePath {string}
+   * @param dpeCode {string}
    * @param csvHeaders {string[]}
    * @return {Promise<void>}
    */
-  #validateCorpus(dpesFilePath, corpusFilePath, csvHeaders) {
+  #validateCorpus(dpesFilePath, corpusFilePath, dpeCode, csvHeaders) {
+    return this.#readCorpusFileOrGetDpe(corpusFilePath, csvHeaders, dpeCode).then(
+      /** @param dpeCodes {{dpeCode: string}[]} **/ async (dpeCodes) => {
+        const dpesToAnalyze = dpeCodes;
+
+        this.#totalDpes = dpesToAnalyze.length;
+        this.#globalReport.totalDpesInFile = this.#totalDpes;
+
+        console.log(`${this.#totalDpes} DPE to analyze from corpus: ${corpusFilePath}`);
+        this.#corpusBar = this.#multiBar.create(this.#totalDpes, 0, { action: 'analysés' });
+
+        // Certains DPE, après analyse manuelle sont à exclure
+        const dpesToExclude = [];
+
+        let nbAnalyzedDpe = 0;
+
+        /**
+         * @type {{dpeCode: string}[][]}
+         */
+        const chunks = chunk(dpesToAnalyze, process.env.WORKER_THREADS_CHUNKS || 200);
+        /** @type {any[][]} **/
+        const results = await Promise.all(
+          chunks.map((chunk) => {
+            return this.#piscina
+              .run({ chunk, dpesToExclude, dpesFilePath })
+              .then((data) => {
+                nbAnalyzedDpe += chunks.length;
+                this.#corpusBar.increment(chunk.length, { action: 'analysés' });
+                return data;
+              })
+              .catch((error) => {
+                console.error(error);
+              });
+          })
+        );
+
+        results.forEach((result) => {
+          this.#dpeOutputs.push(...result);
+        });
+      }
+    );
+  }
+
+  /**
+   * @param corpusFilePath {string}
+   * @param csvHeaders {string[]}
+   * @param dpeCode {string}
+   * @return {Promise<{dpeCode: string}[]>}
+   */
+  #readCorpusFileOrGetDpe(corpusFilePath, csvHeaders, dpeCode) {
+    if (dpeCode) {
+      return Promise.resolve([{ dpeCode }]);
+    }
     const readableStream = createReadStream(`test/corpus/files/${corpusFilePath}`);
-    return this.#csvStore
-      .parseFromStream(
-        readableStream,
-        {
-          // Keep only interested headers + rename them
-          headers: csvHeaders,
-          ignoreEmpty: true,
-          skipRows: 1,
-          discardUnmappedColumns: true
-        },
-        (row) => row
-      )
-      .then(
-        /** @param dpeCodes {{dpeCode: string}[]} **/ async (dpeCodes) => {
-          const dpesToAnalyze = dpeCodes;
-
-          this.#totalDpes = dpesToAnalyze.length;
-          this.#globalReport.totalDpesInFile = this.#totalDpes;
-
-          console.log(`${this.#totalDpes} DPE to analyze from corpus: ${corpusFilePath}`);
-          this.#corpusBar = this.#multiBar.create(this.#totalDpes, 0, { action: 'analysés' });
-
-          // Certains DPE, après analyse manuelle sont à exclure
-          const dpesToExclude = [];
-
-          let nbAnalyzedDpe = 0;
-
-          /**
-           * @type {{dpeCode: string}[][]}
-           */
-          const chunks = chunk(dpesToAnalyze, process.env.WORKER_THREADS_CHUNKS || 200);
-          /** @type {any[][]} **/
-          const results = await Promise.all(
-            chunks.map((chunk) => {
-              return this.#piscina
-                .run({ chunk, dpesToExclude, dpesFilePath })
-                .then((data) => {
-                  nbAnalyzedDpe += chunks.length;
-                  this.#corpusBar.increment(chunk.length, { action: 'analysés' });
-                  return data;
-                })
-                .catch((error) => {
-                  console.error(error);
-                });
-            })
-          );
-
-          results.forEach((result) => {
-            this.#dpeOutputs.push(...result);
-          });
-        }
-      );
+    return this.#csvStore.parseFromStream(
+      readableStream,
+      {
+        // Keep only interested headers + rename them
+        headers: csvHeaders,
+        ignoreEmpty: true,
+        skipRows: 1,
+        discardUnmappedColumns: true
+      },
+      (row) => row
+    );
   }
 
   #onWorkerMessage(event) {

@@ -87,15 +87,22 @@ const addGenerateurs = (inputDpe, csvOutputDpe) => {
 /**
  * @param inputDpe {FullDpe}
  * @param outputDpe {FullDpe}
- * @param propertyPath {string}
+ * @param inputPropertyPath {string}
+ * @param outputPropertyPath {string}
  * @param dpeOutput {any}
  * @return {number}
  */
-const getDpeOutputValueDiff = (inputDpe, outputDpe, propertyPath, dpeOutput) => {
-  let originalValue = parseFloat(get(inputDpe, propertyPath));
-  const outputValue = outputDpe ? parseFloat(get(outputDpe, propertyPath)) : undefined;
+const getDpeOutputValueDiff = (
+  inputDpe,
+  outputDpe,
+  inputPropertyPath,
+  outputPropertyPath,
+  dpeOutput
+) => {
+  let originalValue = parseFloat(get(inputDpe, inputPropertyPath));
+  const outputValue = outputDpe ? parseFloat(get(outputDpe, outputPropertyPath)) : undefined;
 
-  if (propertyPath.indexOf('m2') !== -1) {
+  if (inputPropertyPath.indexOf('m2') !== -1) {
     originalValue = Math.floor(originalValue);
   }
 
@@ -120,6 +127,7 @@ const getDpeOutputValueDiff = (inputDpe, outputDpe, propertyPath, dpeOutput) => 
  * @param dpeOutputs {object[]}
  */
 const runEngineAndVerifyOutput = (inputDpe, dpeOutputs) => {
+  /** @type {FullDpe} **/
   let outputDpe;
   let csvOutputDpe = [
     inputDpe.numero_dpe,
@@ -151,11 +159,32 @@ const runEngineAndVerifyOutput = (inputDpe, dpeOutputs) => {
 
   let isValid = true;
 
-  DPE_PROPERTIES_TO_CHECK.forEach((propertyPath) => {
-    const properties = propertyPath.split('.');
+  DPE_PROPERTIES_TO_CHECK.forEach((inputPropertyPath) => {
+    const properties = inputPropertyPath.split('.');
     const property = properties[properties.length - 1];
+    let outputPropertyPath = inputPropertyPath;
+    if (
+      inputPropertyPath.includes('ep_conso_5_usages') &&
+      outputDpe.logement.sortie.ep_conso.ep_conso_5_usages_2025
+    ) {
+      outputPropertyPath = inputPropertyPath.replace('ep_conso_5_usages', 'ep_conso_5_usages_2025');
+    } else if (
+      inputPropertyPath.includes('ep_conso_5_usages_m2') &&
+      outputDpe.logement.sortie.ep_conso.ep_conso_5_usages_2025_m2
+    ) {
+      outputPropertyPath = inputPropertyPath.replace(
+        'ep_conso_5_usages_m2',
+        'ep_conso_5_usages_2025_m2'
+      );
+    }
 
-    const diff = getDpeOutputValueDiff(inputDpe, outputDpe, propertyPath, csvOutputDpe);
+    const diff = getDpeOutputValueDiff(
+      inputDpe,
+      outputDpe,
+      inputPropertyPath,
+      outputPropertyPath,
+      csvOutputDpe
+    );
     if (diff < DIFF_VALUE_THRESHOLD) {
       parentPort.postMessage({
         action: 'incrementCheckPropertyThreshold',
@@ -168,8 +197,33 @@ const runEngineAndVerifyOutput = (inputDpe, dpeOutputs) => {
     const propertySegments = propertyPath.split('#');
 
     // Si plusieurs champs à valider, au moins un d'entre eux doit être valide
-    const isDiffBelowThreshold = propertySegments.some((property) => {
-      const diff = getDpeOutputValueDiff(inputDpe, outputDpe, property, null);
+    const isDiffBelowThreshold = propertySegments.some((inputPropertyPath) => {
+      let outputPropertyPath = inputPropertyPath;
+      if (
+        inputPropertyPath.includes('ep_conso_5_usages') &&
+        outputDpe.logement.sortie.ep_conso.ep_conso_5_usages_2025
+      ) {
+        outputPropertyPath = inputPropertyPath.replace(
+          'ep_conso_5_usages',
+          'ep_conso_5_usages_2025'
+        );
+      } else if (
+        inputPropertyPath.includes('ep_conso_5_usages_m2') &&
+        outputDpe.logement.sortie.ep_conso.ep_conso_5_usages_2025_m2
+      ) {
+        outputPropertyPath = inputPropertyPath.replace(
+          'ep_conso_5_usages_m2',
+          'ep_conso_5_usages_2025_m2'
+        );
+      }
+
+      const diff = getDpeOutputValueDiff(
+        inputDpe,
+        outputDpe,
+        inputPropertyPath,
+        outputPropertyPath,
+        null
+      );
       return diff <= DIFF_VALUE_THRESHOLD;
     });
 
