@@ -67,17 +67,7 @@ function evaluateFormula(formulaOrValue, pn, E, F) {
  * @param tbase {number} température de fonctionnement du générateur
  * @param methodeSaisie {number} méthode de saisie des caractéristiques du générateur
  */
-export function tv_generateur_combustion(
-  dpe,
-  di,
-  de,
-  type,
-  GV,
-  tbase,
-  methodeSaisie,
-  th,
-  installCh
-) {
+export function tv_generateur_combustion(dpe, di, de, type, GV, tbase, methodeSaisie) {
   const typeGenerateurKey = `enum_type_generateur_${type}_id`;
   let enumTypeGenerateurId = de[typeGenerateurKey];
   let row;
