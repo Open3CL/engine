@@ -27,7 +27,7 @@
     "vite": "^7.1.10"
   },
   "dependencies": {
-    "@open3cl/engine": "^1.3.24",
+    "@open3cl/engine": "^1.3.25",
     "@sveltejs/adapter-static": "^3.0.10",
     "jsondiffpatch": "^0.7.3",
     "svelte-jsoneditor": "^3.10.0"
