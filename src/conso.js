@@ -3,16 +3,36 @@ import calc_conso_eclairage from './16_conso_eclairage.js';
 import tvs from './tv.js';
 import { tv } from './utils.js';
 
-const coef_ep = {
-  'électricité ch': 2.3,
-  'électricité ecs': 2.3,
-  'électricité fr': 2.3,
-  'électricité éclairage': 2.3,
-  'électricité auxiliaire': 2.3
+export const COEFF_EP_2_3 = 2.3;
+export const COEFF_EP_1_9 = 1.9;
+
+/**
+ * Coeff de chauffage 1.9 au 01/01/2026
+ * @link {https://www.legifrance.gouv.fr/jorf/id/JORFTEXT000052134589}
+ */
+export const coef_ep = {
+  'électricité ch': COEFF_EP_1_9,
+  'électricité ecs': COEFF_EP_1_9,
+  'électricité fr': COEFF_EP_1_9,
+  'électricité éclairage': COEFF_EP_1_9,
+  'électricité auxiliaire': COEFF_EP_1_9
 };
 
-// 31 mars 2021
-// https://www.legifrance.gouv.fr/download/pdf?id=doxMrRr0wbfJVvtWjfDP4gHzzERt1iX0PtobthCE6A0=
+/**
+ * Coeff de chauffage 2.3 avant le 01/01/2026
+ */
+export const coef_ep_2_3 = {
+  'électricité ch': COEFF_EP_2_3,
+  'électricité ecs': COEFF_EP_2_3,
+  'électricité fr': COEFF_EP_2_3,
+  'électricité éclairage': COEFF_EP_2_3,
+  'électricité auxiliaire': COEFF_EP_2_3
+};
+
+/**
+ * Au 31 mars 2021
+ * @link {https://www.legifrance.gouv.fr/download/pdf?id=doxMrRr0wbfJVvtWjfDP4gHzzERt1iX0PtobthCE6A0=}
+ */
 const coef_ges = {
   'bois – bûches': 0.03,
   'bois – granulés (pellets) ou briquettes': 0.03,
@@ -32,8 +52,11 @@ const coef_ges = {
   'électricité auxiliaire': 0.064
 };
 
-// annexe 7
-// https://www.legifrance.gouv.fr/download/file/doxMrRr0wbfJVvtWjfDP4qE7zNsiFZL-4wqNyqoY-CA=/JOE_TEXTE
+/**
+ * Annexe 7
+ * @link {https://www.legifrance.gouv.fr/download/file/doxMrRr0wbfJVvtWjfDP4qE7zNsiFZL-4wqNyqoY-CA=/JOE_TEXTE}
+ * @link {https://www.legifrance.gouv.fr/download/pdf?id=7hpbVyq228foxHzNM7WleDImAyXlPNb9zULelSY01V8=}
+ */
 const coef_cout = {
   'fioul domestique': 0.09142,
   'réseau de chauffage urbain': 0.0787,
@@ -44,7 +67,6 @@ const coef_cout = {
   'bois – bûches': 0.03201,
   'bois – plaquettes forestières': 0.03201,
   'bois – plaquettes d’industrie': 0.03201,
-  // https://www.legifrance.gouv.fr/download/pdf?id=7hpbVyq228foxHzNM7WleDImAyXlPNb9zULelSY01V8=
   'gaz naturel': cout_gaz_naturel,
   "électricité d'origine renouvelable utilisée dans le bâtiment": cout_electricite,
   'électricité ch': cout_electricite,
@@ -161,7 +183,8 @@ export default function calc_conso(
   fr,
   prorataECS,
   prorataChauffage,
-  dateDpe
+  dateDpe,
+  coeffEp
 ) {
   const gen_ch = ch.reduce((acc, ch) => {
     const generateur_chauffage = ch.generateur_chauffage_collection.generateur_chauffage;
@@ -217,7 +240,7 @@ export default function calc_conso(
       gen_ecs,
       fr,
       'ep_conso',
-      coef_ep,
+      coeffEp,
       prorataECS,
       prorataChauffage
     ),
