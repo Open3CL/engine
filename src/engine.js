@@ -556,12 +556,11 @@ export function calcul_3cl(dpe) {
     ...conso
   };
 
-  // previous => coeff_2_3
   logement.sortie.ep_conso = {
     ...logement.sortie.ep_conso,
-    previous_classe_bilan_dpe: conso2_3.ep_conso.classe_bilan_dpe,
-    previous_ep_conso_5_usages: conso2_3.ep_conso.ep_conso_5_usages,
-    previous_ep_conso_5_usages_m2: conso2_3.ep_conso.ep_conso_5_usages_m2
+    coeff_2_3_classe_bilan_dpe: conso2_3.ep_conso.classe_bilan_dpe,
+    coeff_2_3_ep_conso_5_usages: conso2_3.ep_conso.ep_conso_5_usages,
+    coeff_2_3_ep_conso_5_usages_m2: conso2_3.ep_conso.ep_conso_5_usages_m2
   };
 
   logement.sortie.ep_conso.classe_bilan_dpe_2026 = logement.sortie.ep_conso.classe_bilan_dpe;

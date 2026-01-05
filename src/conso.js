@@ -3,30 +3,30 @@ import calc_conso_eclairage from './16_conso_eclairage.js';
 import tvs from './tv.js';
 import { tv } from './utils.js';
 
-export const PREVIOUS_COEFF_EP = 2.3;
-export const COEFF_EP = 1.9;
+export const COEFF_EP_2_3 = 2.3;
+export const COEFF_EP_1_9 = 1.9;
 
 /**
  * Coeff de chauffage 1.9 au 01/01/2026
  * @link {https://www.legifrance.gouv.fr/jorf/id/JORFTEXT000052134589}
  */
 export const coef_ep = {
-  'électricité ch': COEFF_EP,
-  'électricité ecs': COEFF_EP,
-  'électricité fr': COEFF_EP,
-  'électricité éclairage': COEFF_EP,
-  'électricité auxiliaire': COEFF_EP
+  'électricité ch': COEFF_EP_1_9,
+  'électricité ecs': COEFF_EP_1_9,
+  'électricité fr': COEFF_EP_1_9,
+  'électricité éclairage': COEFF_EP_1_9,
+  'électricité auxiliaire': COEFF_EP_1_9
 };
 
 /**
  * Coeff de chauffage 2.3 avant le 01/01/2026
  */
 export const coef_ep_2_3 = {
-  'électricité ch': PREVIOUS_COEFF_EP,
-  'électricité ecs': PREVIOUS_COEFF_EP,
-  'électricité fr': PREVIOUS_COEFF_EP,
-  'électricité éclairage': PREVIOUS_COEFF_EP,
-  'électricité auxiliaire': PREVIOUS_COEFF_EP
+  'électricité ch': COEFF_EP_2_3,
+  'électricité ecs': COEFF_EP_2_3,
+  'électricité fr': COEFF_EP_2_3,
+  'électricité éclairage': COEFF_EP_2_3,
+  'électricité auxiliaire': COEFF_EP_2_3
 };
 
 /**

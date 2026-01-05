@@ -169,12 +169,12 @@ const runEngineAndVerifyOutput = (inputDpe, dpeOutputs) => {
     if (inputPropertyPath.includes('ep_conso_5_usages') && isDpeBeforeJanvier2026) {
       outputPropertyPath = outputPropertyPath.replace(
         'ep_conso_5_usages',
-        'previous_ep_conso_5_usages'
+        'coeff_2_3_ep_conso_5_usages'
       );
     } else if (inputPropertyPath.includes('ep_conso_5_usages_m2') && isDpeBeforeJanvier2026) {
       outputPropertyPath = outputPropertyPath.replace(
         'ep_conso_5_usages_m2',
-        'previous_ep_conso_5_usages_m2'
+        'coeff_2_3_ep_conso_5_usages_m2'
       );
     }
 
@@ -202,12 +202,12 @@ const runEngineAndVerifyOutput = (inputDpe, dpeOutputs) => {
       if (inputPropertyPath.includes('ep_conso_5_usages') && isDpeBeforeJanvier2026) {
         outputPropertyPath = outputPropertyPath.replace(
           'ep_conso_5_usages',
-          'previous_ep_conso_5_usages'
+          'coeff_2_3_ep_conso_5_usages'
         );
       } else if (inputPropertyPath.includes('ep_conso_5_usages_m2') && isDpeBeforeJanvier2026) {
         outputPropertyPath = outputPropertyPath.replace(
           'ep_conso_5_usages_m2',
-          'previous_ep_conso_5_usages_m2'
+          'coeff_2_3_ep_conso_5_usages_m2'
         );
       }
 
