@@ -14,6 +14,11 @@
       "mandatory": false,
       "successRatio": "99.81 %"
     },
+    "deperdition_plancher_bas": {
+      "nbBelowThreshold": 9491,
+      "mandatory": false,
+      "successRatio": "94.93 %"
+    },
     "deperdition_plancher_haut": {
       "nbBelowThreshold": 9937,
       "mandatory": false,
@@ -84,11 +89,6 @@
       "nbBelowThreshold": 8941,
       "mandatory": true,
       "successRatio": "89.43 %"
-    },
-    "deperdition_plancher_bas": {
-      "nbBelowThreshold": 9491,
-      "mandatory": false,
-      "successRatio": "94.93 %"
     }
   }
 }

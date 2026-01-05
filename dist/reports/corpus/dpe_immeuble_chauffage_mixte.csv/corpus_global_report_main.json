@@ -46,12 +46,7 @@
       "successRatio": "91.95 %"
     },
     "besoin_ecs": { "nbBelowThreshold": 9979, "mandatory": false, "successRatio": "99.79 %" },
-    "conso_ecs": { "nbBelowThreshold": 7030, "mandatory": true, "successRatio": "70.30 %" },
-    "conso_auxiliaire_distribution_ch": {
-      "nbBelowThreshold": 3979,
-      "mandatory": false,
-      "successRatio": "39.79 %"
-    },
+    "besoin_ch": { "nbBelowThreshold": 8705, "mandatory": false, "successRatio": "87.05 %" },
     "conso_auxiliaire_distribution_ecs": {
       "nbBelowThreshold": 9112,
       "mandatory": false,
@@ -61,18 +56,6 @@
       "nbBelowThreshold": 6591,
       "mandatory": false,
       "successRatio": "65.91 %"
-    },
-    "emission_ges_5_usages": {
-      "nbBelowThreshold": 6244,
-      "mandatory": true,
-      "successRatio": "62.44 %"
-    },
-    "besoin_ch": { "nbBelowThreshold": 8705, "mandatory": false, "successRatio": "87.05 %" },
-    "conso_ch": { "nbBelowThreshold": 7226, "mandatory": true, "successRatio": "72.26 %" },
-    "conso_auxiliaire_generation_ch": {
-      "nbBelowThreshold": 5539,
-      "mandatory": false,
-      "successRatio": "55.39 %"
     },
     "conso_auxiliaire_ventilation": {
       "nbBelowThreshold": 9226,
@@ -85,10 +68,27 @@
       "mandatory": true,
       "successRatio": "68.41 %"
     },
+    "conso_ecs": { "nbBelowThreshold": 7030, "mandatory": true, "successRatio": "70.30 %" },
+    "conso_ch": { "nbBelowThreshold": 7226, "mandatory": true, "successRatio": "72.26 %" },
+    "conso_auxiliaire_generation_ch": {
+      "nbBelowThreshold": 5539,
+      "mandatory": false,
+      "successRatio": "55.39 %"
+    },
+    "emission_ges_5_usages": {
+      "nbBelowThreshold": 6244,
+      "mandatory": true,
+      "successRatio": "62.44 %"
+    },
     "emission_ges_5_usages_m2": {
       "nbBelowThreshold": 6093,
       "mandatory": true,
       "successRatio": "60.93 %"
+    },
+    "conso_auxiliaire_distribution_ch": {
+      "nbBelowThreshold": 3979,
+      "mandatory": false,
+      "successRatio": "39.79 %"
     }
   }
 }
