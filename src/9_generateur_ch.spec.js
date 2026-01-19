@@ -3,6 +3,11 @@ import { describe, expect, test } from 'vitest';
 
 describe('Recherche de bugs dans le calcul de la consommation des generateurs de chauffage', () => {
   test('calcul de la consommation des generateurs de chauffage pour 2475E2510509B', () => {
+    const dpe = {
+      logement: {
+        enveloppe: { inertie: { enum_classe_inertie_id: '5' }, mur_collection: { mur: [] } }
+      }
+    };
     const gen_ch = {
       donnee_entree: {
         description: 'Electrique - Convecteur électrique NFC, NF** et NF***',
@@ -60,6 +65,7 @@ describe('Recherche de bugs dans le calcul de la consommation des generateurs de
     const ac = 1;
 
     calc_generateur_ch(
+      dpe,
       gen_ch,
       _pos,
       em_ch,

@@ -9,6 +9,9 @@ import { tv_generateur_combustion } from './13.2_generateur_combustion.js';
 import { tv_temp_fonc_30_100 } from './13.2_generateur_combustion_ch.js';
 import enums from './enums.js';
 
+/**
+ * @param dpe {FullDpe}
+ */
 export default function calc_chauffage(
   dpe,
   ch,
@@ -22,7 +25,8 @@ export default function calc_chauffage(
   Sh,
   hsp,
   ac,
-  ilpa
+  ilpa,
+  besoin_ch_mois
 ) {
   const de = ch.donnee_entree;
   const di = {};
@@ -150,7 +154,11 @@ export default function calc_chauffage(
       hsp,
       ca_id,
       zc_id,
-      ilpa
+      ilpa,
+      tbase,
+      besoin_ch_mois,
+      ch.donnee_entree.surface_chauffee,
+      gen_ch
     );
 
     // Si plusieurs générateurs de chauffage, la consommation des auxiliaires est répartie sur chacun d'eux
@@ -252,8 +260,9 @@ function tv_ch_facteur_couverture_solaire(de, zc_id) {
  * @param GV {number} déperdition de l'enveloppe
  * @param zcId {string} id de la zone climatique du bien
  * @param caId {string} id de la classe d'altitude du bien
+ * @param th {string} type d'habitation
  */
-export function tauxChargeForGenerator(installationChauffage, GV, caId, zcId) {
+export function tauxChargeForGenerator(installationChauffage, GV, caId, zcId, th) {
   // Récupération des installations de chauffage avec générateur à combustion
   const installChauffageWithCombustion = [];
   installationChauffage.forEach((ch) => {
@@ -285,8 +294,9 @@ export function tauxChargeForGenerator(installationChauffage, GV, caId, zcId) {
 
   installChauffageWithCombustion.forEach((installCh) => {
     (installCh.donnee_utilisateur.genCombustion || []).forEach((gen) => {
-      gen.donnee_utilisateur.cdimref = Pn / (GV * (19 - tbase));
-      gen.donnee_utilisateur.cdimrefDep = Pn / (GV * (21 - tbase));
+      const GV_ratio = th === 'immeuble' ? GV * (1 / (installCh.donnee_entree.rdim || 1)) : GV;
+      gen.donnee_utilisateur.cdimref = Pn / (GV_ratio * (19 - tbase));
+      gen.donnee_utilisateur.cdimrefDep = Pn / (GV_ratio * (21 - tbase));
     });
   });
 }

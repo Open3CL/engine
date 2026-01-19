@@ -98,6 +98,14 @@ export class SynchronizeValeurTables {
                   return v;
                 });
               }
+              if (['qp0_perc', 'rpn', 'rpint'].includes(key)) {
+                return value
+                  .replace(/ /g, '')
+                  .replace(/,/g, '.')
+                  .replace(/\*logPn/g, '*log10(Pn)')
+                  .replace(/\+logPn/g, '+log10(Pn)')
+                  .replace(/logPn/g, '*log10(Pn)');
+              }
 
               // Reformat all number with only one decimal to be compatible with the legacy `tv.js` file
               if (!isNaN(Number(value)) && value.endsWith('0') && value.includes('.')) {

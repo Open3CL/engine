@@ -1,6 +1,15 @@
 import { tvs } from './tv.js';
 import { mois_liste, Njj } from './utils.js';
 
+/**
+ * Calcul du besoin ecs en kw/h
+ * @param ca
+ * @param mois
+ * @param zc
+ * @param nadeq
+ * @param depensier
+ * @return {number}
+ */
 export function calc_besoin_ecs_j(ca, mois, zc, nadeq, depensier) {
   const tefsj = tvs.tefs[ca][mois][zc];
   const njj = Njj[mois];

@@ -4,6 +4,7 @@ import { updateGenerateurBouilleurs } from './13.2_generateur_combustion_bouille
 import { updateGenerateurChaudieres } from './13.2_generateur_combustion_chaudiere.js';
 import { updateGenerateurPacs } from './13.2_generateur_pac.js';
 import getFicheTechnique from './ficheTechnique.js';
+import { evaluate } from 'mathjs';
 
 function criterePn(Pn, matcher) {
   let critere_list = tvColumnLines('generateur_combustion', 'critere_pn', matcher);
@@ -36,20 +37,16 @@ const F_tab = {
   1: -0.55
 };
 
-function excel_to_js_exec(box, pn, E, F) {
-  const formula = box
-    .replace(/ /g, '')
-    .replace(/,/g, '.')
-    .replace(/\*logPn/g, '*Math.log10(Pn)')
-    .replace(/\+logPn/g, '+Math.log10(Pn)')
-    .replace(/logPn/g, '*Math.log10(Pn)')
-    .replace(/%/g, '/100')
-    .replace(/\^/g, '**');
-  const js = `let Pn=${pn / 1000}, E=${E}, F=${F}; (${formula})`;
-  /* console.warn(js) */
-  const result = eval(js);
-  /* console.warn(result) */
-  return result;
+function evaluateFormula(formulaOrValue, pn, E, F) {
+  const pnVariable = pn / 1000;
+  if (!isNaN(formulaOrValue)) {
+    return Number(formulaOrValue);
+  }
+  const variables = new Map();
+  variables.set('Pn', pnVariable);
+  variables.set('E', E);
+  variables.set('F', F);
+  return evaluate(formulaOrValue, variables);
 }
 
 /**
@@ -155,6 +152,8 @@ export function tv_generateur_combustion(dpe, di, de, type, GV, tbase, methodeSa
   const E = E_tab[de.presence_ventouse];
   const F = F_tab[de.presence_ventouse];
 
+  const ratioVirtualisation = de.ratio_virtualisation || 1;
+
   /**
    * Si la consommation ECS est obtenue par virtualisation du générateur collectif pour les besoins individuels
    * la puissance nominale est obtenu à partir de la puissance nominale du générateur collectif multiplié par le
@@ -163,22 +162,26 @@ export function tv_generateur_combustion(dpe, di, de, type, GV, tbase, methodeSa
    */
   if (![3, 4, 5].includes(methodeSaisie)) {
     if (row.rpn) {
-      di.rpn = excel_to_js_exec(row.rpn, di.pn / (de.ratio_virtualisation || 1), E, F) / 100;
+      di.rpn = evaluateFormula(row.rpn, di.pn / ratioVirtualisation, E, F) / 100;
     }
     if (type === 'ch' && row.rpint) {
-      di.rpint = excel_to_js_exec(row.rpint, di.pn / (de.ratio_virtualisation || 1), E, F) / 100;
+      di.rpint = evaluateFormula(row.rpint, di.pn / ratioVirtualisation, E, F) / 100;
     }
   }
 
   if (![4, 5].includes(methodeSaisie)) {
     if (row.qp0_perc) {
-      const qp0_calc = excel_to_js_exec(row.qp0_perc, di.pn / (de.ratio_virtualisation || 1), E, F);
+      const qp0_calc = evaluateFormula(row.qp0_perc, di.pn / ratioVirtualisation, E, F);
       // Certaines chaudières ont un qp0 en % de pn, d'autres ont des valeurs constantes
-      di.qp0 = row.qp0_perc.includes('Pn')
-        ? qp0_calc * 1000 * (de.ratio_virtualisation || 1)
-        : row.qp0_perc.includes('%')
-          ? qp0_calc * di.pn
-          : qp0_calc * 1000;
+      if (row.qp0_perc.includes('Pn')) {
+        di.qp0 = qp0_calc * 1000 * ratioVirtualisation;
+      } else {
+        if (row.qp0_perc.includes('%')) {
+          di.qp0 = qp0_calc * di.pn;
+        } else {
+          di.qp0 = qp0_calc * 1000 * ratioVirtualisation;
+        }
+      }
     } else {
       di.qp0 = 0;
     }

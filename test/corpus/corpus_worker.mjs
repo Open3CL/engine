@@ -87,15 +87,22 @@ const addGenerateurs = (inputDpe, csvOutputDpe) => {
 /**
  * @param inputDpe {FullDpe}
  * @param outputDpe {FullDpe}
- * @param propertyPath {string}
+ * @param inputPropertyPath {string}
+ * @param outputPropertyPath {string}
  * @param dpeOutput {any}
  * @return {number}
  */
-const getDpeOutputValueDiff = (inputDpe, outputDpe, propertyPath, dpeOutput) => {
-  let originalValue = parseFloat(get(inputDpe, propertyPath));
-  const outputValue = outputDpe ? parseFloat(get(outputDpe, propertyPath)) : undefined;
+const getDpeOutputValueDiff = (
+  inputDpe,
+  outputDpe,
+  inputPropertyPath,
+  outputPropertyPath,
+  dpeOutput
+) => {
+  let originalValue = parseFloat(get(inputDpe, inputPropertyPath));
+  const outputValue = outputDpe ? parseFloat(get(outputDpe, outputPropertyPath)) : undefined;
 
-  if (propertyPath.indexOf('m2') !== -1) {
+  if (inputPropertyPath.indexOf('m2') !== -1) {
     originalValue = Math.floor(originalValue);
   }
 
@@ -120,6 +127,7 @@ const getDpeOutputValueDiff = (inputDpe, outputDpe, propertyPath, dpeOutput) => 
  * @param dpeOutputs {object[]}
  */
 const runEngineAndVerifyOutput = (inputDpe, dpeOutputs) => {
+  /** @type {FullDpe} **/
   let outputDpe;
   let csvOutputDpe = [
     inputDpe.numero_dpe,
@@ -151,21 +159,65 @@ const runEngineAndVerifyOutput = (inputDpe, dpeOutputs) => {
 
   let isValid = true;
 
-  DPE_PROPERTIES_TO_CHECK.forEach((propertyPath) => {
-    const properties = propertyPath.split('.');
-    const property = properties[properties.length - 1];
+  const isDpeBeforeJanvier2026 =
+    new Date(inputDpe.administratif.date_etablissement_dpe) < new Date('2026-01-01');
 
-    const diff = getDpeOutputValueDiff(inputDpe, outputDpe, propertyPath, csvOutputDpe);
+  DPE_PROPERTIES_TO_CHECK.forEach((inputPropertyPath) => {
+    const properties = inputPropertyPath.split('.');
+    const property = properties[properties.length - 1];
+    let outputPropertyPath = inputPropertyPath;
+    if (inputPropertyPath.includes('ep_conso_5_usages') && isDpeBeforeJanvier2026) {
+      outputPropertyPath = outputPropertyPath.replace(
+        'ep_conso_5_usages',
+        'coeff_2_3_ep_conso_5_usages'
+      );
+    } else if (inputPropertyPath.includes('ep_conso_5_usages_m2') && isDpeBeforeJanvier2026) {
+      outputPropertyPath = outputPropertyPath.replace(
+        'ep_conso_5_usages_m2',
+        'coeff_2_3_ep_conso_5_usages_m2'
+      );
+    }
+
+    const diff = getDpeOutputValueDiff(
+      inputDpe,
+      outputDpe,
+      inputPropertyPath,
+      outputPropertyPath,
+      csvOutputDpe
+    );
     if (diff < DIFF_VALUE_THRESHOLD) {
-      parentPort.postMessage({ action: 'incrementCheckPropertyThreshold', property });
+      parentPort.postMessage({
+        action: 'incrementCheckPropertyThreshold',
+        property
+      });
     }
   });
 
   DPE_PROPERTIES_TO_VALIDATE.forEach((propertyPath) => {
-    // Si plusieurs champs à valider, au moins un d'entre eux doit être valide
     const propertySegments = propertyPath.split('#');
-    const isDiffBelowThreshold = propertySegments.some((property) => {
-      const diff = getDpeOutputValueDiff(inputDpe, outputDpe, property, null);
+
+    // Si plusieurs champs à valider, au moins un d'entre eux doit être valide
+    const isDiffBelowThreshold = propertySegments.some((inputPropertyPath) => {
+      let outputPropertyPath = inputPropertyPath;
+      if (inputPropertyPath.includes('ep_conso_5_usages') && isDpeBeforeJanvier2026) {
+        outputPropertyPath = outputPropertyPath.replace(
+          'ep_conso_5_usages',
+          'coeff_2_3_ep_conso_5_usages'
+        );
+      } else if (inputPropertyPath.includes('ep_conso_5_usages_m2') && isDpeBeforeJanvier2026) {
+        outputPropertyPath = outputPropertyPath.replace(
+          'ep_conso_5_usages_m2',
+          'coeff_2_3_ep_conso_5_usages_m2'
+        );
+      }
+
+      const diff = getDpeOutputValueDiff(
+        inputDpe,
+        outputDpe,
+        inputPropertyPath,
+        outputPropertyPath,
+        null
+      );
       return diff <= DIFF_VALUE_THRESHOLD;
     });
 
@@ -179,6 +231,7 @@ const runEngineAndVerifyOutput = (inputDpe, dpeOutputs) => {
     parentPort.postMessage({ action: 'incrementAllChecksThreshold' });
   } else {
     csvOutputDpe.push('KO');
+    parentPort.postMessage({ action: 'addDpeExceedThresholdInList', dpeCode: inputDpe.numero_dpe });
   }
 
   dpeOutputs.push(csvOutputDpe);
@@ -197,7 +250,7 @@ const waitFor = (milliseconds) => {
  */
 const downloadDpe = (dpeCode, dpesFilePath) => {
   const filePath = `${dpesFilePath}/${dpeCode}.xml`;
-  return waitFor(process.env.API_ADEME_DONWLOAD_WAIT || 1000).then(() => {
+  return waitFor(process.env.API_ADEME_DOWNLOAD_WAIT || 1000).then(() => {
     return fetch(
       `https://prd-x-ademe-externe-api.de-c1.eu1.cloudhub.io/api/v1/pub/dpe/${dpeCode}/xml`,
       {
@@ -211,7 +264,9 @@ const downloadDpe = (dpeCode, dpesFilePath) => {
         if (resp.status !== 200) {
           /** @type {{error: string}} **/
           const errorPayload = await resp.json();
-          throw new Error(`Could not retrieve DPE: ${dpeCode}, error: ${errorPayload.error}`);
+          throw new Error(
+            `Could not retrieve DPE: ${dpeCode}, code: ${resp.status}, error: ${errorPayload.error}`
+          );
         }
         return resp.text();
       })
@@ -230,6 +285,12 @@ const downloadDpe = (dpeCode, dpesFilePath) => {
 const readOrDownloadDpe = (dpeCode, dpesFilePath) => {
   const filePath = `${dpesFilePath}/${dpeCode}.xml`;
   if (!existsSync(filePath)) {
+    if (!process.env.ADEME_API_CLIENT_ID) {
+      throw new Error('Environment variable ADEME_API_CLIENT_ID not set');
+    }
+    if (!process.env.ADEME_API_CLIENT_SECRET) {
+      throw new Error('Environment variable ADEME_API_CLIENT_SECRET not set');
+    }
     return downloadDpe(dpeCode, dpesFilePath);
   } else {
     return Promise.resolve(readFileSync(filePath, { encoding: 'utf8' }));
@@ -266,6 +327,8 @@ export default async function ({ chunk, dpesToExclude, dpesFilePath = [] }) {
         } else {
           runEngineAndVerifyOutput(dpe, dpeOutputs);
         }
+      } else {
+        parentPort.postMessage({ action: 'incrementInvalidDpeVersion' });
       }
     } catch (ex) {
       console.error(ex);

@@ -14,6 +14,7 @@ export interface MurDE extends DE {
   enum_type_adjacence_id?: number; // ENUM type_adjacence
   enum_orientation_id?: number; // ENUM orientation
   surface_paroi_totale?: number;
+  surface_paroi_opaque?: number;
   umur0_saisi?: number;
   tv_umur0_id?: number; // TV
   epaisseur_structure?: number;
@@ -28,6 +29,7 @@ export interface MurDE extends DE {
   epaisseur_isolation?: number;
   tv_umur_id?: number; // TV
   enum_methode_saisie_u_id?: number; // ENUM methode_saisie_u
+  paroi_lourde?: boolean;
 }
 
 export interface MurDI {

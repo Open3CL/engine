@@ -95,7 +95,7 @@ interface Enveloppe {
   baie_vitree_collection: Baie_vitree_collection;
   porte_collection: Porte_collection;
   ets_collection: string;
-  pont_thermique_collection: string;
+  pont_thermique_collection: PontThermique_collection;
 }
 interface Inertie {
   inertie_plancher_bas_lourd: number;
@@ -191,6 +191,7 @@ interface Donnee_entree {
   enum_methode_saisie_carac_sys_id?: string;
   tv_pertes_stockage_id?: number;
   identifiant_reseau_chaleur?: string;
+  date_arrete_reseau_chaleur?: string;
   enum_type_stockage_ecs_id?: string;
   position_volume_chauffe?: number;
   volume_stockage?: number;
@@ -212,6 +213,8 @@ interface Donnee_entree {
   ref_produit_generateur_ch?: string;
   enum_type_generateur_ch_id?: string;
   tv_rendement_generation_id?: number;
+  ratio_virtualisation?: number;
+  tv_pont_thermique_id?: number;
 }
 interface Donnee_intermediaire {
   b?: number;
@@ -249,6 +252,9 @@ interface Donnee_intermediaire {
   i0?: number;
   rendement_emission?: number;
   rendement_regulation?: number;
+  qp0?: number;
+  pn?: number;
+  k?: number;
 }
 interface Plancher_bas_collection {
   plancher_bas: PlancherBasItem[];
@@ -275,6 +281,13 @@ interface Porte_collection {
   porte: PorteItem[];
 }
 interface PorteItem {
+  donnee_entree: Donnee_entree;
+  donnee_intermediaire: Donnee_intermediaire;
+}
+interface PontThermique_collection {
+  pont_thermique: PontThermiqueItem[];
+}
+interface PontThermiqueItem {
   donnee_entree: Donnee_entree;
   donnee_intermediaire: Donnee_intermediaire;
 }
@@ -406,8 +419,14 @@ interface Ep_conso {
   ep_conso_fr: number;
   ep_conso_fr_depensier: number;
   ep_conso_5_usages: number;
+  coeff_2_3_ep_conso_5_usages?: number;
+  ep_conso_5_usages_2026?: number;
   ep_conso_5_usages_m2: number;
+  coeff_2_3_ep_conso_5_usages_m2?: number;
+  ep_conso_5_usages_2026_m2?: number;
   classe_bilan_dpe: string;
+  coeff_2_3_classe_bilan_dpe?: string;
+  classe_bilan_dpe_2026?: string;
 }
 interface Emission_ges {
   emission_ges_ch: number;

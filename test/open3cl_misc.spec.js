@@ -68,8 +68,8 @@ describe('Open3cl misc unit tests', () => {
   test('should be able to process a dpe with empty plancher_bas_collection and plancher_haut_collection', () => {
     const output = calcul_3cl(structuredClone(getAdemeFileJson('2421E0125604W')));
 
-    expect(output.logement.enveloppe.plancher_bas_collection).toBe('');
-    expect(output.logement.enveloppe.plancher_haut_collection).toBe('');
+    expect(output.logement.enveloppe.plancher_bas_collection).toEqual({ plancher_bas: [] });
+    expect(output.logement.enveloppe.plancher_haut_collection).toEqual({ plancher_haut: [] });
 
     expect(output.logement.sortie.qualite_isolation.qualite_isol_plancher_bas).toBe(1);
   });
@@ -100,5 +100,46 @@ describe('Open3cl misc unit tests', () => {
         .emetteur_chauffage_collection.emetteur_chauffage[0].donnee_entree
         .tv_rendement_distribution_ch_id
     );
+  });
+
+  test('surface sud equivalente should be correct', () => {
+    /** @type {FullDpe} **/
+    let input = getAdemeFileJson('2383E0460002R');
+
+    /** @type {FullDpe} **/
+    let output = calcul_3cl(structuredClone(input));
+    expect(input.logement.sortie.apport_et_besoin.surface_sud_equivalente).toBeCloseTo(
+      output.logement.sortie.apport_et_besoin.surface_sud_equivalente
+    );
+
+    /** @type {FullDpe} **/
+    input = getAdemeFileJson('2569E2636278D');
+
+    /** @type {FullDpe} **/
+    output = calcul_3cl(structuredClone(input));
+    expect(input.logement.sortie.apport_et_besoin.surface_sud_equivalente).toBeCloseTo(
+      output.logement.sortie.apport_et_besoin.surface_sud_equivalente
+    );
+  });
+
+  test('conso chauffage bi jonction should be correct', () => {
+    /** @type {FullDpe} **/
+    let input = getAdemeFileJson('2569E2636278D');
+
+    /** @type {FullDpe} **/
+    let output = calcul_3cl(structuredClone(input));
+    expect(input.logement.sortie.ep_conso.ep_conso_ch).toBeCloseTo(
+      output.logement.sortie.ep_conso.ep_conso_ch,
+      1
+    );
+  });
+
+  test('2375E3009989U', () => {
+    /** @type {FullDpe} **/
+    let input = getAdemeFileJson('2375E3009989U');
+
+    /** @type {FullDpe} **/
+    let output = calcul_3cl(structuredClone(input));
+    expect(input.logement.sortie.ep_conso).toEqual(output.logement.sortie.ep_conso);
   });
 });

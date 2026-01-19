@@ -7,7 +7,12 @@ import calc_besoin_ch from './9_besoin_ch.js';
 import calc_chauffage, { tauxChargeForGenerator } from './9_chauffage.js';
 import calc_confort_ete from './2021_04_13_confort_ete.js';
 import calc_qualite_isolation from './2021_04_13_qualite_isolation.js';
-import calc_conso, { classe_bilan_dpe, classe_emission_ges } from './conso.js';
+import calc_conso, {
+  classe_bilan_dpe,
+  classe_emission_ges,
+  coef_ep,
+  coef_ep_2_3
+} from './conso.js';
 import {
   add_references,
   bug_for_bug_compat,
@@ -19,6 +24,8 @@ import {
 import { Inertie } from './7_inertie.js';
 import getFicheTechnique from './ficheTechnique.js';
 import { ProductionENR } from './16.2_production_enr.js';
+
+const LIB_VERSION = 'OPEN3CL_VERSION';
 
 function calc_th(map_id) {
   const map = enums.methode_application_dpe_log[map_id];
@@ -32,9 +39,18 @@ function calc_th(map_id) {
 const inertie = new Inertie();
 const productionENR = new ProductionENR();
 
+export function getVersion() {
+  return LIB_VERSION;
+}
+
+/**
+ * @param dpe {FullDpe}
+ * @return {FullDpe}
+ */
 export function calcul_3cl(dpe) {
   sanitize_dpe(dpe);
   const modele = enums.modele_dpe[dpe.administratif.enum_modele_dpe_id];
+  const dateDpe = dpe.administratif.date_etablissement_dpe;
   if (modele !== 'dpe 3cl 2021 méthode logement') {
     console.error('Moteur dpe non implémenté pour le modèle: ' + modele);
     return null;
@@ -91,10 +107,7 @@ export function calcul_3cl(dpe) {
 
   add_references(logement.enveloppe);
 
-  // TODO commit version to package.json during release process
-  /* const package_version = require('../package.json').version; */
-  const package_version = 'alpha';
-  dpe.administratif.diagnostiqueur = { version_moteur_calcul: `Open3CL ${package_version}` };
+  dpe.administratif.diagnostiqueur = { version_moteur_calcul: `Open3CL ${getVersion()}` };
   const env = logement.enveloppe;
   let Sh;
   let ShChauffageAndEcs;
@@ -286,6 +299,7 @@ export function calcul_3cl(dpe) {
 
   let becs = apport_et_besoin.besoin_ecs;
   let becs_dep = apport_et_besoin.besoin_ecs_depensier;
+  let isImmeubleSystemEcsIndividuels = false;
 
   /**
    * 11.4 Plusieurs systèmes d’ECS (limité à 2 systèmes différents par logement)
@@ -295,8 +309,14 @@ export function calcul_3cl(dpe) {
   const ecsArray = Array.isArray(ecs) ? ecs : ecs ? [ecs] : [];
 
   if (ecsArray.length > 1) {
-    becs /= 2;
-    becs_dep /= 2;
+    // Immeuble avec différents systèmes individuels
+    isImmeubleSystemEcsIndividuels =
+      th === 'immeuble' && ecsArray.every((e) => e.donnee_entree.enum_type_installation_id === '1');
+
+    if (!isImmeubleSystemEcsIndividuels) {
+      becs /= 2;
+      becs_dep /= 2;
+    }
   }
 
   ecsArray.forEach((ecs) => {
@@ -385,7 +405,20 @@ export function calcul_3cl(dpe) {
         }
       });
     }
-    calc_ecs(dpe, ecs, becs, becs_dep, GV, ca_id, zc_id, th, virtualisationECS);
+    calc_ecs(
+      dpe,
+      ecs,
+      becs,
+      becs_dep,
+      GV,
+      ca_id,
+      zc_id,
+      th,
+      virtualisationECS,
+      dpe.logement.caracteristique_generale.surface_habitable_immeuble,
+      dpe.logement.caracteristique_generale.nombre_appartement,
+      isImmeubleSystemEcsIndividuels
+    );
   });
 
   /**
@@ -430,18 +463,22 @@ export function calcul_3cl(dpe) {
     ecs,
     instal_ch,
     bv_list,
-    ets
+    ets,
+    th,
+    dpe.logement.caracteristique_generale.nombre_appartement
   );
   apport_et_besoin = { ...apport_et_besoin, ...besoin_ch };
 
   const bch = apport_et_besoin.besoin_ch;
   const bch_dep = apport_et_besoin.besoin_ch_depensier;
+  const besoin_ch_mois = { ...apport_et_besoin.besoin_ch_mois };
+  delete apport_et_besoin.besoin_ch_mois;
 
   /**
    * 13.2.1.2 Présence d’un ou plusieurs générateurs à combustion indépendants
    * Calcul des taux de charge pour chacun des générateurs de chauffage
    */
-  tauxChargeForGenerator(instal_ch, GV, ca_id, zc_id);
+  tauxChargeForGenerator(instal_ch, GV, ca_id, zc_id, th);
 
   instal_ch.forEach((ch) => {
     calc_chauffage(
@@ -457,7 +494,8 @@ export function calcul_3cl(dpe) {
       ShChauffageAndEcs,
       hsp,
       ac,
-      ilpa
+      ilpa,
+      besoin_ch_mois
     );
   });
 
@@ -499,7 +537,9 @@ export function calcul_3cl(dpe) {
     ecs,
     clim,
     prorataECS,
-    prorataChauffage
+    prorataChauffage,
+    dateDpe,
+    coef_ep
   );
 
   const production_electricite = productionENR.calculateEnr(
@@ -507,8 +547,25 @@ export function calcul_3cl(dpe) {
     conso,
     Sh,
     th,
-    zc_id
+    zc_id,
+    false
   );
+
+  const conso2_3 = calc_conso(
+    Sh,
+    zc_id,
+    ca_id,
+    vt_list,
+    instal_ch,
+    ecs,
+    clim,
+    prorataECS,
+    prorataChauffage,
+    dateDpe,
+    coef_ep_2_3
+  );
+
+  productionENR.calculateEnr(dpe.logement.production_elec_enr, conso2_3, Sh, th, zc_id, true);
 
   // get all baie_vitree orientations
   const ph_list = env.plancher_haut_collection.plancher_haut || [];
@@ -520,6 +577,18 @@ export function calcul_3cl(dpe) {
     production_electricite,
     ...conso
   };
+
+  logement.sortie.ep_conso = {
+    ...logement.sortie.ep_conso,
+    coeff_2_3_classe_bilan_dpe: conso2_3.ep_conso.classe_bilan_dpe,
+    coeff_2_3_ep_conso_5_usages: conso2_3.ep_conso.ep_conso_5_usages,
+    coeff_2_3_ep_conso_5_usages_m2: conso2_3.ep_conso.ep_conso_5_usages_m2
+  };
+
+  logement.sortie.ep_conso.classe_bilan_dpe_2026 = logement.sortie.ep_conso.classe_bilan_dpe;
+  logement.sortie.ep_conso.ep_conso_5_usages_2026 = logement.sortie.ep_conso.ep_conso_5_usages;
+  logement.sortie.ep_conso.ep_conso_5_usages_2026_m2 =
+    logement.sortie.ep_conso.ep_conso_5_usages_m2;
 
   return dpe;
 }
@@ -548,4 +617,36 @@ export function get_classe_ges_dpe(dpe) {
       Sh
     )
   };
+}
+
+/**
+ * Calcul de la nouvelle conso suite à la modification du coefficient pour le chauffage électrique
+ * Applicable uniquement à partir de janvier 2026
+ *
+ * {@link https://www.ecologie.gouv.fr/actualites/evolutions-du-calcul-du-dpe-reponses-vos-questions#:~:text=Les%20DPE%20r%C3%A9alis%C3%A9s%20avant%20le,%2DAudit%20de%20l'Ademe.}
+ *
+ * @param dpe {FullDpe}
+ * @returns {{ep_conso_5_usages: number; ep_conso_5_usages_m2: number; classe_bilan_dpe: string}}
+ */
+export function get_conso_coeff_1_9_2026(dpe) {
+  const zc_id = dpe.logement.meteo.enum_zone_climatique_id;
+  const ca_id = dpe.logement.meteo.enum_classe_altitude_id;
+  const th = calc_th(dpe.logement.caracteristique_generale.enum_methode_application_dpe_log_id);
+
+  const ep_conso_5_usages =
+    (0.9 / 1.3) *
+      (Number(dpe.logement.sortie.ep_conso.ep_conso_5_usages) -
+        Number(dpe.logement.sortie.ef_conso.conso_5_usages)) +
+    Number(dpe.logement.sortie.ef_conso.conso_5_usages);
+
+  let Sh;
+  if (th === 'maison' || th === 'appartement')
+    Sh = Number(dpe.logement.caracteristique_generale.surface_habitable_logement);
+  else if (th === 'immeuble')
+    Sh = Number(dpe.logement.caracteristique_generale.surface_habitable_immeuble);
+
+  const ep_conso_5_usages_m2 = Math.floor(ep_conso_5_usages / Sh);
+  const classe_dpe = classe_bilan_dpe(ep_conso_5_usages_m2, zc_id, ca_id, Sh);
+
+  return { classe_bilan_dpe: classe_dpe, ep_conso_5_usages_m2, ep_conso_5_usages };
 }

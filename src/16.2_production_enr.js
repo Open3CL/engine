@@ -1,6 +1,7 @@
 import enums from './enums.js';
 import { mois_liste, tv } from './utils.js';
 import tvs from './tv.js';
+import { COEFF_EP_1_9, COEFF_EP_2_3 } from './conso.js';
 
 export class ProductionENR {
   #taplpi = {
@@ -19,7 +20,7 @@ export class ProductionENR {
    * @param productionElecEnr
    * @param Sh {string}
    */
-  calculateEnr(productionElecEnr, conso, Sh, th, zc_id) {
+  calculateEnr(productionElecEnr, conso, Sh, th, zc_id, use_coeff_ch_elec_2_3) {
     const productionElectricite = {
       conso_elec_ac: 0,
       production_pv: 0,
@@ -40,8 +41,11 @@ export class ProductionENR {
       // Calcul de l'électricité auto-consommée pour chaque enveloppe
       this.calculateConsoElecAc(productionElectricite, productionElecEnr, conso, zc_id, th, Sh);
 
-      // Mise à jour des consommations ef en minorant l'énergie consommée par l'énergie autoconsommée par le poste
+      // Mise à jour des consommations d'énergie finale en minorant l'énergie consommée par l'énergie autoconsommée par le poste
       this.updateEfConso(productionElectricite, conso, Sh);
+
+      // Mise à jour des consommations d'énergie primaire en minorant l'énergie consommée par l'énergie autoconsommée par le poste
+      this.updateEPConso(productionElectricite, conso, Sh, use_coeff_ch_elec_2_3);
     }
 
     return {
@@ -150,7 +154,7 @@ export class ProductionENR {
   }
 
   /**
-   * Mise à jour des consommations ef en minorant l'énergie consommée par l'énergie autoconsommée par chaque enveloppe
+   * Mise à jour des consommations ef en minorant l'énergie finale consommée par l'énergie autoconsommée par chaque enveloppe
    * @param productionElectricite
    * @param conso
    * @param Sh
@@ -170,6 +174,55 @@ export class ProductionENR {
       productionElectricite.conso_elec_ac_auxiliaire;
 
     conso.ef_conso.conso_5_usages_m2 = Math.floor(conso.ef_conso.conso_5_usages / Sh);
+  }
+
+  /**
+   * Mise à jour des consommations ef en minorant l'énergie primaire consommée par l'énergie autoconsommée par chaque enveloppe
+   * @param productionElectricite
+   * @param conso {{ep_conso: Ep_conso}}
+   * @param Sh {number}
+   * @param use_coeff_ch_elec_2_3 {boolean} "true" pour ne pas utiliser le dernier coeff de chauffage électrique
+   */
+  updateEPConso(productionElectricite, conso, Sh, use_coeff_ch_elec_2_3) {
+    if (use_coeff_ch_elec_2_3) {
+      conso.ep_conso.ep_conso_ecs -= COEFF_EP_2_3 * productionElectricite.conso_elec_ac_ecs;
+      conso.ep_conso.ep_conso_ch -= COEFF_EP_2_3 * productionElectricite.conso_elec_ac_ch;
+      conso.ep_conso.ep_conso_fr -= COEFF_EP_2_3 * productionElectricite.conso_elec_ac_fr;
+      conso.ep_conso.ep_conso_eclairage -=
+        COEFF_EP_2_3 * productionElectricite.conso_elec_ac_eclairage;
+      conso.ep_conso.ep_conso_totale_auxiliaire -=
+        COEFF_EP_2_3 * productionElectricite.conso_elec_ac_auxiliaire;
+
+      const conso_elec =
+        productionElectricite.conso_elec_ac_ecs +
+        productionElectricite.conso_elec_ac_ch +
+        productionElectricite.conso_elec_ac_fr +
+        productionElectricite.conso_elec_ac_eclairage +
+        productionElectricite.conso_elec_ac_auxiliaire;
+
+      conso.ep_conso.ep_conso_5_usages -= COEFF_EP_2_3 * conso_elec;
+
+      conso.ep_conso.ep_conso_5_usages_m2 = Math.floor(conso.ep_conso.ep_conso_5_usages / Sh);
+    } else {
+      conso.ep_conso.ep_conso_ecs -= COEFF_EP_1_9 * productionElectricite.conso_elec_ac_ecs;
+      conso.ep_conso.ep_conso_ch -= COEFF_EP_1_9 * productionElectricite.conso_elec_ac_ch;
+      conso.ep_conso.ep_conso_fr -= COEFF_EP_1_9 * productionElectricite.conso_elec_ac_fr;
+      conso.ep_conso.ep_conso_eclairage -=
+        COEFF_EP_1_9 * productionElectricite.conso_elec_ac_eclairage;
+      conso.ep_conso.ep_conso_totale_auxiliaire -=
+        COEFF_EP_1_9 * productionElectricite.conso_elec_ac_auxiliaire;
+
+      const conso_elec =
+        productionElectricite.conso_elec_ac_ecs +
+        productionElectricite.conso_elec_ac_ch +
+        productionElectricite.conso_elec_ac_fr +
+        productionElectricite.conso_elec_ac_eclairage +
+        productionElectricite.conso_elec_ac_auxiliaire;
+
+      conso.ep_conso.ep_conso_5_usages -= COEFF_EP_1_9 * conso_elec;
+
+      conso.ep_conso.ep_conso_5_usages_m2 = Math.floor(conso.ep_conso.ep_conso_5_usages / Sh);
+    }
   }
 
   /**

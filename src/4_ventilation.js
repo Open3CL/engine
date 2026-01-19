@@ -67,8 +67,11 @@ function tv_q4pa_conv(di, de, cg, mur_list, ph_list, porte_list, bv_list) {
     if (!porte.donnee_entree.presence_joint) return acc + porte.donnee_entree.surface_porte;
     else return acc;
   }, 0);
-  let pjt =
-    surface_bv_avec_joint / (surface_bv_avec_joint + surface_bv_sans_joint) > 0.5 ? '1' : '0';
+  const ratioSurfaceJoint = surface_bv_avec_joint / (surface_bv_avec_joint + surface_bv_sans_joint);
+  let pjt = ratioSurfaceJoint > 0.5 ? '1' : '0';
+  if (bug_for_bug_compat) {
+    pjt = ratioSurfaceJoint >= 0.5 ? '1' : '0';
+  }
 
   if (bug_for_bug_compat && de.tv_q4pa_conv_id) {
     const rowQ4paConv = tv('q4pa_conv', {

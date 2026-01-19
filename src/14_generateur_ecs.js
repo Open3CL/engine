@@ -14,12 +14,14 @@ import {
 } from './13.2_generateur_combustion.js';
 import { conso_aux_gen } from './15_conso_aux.js';
 import { scopOrCop } from './12.4_pac.js';
+import getFicheTechnique from './ficheTechnique.js';
 
-function tv_pertes_stockage(di, de) {
+function tv_pertes_stockage(di, de, VsCollectif) {
   let vb;
-  if (de.volume_stockage <= 100) vb = '≤ 100';
-  else if (de.volume_stockage <= 200) vb = '100 <   ≤ 200';
-  else if (de.volume_stockage <= 300) vb = '200 <   ≤ 300';
+  const Vs = VsCollectif ? VsCollectif : de.volume_stockage;
+  if (Vs <= 100) vb = '≤ 100';
+  else if (Vs <= 200) vb = '100 <   ≤ 200';
+  else if (Vs <= 300) vb = '200 <   ≤ 300';
   else vb = '> 300';
 
   let matcher = {
@@ -75,39 +77,38 @@ function tv_facteur_couverture_solaire(di, de, zc_id, th) {
   }
 }
 
-// 15.2.3
-export function calc_Qdw_j(instal_ecs, becs_j) {
-  const de = instal_ecs.donnee_entree;
-  const du = instal_ecs.donnee_utilisateur || {};
-
-  const type_installation = requestInput(de, du, 'type_installation');
-
-  let Qdw_ind_vc_j;
-  let Qdw_col_vc_j = 0;
-
-  const Rat_ecs = 1;
-  const Lvc = 0.2 * Rat_ecs;
-
-  Qdw_ind_vc_j = 0.5 * Lvc * becs_j;
-
-  if (type_installation.includes('installation collective')) {
-    Qdw_col_vc_j = 0.112 * becs_j;
-  }
-
-  instal_ecs.donnee_utilisateur = du;
-  return Qdw_col_vc_j + Qdw_ind_vc_j;
-}
-
-function calc_Qgw(di, de, du, ecs_de) {
+function calc_Qgw(di, de, du, ecs_de, th, dpe) {
   const type_stockage_ecs = requestInput(de, du, 'type_stockage_ecs');
+  const isInstCollectif = ecs_de.enum_type_installation_id !== '1';
+  const ratio = isInstCollectif ? ecs_de.ratio_virtualisation || 1 : 1;
 
+  let Vs = requestInput(de, du, 'volume_stockage', 'float');
+
+  const gen_ecs_elec_ids = tvColumnIDs('pertes_stockage', 'type_generateur_ecs');
+  let isElectric = gen_ecs_elec_ids.includes(de.enum_type_generateur_ecs_id);
+
+  /**
+   * Application du ratio uniquement pour les installations collectives
+   */
+  if (isInstCollectif) {
+    let fiche = getFicheTechnique(dpe, '8', 'stockage');
+    if (fiche) {
+      const VsFiche = Number(
+        fiche.valeur.toLowerCase().substring(0, fiche.valeur.toLowerCase().indexOf('l')).trim()
+      );
+      if (!isNaN(VsFiche)) {
+        Vs = VsFiche;
+      }
+    }
+    if (!Vs) {
+      Vs = Number.parseFloat(Vs) / ratio;
+    }
+  }
   // stockage
   if (type_stockage_ecs === "abscence de stockage d'ecs (production instantanée)") {
     di.Qgw = 0;
     return;
   }
-  let Vs = requestInput(de, du, 'volume_stockage', 'float');
-  const gen_ecs_elec_ids = tvColumnIDs('pertes_stockage', 'type_generateur_ecs');
 
   if (bug_for_bug_compat) {
     /**
@@ -117,12 +118,10 @@ function calc_Qgw(di, de, du, ecs_de) {
      */
     const VsFromDescription = getVolumeStockageFromDescription(ecs_de.description);
 
-    if (VsFromDescription === Math.round(Number.parseFloat(Vs) / de.ratio_virtualisation)) {
+    if (VsFromDescription === Math.round(Number.parseFloat(Vs) / ratio)) {
       Vs = VsFromDescription;
     }
   }
-
-  let isElectric = gen_ecs_elec_ids.includes(de.enum_type_generateur_ecs_id);
 
   /**
    * Si le système ECS est inconnu -> on se base exclusivement sur le type d'énergie
@@ -133,11 +132,12 @@ function calc_Qgw(di, de, du, ecs_de) {
   }
 
   if (isElectric) {
-    tv_pertes_stockage(di, de, du);
-    di.Qgw = ((8592 * 45) / 24) * Vs * di.cr;
+    tv_pertes_stockage(di, de, isInstCollectif ? Vs : undefined);
+    di.Qgw = ((8592 * 45) / 24) * Vs * di.cr * ratio;
     delete di.cr;
   } else {
     di.Qgw = 67662 * Vs ** 0.55;
+    di.Qgw *= ratio;
   }
 }
 
@@ -258,14 +258,8 @@ export default function calc_gen_ecs(dpe, gen_ecs, ecs_di, ecs_de, GV, ca_id, zc
     }
   }
 
-  calc_Qgw(di, de, du, ecs_de);
+  calc_Qgw(di, de, du, ecs_de, th, dpe);
 
-  /**
-   * Application du ratio uniquement pour les installations collectives
-   */
-  if (ecs_de.enum_type_installation_id !== '1') {
-    di.Qgw *= de.ratio_virtualisation;
-  }
   let Iecs, Iecs_dep;
 
   if (isPacGenerator) {

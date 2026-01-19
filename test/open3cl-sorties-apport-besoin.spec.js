@@ -3,6 +3,7 @@ import corpus from './corpus.json';
 import { getAdemeFileJson, getResultFile, saveResultFile } from './test-helpers.js';
 import { describe, expect, test, beforeAll, vi } from 'vitest';
 import { PRECISION, PRECISION_PERCENT } from './constant.js';
+import { expect_or } from './utils.js';
 
 describe('Test Open3CL engine compliance on corpus', () => {
   /**
@@ -50,20 +51,10 @@ describe('Test Open3CL engine compliance on corpus', () => {
     });
   });
 
-  function expect_or(...tests) {
-    if (!tests || !Array.isArray(tests)) return;
-    try {
-      tests.shift()?.();
-    } catch (e) {
-      if (tests.length) expect_or(...tests);
-      else throw e;
-    }
-  }
-
   describe.each(['besoin_ecs', 'besoin_ecs_depensier', 'besoin_ch', 'besoin_ch_depensier'])(
     'check "%s" value',
     (attr) => {
-      test.each(corpus)('dpe %s', (ademeId) => {
+      test.each(corpus)('dpe %s, attribut:' + attr, (ademeId) => {
         const exceptedDpe = getAdemeFileJson(ademeId);
         const calculatedDpe = getResultFile(ademeId);
 
@@ -75,10 +66,11 @@ describe('Test Open3CL engine compliance on corpus', () => {
         const diff1 = Math.abs(expectedValue - calculatedValue * 1000) / (expectedValue || 1);
         const diff2 = Math.abs(expectedValue - calculatedValue / 1000) / (expectedValue || 1);
 
+        const expectMessage = `${attr}: expected: ${expectedValue}, calculated: ${calculatedValue}`;
         expect_or(
-          () => expect(diff).toBeLessThan(PRECISION_PERCENT),
-          () => expect(diff1).toBeLessThan(PRECISION_PERCENT),
-          () => expect(diff2).toBeLessThan(PRECISION_PERCENT)
+          () => expect(diff, `${expectMessage}, diff: ${diff}`).toBeLessThan(PRECISION_PERCENT),
+          () => expect(diff1, `${expectMessage}, diff: ${diff1}`).toBeLessThan(PRECISION_PERCENT),
+          () => expect(diff2, `${expectMessage}, diff: ${diff2}`).toBeLessThan(PRECISION_PERCENT)
         );
       });
     }

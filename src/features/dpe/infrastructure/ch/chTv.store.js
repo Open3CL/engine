@@ -1,4 +1,4 @@
-import { tvs as tv } from '../../../../tv-v2.js';
+import { tvs as tv } from '../../../../tv.js';
 import { TvStore } from './../tv.store.js';
 import { convertExpression } from '../../../../utils.js';
 import enums from '../../../../enums.js';

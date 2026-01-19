@@ -3,78 +3,77 @@ import tvs from './tv.js';
 import { mois_liste } from './utils.js';
 
 export function calc_sse_j(bv_list, ets, ca, zc, mois) {
-  const ssej = bv_list.reduce((acc, bv) => {
-    const typeAdjacence = parseInt(bv.donnee_entree.enum_type_adjacence_id);
+  const baiesAdjVeranda = bv_list.filter((bv) => bv.donnee_entree.enum_type_adjacence_id === '10');
+  const baiesAdjExt = bv_list.filter((bv) => bv.donnee_entree.enum_type_adjacence_id === '1');
 
-    /**
-     * 6.3 Traitement des espaces tampons solarisés
-     * 10 - 'espace tampon solarisé (véranda,loggia fermée)'
-     */
-    if (typeAdjacence === 10 && ets && ets.length > 0) {
-      // Certaines vérandas sont dupliqués dans les DPE.
-      if (Array.isArray(ets)) {
-        ets = ets[0];
-      }
+  if (!ets) {
+    return baiesAdjExt.reduce((acc, bv) => {
+      return acc + getSsd(bv, zc, mois, bv.donnee_intermediaire.sw);
+    }, 0);
+  }
 
-      const bver = ets.donnee_intermediaire.bver;
-      const T = ets.donnee_intermediaire.coef_transparence_ets;
+  // Certaines vérandas sont dupliqués dans les DPE.
+  if (Array.isArray(ets)) {
+    ets = ets[0];
+  }
 
+  const bver = ets.donnee_intermediaire.bver;
+  const T = ets.donnee_intermediaire.coef_transparence_ets;
+
+  /**
+   * Surface sud équivalente représentant les apports solaires indirects dans le logement
+   */
+  let baies = ets.baie_ets_collection.baie_ets;
+
+  if (!Array.isArray(baies)) {
+    baies = [baies];
+  }
+
+  /**
+   * Surface sud équivalente représentant l’impact des apports solaires associés au rayonnement solaire
+   * traversant directement l’espace tampon pour arriver dans la partie habitable du logement
+   * Calculés pour les baies vitrées qui séparent le logement de l'espace tampon
+   * @type {number}
+   */
+  const Ssdj =
+    T *
+    baiesAdjVeranda.reduce((acc, bv) => {
       /**
        * Surface sud équivalente représentant l’impact des apports solaires associés au rayonnement solaire
        * traversant directement l’espace tampon pour arriver dans la partie habitable du logement
        * Calculés pour les baies vitrées qui séparent le logement de l'espace tampon
        * @type {number}
        */
-      const Ssdj = getBaiesSurEspaceTampon(bv_list).reduce((acc, bv) => {
-        return acc + T * getSsd(bv, zc, mois, bv.donnee_intermediaire.sw);
-      }, 0);
+      return acc + getSsd(bv, zc, mois, bv.donnee_intermediaire.sw);
+    }, 0);
 
-      /**
-       * Surface sud équivalente représentant les apports solaires indirects dans le logement
-       */
-      let baies = ets.baie_ets_collection.baie_ets;
+  /**
+   * 6.3 Traitement des espaces tampons solarisés
+   * 10 - 'espace tampon solarisé (véranda,loggia fermée)'
+   */
+  const Sstj = baies.reduce((acc, bv) => {
+    return acc + getSsd(bv, zc, mois, 0.8 * T + 0.024);
+  }, 0);
 
-      if (!Array.isArray(baies)) {
-        baies = [baies];
-      }
+  /**
+   * Surface sud équivalente représentant l’impact des apports solaires associés au rayonnement
+   * solaire entrant dans la partie habitable du logement après de multiples réflexions dans l’espace tampon solarisé
+   * @type {number}
+   */
+  const ssIndj = Sstj - Ssdj;
 
-      const Sstj = baies.reduce((acc, bv) => {
-        return acc + getSsd(bv, zc, mois, 0.8 * T + 0.024);
-      }, 0);
+  /**
+   * Impact de l’espace tampon solarisé sur les apports solaires à travers les baies vitrées qui séparent le logement
+   * de l'espace tampon
+   * @type {number}
+   */
+  const SseVerandaj = Ssdj + ssIndj * bver;
 
-      /**
-       * Surface sud équivalente représentant l’impact des apports solaires associés au rayonnement
-       * solaire entrant dans la partie habitable du logement après de multiples réflexions dans l’espace tampon solarisé
-       * @type {number}
-       */
-      const Ssindj = Sstj - Ssdj;
-
-      /**
-       * Impact de l’espace tampon solarisé sur les apports solaires à travers les baies vitrées qui séparent le logement
-       * de l'espace tampon
-       * @type {number}
-       */
-      const SseVerandaj = Ssdj + Ssindj * bver;
-
-      return acc + SseVerandaj;
-    }
-
-    // Pour les fenêtres qui ne donnent pas sur l'extérieur, pas de surface sud équivalente
-    if (typeAdjacence !== 1) {
-      return acc;
-    }
-
+  const sseBaiesExt = baiesAdjExt.reduce((acc, bv) => {
     return acc + getSsd(bv, zc, mois, bv.donnee_intermediaire.sw);
   }, 0);
-  return ssej;
-}
 
-/**
- * Retourne la liste des baies vitrées qui donnent sur l'espace tampon solarisé
- * @param baiesVitrees {BaieVitreeItem[]}
- */
-function getBaiesSurEspaceTampon(baiesVitrees) {
-  return baiesVitrees.filter((bv) => bv.donnee_entree.enum_type_adjacence_id === '10');
+  return sseBaiesExt + SseVerandaj;
 }
 
 /**
