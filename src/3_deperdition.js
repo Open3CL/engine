@@ -209,7 +209,7 @@ export function Upt(pt) {
   return de.l * di.k * (de.pourcentage_valeur_pont_thermique || 1);
 }
 
-export default function calc_deperdition(cg, zc, th, effetJoule, dpe, Sh) {
+export function calc_deperdition(cg, zc, th, effetJoule, dpe, Sh) {
   const pc = cg.enum_periode_construction_id;
   const logement = dpe.logement;
   const enveloppe = logement.enveloppe;

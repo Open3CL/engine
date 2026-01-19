@@ -1,5 +1,5 @@
 import enums from './enums.js';
-import calc_deperdition from './3_deperdition.js';
+import { calc_deperdition } from './3_deperdition.js';
 import calc_apport_et_besoin from './apport_et_besoin.js';
 import calc_clim from './10_clim.js';
 import calc_ecs from './11_ecs.js';
