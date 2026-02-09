@@ -1,6 +1,6 @@
 import enums from './enums.js';
 import tvs from './tv.js';
-import { set, has } from 'lodash-es';
+import { set } from 'lodash-es';
 import { XMLParser } from 'fast-xml-parser';
 
 export const xmlParser = new XMLParser({
@@ -317,42 +317,10 @@ export function removeKeyFromJSON(jsonObj, keyToRemove, skipKeys) {
   }
 }
 
-export function useEnumAsString(jsonObj) {
-  for (const key in jsonObj) {
-    if (jsonObj.hasOwnProperty(key)) {
-      if (key.startsWith('enum_')) {
-        if (jsonObj[key] !== null) jsonObj[key] = jsonObj[key].toString();
-      } else if (typeof jsonObj[key] === 'object') {
-        useEnumAsString(jsonObj[key]);
-      }
-    }
-  }
-}
-
 export function clean_dpe(dpe_in) {
   // skip generateur_[ecs|chauffage] because some input data is contained in donnee_intermediaire (e.g. pn, qp0, ...)
   removeKeyFromJSON(dpe_in, 'donnee_intermediaire', ['generateur_ecs', 'generateur_chauffage']);
   set(dpe_in, 'logement.sortie', null);
-}
-
-export function sanitize_dpe(dpe_in) {
-  const collection_paths = [
-    'logement.enveloppe.plancher_bas_collection.plancher_bas',
-    'logement.enveloppe.plancher_haut_collection.plancher_haut',
-    'logement.ventilation_collection.ventilation',
-    'logement.climatisation_collection.climatisation',
-    'logement.enveloppe.baie_vitree_collection.baie_vitree',
-    'logement.enveloppe.porte_collection.porte',
-    'logement.enveloppe.pont_thermique_collection.pont_thermique'
-  ];
-  for (const path of collection_paths) {
-    if (!has(dpe_in, path)) {
-      set(dpe_in, path, []);
-    }
-  }
-  if (use_enum_as_string) {
-    useEnumAsString(dpe_in);
-  }
 }
 
 /**
