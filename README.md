@@ -108,22 +108,22 @@ const dpeData = {
   }
 };
 
-// Execution d'un dpe avec la librairie Open3CL sans aucune transformation / nettoyage du dpe
+// Execution d'un dpe avec la librairie Open3CL avec pré-transformation / nettoyage du dpe (comportement par défaut)
 const result = calcul_3cl(dpeData);
-const result = calcul_3cl(dpeData, { sanitize: false });
-
-// Execution d'un dpe avec la librairie Open3CL avec pré-transformation / nettoyage du dpe
 const result = calcul_3cl(dpeData, { sanitize: true });
 
-// Execution d'un dpe au format xml avec la librairie Open3CL sans aucune transformation / nettoyage du dpe
+// Execution d'un dpe avec la librairie Open3CL sans pré-transformation / nettoyage du dpe
+const result = calcul_3cl(dpeData, { sanitize: false });
+
+// Execution d'un dpe au format xml avec la librairie Open3CL avec pré-transformation / nettoyage du dpe (comportement par défaut)
 const result = calcul_3cl_xml('<xml><dpe><numero_dpe>2113E1018248X</numero_dpe></dpe</xml>');
 const result = calcul_3cl_xml('<xml><dpe><numero_dpe>2113E1018248X</numero_dpe></dpe</xml>', {
-  sanitize: false
+  sanitize: true
 });
 
-// Execution d'un dpe au format xml avec la librairie Open3CL avec pré-transformation / nettoyage du dpe
+// Execution d'un dpe au format xml avec la librairie Open3CL sans pré-transformation / nettoyage du dpe (comportement par défaut)
 const result = calcul_3cl_xml('<xml><dpe><numero_dpe>2113E1018248X</numero_dpe></dpe</xml>', {
-  sanitize: true
+  sanitize: false
 });
 ```
 

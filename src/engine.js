@@ -65,7 +65,8 @@ export function calcul_3cl_xml(dpeXmlContent, options) {
  * @return {FullDpe}
  */
 export function calcul_3cl(inputDpe, options) {
-  const dpe = options?.sanitize ? dpeSanitizerService.execute(inputDpe) : inputDpe;
+  if (!options) options = { sanitize: true };
+  const dpe = options.sanitize ? dpeSanitizerService.execute(inputDpe) : inputDpe;
   const modele = enums.modele_dpe[dpe.administratif.enum_modele_dpe_id];
   const dateDpe = dpe.administratif.date_etablissement_dpe;
   if (modele !== 'dpe 3cl 2021 méthode logement') {
