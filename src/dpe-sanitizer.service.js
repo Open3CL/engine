@@ -53,7 +53,7 @@ export default class DpeSanitizerService {
         }
 
         if (this.#isEnum(key)) {
-          return val;
+          return val?.toString();
         }
 
         if (this.#isUndefinedVal(val)) {

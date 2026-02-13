@@ -39,6 +39,18 @@ export function set_bug_for_bug_compat() {
   bug_for_bug_compat = true;
 }
 
+export function useEnumAsString(jsonObj) {
+  for (const key in jsonObj) {
+    if (jsonObj.hasOwnProperty(key)) {
+      if (key.startsWith('enum_')) {
+        if (jsonObj[key] !== null) jsonObj[key] = jsonObj[key].toString();
+      } else if (typeof jsonObj[key] === 'object') {
+        useEnumAsString(jsonObj[key]);
+      }
+    }
+  }
+}
+
 export let use_enum_as_string = false;
 export function set_use_enum_as_string() {
   use_enum_as_string = true;
