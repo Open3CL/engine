@@ -19,13 +19,16 @@ import {
   collectionCanBeEmpty,
   containsAnySubstring,
   isEffetJoule,
-  sanitize_dpe
+  xmlParser
 } from './utils.js';
 import { Inertie } from './7_inertie.js';
 import getFicheTechnique from './ficheTechnique.js';
 import { ProductionENR } from './16.2_production_enr.js';
+import DpeSanitizerService from './dpe-sanitizer.service.js';
 
 const LIB_VERSION = 'OPEN3CL_VERSION';
+
+const dpeSanitizerService = new DpeSanitizerService();
 
 function calc_th(map_id) {
   const map = enums.methode_application_dpe_log[map_id];
@@ -44,11 +47,26 @@ export function getVersion() {
 }
 
 /**
- * @param dpe {FullDpe}
+ * Run the engine with a full dpe xml content
+ * @param dpeXmlContent {string} A full dpe xml content
+ * @param options {{sanitize: boolean}?}
  * @return {FullDpe}
  */
-export function calcul_3cl(dpe) {
-  sanitize_dpe(dpe);
+export function calcul_3cl_xml(dpeXmlContent, options) {
+  /** @type {{dpe: FullDpe}} **/
+  const xmlDpe = xmlParser.parse(dpeXmlContent);
+  return calcul_3cl(xmlDpe.dpe, options);
+}
+
+/**
+ * Run the engine with a javascript plain object dpe
+ * @param inputDpe {FullDpe} A full plain object dpe
+ * @param options {{sanitize: boolean}?}
+ * @return {FullDpe}
+ */
+export function calcul_3cl(inputDpe, options) {
+  if (!options) options = { sanitize: true };
+  const dpe = options.sanitize ? dpeSanitizerService.execute(inputDpe) : inputDpe;
   const modele = enums.modele_dpe[dpe.administratif.enum_modele_dpe_id];
   const dateDpe = dpe.administratif.date_etablissement_dpe;
   if (modele !== 'dpe 3cl 2021 méthode logement') {

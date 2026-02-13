@@ -85,7 +85,7 @@ C'est un bon moyen de détecter un éventuel problème dans le dpe ou la librair
 ```javascript
 import { calcul_3cl } from 'open3cl';
 
-// Exemple d'objet JSON issu d'un fichier XML DPE
+// Exemple d'objet JSON (partiel) issu d'un fichier XML DPE
 const dpeData = {
   numero_dpe: '2113E1018248X',
   statut: 'ACTIF',
@@ -108,7 +108,23 @@ const dpeData = {
   }
 };
 
+// Execution d'un dpe avec la librairie Open3CL avec pré-transformation / nettoyage du dpe (comportement par défaut)
 const result = calcul_3cl(dpeData);
+const result = calcul_3cl(dpeData, { sanitize: true });
+
+// Execution d'un dpe avec la librairie Open3CL sans pré-transformation / nettoyage du dpe
+const result = calcul_3cl(dpeData, { sanitize: false });
+
+// Execution d'un dpe au format xml avec la librairie Open3CL avec pré-transformation / nettoyage du dpe (comportement par défaut)
+const result = calcul_3cl_xml('<xml><dpe><numero_dpe>2113E1018248X</numero_dpe></dpe</xml>');
+const result = calcul_3cl_xml('<xml><dpe><numero_dpe>2113E1018248X</numero_dpe></dpe</xml>', {
+  sanitize: true
+});
+
+// Execution d'un dpe au format xml avec la librairie Open3CL sans pré-transformation / nettoyage du dpe (comportement par défaut)
+const result = calcul_3cl_xml('<xml><dpe><numero_dpe>2113E1018248X</numero_dpe></dpe</xml>', {
+  sanitize: false
+});
 ```
 
 ## Variables d'environnements
@@ -316,7 +332,7 @@ Nous accueillons les contributions avec plaisir ! Si vous souhaitez améliorer O
 
 ## Licence
 
-Distribué sous la license `GPL-3.0 license`. Lire le fichier `LICENSE` pour plus d'informations.
+Distribué sous la license `MIT`. Lire le fichier `LICENSE` pour plus d'informations.
 
 <p align="right">(<a href="#readme-top">Retour sommaire</a>)</p>
 

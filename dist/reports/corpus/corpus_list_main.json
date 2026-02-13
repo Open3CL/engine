@@ -9,5 +9,5 @@
     "dpe_appartement_individuel_chauffage_individuel_2025.csv",
     "dpe_appartement_individuel_chauffage_collectif_2025.csv"
   ],
-  "branches": ["main", "fix_issue_132"]
+  "branches": ["main"]
 }
