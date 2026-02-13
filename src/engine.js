@@ -19,6 +19,8 @@ import {
   collectionCanBeEmpty,
   containsAnySubstring,
   isEffetJoule,
+  use_enum_as_string,
+  useEnumAsString,
   xmlParser
 } from './utils.js';
 import { Inertie } from './7_inertie.js';
@@ -66,7 +68,15 @@ export function calcul_3cl_xml(dpeXmlContent, options) {
  */
 export function calcul_3cl(inputDpe, options) {
   if (!options) options = { sanitize: true };
-  const dpe = options.sanitize ? dpeSanitizerService.execute(inputDpe) : inputDpe;
+  let dpe;
+  if (options.sanitize) {
+    dpe = dpeSanitizerService.execute(inputDpe);
+  } else {
+    dpe = inputDpe;
+    if (use_enum_as_string) {
+      useEnumAsString(inputDpe);
+    }
+  }
   const modele = enums.modele_dpe[dpe.administratif.enum_modele_dpe_id];
   const dateDpe = dpe.administratif.date_etablissement_dpe;
   if (modele !== 'dpe 3cl 2021 méthode logement') {
