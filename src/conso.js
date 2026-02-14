@@ -205,6 +205,8 @@ export default function calc_conso(
     return acc.concat(generateur_chauffage);
   }, []);
 
+  ecs = Array.isArray(ecs) ? ecs : [];
+
   const gen_ecs = ecs.reduce((acc, ecs) => {
     const generateur_ecs = ecs.generateur_ecs_collection.generateur_ecs;
     if (prorataECS === 1) {

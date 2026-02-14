@@ -25,8 +25,8 @@ export default function calc_apport_et_besoin(
   const enveloppe = logement.enveloppe;
   const inertie = enums.classe_inertie[enveloppe.inertie.enum_classe_inertie_id];
 
-  const bv = enveloppe.baie_vitree_collection.baie_vitree;
-  const ets = enveloppe.ets_collection.ets;
+  const bv = enveloppe.baie_vitree_collection?.baie_vitree || [];
+  const ets = enveloppe.ets_collection?.ets || [];
 
   const nadeq = nadeqService.calculateNadeq(logement);
 

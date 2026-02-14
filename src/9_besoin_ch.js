@@ -45,6 +45,11 @@ export default function calc_besoin_ch(
   let fraction_apport_gratuit_ch = 0;
   let fraction_apport_gratuit_depensier_ch = 0;
 
+  // Ensure instal_ecs is always an array
+  instal_ecs = Array.isArray(instal_ecs) ? instal_ecs : [];
+  // Ensure instal_ch is always an array
+  instal_ch = Array.isArray(instal_ch) ? instal_ch : [];
+
   /**
    * 11.4 Plusieurs systèmes d’ECS (limité à 2 systèmes différents par logement)
    * Les besoins en ECS pour chaque générateur sont / 2

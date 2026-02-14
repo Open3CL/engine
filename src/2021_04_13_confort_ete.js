@@ -11,7 +11,7 @@ export default function calc_confort_ete(inertie_id, bv, ph) {
   }, []);
   const aspect_traversant = orientations.length > 1 ? 1 : 0;
 
-  const isolation_toiture = ph.reduce((acc, ph) => {
+  const isolation_toiture = (Array.isArray(ph) ? ph : []).reduce((acc, ph) => {
     const de = ph.donnee_entree;
     const du = ph.donnee_utilisateur;
     const type_adjacence = requestInput(de, du, 'type_adjacence');
