@@ -7,9 +7,81 @@ import {
   bug_for_bug_compat,
   getThicknessFromDescription
 } from './utils.js';
+import tvs from './tv.js';
 import b from './3.1_b.js';
 
 const scriptName = new URL(import.meta.url).pathname.split('/').pop();
+
+/**
+ * Find umur0 row by material ID and thickness, handling non-exact thickness matches
+ * @param materialId {string} enum_materiaux_structure_mur_id
+ * @param epaisseur {number|undefined} epaisseur_structure in cm
+ * @returns {object|undefined} matching row from umur0 table
+ */
+function findUmur0Row(materialId, epaisseur) {
+  const umur0Table = tvs['umur0'];
+
+  // Filter rows for the specified material
+  const materialRows = umur0Table.filter(
+    (row) => row.enum_materiaux_structure_mur_id === materialId
+  );
+
+  if (materialRows.length === 0) {
+    return undefined;
+  }
+
+  // If no thickness specified, return first row for this material
+  if (epaisseur === undefined || epaisseur === null) {
+    return materialRows[0];
+  }
+
+  // Find the appropriate row based on thickness
+  for (let i = 0; i < materialRows.length; i++) {
+    const row = materialRows[i];
+    const rowEpaisseur = row.epaisseur_structure;
+
+    // Handle comparison operators (≤ and ≥)
+    if (rowEpaisseur.includes('≤')) {
+      const maxThickness = parseFloat(rowEpaisseur.replace('≤', '').trim());
+      if (epaisseur <= maxThickness) {
+        return row;
+      }
+    } else if (rowEpaisseur.includes('≥')) {
+      const minThickness = parseFloat(rowEpaisseur.replace('≥', '').trim());
+      if (epaisseur >= minThickness) {
+        return row;
+      }
+    } else {
+      // Exact value - check if epaisseur falls into this range
+      const currentThickness = parseFloat(rowEpaisseur);
+      const nextRow = materialRows[i + 1];
+
+      if (nextRow) {
+        const nextEpaisseur = nextRow.epaisseur_structure;
+        let nextThickness;
+
+        if (nextEpaisseur.includes('≥')) {
+          nextThickness = parseFloat(nextEpaisseur.replace('≥', '').trim());
+        } else {
+          nextThickness = parseFloat(nextEpaisseur);
+        }
+
+        // Current row applies if epaisseur is >= current and < next
+        if (epaisseur >= currentThickness && epaisseur < nextThickness) {
+          return row;
+        }
+      } else {
+        // Last row with exact value - applies if epaisseur >= this value
+        if (epaisseur >= currentThickness) {
+          return row;
+        }
+      }
+    }
+  }
+
+  // Fallback: return the last row for this material (usually the ≥ row)
+  return materialRows[materialRows.length - 1];
+}
 
 function tv_umur0(di, de, du) {
   const matcher = {
@@ -52,7 +124,9 @@ function tv_umur0(di, de, du) {
       }
     }
   }
-  let row = tv('umur0', matcher);
+
+  // Use the new findUmur0Row function that properly handles non-exact thickness matches
+  let row = findUmur0Row(de.enum_materiaux_structure_mur_id, matcher.epaisseur_structure);
 
   if (bug_for_bug_compat) {
     if (
