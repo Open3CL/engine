@@ -21,6 +21,8 @@
       const urlSearchParams = new URLSearchParams(location.search);
       const corpusFileFromUrl = urlSearchParams.get('corpus_file');
 
+      const hasBranches = branches.length > 0;
+
       const populateBranchesSelect = () => {
         const branchListSelect = document.getElementById('branch-list');
         branches.forEach((branch) => {
@@ -33,11 +35,20 @@
 
       $(document).ready(() => {
         branchName = 'main';
+
+        if (!hasBranches) {
+          document.getElementById('branchSelectContainer').remove();
+          document.getElementById('showOnlyDiffValuesCheckboxContainer').remove();
+          document.getElementById('branchChartContainer').remove();
+        }
+
         const corpusListSelect = document.getElementById('corpus-list');
         $.get('corpus_list_main.json', (data) => {
           files = data.files;
           branches = data.branches;
-          populateBranchesSelect();
+          if (hasBranches) {
+            populateBranchesSelect();
+          }
           files.forEach((file) => {
             const option = document.createElement('option');
             option.text = file;
@@ -59,12 +70,14 @@
           );
         });
 
-        document.getElementById('branch-list').addEventListener('change', (event) => {
-          branchName = event.target.value;
-          if (branchName !== 'main') {
-            loadDetailReportData(corpusFile, branchName, 'branchChart', showOnlyDifferentValues);
-          }
-        });
+        if (hasBranches) {
+          document.getElementById('branch-list').addEventListener('change', (event) => {
+            branchName = event.target.value;
+            if (branchName !== 'main') {
+              loadDetailReportData(corpusFile, branchName, 'branchChart', showOnlyDifferentValues);
+            }
+          });
+        }
 
         document.getElementById('showOnlyDiffValuesCheckbox').addEventListener('click', (event) => {
           showOnlyDifferentValues = event.target.checked;
@@ -83,12 +96,12 @@
               <div>
                 <select
                   id="corpus-list"
-                  class="mt-2 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                  class="mt-2 mb-3 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                 ></select>
               </div>
-              <div class="flex">
+              <div class="flex" id="branchSelectContainer">
                 <label for="branch-list" class="pt-3" style="width: 20rem"
-                  >Compare with branch</label
+                  >Comparer avec la branche</label
                 >
                 <select
                   id="branch-list"
@@ -99,7 +112,7 @@
           </div>
         </form>
       </div>
-      <div class="w-full flex justify-center p-3">
+      <div class="w-full flex justify-center p-3" id="showOnlyDiffValuesCheckboxContainer">
         <input id="showOnlyDiffValuesCheckbox" type="checkbox" class="mt-1" />
         <div class="ml-2">Afficher que les valeurs différentes</div>
       </div>
@@ -116,7 +129,7 @@
         <div style="width: 800px">
           <canvas id="mainBranchChart"></canvas>
         </div>
-        <div style="width: 800px">
+        <div style="width: 800px" id="branchChartContainer">
           <canvas id="branchChart"></canvas>
         </div>
       </div>
