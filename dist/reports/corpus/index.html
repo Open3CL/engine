@@ -77,12 +77,13 @@
               loadDetailReportData(corpusFile, branchName, 'branchChart', showOnlyDifferentValues);
             }
           });
+          document
+            .getElementById('showOnlyDiffValuesCheckbox')
+            .addEventListener('click', (event) => {
+              showOnlyDifferentValues = event.target.checked;
+              loadDetailReportData(corpusFile, branchName, 'branchChart', showOnlyDifferentValues);
+            });
         }
-
-        document.getElementById('showOnlyDiffValuesCheckbox').addEventListener('click', (event) => {
-          showOnlyDifferentValues = event.target.checked;
-          loadDetailReportData(corpusFile, branchName, 'branchChart', showOnlyDifferentValues);
-        });
       });
     </script>
     <script src="detailed_report_chart.js"></script>
