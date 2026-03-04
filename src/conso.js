@@ -2,6 +2,7 @@ import enums from './enums.js';
 import calc_conso_eclairage from './16_conso_eclairage.js';
 import tvs from './tv.js';
 import { tv } from './utils.js';
+import { interpolateLimitTable } from './interpolateLimitTable.js';
 
 export const COEFF_EP_2_3 = 2.3;
 export const COEFF_EP_1_9 = 1.9;
@@ -340,7 +341,7 @@ export default function calc_conso(
 export function classe_bilan_dpe(ep_conso_5_usages_m2, zc_id, ca_id, Sh) {
   const ca = enums.classe_altitude[ca_id];
 
-  const cut = tvs.dpe_class_limit[ca][Math.round(Sh)] ?? [];
+  const cut = interpolateLimitTable(tvs.dpe_class_limit[ca], Sh);
 
   if (ep_conso_5_usages_m2 == null) return null;
   if (ep_conso_5_usages_m2 < (cut['A'] ?? 70)) return 'A';
@@ -363,7 +364,7 @@ export function classe_bilan_dpe(ep_conso_5_usages_m2, zc_id, ca_id, Sh) {
 export function classe_emission_ges(emission_ges_5_usages_m2, zc_id, ca_id, Sh) {
   const ca = enums.classe_altitude[ca_id];
 
-  const cut = tvs.ges_class_limit[ca][Math.round(Sh)] ?? [];
+  const cut = interpolateLimitTable(tvs.ges_class_limit[ca], Sh);
 
   if (emission_ges_5_usages_m2 == null) return null;
   if (emission_ges_5_usages_m2 < (cut['A'] ?? 6)) return 'A';
