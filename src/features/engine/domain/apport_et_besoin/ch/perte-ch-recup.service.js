@@ -36,8 +36,10 @@ export class PerteChRecupService {
    */
   execute(ctx, logement) {
     return {
-      pertes_generateur_ch_recup: this.pertesGenerateurChRecup(ctx, logement, false) / 1000,
-      pertes_generateur_ch_recup_depensier: this.pertesGenerateurChRecup(ctx, logement, true) / 1000
+      pertes_generateur_ch_recup:
+        this.pertesGenerateurChRecup(ctx, logement, false) / (1000 * 1000),
+      pertes_generateur_ch_recup_depensier:
+        this.pertesGenerateurChRecup(ctx, logement, true) / (1000 * 1000)
     };
   }
 

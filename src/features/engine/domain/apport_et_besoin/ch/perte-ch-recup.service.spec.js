@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import corpus from '../../../../../../test/corpus-sano.json';
-import { expect_or, getAdemeFileJson } from '../../../../../../test/test-helpers.js';
+import { getAdemeFileJson } from '../../../../../../test/test-helpers.js';
 import { DpeNormalizerService } from '../../../../normalizer/domain/dpe-normalizer.service.js';
 import { ContexteBuilder } from '../../contexte.builder.js';
 import { FrTvStore } from '../../../../dpe/infrastructure/froid/frTv.store.js';
@@ -261,15 +261,8 @@ describe('Calcul des pertes de génération de chauffage récupérées', () => {
       const expectedValue = dpeRequest.logement.sortie.apport_et_besoin.pertes_generateur_ch_recup;
       const calculatedValue = pertesGeneration.pertes_generateur_ch_recup;
 
-      expect_or(
-        () =>
-          expect(Math.abs(calculatedValue - expectedValue) / (expectedValue || 1)).toBeLessThan(
-            PRECISION_PERCENT
-          ),
-        () =>
-          expect(
-            Math.abs(calculatedValue - expectedValue * 1000) / (expectedValue * 1000 || 1)
-          ).toBeLessThan(PRECISION_PERCENT)
+      expect(Math.abs(calculatedValue - expectedValue) / (expectedValue || 1)).toBeLessThan(
+        PRECISION_PERCENT
       );
     });
 
@@ -297,15 +290,8 @@ describe('Calcul des pertes de génération de chauffage récupérées', () => {
           dpeRequest.logement.sortie.apport_et_besoin.pertes_generateur_ch_recup_depensier;
         const calculatedValue = pertesGeneration.pertes_generateur_ch_recup_depensier;
 
-        expect_or(
-          () =>
-            expect(Math.abs(calculatedValue - expectedValue) / (expectedValue || 1)).toBeLessThan(
-              PRECISION_PERCENT
-            ),
-          () =>
-            expect(
-              Math.abs(calculatedValue - expectedValue * 1000) / (expectedValue * 1000 || 1)
-            ).toBeLessThan(PRECISION_PERCENT)
+        expect(Math.abs(calculatedValue - expectedValue) / (expectedValue || 1)).toBeLessThan(
+          PRECISION_PERCENT
         );
       }
     );
