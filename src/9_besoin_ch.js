@@ -170,6 +170,9 @@ export default function calc_besoin_ch(
   fraction_apport_gratuit_ch /= sumDh19;
   fraction_apport_gratuit_depensier_ch /= sumDh21;
 
+  pertes_generateur_ch_recup /= 1000;
+  pertes_generateur_ch_recup_depensier /= 1000;
+
   return {
     besoin_ch,
     besoin_ch_depensier,
