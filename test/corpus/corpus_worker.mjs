@@ -12,39 +12,11 @@ import {
   setLoggerOff,
   setLoggerOn
 } from './corpus_utils.js';
+import { UploadDpeToObjectStorage } from './upload-dpe-to-object-storage.js';
 
 const DIFF_VALUE_THRESHOLD = 5;
 
-const xmlParser = new XMLParser({
-  // We want to make sure collections of length 1 are still parsed as arrays
-  isArray: (name, jpath, isLeafNode, isAttribute) => {
-    const collectionNames = [
-      'mur',
-      'plancher_bas',
-      'plancher_haut',
-      'baie_vitree',
-      'porte',
-      'pont_thermique',
-      'ventilation',
-      'installation_ecs',
-      'generateur_ecs',
-      'climatisation',
-      'installation_chauffage',
-      'generateur_chauffage',
-      'emetteur_chauffage',
-      'sortie_par_energie'
-    ];
-    if (collectionNames.includes(name)) return true;
-  },
-  tagValueProcessor: (tagName, val) => {
-    if (tagName.startsWith('enum_')) {
-      // Preserve value as string for tags starting with "enum_"
-      return null;
-    }
-    if (Number.isNaN(Number(val))) return val;
-    return Number(val);
-  }
-});
+const dpeStorageClient = new UploadDpeToObjectStorage();
 
 /**
  * Ajout des informations id et label des générateurs ECS et CH dans le fichier de sortie
@@ -249,12 +221,14 @@ const waitFor = (milliseconds) => {
  * @return {Promise<string>}
  */
 const downloadDpe = (dpeCode, dpesFilePath) => {
-  const filePath = `${dpesFilePath}/${dpeCode}.xml`;
+  const filePath = `${dpesFilePath}/${dpeCode}.json`;
   return waitFor(process.env.API_ADEME_DOWNLOAD_WAIT || 1000).then(() => {
     return fetch(
-      `https://prd-x-ademe-externe-api.de-c1.eu1.cloudhub.io/api/v1/pub/dpe/${dpeCode}/xml`,
+      `https://prd-x-ademe-externe-api.de-c1.eu1.cloudhub.io/api/v1/pub/dpe/${dpeCode}`,
       {
         headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
           client_id: process.env.ADEME_API_CLIENT_ID,
           client_secret: process.env.ADEME_API_CLIENT_SECRET
         }
@@ -271,7 +245,7 @@ const downloadDpe = (dpeCode, dpesFilePath) => {
         return resp.text();
       })
       .then((fileContent) => {
-        writeFileSync(filePath, fileContent, { encoding: 'utf8' });
+        writeFileSync(filePath, JSON.parse(fileContent).dpe, { encoding: 'utf8' });
         return fileContent;
       });
   });
@@ -282,8 +256,8 @@ const downloadDpe = (dpeCode, dpesFilePath) => {
  * @param dpesFilePath {string}
  * @return {Promise<string>}
  */
-const readOrDownloadDpe = (dpeCode, dpesFilePath) => {
-  const filePath = `${dpesFilePath}/${dpeCode}.xml`;
+const readOrDownloadDpe = async (dpeCode, dpesFilePath) => {
+  const filePath = `${dpesFilePath}/${dpeCode}.json`;
   if (!existsSync(filePath)) {
     if (!process.env.ADEME_API_CLIENT_ID) {
       throw new Error('Environment variable ADEME_API_CLIENT_ID not set');
@@ -291,9 +265,17 @@ const readOrDownloadDpe = (dpeCode, dpesFilePath) => {
     if (!process.env.ADEME_API_CLIENT_SECRET) {
       throw new Error('Environment variable ADEME_API_CLIENT_SECRET not set');
     }
-    return downloadDpe(dpeCode, dpesFilePath);
+    return await downloadDpe(dpeCode, dpesFilePath);
   } else {
-    return Promise.resolve(readFileSync(filePath, { encoding: 'utf8' }));
+    const localFileContent = readFileSync(filePath, { encoding: 'utf8' });
+    const jsonFileContent = await dpeStorageClient.getFile(dpeCode);
+    if (!jsonFileContent) {
+      return waitFor(process.env.API_ADEME_DOWNLOAD_WAIT || 1000)
+        .then(() => dpeStorageClient.writeFile(dpeCode, localFileContent))
+        .then(() => localFileContent);
+    }
+
+    return Promise.resolve(localFileContent);
   }
 };
 
@@ -310,14 +292,13 @@ export default async function ({ chunk, dpesToExclude, dpesFilePath = [] }) {
   for (const data of chunk) {
     try {
       /** @type {string} **/
-      const dpeXmlContent = await readOrDownloadDpe(data.dpeCode, dpesFilePath).then((result) => {
+      const dpeJsonContent = await readOrDownloadDpe(data.dpeCode, dpesFilePath).then((result) => {
         parentPort.postMessage({ action: 'fileProcessed' });
         return result;
       });
 
       /** @type {FullDpe} **/
-      const dpe = xmlParser.parse(dpeXmlContent).dpe;
-
+      const dpe = JSON.parse(dpeJsonContent);
       if (dpe.administratif.enum_version_id !== '1.1') {
         parentPort.postMessage({ action: 'incrementTotalReport' });
 
