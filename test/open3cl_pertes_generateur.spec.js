@@ -8,7 +8,7 @@ describe('Pertes generateur ch unit tests', () => {
     set_bug_for_bug_compat();
   });
 
-  test('should calculate deperdition if k_saisi=0', async () => {
+  test('should calculate pertes_generateur_ch_recup in wh', async () => {
     let input = await getAdemeFileJsonOrDownload('2684E0017144V');
 
     /** @type {FullDpe} **/
