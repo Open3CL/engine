@@ -10,5 +10,5 @@
     "dpe_appartement_individuel_chauffage_collectif_2025.csv",
     "dpe_individuel_a_partir_dpe_immeuble_2026.csv"
   ],
-  "branches": ["main"]
+  "branches": ["main", "issue-52"]
 }

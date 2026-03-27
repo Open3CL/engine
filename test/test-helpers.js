@@ -6,24 +6,23 @@ export async function getAdemeFileJsonOrDownload(dpeCode) {
     throw new Error(`ADEME_CLIENT_ID and ADEME_CLIENT_SECRET environment variables are not set !`);
   }
   const dpeJsonFilePath = `test/fixtures/${dpeCode}.json`;
-  const dpeXmlFilePath = `test/fixtures/${dpeCode}.xml`;
   let dpe = getAdemeFileJson(dpeCode);
-  if (!dpe || !fs.existsSync(dpeXmlFilePath)) {
+  if (!dpe || !fs.existsSync(dpeJsonFilePath)) {
     const response = await fetch(
-      `https://prd-x-ademe-externe-api.de-c1.eu1.cloudhub.io/api/v1/pub/dpe/${dpeCode}/xml`,
+      `https://prd-x-ademe-externe-api.de-c1.eu1.cloudhub.io/api/v1/pub/dpe/${dpeCode}`,
       {
         headers: {
           client_id: process.env.ADEME_CLIENT_ID,
-          client_secret: process.env.ADEME_CLIENT_SECRET
+          client_secret: process.env.ADEME_CLIENT_SECRET,
+          'Content-Type': 'application/json'
         }
       }
     );
     if (response.status !== 200) {
       throw new Error(`Fail to retrieve DPE from ademe: ${dpeCode}`);
     }
-    const body = await response.text();
-    fs.writeFileSync(dpeXmlFilePath, body, { encoding: 'utf-8' });
-    dpe = xmlParser.parse(body).dpe;
+    const dpeResponse = await response.json();
+    dpe = dpeResponse.dpe;
     fs.writeFileSync(dpeJsonFilePath, JSON.stringify(dpe));
   }
   return dpe;

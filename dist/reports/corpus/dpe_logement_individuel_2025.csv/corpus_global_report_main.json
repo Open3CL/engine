@@ -6,58 +6,58 @@
   "nbExcludedDpe": 0,
   "nbAllChecksBelowThreshold": 8512,
   "successRatio": "85.14 %",
-  "dpeRunFailed": [],
+  "dpeRunFailed": ["2544E3382876M"],
   "checks": {
-    "deperdition_mur": { "nbBelowThreshold": 9897, "mandatory": false, "successRatio": "98.99 %" },
+    "deperdition_mur": { "nbBelowThreshold": 9896, "mandatory": false, "successRatio": "98.98 %" },
     "deperdition_baie_vitree": {
-      "nbBelowThreshold": 9979,
+      "nbBelowThreshold": 9978,
       "mandatory": false,
-      "successRatio": "99.81 %"
+      "successRatio": "99.80 %"
     },
     "deperdition_plancher_bas": {
-      "nbBelowThreshold": 9491,
+      "nbBelowThreshold": 9490,
       "mandatory": false,
-      "successRatio": "94.93 %"
+      "successRatio": "94.92 %"
     },
     "deperdition_plancher_haut": {
-      "nbBelowThreshold": 9937,
+      "nbBelowThreshold": 9936,
       "mandatory": false,
-      "successRatio": "99.39 %"
+      "successRatio": "99.38 %"
     },
     "deperdition_porte": {
-      "nbBelowThreshold": 9989,
+      "nbBelowThreshold": 9988,
       "mandatory": false,
-      "successRatio": "99.91 %"
+      "successRatio": "99.90 %"
     },
     "deperdition_renouvellement_air": {
-      "nbBelowThreshold": 9885,
+      "nbBelowThreshold": 9884,
       "mandatory": false,
-      "successRatio": "98.87 %"
+      "successRatio": "98.86 %"
     },
-    "hperm": { "nbBelowThreshold": 9832, "mandatory": false, "successRatio": "98.34 %" },
+    "hperm": { "nbBelowThreshold": 9831, "mandatory": false, "successRatio": "98.33 %" },
     "deperdition_pont_thermique": {
-      "nbBelowThreshold": 9345,
+      "nbBelowThreshold": 9344,
       "mandatory": false,
-      "successRatio": "93.47 %"
+      "successRatio": "93.46 %"
     },
     "surface_sud_equivalente": {
-      "nbBelowThreshold": 9815,
+      "nbBelowThreshold": 9814,
       "mandatory": false,
-      "successRatio": "98.17 %"
+      "successRatio": "98.16 %"
     },
-    "besoin_ecs": { "nbBelowThreshold": 9996, "mandatory": false, "successRatio": "99.98 %" },
+    "besoin_ecs": { "nbBelowThreshold": 9995, "mandatory": false, "successRatio": "99.97 %" },
     "besoin_ch": { "nbBelowThreshold": 9296, "mandatory": false, "successRatio": "92.98 %" },
-    "conso_ecs": { "nbBelowThreshold": 9532, "mandatory": true, "successRatio": "95.34 %" },
+    "conso_ecs": { "nbBelowThreshold": 9531, "mandatory": true, "successRatio": "95.33 %" },
     "conso_ch": { "nbBelowThreshold": 9072, "mandatory": true, "successRatio": "90.74 %" },
     "conso_auxiliaire_distribution_ch": {
-      "nbBelowThreshold": 8895,
+      "nbBelowThreshold": 8894,
       "mandatory": false,
-      "successRatio": "88.97 %"
+      "successRatio": "88.96 %"
     },
     "conso_auxiliaire_distribution_ecs": {
-      "nbBelowThreshold": 9238,
+      "nbBelowThreshold": 9237,
       "mandatory": false,
-      "successRatio": "92.40 %"
+      "successRatio": "92.39 %"
     },
     "conso_auxiliaire_generation_ch": {
       "nbBelowThreshold": 8436,
@@ -65,25 +65,25 @@
       "successRatio": "84.38 %"
     },
     "conso_auxiliaire_generation_ecs": {
-      "nbBelowThreshold": 9621,
+      "nbBelowThreshold": 9620,
       "mandatory": false,
-      "successRatio": "96.23 %"
+      "successRatio": "96.22 %"
     },
     "conso_auxiliaire_ventilation": {
-      "nbBelowThreshold": 9727,
+      "nbBelowThreshold": 9726,
       "mandatory": false,
-      "successRatio": "97.29 %"
+      "successRatio": "97.28 %"
     },
-    "ep_conso_5_usages": { "nbBelowThreshold": 9254, "mandatory": true, "successRatio": "92.56 %" },
+    "ep_conso_5_usages": { "nbBelowThreshold": 9253, "mandatory": true, "successRatio": "92.55 %" },
     "ep_conso_5_usages_m2": {
       "nbBelowThreshold": 9243,
       "mandatory": true,
       "successRatio": "92.45 %"
     },
     "emission_ges_5_usages": {
-      "nbBelowThreshold": 9086,
+      "nbBelowThreshold": 9085,
       "mandatory": true,
-      "successRatio": "90.88 %"
+      "successRatio": "90.87 %"
     },
     "emission_ges_5_usages_m2": {
       "nbBelowThreshold": 8941,
