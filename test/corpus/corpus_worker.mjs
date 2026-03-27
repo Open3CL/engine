@@ -1,5 +1,6 @@
 import { set_bug_for_bug_compat, set_tv_match_optimized_version } from '../../src/utils.js';
 import { calcul_3cl } from '../../src/index.js';
+import { XMLParser } from 'fast-xml-parser';
 import { existsSync, writeFileSync } from 'node:fs';
 import enums from '../../src/enums.js';
 import { readFileSync } from 'fs';
@@ -13,6 +14,37 @@ import {
 } from './corpus_utils.js';
 
 const DIFF_VALUE_THRESHOLD = 5;
+
+const xmlParser = new XMLParser({
+  // We want to make sure collections of length 1 are still parsed as arrays
+  isArray: (name, jpath, isLeafNode, isAttribute) => {
+    const collectionNames = [
+      'mur',
+      'plancher_bas',
+      'plancher_haut',
+      'baie_vitree',
+      'porte',
+      'pont_thermique',
+      'ventilation',
+      'installation_ecs',
+      'generateur_ecs',
+      'climatisation',
+      'installation_chauffage',
+      'generateur_chauffage',
+      'emetteur_chauffage',
+      'sortie_par_energie'
+    ];
+    if (collectionNames.includes(name)) return true;
+  },
+  tagValueProcessor: (tagName, val) => {
+    if (tagName.startsWith('enum_')) {
+      // Preserve value as string for tags starting with "enum_"
+      return null;
+    }
+    if (Number.isNaN(Number(val))) return val;
+    return Number(val);
+  }
+});
 
 /**
  * Ajout des informations id et label des générateurs ECS et CH dans le fichier de sortie
@@ -251,7 +283,7 @@ const downloadDpe = (dpeCode, dpesFilePath) => {
  * @return {Promise<string>}
  */
 const readOrDownloadDpe = (dpeCode, dpesFilePath) => {
-  const filePath = `${dpesFilePath}/${dpeCode}.json`;
+  const filePath = `${dpesFilePath}/${dpeCode}.xml`;
   if (!existsSync(filePath)) {
     if (!process.env.ADEME_API_CLIENT_ID) {
       throw new Error('Environment variable ADEME_API_CLIENT_ID not set');
@@ -278,13 +310,13 @@ export default async function ({ chunk, dpesToExclude, dpesFilePath = [] }) {
   for (const data of chunk) {
     try {
       /** @type {string} **/
-      const dpeContent = await readOrDownloadDpe(data.dpeCode, dpesFilePath).then((result) => {
+      const dpeXmlContent = await readOrDownloadDpe(data.dpeCode, dpesFilePath).then((result) => {
         parentPort.postMessage({ action: 'fileProcessed' });
         return result;
       });
 
       /** @type {FullDpe} **/
-      const dpe = JSON.parse(dpeContent);
+      const dpe = xmlParser.parse(dpeXmlContent).dpe;
 
       if (dpe.administratif.enum_version_id !== '1.1') {
         parentPort.postMessage({ action: 'incrementTotalReport' });
