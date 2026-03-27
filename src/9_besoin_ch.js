@@ -4,7 +4,7 @@ import { calc_besoin_ecs_j } from './11_besoin_ecs.js';
 import { calc_Qrec_gen_j } from './9_generateur_ch.js';
 import { calc_ai_j, calc_as_j } from './6.1_apport_gratuit.js';
 import { calc_sse_j } from './6.2_surface_sud_equivalente.js';
-import { mois_liste } from './utils.js';
+import { bug_for_bug_compat, mois_liste } from './utils.js';
 
 export default function calc_besoin_ch(
   ilpa,
@@ -137,8 +137,12 @@ export default function calc_besoin_ch(
     let gen_recup_dep = 0;
 
     gen_ch_recup.forEach((gen_ch) => {
-      gen_recup += calc_Qrec_gen_j(gen_ch, nref19, Bch_hp_j);
-      gen_recup_dep += calc_Qrec_gen_j(gen_ch, nref21, Bch_hp_j_dep);
+      let ratio = 1;
+      if (bug_for_bug_compat) {
+        ratio = 1000;
+      }
+      gen_recup += calc_Qrec_gen_j(gen_ch, nref19, Bch_hp_j) / ratio;
+      gen_recup_dep += calc_Qrec_gen_j(gen_ch, nref21, Bch_hp_j_dep) / ratio;
     });
 
     pertes_generateur_ch_recup += gen_recup;

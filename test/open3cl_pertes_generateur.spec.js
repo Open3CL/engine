@@ -1,0 +1,21 @@
+import { calcul_3cl } from '../src/engine.js';
+import { getAdemeFileJsonOrDownload } from './test-helpers.js';
+import { set_bug_for_bug_compat } from '../src/utils.js';
+import { beforeEach, describe, expect, test } from 'vitest';
+
+describe('Pertes generateur ch unit tests', () => {
+  beforeEach(() => {
+    set_bug_for_bug_compat();
+  });
+
+  test('should calculate pertes_generateur_ch_recup in wh', async () => {
+    let input = await getAdemeFileJsonOrDownload('2684E0017144V');
+
+    /** @type {FullDpe} **/
+    let output = calcul_3cl(structuredClone(input));
+    expect(input.logement.sortie.apport_et_besoin.pertes_generateur_ch_recup * 1000).toBeCloseTo(
+      output.logement.sortie.apport_et_besoin.pertes_generateur_ch_recup,
+      0.5
+    );
+  });
+});
