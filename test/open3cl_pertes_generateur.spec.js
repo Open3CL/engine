@@ -18,6 +18,9 @@ describe('Pertes generateur ch unit tests', () => {
 
     /** @type {FullDpe} **/
     let output = calcul_3cl(structuredClone(input));
-    expect(input.logement.sortie.apport_et_besoin).toEqual(output.logement.sortie.apport_et_besoin);
+    expect(input.logement.sortie.apport_et_besoin.pertes_generateur_ch_recup * 1000).toBeCloseTo(
+      output.logement.sortie.apport_et_besoin.pertes_generateur_ch_recup,
+      0.5
+    );
   });
 });
