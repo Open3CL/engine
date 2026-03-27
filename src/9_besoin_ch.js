@@ -137,8 +137,8 @@ export default function calc_besoin_ch(
     let gen_recup_dep = 0;
 
     gen_ch_recup.forEach((gen_ch) => {
-      gen_recup += calc_Qrec_gen_j(gen_ch, nref19, Bch_hp_j);
-      gen_recup_dep += calc_Qrec_gen_j(gen_ch, nref21, Bch_hp_j_dep);
+      gen_recup += calc_Qrec_gen_j(gen_ch, nref19, Bch_hp_j) / 1000;
+      gen_recup_dep += calc_Qrec_gen_j(gen_ch, nref21, Bch_hp_j_dep) / 1000;
     });
 
     pertes_generateur_ch_recup += gen_recup;
