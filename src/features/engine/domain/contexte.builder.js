@@ -39,6 +39,8 @@ export class ContexteBuilder {
       anneeConstruction: parseInt(caracteristiqueGenerale.annee_construction),
       effetJoule: this.#hasEffetJoule(dpe),
       surfaceHabitable: surfaceHabitable,
+      surfaceHabitableLogement: caracteristiqueGenerale.surface_habitable_logement,
+      surfaceHabitableImmeuble: caracteristiqueGenerale.surface_habitable_immeuble,
       hauteurSousPlafond: caracteristiqueGenerale.hsp,
       nombreAppartement: caracteristiqueGenerale.nombre_appartement,
       nadeq: this.#nadeqService.execute(

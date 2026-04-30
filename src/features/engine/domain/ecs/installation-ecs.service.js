@@ -1,4 +1,6 @@
 import { GenerateurEcsService } from './generateur-ecs.service.js';
+import { EcsTvStore } from '../../../../dpe/infrastructure/ecs/ecsTv.store.js';
+import { mois_liste, Njj } from '../../../../../utils.js';
 import { inject } from 'dioma';
 
 /**
@@ -10,8 +12,9 @@ import { inject } from 'dioma';
  *  — QdwIndVc: pertes de la distribution individuelle en volume chauffé pour le mois j (Wh)
  *  — QdwColVc: pertes de la distribution collective en volume chauffé pour le mois j (Wh)
  *  — QdwColHVc: pertes de la distribution collective hors volume chauffé pour le mois j (Wh)
+ *  — conso_auxiliaire_distribution_ecs: consommation des auxiliaires de distribution d'ECS (kWh)
  *
- * @see Méthode de calcul 3CL-DPE 2021 (cotobre 2021) chapitre 3
+ * @see Méthode de calcul 3CL-DPE 2021 (octobre 2021) chapitre 15.2.3
  */
 export class InstallationEcsService {
   /**
@@ -20,10 +23,17 @@ export class InstallationEcsService {
   #generateurEcsService;
 
   /**
-   * @param generateurEcsService {GenerateurEcsService}
+   * @type {EcsTvStore}
    */
-  constructor(generateurEcsService = inject(GenerateurEcsService)) {
+  #tvStore;
+
+  /**
+   * @param generateurEcsService {GenerateurEcsService}
+   * @param tvStore {EcsTvStore}
+   */
+  constructor(generateurEcsService = inject(GenerateurEcsService), tvStore = inject(EcsTvStore)) {
     this.#generateurEcsService = generateurEcsService;
+    this.#tvStore = tvStore;
   }
 
   /**
@@ -61,6 +71,11 @@ export class InstallationEcsService {
         besoinEcsInstallation * 1000,
         besoinEcsDepensierInstallation * 1000
       );
+
+      /**
+       * 15.2.3 Consommation des auxiliaires de distribution d'ECS
+       */
+      this.consoAuxiliaireDistributionEcs(ctx, installationEcs);
     });
   }
 
@@ -152,5 +167,94 @@ export class InstallationEcsService {
             return acc + generateurEcs.donnee_utilisateur.Qgw;
           }, 0);
     }
+  }
+
+  /**
+   * 15.2.3 Consommation des auxiliaires de distribution d'ECS
+   *
+   * SI installation individuelle : conso = 0
+   * SI installation collective :
+   *   CAS 1 - enum_bouclage_reseau_ecs_id = 1 (non bouclé) : conso = 0
+   *   CAS 2 - enum_bouclage_reseau_ecs_id = 2 (bouclé) : calcul selon étapes 1-9
+   *   CAS 3 - enum_bouclage_reseau_ecs_id = 3 (traçage) : conso = 0.14 * BECS_annuel * Sh_install / Sh_logement
+   *
+   * @param ctx {Contexte}
+   * @param installationEcs {InstallationEcs}
+   */
+  consoAuxiliaireDistributionEcs(ctx, installationEcs) {
+    const installationEcsDE = installationEcs.donnee_entree;
+    const installationEcsDI = installationEcs.donnee_intermediaire;
+
+    const typeInstallation = parseInt(installationEcsDE.enum_type_installation_id);
+
+    if (typeInstallation === 1) {
+      installationEcsDI.conso_auxiliaire_distribution_ecs = 0;
+      return;
+    }
+
+    const enumBouclage = parseInt(installationEcsDE.enum_bouclage_reseau_ecs_id);
+
+    if (enumBouclage === 1) {
+      installationEcsDI.conso_auxiliaire_distribution_ecs = 0;
+      return;
+    }
+
+    const Sh_logement = ctx.surfaceHabitable;
+    const Sh_immeuble = ctx.surfaceHabitableImmeuble || Sh_logement;
+    const Sh_install = installationEcsDE.surface_habitable || Sh_logement;
+
+    if (enumBouclage === 3) {
+      const BECS_annuel = installationEcsDI.besoin_ecs;
+      installationEcsDI.conso_auxiliaire_distribution_ecs =
+        (0.14 * BECS_annuel * Sh_install) / Sh_logement;
+      return;
+    }
+
+    // CAS 2 - enum_bouclage_reseau_ecs_id = 2 (réseau bouclé)
+    const Niv_inst_ecs = installationEcsDE.nombre_niveau_installation_ecs || 1;
+    const nadeq = ctx.nadeq;
+    const ca = ctx.altitude.value;
+    const zc = ctx.zoneClimatique.value;
+
+    // Etape 3: Lb - longueur par défaut du bouclage ECS (m)
+    const Sh = (Sh_install / Sh_logement) * Sh_immeuble;
+    const Lb = 4 * Math.pow(Sh / Niv_inst_ecs, 0.5) + 6 * (Niv_inst_ecs - 0.5);
+
+    // Etape 4: DeltaPb (kPa) - perte de charge dans le bouclage
+    const DeltaPb = 0.2 * Lb + 10;
+
+    let conso = 0;
+
+    for (const mois of mois_liste) {
+      const tefsj = this.#tvStore.getTefs(ca, zc, mois);
+      const njj = Njj[mois];
+      const BECS_j = (1.163 * nadeq * 56 * (40 - tefsj) * njj) / 1000;
+
+      // Etape 1: Qdwj (Wh) - pertes de distribution à l'échelle de l'immeuble
+      const Qdwj = (0.24 * BECS_j * 1000 * Sh_install * Sh_immeuble) / (Sh_logement * Sh_logement);
+
+      // Etape 2: qdwj (m³/h) - débit de distribution ECS
+      const Nh_puisage_j = njj * 5;
+      const qdwj = Qdwj / (5.85 * Nh_puisage_j) / 1000;
+
+      // Etape 5: Phyd,j (W) - puissance hydraulique du bouclage
+      const Phyd_j = (qdwj * DeltaPb) / 3.6;
+
+      // Etape 6: Effcirb,j - efficacité du circulateur
+      const Effcirb_j = 0.324 / Math.pow(Phyd_j, 1 / 15.3);
+
+      // Etape 7: Pcirb,j (W) - puissance électrique du circulateur
+      const Pcirb_j = Math.max(20, Phyd_j / Effcirb_j);
+
+      // Etape 8: Qcirb,j (Wh) - consommation mensuelle du circulateur
+      const Nh_mois_j = njj * 24;
+      const Qcirb_j = Nh_puisage_j * Pcirb_j + (Nh_mois_j - Nh_puisage_j) * 20;
+
+      conso += Qcirb_j;
+    }
+
+    // Etape 9: conso annuelle ramenée à l'appartement (kWh)
+    installationEcsDI.conso_auxiliaire_distribution_ecs =
+      (conso * Sh_logement) / Sh_immeuble / 1000;
   }
 }
