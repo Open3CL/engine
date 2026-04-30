@@ -1,6 +1,6 @@
 import enums from './enums.js';
 import tvs from './tv.js';
-import { mois_liste, Tbase } from './utils.js';
+import { mois_liste, Njj, Tbase } from './utils.js';
 
 const G_CHAUDIERE = 20;
 const G_RADIATEURS_GAZ = 40;
@@ -258,4 +258,113 @@ function getPuissanceCirculateur(em_ch, de, di, du, surfaceHabitable, GV, Tbase)
       ((deltaPemnom * Qvemnom) / Math.max(1, surfaceHabitable / 400)) ** 0.676 *
       Math.max(1, surfaceHabitable / 400)
   );
+}
+
+/**
+ * 15.2.3 Consommation des auxiliaires de distribution d'ECS
+ * Calcul installation par installation pour le cas appartement
+ *
+ * SI installation individuelle : conso = 0
+ * SI installation collective :
+ *   CAS 1 - enum_bouclage_reseau_ecs_id = 1 (non bouclé) : conso = 0
+ *   CAS 2 - enum_bouclage_reseau_ecs_id = 2 (bouclé) : calcul selon étapes 1-9
+ *   CAS 3 - enum_bouclage_reseau_ecs_id = 3 (traçage) : conso = 0.14 * BECS_annuel * Sh_install / Sh_logement
+ *
+ * @param ecs {object} installation ECS
+ * @param de {Donnee_entree} donnée d'entrée de l'installation ECS
+ * @param di {Donnee_intermediaire} donnée intermédiaire de l'installation ECS
+ * @param Sh_logement {number} surface habitable du logement
+ * @param Sh_immeuble {number} surface habitable de l'immeuble
+ * @param caId {number} id de la classe d'altitude
+ * @param zcId {number} id de la zone climatique
+ * @param nadeq {number} nombre d'unités d'équivalence
+ */
+export function conso_aux_distribution_ecs(
+  ecs,
+  de,
+  di,
+  Sh_logement,
+  Sh_immeuble,
+  caId,
+  zcId,
+  nadeq
+) {
+  const typeInstallation = parseInt(de.enum_type_installation_id);
+
+  if (typeInstallation === 1) {
+    di.conso_auxiliaire_distribution_ecs = 0;
+    return;
+  }
+
+  const enumBouclage = parseInt(de.enum_bouclage_reseau_ecs_id);
+
+  // CAS 1 - enum_bouclage_reseau_ecs_id =1 (réseau d'ECS non bouclé)
+  if (enumBouclage === 1) {
+    di.conso_auxiliaire_distribution_ecs = 0;
+    return;
+  }
+
+  // CAS 3 - enum_bouclage_reseau_ecs_id = 3 (traçage)
+  if (enumBouclage === 3) {
+    const BECS_annuel = di.besoin_ecs;
+    const Sh_install = de.surface_habitable || Sh_logement;
+    di.conso_auxiliaire_distribution_ecs = (0.14 * BECS_annuel * Sh_install) / Sh_logement;
+    return;
+  }
+
+  // CAS 2 - enum_bouclage_reseau_ecs_id = 2 (réseau bouclé)
+  const ca = enums.classe_altitude[caId];
+  const zc = enums.zone_climatique[zcId];
+
+  const Sh_install = de.surface_habitable;
+  const Niv_inst_ecs = de.nombre_niveau_installation_ecs || 1;
+
+  // Etape 3: Lb - longueur par défaut du bouclage ECS (m)
+  // Sh est la surface habitable des logements desservis par l'installation d'ECS
+  // Pour l'appartement, on utilise la surface à l'échelle de l'immeuble
+  const Sh = (Sh_install / Sh_logement) * Sh_immeuble;
+  const Lb = 4 * Math.pow(Sh / Niv_inst_ecs, 0.5) + 6 * (Niv_inst_ecs - 0.5);
+
+  // Etape 4: DeltaPb (kPa) - perte de charge dans le bouclage
+  const DeltaPb = 0.2 * Lb + 10;
+
+  let conso = 0;
+
+  for (const mois of mois_liste) {
+    // Besoin ECS mensuel pour le logement (kWh)
+    // spec : https://rt-re-batiment.developpement-durable.gouv.fr/IMG/pdf/consolide_annexe_1_arrete_du_31_03_2021_relatif_aux_methodes_et_procedures_applicables.pdf
+    // page 71-72
+    const tefsj = tvs.tefs[ca][mois][zc];
+    const njj = Njj[mois];
+    const BECS_j = (1.163 * nadeq * 56 * (40 - tefsj) * njj) / 1000;
+
+    // Etape 1: Qdwj_i (Wh) - pertes de distribution à l'échelle de l'immeuble
+    // Qd,w,j = (0.5 * Lvc / Sh + 0.112 + 0.028) * BECS_j
+    // Pour Ratecs=1 (bouclé): Lvc = 0.2 * Sh * Ratecs = 0.2 * Sh
+    // So Qd,w,j = (0.1 + 0.112 + 0.028) * BECS_j = 0.24 * BECS_j (kWh)
+    // Pour l'appartement: Qd,w,j est multiplié par Sh_immeuble / Sh_logement
+    const Qdwj_i = (0.24 * BECS_j * 1000 * Sh_install * Sh_immeuble) / (Sh_logement * Sh_logement);
+
+    // Etape 2: qdwj_i (m³/h) - débit de distribution ECS
+    const Nh_puisage_j = njj * 5;
+    const qdwj_i = Qdwj_i / (5.85 * Nh_puisage_j) / 1000;
+
+    // Etape 5: Phyd,j (W) - puissance hydraulique du bouclage
+    const Phyd_j = (qdwj_i * DeltaPb) / 3.6;
+
+    // Etape 6: Effcirb,j - efficacité du circulateur
+    const Effcirb_j = Math.pow(Phyd_j, 0.324) / 15.3;
+
+    // Etape 7: Pcirb,j (W) - puissance électrique du circulateur
+    const Pcirb_j = Math.max(20, Phyd_j / Effcirb_j);
+
+    // Etape 8: Qcirb,j (Wh) - consommation mensuelle du circulateur
+    const Nh_mois_j = njj * 24;
+    const Qcirb_j = Nh_puisage_j * Pcirb_j + (Nh_mois_j - Nh_puisage_j) * 20;
+
+    conso += Qcirb_j;
+  }
+
+  // Etape 9: conso annuelle ramenée à l'appartement (kWh)
+  di.conso_auxiliaire_distribution_ecs = (conso * Sh_logement) / Sh_immeuble / 1000;
 }
