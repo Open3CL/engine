@@ -347,7 +347,7 @@ export function conso_aux_distribution_ecs(
 
     // Etape 2: qdwj_i (m³/h) - débit de distribution ECS
     const Nh_puisage_j = njj * 5;
-    const qdwj_i = Qdwj_i / (5.85 * Nh_puisage_j) / 1000;
+    const qdwj_i = Qdwj_i / (5.815 * Nh_puisage_j) / 1000;
 
     // Etape 5: Phyd,j (W) - puissance hydraulique du bouclage
     const Phyd_j = (qdwj_i * DeltaPb) / 3.6;
