@@ -1,6 +1,5 @@
 import { set_bug_for_bug_compat, set_tv_match_optimized_version } from '../../src/utils.js';
 import { calcul_3cl } from '../../src/index.js';
-import { XMLParser } from 'fast-xml-parser';
 import { existsSync, writeFileSync } from 'node:fs';
 import enums from '../../src/enums.js';
 import { readFileSync } from 'fs';
@@ -277,15 +276,7 @@ const readOrDownloadDpe = async (dpeCode, dpesFilePath) => {
   if (!existsSync(filePath)) {
     return await downloadDpe(dpeCode, filePath);
   } else {
-    const localFileContent = readFileSync(filePath, { encoding: 'utf8' });
-    const jsonFileContent = await dpeStorageClient.getFile(dpeCode);
-    if (!jsonFileContent) {
-      return waitFor(process.env.DOWNLOAD_DPE_WAIT || 1000)
-        .then(() => dpeStorageClient.writeFile(dpeCode, localFileContent))
-        .then(() => localFileContent);
-    }
-
-    return Promise.resolve(localFileContent);
+    return Promise.resolve(readFileSync(filePath, { encoding: 'utf8' }));
   }
 };
 

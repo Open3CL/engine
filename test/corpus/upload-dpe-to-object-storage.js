@@ -21,7 +21,7 @@ export class UploadDpeToObjectStorage {
    * @return {Promise<string>}
    */
   getFile(dpeCode) {
-    return fetch(`https://dpe.s3.fr-par.scw.cloud/${dpeCode}/${dpeCode}.json`)
+    return fetch(`https://dpe.s3.fr-par.scw.cloudd/${dpeCode}/${dpeCode}.json`)
       .then((response) => response.text())
       .catch(() => null);
   }
