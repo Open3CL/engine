@@ -46,6 +46,7 @@
     "winston": "3.13.0"
   },
   "devDependencies": {
+    "@aws-sdk/client-s3": "^3.1013.0",
     "@commitlint/cli": "^19.2.1",
     "@commitlint/config-conventional": "^19.1.0",
     "@commitlint/cz-commitlint": "^19.2.0",

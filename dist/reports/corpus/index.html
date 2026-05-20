@@ -21,7 +21,7 @@
       const urlSearchParams = new URLSearchParams(location.search);
       const corpusFileFromUrl = urlSearchParams.get('corpus_file');
 
-      const hasBranches = branches.length > 0;
+      let hasBranches = branches.length > 0;
 
       const populateBranchesSelect = () => {
         const branchListSelect = document.getElementById('branch-list');
@@ -36,18 +36,39 @@
       $(document).ready(() => {
         branchName = 'main';
 
-        if (!hasBranches) {
-          document.getElementById('branchSelectContainer').remove();
-          document.getElementById('showOnlyDiffValuesCheckboxContainer').remove();
-          document.getElementById('branchChartContainer').remove();
-        }
-
         const corpusListSelect = document.getElementById('corpus-list');
         $.get('corpus_list_main.json', (data) => {
           files = data.files;
           branches = data.branches;
+          hasBranches = branches.length > 0;
           if (hasBranches) {
             populateBranchesSelect();
+            document.getElementById('branch-list').addEventListener('change', (event) => {
+              branchName = event.target.value;
+              if (branchName !== 'main') {
+                loadDetailReportData(
+                  corpusFile,
+                  branchName,
+                  'branchChart',
+                  showOnlyDifferentValues
+                );
+              }
+            });
+            document
+              .getElementById('showOnlyDiffValuesCheckbox')
+              .addEventListener('click', (event) => {
+                showOnlyDifferentValues = event.target.checked;
+                loadDetailReportData(
+                  corpusFile,
+                  branchName,
+                  'branchChart',
+                  showOnlyDifferentValues
+                );
+              });
+          } else {
+            document.getElementById('branchSelectContainer').remove();
+            document.getElementById('showOnlyDiffValuesCheckboxContainer').remove();
+            document.getElementById('branchChartContainer').remove();
           }
           files.forEach((file) => {
             const option = document.createElement('option');
@@ -69,21 +90,6 @@
               loadDetailReportData(corpusFile, branchName, 'branchChart', showOnlyDifferentValues)
           );
         });
-
-        if (hasBranches) {
-          document.getElementById('branch-list').addEventListener('change', (event) => {
-            branchName = event.target.value;
-            if (branchName !== 'main') {
-              loadDetailReportData(corpusFile, branchName, 'branchChart', showOnlyDifferentValues);
-            }
-          });
-          document
-            .getElementById('showOnlyDiffValuesCheckbox')
-            .addEventListener('click', (event) => {
-              showOnlyDifferentValues = event.target.checked;
-              loadDetailReportData(corpusFile, branchName, 'branchChart', showOnlyDifferentValues);
-            });
-        }
       });
     </script>
     <script src="detailed_report_chart.js"></script>

@@ -136,7 +136,12 @@ const result = calcul_3cl_xml('<xml><dpe><numero_dpe>2113E1018248X</numero_dpe><
 | ADEME_API_CLIENT_SECRET | Client secret pour l'api de l'ademe                                                                                                      |
 | MAX_WORKER_THREADS      | Nombre de threads maximum pour les tests de corpus, par défaut: os.availableParallelism \* 1.5                                           |
 | WORKER_THREADS_CHUNKS   | Nombre de dpe à analyser par thread, par défaut: 200                                                                                     |
-| API_ADEME_DOWNLOAD_WAIT | Temps d'attente en ms entre chaque dpe à télécharger via l'api de l'ademe, par défaut: 1s                                                |
+| DOWNLOAD_DPE_WAIT       | Temps d'attente en ms entre chaque dpe à télécharge, par défaut: 1s                                                                      |
+| SCW_ACCESS_KEY          | Client id pour l'api scaleway                                                                                                            |
+| SCW_SECRET_KEY          | Client secret pour l'api scaleway                                                                                                        |
+| S3_REGION               | Region du bucket S3 dans lequel sont sauvegardés les DPE                                                                                 |
+| S3_ENDPOINT             | Url du endpoint du bucket S3 dans lequel sont sauvegardés les DPE                                                                        |
+| DOWNLOAD_DPE_WAIT       | Temps d'attente en ms entre chaque dpe à télécharge, par défaut: 1s                                                                      |
 
 Attention aux quotas sur l'api:
 
@@ -189,7 +194,8 @@ Il existe actuellement 9 corpus (avec 10000 dpe analysés dans chaque corpus) :
 - `dpe_immeuble_chauffage_collectif.csv`: Corpus avec uniquement des dpe immeuble pour des logements avec chauffage
   collectif
 - `dpe_immeuble_chauffage_mixte.csv`: Corpus avec uniquement des dpe immeuble pour des logements avec chauffage mixte
-- `dpe_individuel_a_partir_dpe_immeuble_2026.csv`: Corpus avec uniquement des dpe individuels réalisés à partir du dpe immeuble en 2026
+- `dpe_individuel_a_partir_dpe_immeuble_2026.csv`: Corpus avec uniquement des dpe individuels réalisés à partir du dpe
+  immeuble en 2026
 
 ### Comment lancer les corpus ?
 
