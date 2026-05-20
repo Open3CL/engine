@@ -6,23 +6,23 @@ export class UploadDpeToObjectStorage {
 
   constructor() {
     this.#s3client = new S3Client({
-      region: 'fr-par',
-      endpoint: 'https://s3.fr-par.scw.cloud',
+      region: process.env.S3_REGION,
+      endpoint: process.env.S3_ENDPOINT,
       forcePathStyle: true,
       credentials: {
-        accessKeyId: 'SCWK0Y8MBDQ9EQ2Y3FXB',
-        secretAccessKey: 'f3e2f5c3-be27-4741-8f35-eafdf4ca148d'
+        accessKeyId: process.env.SCW_ACCESS_KEY,
+        secretAccessKey: process.env.SCW_SECRET_KEY
       }
     });
   }
 
   /**
    * @param dpeCode {string}
-   * @return {Promise<object>}
+   * @return {Promise<string>}
    */
   getFile(dpeCode) {
     return fetch(`https://dpe.s3.fr-par.scw.cloud/${dpeCode}/${dpeCode}.json`)
-      .then((response) => response.json())
+      .then((response) => response.text())
       .catch(() => null);
   }
 

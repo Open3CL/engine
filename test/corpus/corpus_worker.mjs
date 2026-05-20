@@ -217,12 +217,16 @@ const waitFor = (milliseconds) => {
 
 /**
  * @param dpeCode {string}
- * @param dpesFilePath {string}
  * @return {Promise<string>}
  */
-const downloadDpe = (dpeCode, dpesFilePath) => {
-  const filePath = `${dpesFilePath}/${dpeCode}.json`;
-  return waitFor(process.env.API_ADEME_DOWNLOAD_WAIT || 1000).then(() => {
+const downloadDpeFromAdeme = (dpeCode) => {
+  if (!process.env.ADEME_API_CLIENT_ID) {
+    throw new Error('Environment variable ADEME_API_CLIENT_ID not set');
+  }
+  if (!process.env.ADEME_API_CLIENT_SECRET) {
+    throw new Error('Environment variable ADEME_API_CLIENT_SECRET not set');
+  }
+  return waitFor(process.env.DOWNLOAD_DPE_WAIT || 1000).then(() => {
     return fetch(
       `https://prd-x-ademe-externe-api.de-c1.eu1.cloudhub.io/api/v1/pub/dpe/${dpeCode}`,
       {
@@ -233,22 +237,34 @@ const downloadDpe = (dpeCode, dpesFilePath) => {
           client_secret: process.env.ADEME_API_CLIENT_SECRET
         }
       }
-    )
-      .then(async (resp) => {
-        if (resp.status !== 200) {
-          /** @type {{error: string}} **/
-          const errorPayload = await resp.json();
-          throw new Error(
-            `Could not retrieve DPE: ${dpeCode}, code: ${resp.status}, error: ${errorPayload.error}`
-          );
-        }
-        return resp.text();
-      })
-      .then((fileContent) => {
-        writeFileSync(filePath, JSON.parse(fileContent).dpe, { encoding: 'utf8' });
-        return fileContent;
-      });
+    ).then(async (resp) => {
+      if (resp.status !== 200) {
+        /** @type {{error: string}} **/
+        const errorPayload = await resp.json();
+        throw new Error(
+          `Could not retrieve DPE: ${dpeCode}, code: ${resp.status}, error: ${errorPayload.error}`
+        );
+      }
+      return resp.text();
+    });
   });
+};
+
+const downloadDpe = async (dpeCode, dpeFilePath) => {
+  // Try to download from object storage
+  let dpeFileContent = await dpeStorageClient.getFile(dpeCode);
+  if (!dpeFileContent) {
+    // Then try to download from ademe
+    dpeFileContent = await downloadDpeFromAdeme(dpeCode);
+
+    // Then write the downloaded file into object storage
+    return waitFor(process.env.DOWNLOAD_DPE_WAIT || 1000)
+      .then(() => dpeStorageClient.writeFile(dpeCode, dpeFileContent))
+      .then(() => dpeFileContent);
+  }
+
+  writeFileSync(dpeFilePath, JSON.parse(dpeFileContent).dpe, { encoding: 'utf8' });
+  return dpeFileContent;
 };
 
 /**
@@ -259,18 +275,12 @@ const downloadDpe = (dpeCode, dpesFilePath) => {
 const readOrDownloadDpe = async (dpeCode, dpesFilePath) => {
   const filePath = `${dpesFilePath}/${dpeCode}.json`;
   if (!existsSync(filePath)) {
-    if (!process.env.ADEME_API_CLIENT_ID) {
-      throw new Error('Environment variable ADEME_API_CLIENT_ID not set');
-    }
-    if (!process.env.ADEME_API_CLIENT_SECRET) {
-      throw new Error('Environment variable ADEME_API_CLIENT_SECRET not set');
-    }
-    return await downloadDpe(dpeCode, dpesFilePath);
+    return await downloadDpe(dpeCode, filePath);
   } else {
     const localFileContent = readFileSync(filePath, { encoding: 'utf8' });
     const jsonFileContent = await dpeStorageClient.getFile(dpeCode);
     if (!jsonFileContent) {
-      return waitFor(process.env.API_ADEME_DOWNLOAD_WAIT || 1000)
+      return waitFor(process.env.DOWNLOAD_DPE_WAIT || 1000)
         .then(() => dpeStorageClient.writeFile(dpeCode, localFileContent))
         .then(() => localFileContent);
     }
