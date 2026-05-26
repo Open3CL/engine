@@ -271,9 +271,15 @@ export function calcul_3cl(inputDpe, options) {
    * Inertie ID
    * 1 - Très lourde
    * 2 - Lourde
+   * 3 - Moyenne
+   * 4 - Légère
+   *
+   * Cf. issue #149 : l'utilisation de la variable batiment_materiaux_anciens
+   * n'est plus conditionnée par la classe d'inertie ni par le type de logement
+   * (maison ou appartement). On considère le bâtiment comme à inertie lourde
+   * dès lors que la variable batiment_materiaux_anciens vaut 1.
    */
-  const ilpa =
-    logement.meteo.batiment_materiaux_anciens === 1 && ['1', '2'].includes(inertie_id) ? '1' : '0';
+  const ilpa = logement.meteo.batiment_materiaux_anciens === 1 ? '1' : '0';
 
   const ecs = logement.installation_ecs_collection.installation_ecs || [];
   const Nb_lgt = cg.nombre_appartement || 1;
