@@ -34,7 +34,6 @@ export interface InstallationEcsDI {
   production_ecs_solaire?: number;
   conso_ecs: number;
   conso_ecs_depensier: number;
-  conso_auxiliaire_distribution_ecs?: number;
 }
 
 export interface InstallationEcsDU {
