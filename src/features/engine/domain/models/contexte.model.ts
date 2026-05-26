@@ -6,8 +6,6 @@ export interface Contexte {
   enumPeriodeConstructionId: number;
   anneeConstruction: number;
   surfaceHabitable: number;
-  surfaceHabitableLogement: number;
-  surfaceHabitableImmeuble: number;
   hauteurSousPlafond: number;
   nombreAppartement: number;
   zoneClimatique: {
