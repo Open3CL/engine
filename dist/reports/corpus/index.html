@@ -1,149 +1,1416 @@
 <!doctype html>
-<html lang="en">
+<html lang="fr" data-theme="light">
   <head>
     <meta charset="UTF-8" />
-    <title>Open3CL reports</title>
-    <link
-      href="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.css"
-      rel="stylesheet"
-    />
-    <script
-      src="https://code.jquery.com/jquery-3.7.1.min.js"
-      integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo="
-      crossorigin="anonymous"
-    ></script>
-    <script>
-      let files = [];
-      let corpusFile;
-      let branchName;
-      let branches = [];
-      let showOnlyDifferentValues = false;
-      const urlSearchParams = new URLSearchParams(location.search);
-      const corpusFileFromUrl = urlSearchParams.get('corpus_file');
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Open3CL — Corpus Reports</title>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <style>
+      /* ===== Design tokens ===== */
+      :root {
+        --bg: #f6f7fb;
+        --bg-elev: #ffffff;
+        --bg-soft: #f1f3f9;
+        --border: #e5e7eb;
+        --border-strong: #d1d5db;
+        --text: #0f172a;
+        --text-muted: #64748b;
+        --text-dim: #94a3b8;
 
-      let hasBranches = branches.length > 0;
+        --primary: #ef562f;
+        --primary-soft: #fff1ee;
+        --primary-strong: #cc4522;
 
-      const populateBranchesSelect = () => {
-        const branchListSelect = document.getElementById('branch-list');
-        branches.forEach((branch) => {
-          const option = document.createElement('option');
-          option.text = branch;
-          option.value = branch;
-          branchListSelect.appendChild(option);
-        });
-      };
+        --accent: #0ea5e9;
+        --accent-soft: #e0f2fe;
 
-      $(document).ready(() => {
-        branchName = 'main';
+        --good: #10b981;
+        --good-soft: #d1fae5;
+        --warn: #f59e0b;
+        --warn-soft: #fef3c7;
+        --bad: #ef4444;
+        --bad-soft: #fee2e2;
 
-        const corpusListSelect = document.getElementById('corpus-list');
-        $.get('corpus_list_main.json', (data) => {
-          files = data.files;
-          branches = data.branches;
-          hasBranches = branches.length > 0;
-          if (hasBranches) {
-            populateBranchesSelect();
-            document.getElementById('branch-list').addEventListener('change', (event) => {
-              branchName = event.target.value;
-              if (branchName !== 'main') {
-                loadDetailReportData(
-                  corpusFile,
-                  branchName,
-                  'branchChart',
-                  showOnlyDifferentValues
-                );
-              }
-            });
-            document
-              .getElementById('showOnlyDiffValuesCheckbox')
-              .addEventListener('click', (event) => {
-                showOnlyDifferentValues = event.target.checked;
-                loadDetailReportData(
-                  corpusFile,
-                  branchName,
-                  'branchChart',
-                  showOnlyDifferentValues
-                );
-              });
-          } else {
-            document.getElementById('branchSelectContainer').remove();
-            document.getElementById('showOnlyDiffValuesCheckboxContainer').remove();
-            document.getElementById('branchChartContainer').remove();
-          }
-          files.forEach((file) => {
-            const option = document.createElement('option');
-            option.text = file;
-            option.value = file;
-            if (corpusFileFromUrl === file) {
-              option.setAttribute('selected', '');
-            }
-            corpusListSelect.appendChild(option);
-          });
-          corpusFile = corpusFileFromUrl || files[0];
-          loadDetailReportData(corpusFile, 'main', 'mainBranchChart');
-        });
+        --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04), 0 1px 1px rgba(15, 23, 42, 0.03);
+        --shadow-md: 0 6px 20px -8px rgba(15, 23, 42, 0.15), 0 2px 6px rgba(15, 23, 42, 0.05);
+        --radius: 14px;
+        --radius-sm: 10px;
+      }
+      [data-theme='dark'] {
+        --bg: #0b1020;
+        --bg-elev: #121830;
+        --bg-soft: #181f3a;
+        --border: #243056;
+        --border-strong: #2f3d6a;
+        --text: #e6e9f3;
+        --text-muted: #94a3b8;
+        --text-dim: #64748b;
+        --primary-soft: #3a1a12;
+        --accent-soft: #07314a;
+        --good-soft: #062e22;
+        --warn-soft: #3a2a06;
+        --bad-soft: #3a1313;
+        --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+        --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.5);
+      }
 
-        document.getElementById('corpus-list').addEventListener('change', (event) => {
-          corpusFile = event.target.value;
-          loadDetailReportData(corpusFile, 'main', 'mainBranchChart', showOnlyDifferentValues).then(
-            () =>
-              loadDetailReportData(corpusFile, branchName, 'branchChart', showOnlyDifferentValues)
-          );
-        });
-      });
-    </script>
-    <script src="detailed_report_chart.js"></script>
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, Roboto, sans-serif;
+        font-size: 14px;
+        line-height: 1.5;
+        min-height: 100vh;
+      }
+
+      /* ===== Layout ===== */
+      .wrap {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 24px 28px 64px;
+      }
+
+      header.topbar {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        backdrop-filter: saturate(140%) blur(10px);
+        background: color-mix(in srgb, var(--bg) 75%, transparent);
+        border-bottom: 1px solid var(--border);
+      }
+      .topbar-inner {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 14px 28px;
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        flex-wrap: wrap;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-weight: 700;
+        font-size: 16px;
+        letter-spacing: -0.01em;
+      }
+      .brand .logo {
+        width: 32px;
+        height: 32px;
+        border-radius: 9px;
+        background: linear-gradient(135deg, var(--primary), #ff8a5d);
+        display: grid;
+        place-items: center;
+        color: #fff;
+        font-size: 18px;
+        box-shadow: var(--shadow-sm);
+      }
+      .brand small {
+        display: block;
+        font-weight: 500;
+        color: var(--text-muted);
+        font-size: 11px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+      .controls {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-left: auto;
+        align-items: center;
+      }
+      .field {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: var(--bg-elev);
+        border: 1px solid var(--border);
+        padding: 6px 8px 6px 12px;
+        border-radius: var(--radius-sm);
+        box-shadow: var(--shadow-sm);
+      }
+      .field label {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--text-muted);
+        font-weight: 600;
+      }
+      .field select {
+        appearance: none;
+        background: transparent;
+        border: 0;
+        color: var(--text);
+        font-size: 13px;
+        font-weight: 600;
+        outline: none;
+        padding-right: 18px;
+        background-image: linear-gradient(45deg, transparent 50%, var(--text-muted) 50%),
+          linear-gradient(135deg, var(--text-muted) 50%, transparent 50%);
+        background-position:
+          calc(100% - 10px) center,
+          calc(100% - 6px) center;
+        background-size:
+          4px 4px,
+          4px 4px;
+        background-repeat: no-repeat;
+        max-width: 280px;
+      }
+      .btn-icon {
+        background: var(--bg-elev);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        height: 38px;
+        width: 38px;
+        display: grid;
+        place-items: center;
+        cursor: pointer;
+        color: var(--text);
+        transition: transform 0.15s ease;
+      }
+      .btn-icon:hover {
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-sm);
+      }
+
+      /* ===== Hero / breadcrumb ===== */
+      .hero {
+        padding: 28px 0 12px;
+      }
+      .hero h1 {
+        font-size: 26px;
+        margin: 0 0 4px;
+        letter-spacing: -0.02em;
+      }
+      .hero p {
+        margin: 0;
+        color: var(--text-muted);
+      }
+      .hero .meta {
+        margin-top: 14px;
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .pill {
+        font-size: 12px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        background: var(--bg-elev);
+        border: 1px solid var(--border);
+        color: var(--text-muted);
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .pill .dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--primary);
+      }
+      .pill.branch-b .dot {
+        background: var(--accent);
+      }
+
+      /* ===== KPI cards ===== */
+      .kpis {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 14px;
+        margin-top: 18px;
+      }
+      .card {
+        background: var(--bg-elev);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 18px;
+        box-shadow: var(--shadow-sm);
+        transition:
+          transform 0.15s ease,
+          box-shadow 0.15s ease;
+      }
+      .card:hover {
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-md);
+      }
+      .kpi {
+        position: relative;
+        overflow: hidden;
+      }
+      .kpi .label {
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--text-muted);
+      }
+      .kpi .value {
+        font-size: 32px;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        margin-top: 6px;
+      }
+      .kpi .sub {
+        font-size: 12px;
+        color: var(--text-muted);
+        margin-top: 4px;
+      }
+      .kpi .delta {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 12px;
+        font-weight: 600;
+        padding: 2px 8px;
+        border-radius: 999px;
+        margin-top: 8px;
+      }
+      .kpi.kpi-success .icon-circle {
+        background: var(--good-soft);
+        color: var(--good);
+      }
+      .kpi.kpi-total .icon-circle {
+        background: var(--accent-soft);
+        color: var(--accent);
+      }
+      .kpi.kpi-above .icon-circle {
+        background: var(--bad-soft);
+        color: var(--bad);
+      }
+      .kpi.kpi-valid .icon-circle {
+        background: var(--primary-soft);
+        color: var(--primary);
+      }
+      .icon-circle {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        display: grid;
+        place-items: center;
+        font-size: 18px;
+        font-weight: 800;
+        margin-bottom: 12px;
+      }
+      .delta.up {
+        background: var(--good-soft);
+        color: var(--good);
+      }
+      .delta.down {
+        background: var(--bad-soft);
+        color: var(--bad);
+      }
+      .delta.flat {
+        background: var(--bg-soft);
+        color: var(--text-muted);
+      }
+
+      /* ===== Sections ===== */
+      .section {
+        margin-top: 28px;
+      }
+      .section-title {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        margin-bottom: 12px;
+      }
+      .section-title h2 {
+        font-size: 16px;
+        margin: 0;
+        letter-spacing: -0.01em;
+      }
+      .section-title .hint {
+        font-size: 12px;
+        color: var(--text-muted);
+      }
+
+      .grid-2 {
+        display: grid;
+        grid-template-columns: 1.1fr 1.6fr;
+        gap: 14px;
+      }
+      @media (max-width: 980px) {
+        .grid-2 {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .gauge-wrap {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+        padding: 20px;
+        min-height: 320px;
+      }
+      .gauge {
+        position: relative;
+        width: 220px;
+        height: 220px;
+      }
+      .gauge canvas {
+        width: 220px !important;
+        height: 220px !important;
+      }
+      .gauge .center {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        text-align: center;
+      }
+      .gauge .center .v {
+        font-size: 36px;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+      }
+      .gauge .center .v small {
+        font-size: 18px;
+        color: var(--text-muted);
+        margin-left: 2px;
+      }
+      .gauge .center .l {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--text-muted);
+        margin-top: 4px;
+      }
+
+      .legend-row {
+        display: flex;
+        gap: 18px;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+      .legend-row .legend-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        color: var(--text-muted);
+      }
+      .legend-row .swatch {
+        width: 12px;
+        height: 12px;
+        border-radius: 3px;
+      }
+
+      .chart-card {
+        padding: 18px;
+      }
+      .chart-card .head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 10px;
+      }
+      .chart-card .head .toggles {
+        display: flex;
+        gap: 6px;
+      }
+      .seg {
+        display: inline-flex;
+        background: var(--bg-soft);
+        border-radius: 999px;
+        padding: 3px;
+        border: 1px solid var(--border);
+      }
+      .seg button {
+        background: transparent;
+        border: 0;
+        padding: 5px 10px;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text-muted);
+        border-radius: 999px;
+        cursor: pointer;
+      }
+      .seg button.active {
+        background: var(--bg-elev);
+        color: var(--text);
+        box-shadow: var(--shadow-sm);
+      }
+      .chart-host {
+        position: relative;
+        height: 520px;
+      }
+
+      /* ===== Checks table ===== */
+      .checks-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        font-size: 13px;
+      }
+      .checks-table th {
+        text-align: left;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--text-muted);
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--border);
+        background: var(--bg-soft);
+        position: sticky;
+        top: 0;
+      }
+      .checks-table td {
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--border);
+        vertical-align: middle;
+      }
+      .checks-table tr:last-child td {
+        border-bottom: 0;
+      }
+      .check-name {
+        font-weight: 600;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 12.5px;
+      }
+      .badge {
+        font-size: 10px;
+        font-weight: 700;
+        padding: 2px 6px;
+        border-radius: 999px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+      }
+      .badge-mand {
+        background: var(--primary-soft);
+        color: var(--primary-strong);
+      }
+      .badge-info {
+        background: var(--bg-soft);
+        color: var(--text-muted);
+      }
+      .bar-cell {
+        width: 220px;
+      }
+      .bar-track {
+        background: var(--bg-soft);
+        border-radius: 999px;
+        height: 8px;
+        position: relative;
+        overflow: hidden;
+      }
+      .bar-fill {
+        height: 100%;
+        border-radius: 999px;
+        background: linear-gradient(90deg, var(--good), #34d399);
+        transition: width 0.4s ease;
+      }
+      .bar-fill.warn {
+        background: linear-gradient(90deg, var(--warn), #fbbf24);
+      }
+      .bar-fill.bad {
+        background: linear-gradient(90deg, var(--bad), #f87171);
+      }
+      .ratio {
+        font-variant-numeric: tabular-nums;
+        font-weight: 700;
+      }
+      .delta-cell {
+        font-variant-numeric: tabular-nums;
+        font-size: 12px;
+        font-weight: 600;
+      }
+      .delta-cell.up {
+        color: var(--good);
+      }
+      .delta-cell.down {
+        color: var(--bad);
+      }
+      .delta-cell.flat {
+        color: var(--text-muted);
+      }
+
+      /* ===== DPE list ===== */
+      .toolbar {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .input {
+        background: var(--bg-elev);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        padding: 8px 12px;
+        font-size: 13px;
+        color: var(--text);
+        min-width: 240px;
+        outline: none;
+      }
+      .input:focus {
+        border-color: var(--primary);
+      }
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: var(--bg-elev);
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        padding: 4px 10px;
+        font-size: 12px;
+        color: var(--text-muted);
+        cursor: pointer;
+      }
+      .chip.active {
+        background: var(--primary-soft);
+        color: var(--primary-strong);
+        border-color: var(--primary);
+      }
+      .dpe-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+        gap: 8px;
+        max-height: 380px;
+        overflow: auto;
+        padding: 4px;
+      }
+      .dpe-card {
+        background: var(--bg-soft);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 10px 12px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 12px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+        transition: transform 0.1s ease;
+      }
+      .dpe-card:hover {
+        transform: translateY(-1px);
+        border-color: var(--border-strong);
+      }
+      .dpe-card .id {
+        font-weight: 600;
+        color: var(--text);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .dpe-card .tag {
+        font-size: 9px;
+        font-weight: 800;
+        text-transform: uppercase;
+        padding: 2px 6px;
+        border-radius: 6px;
+      }
+      .tag-new {
+        background: var(--bad-soft);
+        color: var(--bad);
+      }
+      .tag-fixed {
+        background: var(--good-soft);
+        color: var(--good);
+      }
+      .tag-common {
+        background: var(--bg-elev);
+        color: var(--text-muted);
+        border: 1px solid var(--border);
+      }
+      .empty {
+        text-align: center;
+        padding: 36px 20px;
+        color: var(--text-muted);
+        font-size: 13px;
+      }
+      .skel {
+        display: inline-block;
+        height: 14px;
+        background: linear-gradient(
+          90deg,
+          var(--bg-soft) 0%,
+          var(--border) 50%,
+          var(--bg-soft) 100%
+        );
+        background-size: 200% 100%;
+        animation: shine 1.4s infinite;
+        border-radius: 6px;
+      }
+      @keyframes shine {
+        0% {
+          background-position: 200% 0;
+        }
+        100% {
+          background-position: -200% 0;
+        }
+      }
+
+      /* ===== Footer ===== */
+      footer {
+        margin-top: 40px;
+        color: var(--text-dim);
+        font-size: 12px;
+        text-align: center;
+      }
+      a {
+        color: var(--primary);
+      }
+
+      /* Tooltips on bar list rows */
+      .check-row {
+        transition: background 0.15s ease;
+      }
+      .check-row:hover td {
+        background: var(--bg-soft);
+      }
+    </style>
   </head>
+
   <body>
-    <div id="container">
-      <div class="w-full">
-        <form class="pt-3">
-          <div class="w-auto">
-            <div class="text-center flex justify-center gap-8">
-              <div>
-                <select
-                  id="corpus-list"
-                  class="mt-2 mb-3 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                ></select>
-              </div>
-              <div class="flex" id="branchSelectContainer">
-                <label for="branch-list" class="pt-3" style="width: 20rem"
-                  >Comparer avec la branche</label
-                >
-                <select
-                  id="branch-list"
-                  class="mt-2 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                ></select>
+    <header class="topbar">
+      <div class="topbar-inner">
+        <div class="brand">
+          <div class="logo">⌁</div>
+          <div>Open3CL <small>Corpus reports</small></div>
+        </div>
+
+        <div class="controls">
+          <div class="field">
+            <label for="corpus-list">Fichier</label>
+            <select id="corpus-list"></select>
+          </div>
+          <div class="field" id="branchSelectContainer">
+            <label for="branch-list">Comparer</label>
+            <select id="branch-list"></select>
+          </div>
+          <button class="btn-icon" id="theme-toggle" title="Toggle theme">🌗</button>
+        </div>
+      </div>
+    </header>
+
+    <div class="wrap">
+      <!-- Hero -->
+      <div class="hero">
+        <h1 id="hero-title">Rapport d'analyse</h1>
+        <p id="hero-sub">Vue d'ensemble des résultats Open3CL pour le fichier sélectionné.</p>
+        <div class="meta" id="hero-meta">
+          <span class="pill"><span class="dot"></span><span id="pill-main">main</span></span>
+          <span class="pill branch-b" id="pill-compare-wrap" style="display: none">
+            <span class="dot"></span><span id="pill-compare">—</span>
+          </span>
+          <span class="pill" id="pill-threshold">Seuil : —</span>
+        </div>
+      </div>
+
+      <!-- KPI cards -->
+      <div class="kpis" id="kpis">
+        <div class="card kpi kpi-total">
+          <div class="icon-circle">Σ</div>
+          <div class="label">DPE dans le fichier</div>
+          <div class="value" id="kpi-total"><span class="skel" style="width: 80px"></span></div>
+          <div class="sub" id="kpi-total-sub">—</div>
+        </div>
+        <div class="card kpi kpi-valid">
+          <div class="icon-circle">✓</div>
+          <div class="label">DPE analysés</div>
+          <div class="value" id="kpi-valid"><span class="skel" style="width: 80px"></span></div>
+          <div class="sub" id="kpi-valid-sub">—</div>
+        </div>
+        <div class="card kpi kpi-success">
+          <div class="icon-circle">%</div>
+          <div class="label">Ratio de succès</div>
+          <div class="value" id="kpi-ratio"><span class="skel" style="width: 80px"></span></div>
+          <div class="sub" id="kpi-ratio-sub">tous les checks sous le seuil</div>
+          <div class="delta flat" id="kpi-ratio-delta" style="display: none">—</div>
+        </div>
+        <div class="card kpi kpi-above">
+          <div class="icon-circle">!</div>
+          <div class="label">Au-dessus du seuil</div>
+          <div class="value" id="kpi-above"><span class="skel" style="width: 80px"></span></div>
+          <div class="sub" id="kpi-above-sub">—</div>
+          <div class="delta flat" id="kpi-above-delta" style="display: none">—</div>
+        </div>
+      </div>
+
+      <!-- Section 1: overview & checks -->
+      <div class="section">
+        <div class="section-title">
+          <h2>Vue d'ensemble</h2>
+          <span class="hint">
+            Seuls les checks <b>obligatoires</b> sont bloquants. Les autres sont informatifs.
+          </span>
+        </div>
+        <div class="grid-2">
+          <div class="card gauge-wrap">
+            <div class="gauge">
+              <canvas id="gaugeChart"></canvas>
+              <div class="center">
+                <div>
+                  <div class="v" id="gauge-value">—<small>%</small></div>
+                  <div class="l">Succès global</div>
+                </div>
               </div>
             </div>
+            <div class="legend-row" id="gauge-legend">
+              <span class="legend-item"
+                ><span class="swatch" style="background: var(--good)"></span> Sous le seuil</span
+              >
+              <span class="legend-item"
+                ><span class="swatch" style="background: var(--bad-soft)"></span> Au-dessus</span
+              >
+            </div>
           </div>
-        </form>
-      </div>
-      <div class="w-full flex justify-center p-3" id="showOnlyDiffValuesCheckboxContainer">
-        <input id="showOnlyDiffValuesCheckbox" type="checkbox" class="mt-1" />
-        <div class="ml-2">Afficher que les valeurs différentes</div>
-      </div>
-      <div class="w-full text-center">
-        <div class="ml-2 text-sm">
-          Seules les valeurs affichées dans la légende entourées de <b>**</b> sont bloquantes
-          <b>si le seuil de 5% n'est pas respecté</b>
+
+          <div class="card chart-card">
+            <div class="head">
+              <div>
+                <div class="section-title" style="margin: 0">
+                  <h2 style="font-size: 14px">Ratio de succès par check</h2>
+                </div>
+                <div class="hint" style="margin-top: 4px">
+                  Trié par sévérité (obligatoires d'abord, puis par % croissant).
+                </div>
+              </div>
+              <div class="toggles">
+                <div class="seg" id="check-filter">
+                  <button data-filter="all" class="active">Tous</button>
+                  <button data-filter="mandatory">Obligatoires</button>
+                  <button data-filter="info">Informatifs</button>
+                </div>
+              </div>
+            </div>
+            <div class="chart-host">
+              <canvas id="checksChart"></canvas>
+            </div>
+          </div>
         </div>
-        <div class="ml-2 text-sm">
-          Les autres valeurs sont affichées purement à titre informatif
+      </div>
+
+      <!-- Section 2: detailed table -->
+      <div class="section">
+        <div class="section-title">
+          <h2>Détail des checks</h2>
+          <span class="hint" id="table-hint"> Cliquez sur un en-tête pour trier. </span>
+        </div>
+        <div class="card" style="padding: 0; overflow: hidden">
+          <div style="max-height: 480px; overflow: auto">
+            <table class="checks-table" id="checks-table">
+              <thead>
+                <tr>
+                  <th data-sort="name">Check</th>
+                  <th data-sort="kind">Type</th>
+                  <th data-sort="ratio">Ratio</th>
+                  <th>Distribution</th>
+                  <th data-sort="below">Sous le seuil</th>
+                  <th data-sort="delta" id="th-delta">Δ vs main</th>
+                </tr>
+              </thead>
+              <tbody id="checks-tbody"></tbody>
+            </table>
+          </div>
         </div>
       </div>
-      <div id="charts" class="p-6 flex justify-center">
-        <div style="width: 800px">
-          <canvas id="mainBranchChart"></canvas>
+
+      <!-- Section 3: DPE list above threshold -->
+      <div class="section">
+        <div class="section-title">
+          <h2>DPE au-dessus du seuil</h2>
+          <span class="hint" id="dpe-count-hint">—</span>
         </div>
-        <div style="width: 800px" id="branchChartContainer">
-          <canvas id="branchChart"></canvas>
+        <div class="card" style="padding: 16px">
+          <div class="toolbar" style="margin-bottom: 12px">
+            <input class="input" id="dpe-search" placeholder="Rechercher un identifiant DPE…" />
+            <div class="chip-row" id="dpe-filter-chips" style="display: none">
+              <span class="chip active" data-dpe-filter="all">Tous</span>
+              <span class="chip" data-dpe-filter="new">Nouveaux (vs main)</span>
+              <span class="chip" data-dpe-filter="fixed">Corrigés (vs main)</span>
+              <span class="chip" data-dpe-filter="common">Communs</span>
+            </div>
+          </div>
+          <div class="dpe-grid" id="dpe-grid"></div>
         </div>
       </div>
+
+      <!-- Section 4: run failures -->
+      <div class="section" id="run-failed-section" style="display: none">
+        <div class="section-title">
+          <h2>Échecs d'exécution</h2>
+          <span class="hint" id="run-failed-count">—</span>
+        </div>
+        <div class="card" style="padding: 16px">
+          <div class="dpe-grid" id="run-failed-grid"></div>
+        </div>
+      </div>
+
+      <footer>
+        Proposition d'UI — Open3CL · Données issues de <code>dist/reports/corpus/</code>
+      </footer>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-autocolors"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.js"></script>
+    <script>
+      /* ====================================================================
+       * Open3CL corpus dashboard
+       * Loads:
+       *   - corpus_list_main.json (entry point with files + branches)
+       *   - <corpusFile>/corpus_global_report_<branch>.json
+       *   - <corpusFile>/corpus_dpe_list_above_threshold_<branch>.json
+       * ==================================================================== */
+
+      const state = {
+        files: [],
+        branches: [],
+        corpusFile: null,
+        compareBranch: null, // null = no comparison
+        mainReport: null,
+        branchReport: null,
+        mainAboveList: [],
+        branchAboveList: [],
+        diffList: [],
+        checkFilter: 'all',
+        dpeFilter: 'all',
+        sortKey: 'kind',
+        sortAsc: false
+      };
+
+      // ----- Utilities -----
+      const $ = (sel) => document.querySelector(sel);
+      const $$ = (sel) => Array.from(document.querySelectorAll(sel));
+      const parsePct = (s) => Number(String(s).replace('%', '').trim());
+      const fmtPct = (n) => `${n.toFixed(2).replace(/\.00$/, '')}%`;
+      const fmtNum = (n) => new Intl.NumberFormat('fr-FR').format(Number.isFinite(n) ? n : 0);
+      const colorFor = (ratio) => {
+        if (ratio >= 95) return 'var(--good)';
+        if (ratio >= 80) return 'var(--warn)';
+        return 'var(--bad)';
+      };
+      const barClassFor = (ratio) => {
+        if (ratio >= 95) return '';
+        if (ratio >= 80) return 'warn';
+        return 'bad';
+      };
+
+      async function fetchJSON(path) {
+        const res = await fetch(path);
+        if (!res.ok) throw new Error(`Failed to load ${path}`);
+        return res.json();
+      }
+
+      // ----- Theme -----
+      const themeToggle = $('#theme-toggle');
+      const savedTheme = localStorage.getItem('open3cl-theme');
+      if (savedTheme) document.documentElement.setAttribute('data-theme', savedTheme);
+      themeToggle.addEventListener('click', () => {
+        const cur = document.documentElement.getAttribute('data-theme');
+        const next = cur === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        localStorage.setItem('open3cl-theme', next);
+        // Re-render charts so they pick up the new text colour
+        renderGauge();
+        renderChecksChart();
+      });
+
+      // ----- Boot -----
+      (async function boot() {
+        try {
+          const list = await fetchJSON('corpus_list_main.json');
+          state.files = list.files || [];
+          state.branches = list.branches || [];
+
+          // populate file selector
+          const fileSel = $('#corpus-list');
+          state.files.forEach((f) => {
+            const o = document.createElement('option');
+            o.value = f;
+            o.textContent = f;
+            fileSel.appendChild(o);
+          });
+
+          // honour ?corpus_file= and ?branch=
+          const url = new URLSearchParams(location.search);
+          const requestedFile = url.get('corpus_file');
+          state.corpusFile =
+            requestedFile && state.files.includes(requestedFile) ? requestedFile : state.files[0];
+          fileSel.value = state.corpusFile;
+
+          // populate branch selector (excluding main)
+          const branchSel = $('#branch-list');
+          const noneOpt = document.createElement('option');
+          noneOpt.value = '';
+          noneOpt.textContent = '— aucune —';
+          branchSel.appendChild(noneOpt);
+          state.branches
+            .filter((b) => b !== 'main')
+            .forEach((b) => {
+              const o = document.createElement('option');
+              o.value = b;
+              o.textContent = b;
+              branchSel.appendChild(o);
+            });
+          const requestedBranch = url.get('branch');
+          if (requestedBranch && state.branches.includes(requestedBranch)) {
+            state.compareBranch = requestedBranch;
+            branchSel.value = requestedBranch;
+          }
+
+          fileSel.addEventListener('change', (e) => {
+            state.corpusFile = e.target.value;
+            updateURL();
+            loadAll();
+          });
+          branchSel.addEventListener('change', (e) => {
+            state.compareBranch = e.target.value || null;
+            updateURL();
+            loadAll();
+          });
+
+          // search + filters
+          $('#dpe-search').addEventListener('input', () => renderDpeList());
+          $$('#check-filter button').forEach((b) =>
+            b.addEventListener('click', () => {
+              $$('#check-filter button').forEach((bb) => bb.classList.remove('active'));
+              b.classList.add('active');
+              state.checkFilter = b.dataset.filter;
+              renderChecksChart();
+              renderChecksTable();
+            })
+          );
+          $$('#dpe-filter-chips .chip').forEach((c) =>
+            c.addEventListener('click', () => {
+              $$('#dpe-filter-chips .chip').forEach((cc) => cc.classList.remove('active'));
+              c.classList.add('active');
+              state.dpeFilter = c.dataset.dpeFilter;
+              renderDpeList();
+            })
+          );
+          // Sort
+          $$('#checks-table th[data-sort]').forEach((th) =>
+            th.addEventListener('click', () => {
+              const k = th.dataset.sort;
+              if (state.sortKey === k) state.sortAsc = !state.sortAsc;
+              else {
+                state.sortKey = k;
+                state.sortAsc = true;
+              }
+              renderChecksTable();
+            })
+          );
+
+          await loadAll();
+        } catch (err) {
+          console.error(err);
+          document.body.innerHTML = `<div class="wrap"><div class="card" style="padding:24px; border-color:var(--bad)"><b>Erreur de chargement.</b><br/>${err.message}</div></div>`;
+        }
+      })();
+
+      function updateURL() {
+        const url = new URL(location.href);
+        url.searchParams.set('corpus_file', state.corpusFile);
+        if (state.compareBranch) url.searchParams.set('branch', state.compareBranch);
+        else url.searchParams.delete('branch');
+        history.replaceState({}, '', url);
+      }
+
+      // ----- Load + render orchestration -----
+      async function loadAll() {
+        const cf = state.corpusFile;
+        try {
+          const [mainRep, mainAbove] = await Promise.all([
+            fetchJSON(`${cf}/corpus_global_report_main.json`),
+            fetchJSON(`${cf}/corpus_dpe_list_above_threshold_main.json`).catch(() => [])
+          ]);
+          state.mainReport = mainRep;
+          state.mainAboveList = mainAbove;
+        } catch (e) {
+          console.error(e);
+        }
+        if (state.compareBranch && state.compareBranch !== 'main') {
+          try {
+            const [br, ab, diff] = await Promise.all([
+              fetchJSON(`${cf}/corpus_global_report_${state.compareBranch}.json`),
+              fetchJSON(`${cf}/corpus_dpe_list_above_threshold_${state.compareBranch}.json`).catch(
+                () => []
+              ),
+              fetchJSON(
+                `${cf}/corpus_dpe_list_above_threshold_diff_main_${state.compareBranch}.json`
+              ).catch(() => [])
+            ]);
+            state.branchReport = br;
+            state.branchAboveList = ab;
+            state.diffList = diff;
+          } catch (e) {
+            console.warn('Branch data not available', e);
+            state.branchReport = null;
+            state.branchAboveList = [];
+            state.diffList = [];
+          }
+        } else {
+          state.branchReport = null;
+          state.branchAboveList = [];
+          state.diffList = [];
+        }
+        renderAll();
+      }
+
+      function renderAll() {
+        renderHero();
+        renderKPIs();
+        renderGauge();
+        renderChecksChart();
+        renderChecksTable();
+        renderDpeList();
+        renderRunFailed();
+      }
+
+      // ----- Hero -----
+      function renderHero() {
+        $('#hero-title').textContent = state.corpusFile.replace(/\.csv$/, '');
+        $('#hero-sub').textContent = state.compareBranch
+          ? `Comparaison de la branche « ${state.compareBranch} » vs « main »`
+          : `Résultats sur la branche « main »`;
+        $('#pill-threshold').textContent = `Seuil : ${state.mainReport?.threshold ?? '—'}`;
+        $('#pill-main').textContent = 'main';
+        const wrap = $('#pill-compare-wrap');
+        if (state.compareBranch) {
+          wrap.style.display = '';
+          $('#pill-compare').textContent = state.compareBranch;
+        } else {
+          wrap.style.display = 'none';
+        }
+      }
+
+      // ----- KPIs -----
+      function renderKPIs() {
+        const m = state.mainReport;
+        const b = state.branchReport;
+        if (!m) return;
+        const active = b || m;
+
+        $('#kpi-total').textContent = fmtNum(active.totalDpesInFile);
+        $('#kpi-total-sub').textContent = `Branche analysée : ${b ? state.compareBranch : 'main'}`;
+
+        $('#kpi-valid').textContent = fmtNum(active.nbValidDpe);
+        const excluded = active.nbExcludedDpe ?? 0;
+        const invalid = active.nbInvalidDpeVersion ?? 0;
+        $('#kpi-valid-sub').textContent =
+          `${fmtNum(excluded)} exclus · ${fmtNum(invalid)} version invalide`;
+
+        const ratio = parsePct(active.successRatio);
+        $('#kpi-ratio').innerHTML =
+          `${ratio.toFixed(2).replace(/\.00$/, '')}<small style="font-size:18px;color:var(--text-muted)">%</small>`;
+        $('#kpi-ratio-sub').textContent =
+          `${fmtNum(active.nbAllChecksBelowThreshold)} / ${fmtNum(active.nbValidDpe)} DPE conformes`;
+
+        const above = active.nbValidDpe - active.nbAllChecksBelowThreshold;
+        $('#kpi-above').textContent = fmtNum(above);
+        $('#kpi-above-sub').textContent =
+          `${((above / active.nbValidDpe) * 100).toFixed(1)}% des DPE analysés`;
+
+        // Deltas
+        const dRatio = $('#kpi-ratio-delta');
+        const dAbove = $('#kpi-above-delta');
+        if (b) {
+          const mainRatio = parsePct(m.successRatio);
+          const deltaR = ratio - mainRatio;
+          dRatio.style.display = '';
+          dRatio.className = 'delta ' + (deltaR > 0 ? 'up' : deltaR < 0 ? 'down' : 'flat');
+          dRatio.textContent = `${deltaR >= 0 ? '+' : ''}${deltaR.toFixed(2)} pts vs main`;
+
+          const mainAbove = m.nbValidDpe - m.nbAllChecksBelowThreshold;
+          const deltaA = above - mainAbove;
+          dAbove.style.display = '';
+          // For "above threshold" lower is better
+          dAbove.className = 'delta ' + (deltaA < 0 ? 'up' : deltaA > 0 ? 'down' : 'flat');
+          dAbove.textContent = `${deltaA >= 0 ? '+' : ''}${fmtNum(deltaA)} vs main`;
+        } else {
+          dRatio.style.display = 'none';
+          dAbove.style.display = 'none';
+        }
+      }
+
+      // ----- Gauge -----
+      let gaugeChart = null;
+      function renderGauge() {
+        const r = state.branchReport || state.mainReport;
+        if (!r) return;
+        const ratio = parsePct(r.successRatio);
+        $('#gauge-value').innerHTML =
+          ratio.toFixed(2).replace(/\.00$/, '') +
+          '<small style="font-size:18px;color:var(--text-muted)">%</small>';
+        const ctx = document.getElementById('gaugeChart');
+        const data = {
+          labels: ['Conformes', 'Au-dessus du seuil'],
+          datasets: [
+            {
+              data: [ratio, 100 - ratio],
+              backgroundColor: [colorFor(ratio), 'rgba(148,163,184,0.18)'],
+              borderWidth: 0,
+              cutout: '78%',
+              circumference: 270,
+              rotation: 225
+            }
+          ]
+        };
+        if (gaugeChart) gaugeChart.destroy();
+        gaugeChart = new Chart(ctx, {
+          type: 'doughnut',
+          data,
+          options: {
+            responsive: false,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false }, tooltip: { enabled: false } }
+          }
+        });
+      }
+
+      // ----- Checks data prep -----
+      function getCheckRows() {
+        const m = state.mainReport;
+        const b = state.branchReport;
+        const active = b || m;
+        if (!active) return [];
+        const baseChecks = active.checks || {};
+        const mainChecks = m?.checks || {};
+        let rows = Object.entries(baseChecks).map(([name, c]) => {
+          const ratio = parsePct(c.successRatio);
+          const mainC = mainChecks[name];
+          const mainRatio = mainC ? parsePct(mainC.successRatio) : null;
+          const delta = b && mainRatio != null ? ratio - mainRatio : null;
+          return {
+            name,
+            mandatory: !!c.mandatory,
+            ratio,
+            below: c.nbBelowThreshold,
+            total: active.nbValidDpe,
+            delta
+          };
+        });
+        if (state.checkFilter === 'mandatory') rows = rows.filter((r) => r.mandatory);
+        if (state.checkFilter === 'info') rows = rows.filter((r) => !r.mandatory);
+        // default sort: mandatory desc, then ratio asc (worst first)
+        rows.sort((a, b2) => {
+          if (a.mandatory !== b2.mandatory) return a.mandatory ? -1 : 1;
+          return a.ratio - b2.ratio;
+        });
+        return rows;
+      }
+
+      // ----- Checks chart -----
+      let checksChart = null;
+      function renderChecksChart() {
+        const rows = getCheckRows();
+        const host = $('.chart-host');
+        // Adjust height to fit rows
+        host.style.height = Math.max(360, rows.length * 26 + 40) + 'px';
+        const labels = rows.map((r) => (r.mandatory ? '★ ' : '') + r.name);
+        const data = rows.map((r) => r.ratio);
+        const deltas = rows.map((r) => r.delta);
+        const colours = rows.map((r) => colorFor(r.ratio));
+        const ctx = document.getElementById('checksChart');
+        const textColor =
+          document.documentElement.getAttribute('data-theme') === 'dark' ? '#e6e9f3' : '#0f172a';
+        const gridColor =
+          document.documentElement.getAttribute('data-theme') === 'dark'
+            ? 'rgba(255,255,255,0.06)'
+            : 'rgba(15,23,42,0.06)';
+        if (checksChart) checksChart.destroy();
+        checksChart = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels,
+            datasets: [
+              {
+                label: 'Sous le seuil (%)',
+                data,
+                backgroundColor: colours,
+                borderRadius: 6,
+                borderSkipped: false,
+                barThickness: 14,
+                _deltas: deltas
+              }
+            ]
+          },
+          options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              x: {
+                min: 0,
+                max: 100,
+                ticks: { color: textColor, callback: (v) => v + '%' },
+                grid: { color: gridColor }
+              },
+              y: {
+                ticks: {
+                  color: textColor,
+                  font: { family: 'ui-monospace, SFMono-Regular, Menlo, monospace', size: 11 }
+                },
+                grid: { display: false }
+              }
+            },
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: (ctx2) => {
+                    const r = rows[ctx2.dataIndex];
+                    const lines = [
+                      `Ratio : ${r.ratio.toFixed(2)}%`,
+                      `Sous le seuil : ${fmtNum(r.below)} / ${fmtNum(r.total)}`,
+                      r.mandatory ? 'Check obligatoire' : 'Check informatif'
+                    ];
+                    if (r.delta != null) {
+                      const sign = r.delta >= 0 ? '+' : '';
+                      lines.push(`Δ vs main : ${sign}${r.delta.toFixed(2)} pts`);
+                    }
+                    return lines;
+                  }
+                }
+              }
+            }
+          }
+        });
+      }
+
+      // ----- Checks table -----
+      function renderChecksTable() {
+        let rows = getCheckRows();
+        const k = state.sortKey;
+        const dir = state.sortAsc ? 1 : -1;
+        rows = rows.slice().sort((a, b) => {
+          switch (k) {
+            case 'name':
+              return a.name.localeCompare(b.name) * dir;
+            case 'kind':
+              return (a.mandatory === b.mandatory ? 0 : a.mandatory ? -1 : 1) * dir;
+            case 'ratio':
+              return (a.ratio - b.ratio) * dir;
+            case 'below':
+              return (a.below - b.below) * dir;
+            case 'delta':
+              return ((a.delta ?? 0) - (b.delta ?? 0)) * dir;
+            default:
+              return 0;
+          }
+        });
+
+        // Hide delta column when no comparison
+        $('#th-delta').style.display = state.compareBranch ? '' : 'none';
+
+        const tbody = $('#checks-tbody');
+        tbody.innerHTML = rows
+          .map((r) => {
+            const cls = barClassFor(r.ratio);
+            let deltaCell = '';
+            if (state.compareBranch) {
+              if (r.delta == null) deltaCell = '<td class="delta-cell flat">—</td>';
+              else {
+                const direction = r.delta > 0 ? 'up' : r.delta < 0 ? 'down' : 'flat';
+                const sign = r.delta > 0 ? '+' : '';
+                deltaCell = `<td class="delta-cell ${direction}">${sign}${r.delta.toFixed(2)} pts</td>`;
+              }
+            }
+            return `
+              <tr class="check-row">
+                <td class="check-name">${r.name}</td>
+                <td>${r.mandatory ? '<span class="badge badge-mand">Obligatoire</span>' : '<span class="badge badge-info">Informatif</span>'}</td>
+                <td class="ratio" style="color:${colorFor(r.ratio)}">${r.ratio.toFixed(2)}%</td>
+                <td class="bar-cell">
+                  <div class="bar-track"><div class="bar-fill ${cls}" style="width:${r.ratio}%"></div></div>
+                </td>
+                <td class="ratio">${fmtNum(r.below)} <span style="color:var(--text-dim);font-weight:400">/ ${fmtNum(r.total)}</span></td>
+                ${deltaCell}
+              </tr>`;
+          })
+          .join('');
+      }
+
+      // ----- DPE list -----
+      function renderDpeList() {
+        const chipsRow = $('#dpe-filter-chips');
+        chipsRow.style.display = state.compareBranch ? 'inline-flex' : 'none';
+
+        const main = new Set(state.mainAboveList || []);
+        const branch = state.compareBranch ? new Set(state.branchAboveList || []) : null;
+        // build entries with tag
+        let entries;
+        if (branch) {
+          const all = new Set([...main, ...branch]);
+          entries = [...all].map((id) => {
+            const inMain = main.has(id);
+            const inBranch = branch.has(id);
+            let tag = 'common';
+            if (inBranch && !inMain) tag = 'new';
+            else if (!inBranch && inMain) tag = 'fixed';
+            return { id, tag };
+          });
+        } else {
+          entries = [...main].map((id) => ({ id, tag: 'common' }));
+        }
+
+        const q = ($('#dpe-search').value || '').trim().toLowerCase();
+        if (q) entries = entries.filter((e) => e.id.toLowerCase().includes(q));
+        if (state.dpeFilter !== 'all') entries = entries.filter((e) => e.tag === state.dpeFilter);
+
+        // sort: new -> fixed -> common, alpha within
+        const order = { new: 0, fixed: 1, common: 2 };
+        entries.sort((a, b) => order[a.tag] - order[b.tag] || a.id.localeCompare(b.id));
+
+        const grid = $('#dpe-grid');
+        const hint = $('#dpe-count-hint');
+        if (entries.length === 0) {
+          grid.innerHTML = `<div class="empty">Aucun DPE à afficher.</div>`;
+        } else {
+          grid.innerHTML = entries
+            .slice(0, 600) // safety cap on DOM size
+            .map((e) => {
+              const tagLabel = e.tag === 'new' ? 'NEW' : e.tag === 'fixed' ? 'FIX' : 'COMMUN';
+              return `<div class="dpe-card" title="${e.id}">
+                <span class="id">${e.id}</span>
+                <span class="tag tag-${e.tag}">${tagLabel}</span>
+              </div>`;
+            })
+            .join('');
+        }
+
+        const totalShown = entries.length;
+        const totalAll = (state.compareBranch ? branch || main : main).size;
+        hint.textContent = state.compareBranch
+          ? `${fmtNum(totalShown)} affichés · ${fmtNum(main.size)} sur main · ${fmtNum((branch || new Set()).size)} sur ${state.compareBranch}`
+          : `${fmtNum(totalShown)} DPE`;
+      }
+
+      // ----- Run-failed -----
+      function renderRunFailed() {
+        const active = state.branchReport || state.mainReport;
+        const failed = active?.dpeRunFailed || [];
+        const sec = $('#run-failed-section');
+        if (!failed.length) {
+          sec.style.display = 'none';
+          return;
+        }
+        sec.style.display = '';
+        $('#run-failed-count').textContent = `${failed.length} DPE`;
+        $('#run-failed-grid').innerHTML = failed
+          .map(
+            (id) => `<div class="dpe-card" title="${id}">
+              <span class="id">${id}</span>
+              <span class="tag tag-new">FAIL</span>
+            </div>`
+          )
+          .join('');
+      }
+    </script>
   </body>
 </html>
