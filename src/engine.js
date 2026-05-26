@@ -3,6 +3,7 @@ import calc_deperdition from './3_deperdition.js';
 import calc_apport_et_besoin from './apport_et_besoin.js';
 import calc_clim from './10_clim.js';
 import calc_ecs from './11_ecs.js';
+import { conso_aux_distribution_ecs } from './15_conso_aux.js';
 import calc_besoin_ch from './9_besoin_ch.js';
 import calc_chauffage, { tauxChargeForGenerator } from './9_chauffage.js';
 import calc_confort_ete from './2021_04_13_confort_ete.js';
@@ -425,6 +426,17 @@ export function calcul_3cl(inputDpe, options) {
       dpe.logement.caracteristique_generale.surface_habitable_immeuble,
       dpe.logement.caracteristique_generale.nombre_appartement,
       isImmeubleSystemEcsIndividuels
+    );
+
+    conso_aux_distribution_ecs(
+      ecs,
+      ecs.donnee_entree,
+      ecs.donnee_intermediaire,
+      Sh,
+      cg.surface_habitable_immeuble,
+      ca_id,
+      zc_id,
+      apport_et_besoin.nadeq
     );
   });
 
