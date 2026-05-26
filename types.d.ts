@@ -252,6 +252,7 @@ interface Donnee_intermediaire {
   i0?: number;
   rendement_emission?: number;
   rendement_regulation?: number;
+  rendement_generation_stockage?: number;
   qp0?: number;
   pn?: number;
   k?: number;

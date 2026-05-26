@@ -190,8 +190,22 @@ function rg_accumulateur_gaz(di, besoin_ecs) {
   );
 }
 
-function rgrsReseauUrbain(de) {
-  if (de.reseau_distribution_isole === 1) {
+function rgrsReseauUrbain(de, ecs_de) {
+  /**
+   * Le rendement de génération d'un réseau de chaleur dépend de son caractère isolé ou non.
+   * D'après la spécification 3CL-DPE, le type de RCU est porté par enum_type_generateur_ecs_id :
+   *  - 72 : "Réseau de chaleur non isolé" -> 0.75
+   *  - 73 : "Réseau de chaleur isolé"     -> 0.9
+   */
+  if (de.enum_type_generateur_ecs_id === '73') {
+    return 0.9;
+  }
+  /**
+   * Pour les autres générateurs assimilés à un réseau de chaleur (ex : installation
+   * collective multi-bâtiment modélisée comme un réseau de chaleur), on retombe sur
+   * l'indicateur reseau_distribution_isole de l'installation ECS s'il est renseigné.
+   */
+  if (ecs_de && ecs_de.reseau_distribution_isole === 1) {
     return 0.9;
   }
   return 0.75;
@@ -295,8 +309,8 @@ export default function calc_gen_ecs(dpe, gen_ecs, ecs_di, ecs_de, GV, ca_id, zc
       }
     }
 
-    di.rendement_generation_stockage = rgrsReseauUrbain(ecs_de);
-    di.rendement_generation_stockage_depensier = rgrsReseauUrbain(ecs_de);
+    di.rendement_generation_stockage = rgrsReseauUrbain(de, ecs_de);
+    di.rendement_generation_stockage_depensier = rgrsReseauUrbain(de, ecs_de);
 
     Iecs = 1 / di.rendement_generation_stockage;
     Iecs_dep = 1 / di.rendement_generation_stockage_depensier;
