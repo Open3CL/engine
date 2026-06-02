@@ -83,7 +83,10 @@ C'est un bon moyen de détecter un éventuel problème dans le dpe ou la librair
 ## Utilisation
 
 ```javascript
-import { calcul_3cl } from 'open3cl';
+import { @open3cl } from 'open3cl/engine';
+import {
+  set_bug_for_bug_compat,
+} from '@open3cl/engine/utils.js';
 
 // Exemple d'objet JSON (partiel) issu d'un fichier XML DPE
 const dpeData = {
