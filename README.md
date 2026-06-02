@@ -88,6 +88,8 @@ import {
   set_bug_for_bug_compat,
 } from '@open3cl/engine/utils.js';
 
+set_bug_for_bug_compat();
+
 // Exemple d'objet JSON (partiel) issu d'un fichier XML DPE
 const dpeData = {
   numero_dpe: '2113E1018248X',
