@@ -428,16 +428,18 @@ export function calcul_3cl(inputDpe, options) {
       isImmeubleSystemEcsIndividuels
     );
 
-    conso_aux_distribution_ecs(
-      ecs,
-      ecs.donnee_entree,
-      ecs.donnee_intermediaire,
-      Sh,
-      cg.surface_habitable_immeuble,
-      ca_id,
-      zc_id,
-      apport_et_besoin.nadeq
-    );
+    if (th !== 'immeuble') {
+      conso_aux_distribution_ecs(
+        ecs,
+        ecs.donnee_entree,
+        ecs.donnee_intermediaire,
+        Sh,
+        cg.surface_habitable_immeuble,
+        ca_id,
+        zc_id,
+        apport_et_besoin.nadeq
+      );
+    }
   });
 
   /**
