@@ -1,20 +1,24 @@
 import { ObjectUtil } from './core/util/infrastructure/object-util.js';
+import { set, has } from 'lodash-es';
 
 const nodesToMap = [
-  'mur',
-  'plancher_bas',
-  'plancher_haut',
-  'baie_vitree',
-  'porte',
-  'pont_thermique',
-  'ventilation',
   'installation_ecs',
   'generateur_ecs',
-  'climatisation',
   'installation_chauffage',
   'generateur_chauffage',
   'emetteur_chauffage',
   'sortie_par_energie'
+];
+
+const nodesCollectionToCheck = [
+  'logement.enveloppe.mur_collection.mur',
+  'logement.enveloppe.plancher_bas_collection.plancher_bas',
+  'logement.enveloppe.plancher_haut_collection.plancher_haut',
+  'logement.ventilation_collection.ventilation',
+  'logement.climatisation_collection.climatisation',
+  'logement.enveloppe.baie_vitree_collection.baie_vitree',
+  'logement.enveloppe.porte_collection.porte',
+  'logement.enveloppe.pont_thermique_collection.pont_thermique'
 ];
 
 /**
@@ -23,6 +27,13 @@ const nodesToMap = [
  * These transformations should be done inside the open3cl library
  *
  * @example
+ *
+ * // Will create
+ * "plancher_haut_collection": {
+ *         "plancher_haut": []
+ * }
+ * if the plancher_haut_collection.plancher_haut nodes does not exist or are not an array
+ *
  * // Will transform
  * "plancher_haut_collection": {
  *         "plancher_haut": {"id": 1}
@@ -44,6 +55,12 @@ export default class DpeSanitizerService {
    * @return {FullDpe}
    */
   execute(dpe) {
+    for (const path of nodesCollectionToCheck) {
+      if (!has(dpe, path)) {
+        set(dpe, path, []);
+      }
+    }
+
     return ObjectUtil.deepObjectTransform(
       dpe,
       (key) => key,
