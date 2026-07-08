@@ -205,6 +205,11 @@ export default function calc_conso(
     return acc.concat(generateur_chauffage);
   }, []);
 
+  ecs = Array.isArray(ecs) ? ecs : [];
+
+  const conso_aux_distribution_ecs_total = ecs.reduce((acc, ecs) => {
+    return acc + (ecs.donnee_intermediaire.conso_auxiliaire_distribution_ecs || 0);
+  }, 0);
   const gen_ecs = ecs.reduce((acc, ecs) => {
     const generateur_ecs = ecs.generateur_ecs_collection.generateur_ecs;
     if (prorataECS === 1) {
@@ -230,7 +235,8 @@ export default function calc_conso(
       'conso',
       null,
       prorataECS,
-      prorataChauffage
+      prorataChauffage,
+      conso_aux_distribution_ecs_total
     ),
     ep_conso: calc_conso_pond(
       Sh,
@@ -242,7 +248,8 @@ export default function calc_conso(
       'ep_conso',
       coeffEp,
       prorataECS,
-      prorataChauffage
+      prorataChauffage,
+      conso_aux_distribution_ecs_total
     ),
     emission_ges: calc_conso_pond(
       Sh,
@@ -254,7 +261,8 @@ export default function calc_conso(
       'emission_ges',
       coef_ges,
       prorataECS,
-      prorataChauffage
+      prorataChauffage,
+      conso_aux_distribution_ecs_total
     ),
     cout: calc_conso_pond(
       Sh,
@@ -266,7 +274,8 @@ export default function calc_conso(
       'cout',
       coef_cout,
       prorataECS,
-      prorataChauffage
+      prorataChauffage,
+      conso_aux_distribution_ecs_total
     )
   };
   ret.ep_conso.classe_bilan_dpe = classe_bilan_dpe(
@@ -451,7 +460,8 @@ function calc_conso_pond(
   prefix,
   coef,
   prorataECS,
-  prorataChauffage
+  prorataChauffage,
+  conso_aux_distribution_ecs_total
 ) {
   const ret = {};
   ret.auxiliaire_ventilation = vt_list.reduce((acc, vt) => {
@@ -515,7 +525,11 @@ function calc_conso_pond(
     return acc + getConso(coef, 'électricité auxiliaire', conso);
   }, 0);
 
-  ret.auxiliaire_distribution_ecs = 0;
+  ret.auxiliaire_distribution_ecs = getConso(
+    coef,
+    'électricité auxiliaire',
+    conso_aux_distribution_ecs_total || 0
+  );
 
   ret.ecs = getEcsConso(gen_ecs, 'conso_ecs', coef, prorataECS, prefix);
 
