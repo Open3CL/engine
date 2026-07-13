@@ -5,6 +5,7 @@ import { ContexteBuilder } from '../../contexte.builder.js';
 import { getAdemeFileJson } from '../../../../../../test/test-helpers.js';
 import { BesoinEcsService } from './besoin-ecs.service.js';
 import { EcsTvStore } from '../../../../dpe/infrastructure/ecs/ecsTv.store.js';
+import { describeIntegration } from '../../../../../../test/helpers/integration-test.js';
 
 /** @type {BesoinEcsService} **/
 let service;
@@ -45,7 +46,7 @@ describe('Calcul du besoin en eau chaude sanitaire', () => {
     expect(tvStore.getTefs).toHaveBeenCalledWith('400-800m', 'h1a', 'Janvier');
   });
 
-  describe("Test d'intégration pour le besoin en eau chaude sanitaire", () => {
+  describeIntegration("Test d'intégration pour le besoin en eau chaude sanitaire", () => {
     test.each(corpus)('vérification des sorties besoin_ecs pour dpe %s', (ademeId) => {
       /**
        * @type {Dpe}

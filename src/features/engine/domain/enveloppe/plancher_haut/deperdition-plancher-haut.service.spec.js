@@ -5,6 +5,7 @@ import { DeperditionPlancherHautService } from './deperdition-plancher-haut.serv
 import corpus from '../../../../../../test/corpus-sano.json';
 import { TvStore } from '../../../../dpe/infrastructure/tv.store.js';
 import { beforeEach, describe, expect, test } from 'vitest';
+import { describeIntegration } from '../../../../../../test/helpers/integration-test.js';
 
 /** @type {DeperditionPlancherHautService} **/
 let service;
@@ -256,7 +257,7 @@ describe('Calcul de déperdition des planchers haut', () => {
     }
   );
 
-  describe("Test d'intégration de plancher haut", () => {
+  describeIntegration("Test d'intégration de plancher haut", () => {
     test.each(corpus)('vérification des DI des ph pour dpe %s', (ademeId) => {
       /**
        * @type {Dpe}

@@ -1,5 +1,13 @@
-import { FileStore } from './file.store.js';
 import { describe, expect, test, vi } from 'vitest';
+
+// Isolation : on mocke le module `fs` pour ne pas dépendre du système de fichiers
+// (lecture d'un vrai `.ods`) ni écrire réellement sur le disque.
+vi.mock('fs', () => ({
+  readFile: vi.fn((path, cb) => cb(null, Buffer.from(new ArrayBuffer(1)))),
+  writeFile: vi.fn((path, content, opts, cb) => cb(null))
+}));
+
+const { FileStore } = await import('./file.store.js');
 
 global.fetch = vi.fn(() =>
   Promise.resolve({

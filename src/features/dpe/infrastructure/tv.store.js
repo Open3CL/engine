@@ -4,6 +4,23 @@ import { logger } from '../../../core/util/logger/log-service.js';
 import { TypeHabitation } from '../domain/models/type-habitation.model.js';
 
 /**
+ * Extrait la borne numérique d'un libellé de plage aiu/aue de la table
+ * `coef_reduction_deperdition`. Les bornes y sont stockées sous forme de libellés
+ * formatés à la française (ex: `'≤ 6,00'`, `'4,00 <'`) et doivent être converties
+ * en nombre pour être comparées au ratio surface_aiu / surface_aue.
+ *
+ * @param bound {string} Libellé de borne (ex: `'≤ 0,25'`, `'0,25 <'`)
+ * @return {number} Valeur numérique de la borne
+ */
+export function parseAiuAueBound(bound) {
+  return parseFloat(
+    String(bound)
+      .replace(/,/g, '.')
+      .replace(/[^\d.]/g, '')
+  );
+}
+
+/**
  * Accès aux données des tables de valeurs
  *
  * /!\ Les tableaux des valeurs doivent souvent être ordonnés (ex: epaisseur_structure pour umur0)
@@ -60,8 +77,8 @@ export class TvStore {
           !v.zone_climatique ||
           zc.toLowerCase().startsWith(v.zone_climatique.toLowerCase())) &&
         (!rAiuAue ||
-          ((!v.aiu_aue_min || v.aiu_aue_min < rAiuAue) &&
-            (!v.aiu_aue_max || v.aiu_aue_max >= rAiuAue)))
+          ((!v.aiu_aue_min || parseAiuAueBound(v.aiu_aue_min) < rAiuAue) &&
+            (!v.aiu_aue_max || parseAiuAueBound(v.aiu_aue_max) >= rAiuAue)))
     )?.b;
 
     if (!b) {

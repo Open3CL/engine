@@ -4,8 +4,7 @@ import { TypeGenerateur } from './type-generateur.model.js';
 describe('Modèle TypeGenerateur', () => {
   test('expose les types de générateurs attendus', () => {
     expect(TypeGenerateur).toEqual({
-      COMBUSTION: 'COMBUSTION',
-      PAC: 'PAC',
+      CHAUDIERE: 'CHAUDIERE',
       OTHER: 'OTHER'
     });
   });

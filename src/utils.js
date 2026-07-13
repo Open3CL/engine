@@ -2,6 +2,7 @@ import enums from './enums.js';
 import tvs from './tv.js';
 import { set } from 'lodash-es';
 import { XMLParser } from 'fast-xml-parser';
+import { evaluate } from 'mathjs';
 
 export const xmlParser = new XMLParser({
   // We want to make sure collections of length 1 are still parsed as arrays
@@ -474,6 +475,44 @@ export function containsAnySubstring(mainString, substrings) {
 }
 
 /**
+ * Évalue une formule de type tableur issue des tables de valeurs des générateurs à combustion
+ * (ex. `Pn * (E + F * logPn) / 100`, `84 + 2 logPn`).
+ *
+ * Une valeur numérique est retournée telle quelle. Sinon la formule est évaluée avec les
+ * variables suivantes :
+ *   - `Pn`    : puissance nominale exprimée en kW (l'argument `pn` est fourni en W, donc divisé
+ *               par 1000),
+ *   - `logPn` : logarithme décimal de `Pn`,
+ *   - `E`, `F`: coefficients forfaitaires (présence ou non d'une ventouse).
+ *
+ * @param formulaOrValue {string|number} Formule tableur ou valeur numérique.
+ * @param pn {number} Puissance nominale en W.
+ * @param E {number} [Coefficient forfaitaire E]
+ * @param F {number} [Coefficient forfaitaire F]
+ * @returns {number} Résultat de l'évaluation.
+ */
+export function excel_to_js_exec(formulaOrValue, pn, E, F) {
+  // Les formules des tables utilisent la virgule comme séparateur décimal (ex. `0,085`),
+  // à convertir en point pour être évaluées.
+  const formula =
+    typeof formulaOrValue === 'string'
+      ? formulaOrValue.replace(/(\d),(\d)/g, '$1.$2')
+      : formulaOrValue;
+
+  if (!isNaN(formula)) {
+    return Number(formula);
+  }
+
+  const Pn = pn / 1000;
+  return evaluate(formula, {
+    Pn,
+    logPn: Math.log10(Pn),
+    E,
+    F
+  });
+}
+
+/**
  * Conversion des expressions du type `70 < Pn <= 400` en (70 < Pn) && (Pn <= 400)
  * @param expression {string}
  * @returns {string}
@@ -504,7 +543,7 @@ export function getRange(inputNumber, ranges) {
 
   ranges.sort();
 
-  if (inputNumber <= ranges[0]) {
+  if (inputNumber < ranges[0]) {
     result.push(ranges[0]);
     result.push(ranges[1]);
     return result;
