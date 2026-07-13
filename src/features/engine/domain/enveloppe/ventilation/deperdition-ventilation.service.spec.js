@@ -7,6 +7,7 @@ import { getAdemeFileJson } from '../../../../../../test/test-helpers.js';
 import { DpeNormalizerService } from '../../../../normalizer/domain/dpe-normalizer.service.js';
 import { ContexteBuilder } from '../../contexte.builder.js';
 import { DeperditionEnveloppeService } from '../deperdition-enveloppe.service.js';
+import { describeIntegration } from '../../../../../../test/helpers/integration-test.js';
 
 /** @type {DeperditionVentilationService} **/
 let service;
@@ -408,7 +409,7 @@ describe('Calcul de déperdition des portes', () => {
     );
   });
 
-  describe("Test d'intégration des ventilations", () => {
+  describeIntegration("Test d'intégration des ventilations", () => {
     test.each(corpus)('vérification des DI de la ventilation pour dpe %s', (ademeId) => {
       let dpeRequest = getAdemeFileJson(ademeId);
       dpeRequest = normalizerService.normalize(dpeRequest);

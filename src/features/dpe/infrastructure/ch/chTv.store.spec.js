@@ -33,8 +33,8 @@ describe('Lecture des tables de valeurs', () => {
       enum_type_generateur_ecs_id: '46|93',
       type_generateur: 'Chaudière gaz  classique 1981-1985',
       pn: 'Pn',
-      rpn: '84 + 2 logPn',
-      rpint: '80 + 3 logPn',
+      rpn: '84+2*log10(Pn)',
+      rpint: '80+3*log10(Pn)',
       qp0_perc: '2%',
       pveil: '150'
     });
@@ -46,8 +46,8 @@ describe('Lecture des tables de valeurs', () => {
       type_generateur: 'Chaudière fioul à condensation après 2015',
       critere_pn: '70<Pn≤400',
       pn: 'Pn',
-      rpn: '94 + logPn',
-      rpint: '100 + logPn',
+      rpn: '94+log10(Pn)',
+      rpint: '100+log10(Pn)',
       qp0_perc: '0.60%'
     });
   });

@@ -3,6 +3,7 @@ import corpus from '../../../../../../test/corpus-sano.json';
 import { getAdemeFileJson } from '../../../../../../test/test-helpers.js';
 import { beforeEach, describe, expect, test } from 'vitest';
 import { TvStore } from '../../../../dpe/infrastructure/tv.store.js';
+import { describeIntegration } from '../../../../../../test/helpers/integration-test.js';
 
 /** @type {DeperditionPorteService} **/
 let service;
@@ -99,7 +100,7 @@ describe('Calcul de déperdition des portes', () => {
     });
   });
 
-  describe("Test d'intégration de porte", () => {
+  describeIntegration("Test d'intégration de porte", () => {
     test.each(corpus)('vérification des DI des portes pour dpe %s', (ademeId) => {
       const dpeRequest = getAdemeFileJson(ademeId);
       /** @type {Contexte} */

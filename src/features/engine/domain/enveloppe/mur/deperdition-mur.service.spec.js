@@ -5,6 +5,7 @@ import { ContexteBuilder } from '../../contexte.builder.js';
 import { DpeNormalizerService } from '../../../../normalizer/domain/dpe-normalizer.service.js';
 import { TvStore } from '../../../../dpe/infrastructure/tv.store.js';
 import { beforeEach, describe, expect, test } from 'vitest';
+import { describeIntegration } from '../../../../../../test/helpers/integration-test.js';
 
 /** @type {DeperditionMurService} **/
 let service;
@@ -396,7 +397,7 @@ describe('Calcul de déperdition des murs', () => {
     }
   );
 
-  describe("Test d'intégration de mur", () => {
+  describeIntegration("Test d'intégration de mur", () => {
     test.each(corpus)('vérification des DI des murs pour dpe %s', (ademeId) => {
       let dpeRequest = getAdemeFileJson(ademeId);
       dpeRequest = normalizerService.normalize(dpeRequest);

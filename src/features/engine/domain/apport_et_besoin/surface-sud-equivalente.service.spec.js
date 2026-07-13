@@ -5,6 +5,7 @@ import { ContexteBuilder } from '../contexte.builder.js';
 import { SurfaceSudEquivalenteService } from './surface-sud-equivalente.service.js';
 import { getAdemeFileJson } from '../../../../../test/test-helpers.js';
 import { BaieVitreeTvStore } from '../../../dpe/infrastructure/enveloppe/baieVitreeTv.store.js';
+import { describeIntegration } from '../../../../../test/helpers/integration-test.js';
 
 /** @type {SurfaceSudEquivalenteService} **/
 let service;
@@ -206,7 +207,7 @@ describe('Calcul de la surface sud équivalente du logement', () => {
     });
   });
 
-  describe("Test d'intégration pour surface sud équivalente", () => {
+  describeIntegration("Test d'intégration pour surface sud équivalente", () => {
     test.each(corpus)(
       'vérification des DI de la surface sud équivalente pour dpe %s',
       (ademeId) => {

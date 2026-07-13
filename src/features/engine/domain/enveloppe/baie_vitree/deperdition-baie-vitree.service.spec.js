@@ -5,6 +5,7 @@ import { DpeNormalizerService } from '../../../../normalizer/domain/dpe-normaliz
 import { DeperditionBaieVitreeService } from './deperdition-baie-vitree.service.js';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { BaieVitreeTvStore } from '../../../../dpe/infrastructure/enveloppe/baieVitreeTv.store.js';
+import { describeIntegration } from '../../../../../../test/helpers/integration-test.js';
 
 /** @type {DeperditionBaieVitreeService} **/
 let service;
@@ -445,7 +446,7 @@ describe('Calcul de déperdition des baies vitrées', () => {
     expect(bvDI.u_menuiserie).toBe(5.6);
   });
 
-  describe("Test d'intégration des baies vitrées", () => {
+  describeIntegration("Test d'intégration des baies vitrées", () => {
     test.each(corpus)('vérification des DI des baies vitrées pour dpe %s', (ademeId) => {
       let dpeRequest = getAdemeFileJson(ademeId);
       dpeRequest = normalizerService.normalize(dpeRequest);

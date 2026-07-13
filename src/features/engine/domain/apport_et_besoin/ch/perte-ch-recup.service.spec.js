@@ -9,6 +9,7 @@ import { PerteChRecupService } from './perte-ch-recup.service.js';
 import { BesoinChService } from './besoin-ch.service.js';
 import { ApportGratuitService } from '../apport_gratuit/apport-gratuit.service.js';
 import { PRECISION_PERCENT } from '../../../../../../test/constant.js';
+import { describeIntegration } from '../../../../../../test/helpers/integration-test.js';
 
 /** @type {PerteChRecupService} **/
 let service;
@@ -239,7 +240,7 @@ describe('Calcul des pertes de génération de chauffage récupérées', () => {
     }
   });
 
-  describe("Test d'intégration des installations CH", () => {
+  describeIntegration("Test d'intégration des installations CH", () => {
     test.each(corpus)('vérification des pertes de génération ch pour dpe %s', (ademeId) => {
       let dpeRequest = getAdemeFileJson(ademeId);
       dpeRequest = normalizerService.normalize(dpeRequest);
