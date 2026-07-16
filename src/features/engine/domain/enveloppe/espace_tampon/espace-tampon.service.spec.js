@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { BaieVitreeTvStore } from '../../../../dpe/infrastructure/enveloppe/baieVitreeTv.store.js';
 import { EspaceTamponService } from './espace-tampon.service.js';
 import { getAdemeFileJson } from '../../../../../../test/test-helpers.js';
+import { describeIntegration } from '../../../../../../test/helpers/integration-test.js';
 
 /** @type {EspaceTamponService} **/
 let service;
@@ -54,7 +55,7 @@ describe('Calcul de déperdition des baies vitrées', () => {
     });
   });
 
-  describe("Test d'intégration des ets", () => {
+  describeIntegration("Test d'intégration des ets", () => {
     test.each(['2273E0303205P', '2364E0984413P', '2283E0131604Y'])(
       'vérification des DI des ets pour dpe %s',
       (ademeId) => {

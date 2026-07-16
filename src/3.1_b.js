@@ -1,7 +1,7 @@
 import enums from './enums.js';
 import { tv, requestInput, requestInputID, bug_for_bug_compat } from './utils.js';
 
-function findRanges(inputNumber) {
+export function findRanges(inputNumber) {
   const ranges = [0.25, 0.5, 0.75, 1, 1.25, 2, 2.5, 3, 3.5, 4, 6, 8, 10, 25, 50];
   const result = [];
 

@@ -9,6 +9,7 @@ import { mois_liste } from '../../../../../utils.js';
 import { EcsTvStore } from '../../../../dpe/infrastructure/ecs/ecsTv.store.js';
 import { GenerateurEcsService } from '../../ecs/generateur-ecs.service.js';
 import { InstallationEcsService } from '../../ecs/installation-ecs.service.js';
+import { describeIntegration } from '../../../../../../test/helpers/integration-test.js';
 
 /** @type {PerteEcsRecupService} **/
 let service;
@@ -130,7 +131,7 @@ describe('Calcul des pertes de distribution et stockage récupérées', () => {
     }
   });
 
-  describe("Test d'intégration des installations ECS", () => {
+  describeIntegration("Test d'intégration des installations ECS", () => {
     test.each(corpus)(
       'vérification des pertes de distribution ecs recup des installations ECS pour dpe %s',
       (ademeId) => {

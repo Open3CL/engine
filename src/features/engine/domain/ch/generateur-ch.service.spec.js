@@ -4,11 +4,12 @@ import { GenerateurChService } from './generateur-ch.service.js';
 import { DpeNormalizerService } from '../../../normalizer/domain/dpe-normalizer.service.js';
 import corpus from '../../../../../test/corpus-sano.json';
 import { getAdemeFileJson } from '../../../../../test/test-helpers.js';
-import { TypeGenerateur } from '../../../dpe/domain/models/installation-chauffage.model.js';
+import { TypeGenerateur } from '../../../dpe/domain/models/type-generateur.model.js';
 import { ChTvStore } from '../../../dpe/infrastructure/ch/chTv.store.js';
 import { ContexteBuilder } from '../contexte.builder.js';
 import { TvStore } from '../../../dpe/infrastructure/tv.store.js';
 import { EmetteurChService } from './emetteur-ch.service.js';
+import { describeIntegration } from '../../../../../test/helpers/integration-test.js';
 
 /** @type {GenerateurChService} **/
 let service;
@@ -563,7 +564,7 @@ describe('Calcul des caractéristiques des générateurs de chauffage', () => {
     });
   });
 
-  describe("Test d'intégration des installations de chauffage", () => {
+  describeIntegration("Test d'intégration des installations de chauffage", () => {
     test.each(corpus)('vérification des DI qp0 des installations CH pour dpe %s', (ademeId) => {
       let dpeRequest = getAdemeFileJson(ademeId);
       dpeRequest = normalizerService.normalize(dpeRequest);

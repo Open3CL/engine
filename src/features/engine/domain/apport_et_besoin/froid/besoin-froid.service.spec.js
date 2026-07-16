@@ -6,6 +6,7 @@ import { getAdemeFileJson } from '../../../../../../test/test-helpers.js';
 import { FrTvStore } from '../../../../dpe/infrastructure/froid/frTv.store.js';
 import { ApportGratuitService } from '../apport_gratuit/apport-gratuit.service.js';
 import { BesoinFroidService } from './besoin-froid.service.js';
+import { describeIntegration } from '../../../../../../test/helpers/integration-test.js';
 
 /** @type {ApportGratuitService} **/
 let apportGratuitService;
@@ -207,7 +208,7 @@ describe('Calcul des besoins en froid du logement', () => {
     );
   });
 
-  describe("Test d'intégration pour le besoin en froid", () => {
+  describeIntegration("Test d'intégration pour le besoin en froid", () => {
     test.each(corpus)('vérification des sorties besoin_fr pour dpe %s', (ademeId) => {
       /**
        * @type {Dpe}

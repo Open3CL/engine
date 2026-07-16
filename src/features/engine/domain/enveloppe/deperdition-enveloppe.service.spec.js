@@ -10,6 +10,7 @@ import { DpeNormalizerService } from '../../../normalizer/domain/dpe-normalizer.
 import { TvStore } from '../../../dpe/infrastructure/tv.store.js';
 import { beforeEach, describe, expect, test } from 'vitest';
 import b from '../../../../3.1_b.js';
+import { describeIntegration } from '../../../../../test/helpers/integration-test.js';
 
 /** @type {DeperditionPorteService} **/
 let deperditionPorteService;
@@ -249,7 +250,7 @@ describe('Calcul des déperditions', () => {
     });
   });
 
-  describe("Test d'intégration de calcul des deperditions", () => {
+  describeIntegration("Test d'intégration de calcul des deperditions", () => {
     test.each(corpus)('deperditions pour dpe %s', (ademeId) => {
       let dpeRequest = getAdemeFileJson(ademeId);
       dpeRequest = normalizerService.normalize(dpeRequest);

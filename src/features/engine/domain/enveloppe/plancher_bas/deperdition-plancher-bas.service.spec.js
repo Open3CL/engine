@@ -5,6 +5,7 @@ import { DpeNormalizerService } from '../../../../normalizer/domain/dpe-normaliz
 import { DeperditionPlancherBasService } from './deperdition-plancher-bas.service.js';
 import { TvStore } from '../../../../dpe/infrastructure/tv.store.js';
 import { beforeEach, describe, expect, test } from 'vitest';
+import { describeIntegration } from '../../../../../../test/helpers/integration-test.js';
 
 /** @type {DeperditionPlancherBasService} **/
 let service;
@@ -267,7 +268,7 @@ describe('Calcul de déperdition des planchers bas', () => {
     }
   );
 
-  describe("Test d'intégration de plancher bas", () => {
+  describeIntegration("Test d'intégration de plancher bas", () => {
     test.each(corpus)('vérification des DI des pb pour dpe %s', (ademeId) => {
       /**
        * @type {Dpe}

@@ -8,6 +8,7 @@ import { PontThermiqueTvStore } from '../../../../dpe/infrastructure/enveloppe/p
 import { DeperditionMurService } from '../mur/deperdition-mur.service.js';
 import { DeperditionPlancherHautService } from '../plancher_haut/deperdition-plancher-haut.service.js';
 import { DeperditionPlancherBasService } from '../plancher_bas/deperdition-plancher-bas.service.js';
+import { describeIntegration } from '../../../../../../test/helpers/integration-test.js';
 
 /** @type {DeperditionPontThermiqueService} **/
 let service;
@@ -616,7 +617,7 @@ describe('Calcul de déperdition des ponts thermiques', () => {
     });
   });
 
-  describe("Test d'intégration des ponts thermiques", () => {
+  describeIntegration("Test d'intégration des ponts thermiques", () => {
     test.each(corpus)('vérification des DI des ponts thermiques pour dpe %s', (ademeId) => {
       let dpeRequest = getAdemeFileJson(ademeId);
       dpeRequest = normalizerService.normalize(dpeRequest);

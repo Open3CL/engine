@@ -120,7 +120,7 @@ const f_tab = {
   0: 20
 };
 
-function calc_hperm(di, surface_ventile, Hsp, Sdep, pfe) {
+export function calc_hperm(di, surface_ventile, Hsp, Sdep, pfe) {
   const e = e_tab[pfe];
   const f = f_tab[pfe];
   const Q4pa_env = di.q4pa_conv * Sdep;

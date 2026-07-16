@@ -12,14 +12,15 @@ permissions:
   pages: write
   issues: write
   id-token: write
+  checks: write
 
 concurrency:
   group: 'pages'
   cancel-in-progress: false
 
 jobs:
-  build:
-    name: Build
+  test:
+    name: Unit tests
     runs-on: ubuntu-24.04
     env:
       NODE_OPTIONS: '--max-old-space-size=4096'
@@ -44,8 +45,47 @@ jobs:
         run: npm run assets:sync
 
       - name: Run unit tests with coverage
-        run: npm run test:ci
-        continue-on-error: true
+        run: npm run test:ci -- --reporter=default --reporter=junit --outputFile.junit=./test-results/junit.xml
+
+      - name: Publish test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: ./test-results/junit.xml
+
+      - name: Publish coverage report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage
+          path: ./coverage
+
+  build:
+    name: Build
+    needs: test
+    runs-on: ubuntu-24.04
+    env:
+      NODE_OPTIONS: '--max-old-space-size=4096'
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.17.0
+
+      - name: Git checkout for source code analysis
+        uses: actions/checkout@v4
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Cache Node.js modules
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.OS }}-node-${{ hashFiles('**/package-lock.json') }}
+
+      - name: Generate assets
+        run: npm run assets:sync
 
       - name: Run qa
         run: |
@@ -62,6 +102,7 @@ jobs:
           cp README.md src/
           npm run release -- --r git@github.com:Open3CL/engine.git
   deploy:
+    needs: build
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

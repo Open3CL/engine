@@ -5,6 +5,7 @@ import corpus from '../../../../../test/corpus-sano.json';
 import { expect_or, getAdemeFileJson } from '../../../../../test/test-helpers.js';
 import { DpeNormalizerService } from '../../../normalizer/domain/dpe-normalizer.service.js';
 import { ContexteBuilder } from '../contexte.builder.js';
+import { describeIntegration } from '../../../../../test/helpers/integration-test.js';
 
 /** @type {InstallationEcsService} **/
 let service;
@@ -247,7 +248,7 @@ describe('Calcul des besoins et des pertes des installations ECS', () => {
     expect(service.isInstallationIndividuelle({ enum_type_installation_id: 4 })).toBeFalsy();
   });
 
-  describe("Test d'intégration des installations ECS", () => {
+  describeIntegration("Test d'intégration des installations ECS", () => {
     test.each(corpus)('vérification des DI des installations ECS pour dpe %s', (ademeId) => {
       let dpeRequest = getAdemeFileJson(ademeId);
       dpeRequest = normalizerService.normalize(dpeRequest);
