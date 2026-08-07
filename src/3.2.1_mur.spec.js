@@ -45,3 +45,122 @@ describe('Recherche de bugs dans le calcul de déperdition des murs', () => {
     expect(mur.donnee_intermediaire.umur0).toBe(2.5);
   });
 });
+
+/**
+ * @see https://github.com/Open3CL/engine/issues/146
+ * Lorsqu'un doublage est présent ET une isolation ITE ou ITI également,
+ * le doublage NE doit PAS être cumulé dans le calcul de Umur0.
+ * Il l'est en revanche pour une isolation ITR (intrinsèque au matériau).
+ */
+describe('[Issue #146] Doublage NE doit PAS être cumulé à une isolation ITE ou ITI', () => {
+  /**
+   * Cas de base : mur en blocs de béton creux 25cm (id 12), sans isolation.
+   * umur0 brut = 2.3 => après min(2.5) = 2.3
+   * Avec doublage type 4 (>15mm) sans isolation : umur0 = 1/(1/2.3 + 0.21) ≈ 1.5509
+   */
+  test('Doublage appliqué si isolation non présente (non isolé, type 2)', () => {
+    const mur = {
+      donnee_entree: {
+        description: 'Mur blocs béton creux 25cm non isolé avec doublage >15mm',
+        enum_materiaux_structure_mur_id: '12',
+        enum_methode_saisie_u0_id: '2',
+        epaisseur_structure: 25,
+        enum_type_doublage_id: '4', // doublage >15mm
+        enum_type_isolation_id: '2', // non isolé
+        enum_methode_saisie_u_id: '1', // non isolé
+        enum_type_adjacence_id: '1',
+        surface_paroi_totale: 10
+      },
+      donnee_intermediaire: {}
+    };
+    calc_mur(mur, 3, 1, 0);
+    // doublage doit être appliqué : umur0 ≈ 1.5509
+    expect(mur.donnee_intermediaire.umur0).toBeCloseTo(1.5509103169251517, 4);
+  });
+
+  test('Doublage NON appliqué si isolation ITI présente (type 3)', () => {
+    const mur = {
+      donnee_entree: {
+        description: 'Mur blocs béton creux 25cm avec ITI et doublage >15mm',
+        enum_materiaux_structure_mur_id: '12',
+        enum_methode_saisie_u0_id: '2',
+        epaisseur_structure: 25,
+        enum_type_doublage_id: '4', // doublage >15mm
+        enum_type_isolation_id: '3', // ITI
+        epaisseur_isolation: 4, // 4cm
+        enum_methode_saisie_u_id: '3', // épaisseur isolation saisie
+        enum_type_adjacence_id: '1',
+        surface_paroi_totale: 10
+      },
+      donnee_intermediaire: {}
+    };
+    calc_mur(mur, 3, 1, 0);
+    // doublage ignoré : umur0 = min(2.5, 2.3) = 2.3
+    expect(mur.donnee_intermediaire.umur0).toBeCloseTo(2.3, 4);
+    // umur = 1 / (1/2.3 + 0.04/0.04) = 1 / (1/2.3 + 1) ≈ 0.6970
+    expect(mur.donnee_intermediaire.umur).toBeCloseTo(1 / (1 / 2.3 + 1), 4);
+  });
+
+  test('Doublage NON appliqué si isolation ITE présente (type 4)', () => {
+    const mur = {
+      donnee_entree: {
+        description: 'Mur blocs béton creux 25cm avec ITE et doublage >15mm',
+        enum_materiaux_structure_mur_id: '12',
+        enum_methode_saisie_u0_id: '2',
+        epaisseur_structure: 25,
+        enum_type_doublage_id: '4', // doublage >15mm
+        enum_type_isolation_id: '4', // ITE
+        epaisseur_isolation: 4, // 4cm
+        enum_methode_saisie_u_id: '3', // épaisseur isolation saisie
+        enum_type_adjacence_id: '1',
+        surface_paroi_totale: 10
+      },
+      donnee_intermediaire: {}
+    };
+    calc_mur(mur, 3, 1, 0);
+    // doublage ignoré : umur0 = min(2.5, 2.3) = 2.3
+    expect(mur.donnee_intermediaire.umur0).toBeCloseTo(2.3, 4);
+  });
+
+  test('Doublage NON appliqué si isolation ITI+ITE présente (type 6)', () => {
+    const mur = {
+      donnee_entree: {
+        description: 'Mur blocs béton creux 25cm avec ITI+ITE et doublage >15mm',
+        enum_materiaux_structure_mur_id: '12',
+        enum_methode_saisie_u0_id: '2',
+        epaisseur_structure: 25,
+        enum_type_doublage_id: '5', // doublage connu (plâtre brique bois)
+        enum_type_isolation_id: '6', // ITI+ITE
+        epaisseur_isolation: 4,
+        enum_methode_saisie_u_id: '3',
+        enum_type_adjacence_id: '1',
+        surface_paroi_totale: 10
+      },
+      donnee_intermediaire: {}
+    };
+    calc_mur(mur, 3, 1, 0);
+    // doublage ignoré : umur0 = min(2.5, 2.3) = 2.3
+    expect(mur.donnee_intermediaire.umur0).toBeCloseTo(2.3, 4);
+  });
+
+  test('Doublage APPLIQUÉ si isolation ITR présente (type 5) — isolation intrinsèque', () => {
+    const mur = {
+      donnee_entree: {
+        description: 'Mur blocs béton creux 25cm avec ITR et doublage >15mm',
+        enum_materiaux_structure_mur_id: '12',
+        enum_methode_saisie_u0_id: '2',
+        epaisseur_structure: 25,
+        enum_type_doublage_id: '4', // doublage >15mm
+        enum_type_isolation_id: '5', // ITR
+        epaisseur_isolation: 4,
+        enum_methode_saisie_u_id: '3',
+        enum_type_adjacence_id: '1',
+        surface_paroi_totale: 10
+      },
+      donnee_intermediaire: {}
+    };
+    calc_mur(mur, 3, 1, 0);
+    // doublage appliqué : umur0 ≈ 1.5509
+    expect(mur.donnee_intermediaire.umur0).toBeCloseTo(1.5509103169251517, 4);
+  });
+});

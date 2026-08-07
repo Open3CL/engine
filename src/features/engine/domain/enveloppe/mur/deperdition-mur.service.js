@@ -129,20 +129,30 @@ export class DeperditionMurService extends DeperditionService {
     }
 
     /**
-     * Pour l’ensemble des parois, la présence d’un doublage apporte une résistance thermique supplémentaire
+     * Pour l’ensemble des parois, la présence d’un doublage apporte une résistance thermique supplémentaire.
+     * Cependant, en accord avec la méthode 3CL et le comportement de LICIEL, lorsqu'une isolation ITE ou ITI
+     * est présente (types 3, 4, 6), le doublage ne doit PAS être cumulé.
+     * Le doublage est en revanche pris en compte pour une isolation ITR (type 5, 7, 8) car c'est une isolation
+     * intrinsèque au matériau, ainsi que pour les cas inconnus (1) ou non isolé (2).
+     * @see https://github.com/Open3CL/engine/issues/146
      */
-    switch (murDE.enum_type_doublage_id) {
-      case '3':
-        // doublage indéterminé ou lame d'air inf 15 mm
-        umur0 = 1 / (1 / umur0 + 0.1);
-        break;
-      case '4': // doublage indéterminé ou lame d'air sup 15 mm
-      case '5': // doublage connu (plâtre brique bois)
-        umur0 = 1 / (1 / umur0 + 0.21);
-        break;
-      default:
-        // absence de doublage ou inconnu
-        break;
+    const typeIsolation = parseInt(murDE.enum_type_isolation_id);
+    const hasIteOrIti = [3, 4, 6].includes(typeIsolation);
+
+    if (!hasIteOrIti) {
+      switch (murDE.enum_type_doublage_id) {
+        case '3':
+          // doublage indéterminé ou lame d'air inf 15 mm
+          umur0 = 1 / (1 / umur0 + 0.1);
+          break;
+        case '4': // doublage indéterminé ou lame d'air sup 15 mm
+        case '5': // doublage connu (plâtre brique bois)
+          umur0 = 1 / (1 / umur0 + 0.21);
+          break;
+        default:
+          // absence de doublage ou inconnu
+          break;
+      }
     }
 
     /**

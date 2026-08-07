@@ -167,7 +167,14 @@ function calc_umur0(di, de, du) {
   }
 
   // Si présence d'un doublage
-  if (type_doublage > 2) {
+  // En accord avec la méthode 3CL et LICIEL, le doublage ne doit PAS être cumulé
+  // si une isolation ITE ou ITI est présente (types 3=iti, 4=ite, 6=iti+ite).
+  // Pour une isolation ITR (5, 7, 8), inconnu (1) ou non isolé (2), le doublage est pris en compte.
+  // @see https://github.com/Open3CL/engine/issues/146
+  const typeIsolation = parseInt(de.enum_type_isolation_id);
+  const hasIteOrIti = [3, 4, 6].includes(typeIsolation);
+
+  if (type_doublage > 2 && !hasIteOrIti) {
     let umur0Doublage;
 
     // 3 - doublage indéterminé ou lame d'air inf 15 mm

@@ -53,6 +53,70 @@ describe('Calcul de déperdition des murs', () => {
         zoneClimatiqueId: '3',
         umurExpected: 0.8, // 0.7 dans le DPE original, mais certainement lié à une erreur
         umur0Expected: 1.55091
+      },
+      // Issue #146 : doublage NON cumulé si isolation ITI présente (type 3)
+      {
+        label:
+          '[Issue #146] Mur blocs béton creux 25cm avec doublage >15mm et isolation ITI — doublage ignoré',
+        enumMateriauxStructureMurId: '12',
+        enumMethodeSaisieUId: '3',
+        enumMethodeSaisieU0Id: '2',
+        paroiAncienne: false,
+        enumTypeIsolationId: '3', // ITI
+        enumTypeDoublageId: '4', // doublage >15mm
+        epaisseurStructure: 25,
+        epaisseurIsolation: 4,
+        zoneClimatiqueId: '3',
+        umur0Expected: 2.3, // doublage ignoré : umur0 brut = 2.3, min(2.5, 2.3) = 2.3
+        umurExpected: 1 / (1 / 2.3 + 1) // 1/(1/2.3 + 0.04/0.04)
+      },
+      // Issue #146 : doublage NON cumulé si isolation ITE présente (type 4)
+      {
+        label:
+          '[Issue #146] Mur blocs béton creux 25cm avec doublage >15mm et isolation ITE — doublage ignoré',
+        enumMateriauxStructureMurId: '12',
+        enumMethodeSaisieUId: '3',
+        enumMethodeSaisieU0Id: '2',
+        paroiAncienne: false,
+        enumTypeIsolationId: '4', // ITE
+        enumTypeDoublageId: '4', // doublage >15mm
+        epaisseurStructure: 25,
+        epaisseurIsolation: 4,
+        zoneClimatiqueId: '3',
+        umur0Expected: 2.3, // doublage ignoré
+        umurExpected: 1 / (1 / 2.3 + 1)
+      },
+      // Issue #146 : doublage NON cumulé si isolation ITI+ITE présente (type 6)
+      {
+        label:
+          '[Issue #146] Mur blocs béton creux 25cm avec doublage connu et isolation ITI+ITE — doublage ignoré',
+        enumMateriauxStructureMurId: '12',
+        enumMethodeSaisieUId: '3',
+        enumMethodeSaisieU0Id: '2',
+        paroiAncienne: false,
+        enumTypeIsolationId: '6', // ITI+ITE
+        enumTypeDoublageId: '5', // doublage connu
+        epaisseurStructure: 25,
+        epaisseurIsolation: 4,
+        zoneClimatiqueId: '3',
+        umur0Expected: 2.3, // doublage ignoré
+        umurExpected: 1 / (1 / 2.3 + 1)
+      },
+      // Issue #146 : doublage APPLIQUÉ si isolation ITR présente (type 5) — intrinsèque au matériau
+      {
+        label:
+          '[Issue #146] Mur blocs béton creux 25cm avec doublage >15mm et isolation ITR — doublage appliqué',
+        enumMateriauxStructureMurId: '12',
+        enumMethodeSaisieUId: '3',
+        enumMethodeSaisieU0Id: '2',
+        paroiAncienne: false,
+        enumTypeIsolationId: '5', // ITR
+        enumTypeDoublageId: '4', // doublage >15mm
+        epaisseurStructure: 25,
+        epaisseurIsolation: 4,
+        zoneClimatiqueId: '3',
+        umur0Expected: 1.55091, // doublage appliqué
+        umurExpected: 1 / (1 / 1.5509103169251517 + 1)
       }
     ])(
       '$label',
@@ -64,6 +128,7 @@ describe('Calcul de déperdition des murs', () => {
         enumTypeIsolationId,
         umurSaisi,
         epaisseurStructure,
+        epaisseurIsolation,
         paroiAncienne,
         resistanceIsolation,
         umurExpected,
@@ -91,6 +156,7 @@ describe('Calcul de déperdition des murs', () => {
           resistance_isolation: resistanceIsolation,
           paroi_ancienne: paroiAncienne,
           epaisseur_structure: epaisseurStructure,
+          epaisseur_isolation: epaisseurIsolation,
           enum_type_doublage_id: enumTypeDoublageId,
           enum_type_isolation_id: enumTypeIsolationId,
           enum_periode_isolation_id: enumIsolationId
