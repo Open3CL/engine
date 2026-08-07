@@ -6,15 +6,27 @@ export function calc_sse_j(bv_list, ets, ca, zc, mois) {
   const baiesAdjVeranda = bv_list.filter((bv) => bv.donnee_entree.enum_type_adjacence_id === '10');
   const baiesAdjExt = bv_list.filter((bv) => bv.donnee_entree.enum_type_adjacence_id === '1');
 
+  const sseBaiesExt = baiesAdjExt.reduce((acc, bv) => {
+    return acc + getSsd(bv, zc, mois, bv.donnee_intermediaire.sw);
+  }, 0);
+
   if (!ets) {
-    return baiesAdjExt.reduce((acc, bv) => {
-      return acc + getSsd(bv, zc, mois, bv.donnee_intermediaire.sw);
-    }, 0);
+    return sseBaiesExt;
   }
 
   // Certaines vérandas sont dupliqués dans les DPE.
   if (Array.isArray(ets)) {
     ets = ets[0];
+  }
+
+  /**
+   * S'il n'existe aucune baie vitrée séparant l'ETS du reste du logement
+   * (type_adjacence = 10), les apports solaires de l'ETS ne peuvent pas
+   * pénétrer dans la partie habitable : Sse_ver ne doit pas être calculé.
+   * Cf. méthode 3CL §6.3 et issue #140.
+   */
+  if (baiesAdjVeranda.length === 0) {
+    return sseBaiesExt;
   }
 
   const bver = ets.donnee_intermediaire.bver;
@@ -30,8 +42,8 @@ export function calc_sse_j(bv_list, ets, ca, zc, mois) {
   }
 
   /**
-   * Surface sud équivalente représentant l’impact des apports solaires associés au rayonnement solaire
-   * traversant directement l’espace tampon pour arriver dans la partie habitable du logement
+   * Surface sud équivalente représentant l'impact des apports solaires associés au rayonnement solaire
+   * traversant directement l'espace tampon pour arriver dans la partie habitable du logement
    * Calculés pour les baies vitrées qui séparent le logement de l'espace tampon
    * @type {number}
    */
@@ -39,9 +51,9 @@ export function calc_sse_j(bv_list, ets, ca, zc, mois) {
     T *
     baiesAdjVeranda.reduce((acc, bv) => {
       /**
-       * Surface sud équivalente représentant l’impact des apports solaires associés au rayonnement solaire
-       * traversant directement l’espace tampon pour arriver dans la partie habitable du logement
-       * Calculés pour les baies vitrées qui séparent le logement de l'espace tampon
+       * Surface sud équivalente représentant l'impact des apports solaires associés au rayonnement solaire
+       * traversant directement l'espace tampon pour arriver dans la partie habitable du logement
+       * Calculés pour les baies vitrées qui séparant le logement de l'espace tampon
        * @type {number}
        */
       return acc + getSsd(bv, zc, mois, bv.donnee_intermediaire.sw);
@@ -56,22 +68,18 @@ export function calc_sse_j(bv_list, ets, ca, zc, mois) {
   }, 0);
 
   /**
-   * Surface sud équivalente représentant l’impact des apports solaires associés au rayonnement
-   * solaire entrant dans la partie habitable du logement après de multiples réflexions dans l’espace tampon solarisé
+   * Surface sud équivalente représentant l'impact des apports solaires associés au rayonnement
+   * solaire entrant dans la partie habitable du logement après de multiples réflexions dans l'espace tampon solarisé
    * @type {number}
    */
   const ssIndj = Sstj - Ssdj;
 
   /**
-   * Impact de l’espace tampon solarisé sur les apports solaires à travers les baies vitrées qui séparent le logement
+   * Impact de l'espace tampon solarisé sur les apports solaires à travers les baies vitrées qui séparent le logement
    * de l'espace tampon
    * @type {number}
    */
   const SseVerandaj = Ssdj + ssIndj * bver;
-
-  const sseBaiesExt = baiesAdjExt.reduce((acc, bv) => {
-    return acc + getSsd(bv, zc, mois, bv.donnee_intermediaire.sw);
-  }, 0);
 
   return sseBaiesExt + SseVerandaj;
 }
