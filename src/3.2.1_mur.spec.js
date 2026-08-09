@@ -44,4 +44,102 @@ describe('Recherche de bugs dans le calcul de déperdition des murs', () => {
     expect(mur.donnee_intermediaire.umur).toBe(2.5);
     expect(mur.donnee_intermediaire.umur0).toBe(2.5);
   });
+
+  /**
+   * @see https://github.com/Open3CL/engine/issues/146
+   * Le doublage NE doit PAS être cumulé à une isolation ITE ou ITI.
+   */
+  describe('[MURS] Doublage non cumulé à une isolation ITE/ITI (#146)', () => {
+    const baseDE = {
+      enum_type_adjacence_id: '1', // Paroi sur l'extérieur (b=1)
+      enum_materiaux_structure_mur_id: '11', // Béton ≤20 cm
+      epaisseur_structure: 20,
+      enum_methode_saisie_u0_id: '2',
+      paroi_ancienne: 0
+    };
+
+    test('doublage avec ITI : le doublage ne doit pas être pris en compte dans Umur0', () => {
+      const zc = 3; // H2a
+      const pc_id = 6;
+      const ej = 0;
+      // Mur béton 20 cm (umur0 ~ 2.5), avec doublage connu (type 5) ET isolation ITI (type 3)
+      const mur = {
+        donnee_entree: {
+          ...baseDE,
+          description: 'Mur béton avec doublage et ITI',
+          enum_methode_saisie_u_id: '3', // épaisseur isolation saisie
+          epaisseur_isolation: 10, // 10 cm
+          enum_type_doublage_id: '5', // doublage connu (plâtre brique bois)
+          enum_type_isolation_id: '3' // ITI
+        },
+        donnee_intermediaire: {}
+      };
+      calc_mur(mur, zc, pc_id, ej);
+
+      // Sans doublage cumulé, umur0 = 2.5 (valeur brute du mur béton ≤20cm)
+      // Avec doublage cumulé à tort : umur0 = 1 / (1/2.5 + 0.21) ≈ 1.724
+      expect(mur.donnee_intermediaire.umur0).toBeCloseTo(2.5, 2);
+    });
+
+    test('doublage avec ITE : le doublage ne doit pas être pris en compte dans Umur0', () => {
+      const zc = 3;
+      const pc_id = 6;
+      const ej = 0;
+      const mur = {
+        donnee_entree: {
+          ...baseDE,
+          description: 'Mur béton avec doublage et ITE',
+          enum_methode_saisie_u_id: '3',
+          epaisseur_isolation: 8,
+          enum_type_doublage_id: '4', // doublage indéterminé lame d'air sup 15mm
+          enum_type_isolation_id: '4' // ITE
+        },
+        donnee_intermediaire: {}
+      };
+      calc_mur(mur, zc, pc_id, ej);
+
+      // umur0 = 2.5 (béton ≤20cm, doublage ignoré car ITE présent)
+      expect(mur.donnee_intermediaire.umur0).toBeCloseTo(2.5, 2);
+    });
+
+    test('doublage avec ITR seule : le doublage DOIT être pris en compte dans Umur0', () => {
+      const zc = 3;
+      const pc_id = 6;
+      const ej = 0;
+      const mur = {
+        donnee_entree: {
+          ...baseDE,
+          description: 'Mur béton avec doublage et ITR',
+          enum_methode_saisie_u_id: '1', // non isolé
+          enum_type_doublage_id: '5', // doublage connu
+          enum_type_isolation_id: '5' // ITR
+        },
+        donnee_intermediaire: {}
+      };
+      calc_mur(mur, zc, pc_id, ej);
+
+      // ITR seule → le doublage est pris en compte : umur0 < 2.5
+      expect(mur.donnee_intermediaire.umur0).toBeLessThan(2.5);
+    });
+
+    test('doublage sans isolation : le doublage DOIT être pris en compte dans Umur0', () => {
+      const zc = 3;
+      const pc_id = 6;
+      const ej = 0;
+      const mur = {
+        donnee_entree: {
+          ...baseDE,
+          description: 'Mur béton avec doublage sans isolation',
+          enum_methode_saisie_u_id: '1', // non isolé
+          enum_type_doublage_id: '5',
+          enum_type_isolation_id: '2' // non isolé
+        },
+        donnee_intermediaire: {}
+      };
+      calc_mur(mur, zc, pc_id, ej);
+
+      // Non isolé → doublage pris en compte : umur0 < umur0_nu_brut (le doublage réduit bien la valeur)
+      expect(mur.donnee_intermediaire.umur0).toBeLessThan(2.5);
+    });
+  });
 });
