@@ -10,7 +10,9 @@ import calc_qualite_isolation from './2021_04_13_qualite_isolation.js';
 import calc_conso, {
   classe_bilan_dpe,
   classe_emission_ges,
+  COEFF_EP_1_7,
   coef_ep,
+  coef_ep_1_7,
   coef_ep_2_3
 } from './conso.js';
 import {
@@ -577,7 +579,29 @@ export function calcul_3cl(inputDpe, options) {
     coef_ep_2_3
   );
 
+  const conso1_7 = calc_conso(
+    Sh,
+    zc_id,
+    ca_id,
+    vt_list,
+    instal_ch,
+    ecs,
+    clim,
+    prorataECS,
+    prorataChauffage,
+    dateDpe,
+    coef_ep_1_7
+  );
+
   productionENR.calculateEnr(dpe.logement.production_elec_enr, conso2_3, Sh, th, zc_id, true);
+  productionENR.calculateEnr(
+    dpe.logement.production_elec_enr,
+    conso1_7,
+    Sh,
+    th,
+    zc_id,
+    COEFF_EP_1_7
+  );
 
   // get all baie_vitree orientations
   const ph_list = env.plancher_haut_collection.plancher_haut || [];
@@ -601,6 +625,10 @@ export function calcul_3cl(inputDpe, options) {
   logement.sortie.ep_conso.ep_conso_5_usages_2026 = logement.sortie.ep_conso.ep_conso_5_usages;
   logement.sortie.ep_conso.ep_conso_5_usages_2026_m2 =
     logement.sortie.ep_conso.ep_conso_5_usages_m2;
+
+  logement.sortie.ep_conso.classe_bilan_dpe_2027 = conso1_7.ep_conso.classe_bilan_dpe;
+  logement.sortie.ep_conso.ep_conso_5_usages_2027 = conso1_7.ep_conso.ep_conso_5_usages;
+  logement.sortie.ep_conso.ep_conso_5_usages_2027_m2 = conso1_7.ep_conso.ep_conso_5_usages_m2;
 
   return dpe;
 }
@@ -647,6 +675,40 @@ export function get_conso_coeff_1_9_2026(dpe) {
 
   const ep_conso_5_usages =
     (0.9 / 1.3) *
+      (Number(dpe.logement.sortie.ep_conso.ep_conso_5_usages) -
+        Number(dpe.logement.sortie.ef_conso.conso_5_usages)) +
+    Number(dpe.logement.sortie.ef_conso.conso_5_usages);
+
+  let Sh;
+  if (th === 'maison' || th === 'appartement')
+    Sh = Number(dpe.logement.caracteristique_generale.surface_habitable_logement);
+  else if (th === 'immeuble')
+    Sh = Number(dpe.logement.caracteristique_generale.surface_habitable_immeuble);
+
+  const ep_conso_5_usages_m2 = Math.floor(ep_conso_5_usages / Sh);
+  const classe_dpe = classe_bilan_dpe(ep_conso_5_usages_m2, zc_id, ca_id, Sh);
+
+  return { classe_bilan_dpe: classe_dpe, ep_conso_5_usages_m2, ep_conso_5_usages };
+}
+
+/**
+ * Calcul de la nouvelle conso suite à la modification du coefficient pour le chauffage électrique
+ * Applicable uniquement à partir de janvier 2027
+ *
+ * {@link https://www.legifrance.gouv.fr/jorf/id/JORFTEXT000054747079}
+ *
+ * @param dpe {FullDpe}
+ * @returns {{ep_conso_5_usages: number; ep_conso_5_usages_m2: number; classe_bilan_dpe: string}}
+ */
+export function get_conso_coeff_1_7_2027(dpe) {
+  const zc_id = dpe.logement.meteo.enum_zone_climatique_id;
+  const ca_id = dpe.logement.meteo.enum_classe_altitude_id;
+  const th = calc_th(dpe.logement.caracteristique_generale.enum_methode_application_dpe_log_id);
+
+  // Converts a DPE computed with coeff 1.9 to coeff 1.7:
+  // ep_1.7 = ef_conso + (ep_conso - ef_conso) * (0.7 / 0.9)
+  const ep_conso_5_usages =
+    (0.7 / 0.9) *
       (Number(dpe.logement.sortie.ep_conso.ep_conso_5_usages) -
         Number(dpe.logement.sortie.ef_conso.conso_5_usages)) +
     Number(dpe.logement.sortie.ef_conso.conso_5_usages);

@@ -5,6 +5,7 @@ import { tv } from './utils.js';
 
 export const COEFF_EP_2_3 = 2.3;
 export const COEFF_EP_1_9 = 1.9;
+export const COEFF_EP_1_7 = 1.7;
 
 /**
  * Coeff de chauffage 1.9 au 01/01/2026
@@ -16,6 +17,18 @@ export const coef_ep = {
   'électricité fr': COEFF_EP_1_9,
   'électricité éclairage': COEFF_EP_1_9,
   'électricité auxiliaire': COEFF_EP_1_9
+};
+
+/**
+ * Coeff de chauffage 1.7 au 01/01/2027
+ * @link {https://www.legifrance.gouv.fr/jorf/id/JORFTEXT000054747079}
+ */
+export const coef_ep_1_7 = {
+  'électricité ch': COEFF_EP_1_7,
+  'électricité ecs': COEFF_EP_1_7,
+  'électricité fr': COEFF_EP_1_7,
+  'électricité éclairage': COEFF_EP_1_7,
+  'électricité auxiliaire': COEFF_EP_1_7
 };
 
 /**

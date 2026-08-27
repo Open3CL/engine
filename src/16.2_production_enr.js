@@ -1,7 +1,7 @@
 import enums from './enums.js';
 import { mois_liste, tv } from './utils.js';
 import tvs from './tv.js';
-import { COEFF_EP_1_9, COEFF_EP_2_3 } from './conso.js';
+import { COEFF_EP_1_7, COEFF_EP_1_9, COEFF_EP_2_3 } from './conso.js';
 
 export class ProductionENR {
   #taplpi = {
@@ -181,17 +181,24 @@ export class ProductionENR {
    * @param productionElectricite
    * @param conso {{ep_conso: Ep_conso}}
    * @param Sh {number}
-   * @param use_coeff_ch_elec_2_3 {boolean} "true" pour ne pas utiliser le dernier coeff de chauffage électrique
+   * @param use_coeff_ch_elec_2_3 {boolean|number} "true" pour coeff 2.3, un nombre pour un coeff personnalisé (ex: COEFF_EP_1_7), sinon coeff 1.9 courant
    */
   updateEPConso(productionElectricite, conso, Sh, use_coeff_ch_elec_2_3) {
-    if (use_coeff_ch_elec_2_3) {
-      conso.ep_conso.ep_conso_ecs -= COEFF_EP_2_3 * productionElectricite.conso_elec_ac_ecs;
-      conso.ep_conso.ep_conso_ch -= COEFF_EP_2_3 * productionElectricite.conso_elec_ac_ch;
-      conso.ep_conso.ep_conso_fr -= COEFF_EP_2_3 * productionElectricite.conso_elec_ac_fr;
-      conso.ep_conso.ep_conso_eclairage -=
-        COEFF_EP_2_3 * productionElectricite.conso_elec_ac_eclairage;
+    // Resolve the coefficient: boolean true → 2.3, a number → use directly, false/undefined → 1.9
+    const coeff =
+      use_coeff_ch_elec_2_3 === true
+        ? COEFF_EP_2_3
+        : typeof use_coeff_ch_elec_2_3 === 'number'
+          ? use_coeff_ch_elec_2_3
+          : COEFF_EP_1_9;
+
+    if (coeff !== COEFF_EP_1_9) {
+      conso.ep_conso.ep_conso_ecs -= coeff * productionElectricite.conso_elec_ac_ecs;
+      conso.ep_conso.ep_conso_ch -= coeff * productionElectricite.conso_elec_ac_ch;
+      conso.ep_conso.ep_conso_fr -= coeff * productionElectricite.conso_elec_ac_fr;
+      conso.ep_conso.ep_conso_eclairage -= coeff * productionElectricite.conso_elec_ac_eclairage;
       conso.ep_conso.ep_conso_totale_auxiliaire -=
-        COEFF_EP_2_3 * productionElectricite.conso_elec_ac_auxiliaire;
+        coeff * productionElectricite.conso_elec_ac_auxiliaire;
 
       const conso_elec =
         productionElectricite.conso_elec_ac_ecs +
@@ -200,7 +207,7 @@ export class ProductionENR {
         productionElectricite.conso_elec_ac_eclairage +
         productionElectricite.conso_elec_ac_auxiliaire;
 
-      conso.ep_conso.ep_conso_5_usages -= COEFF_EP_2_3 * conso_elec;
+      conso.ep_conso.ep_conso_5_usages -= coeff * conso_elec;
 
       conso.ep_conso.ep_conso_5_usages_m2 = Math.floor(conso.ep_conso.ep_conso_5_usages / Sh);
     } else {
