@@ -58,11 +58,16 @@ describe('Recherche de bugs dans le calcul de la consommation des generateurs de
     const bch_dep = 9714.925476692655;
     const GV = 150.18558182166174;
     const Sh = 22.76;
-    const Sc = 22.76;
     const hsp = 2.5700000000000003;
     const ca_id = 1;
     const zc_id = 1;
-    const ac = 1;
+    // Température de base pour ca=1 (< 400 m) et zc=1 (h1a) — cf. table Tbase de utils.js
+    const tbase = -9.5;
+    // Paramètres non exploités pour un convecteur électrique (ni auxiliaire de distribution ni
+    // calcul mensuel), mais requis par la signature actuelle de calc_generateur_ch.
+    const ilpa = 0;
+    const besoin_ch_mois = undefined;
+    const s_chauffee_inst = 22.76; // surface chauffée de l'installation
 
     calc_generateur_ch(
       dpe,
@@ -74,11 +79,14 @@ describe('Recherche de bugs dans le calcul de la consommation des generateurs de
       bch_dep,
       GV,
       Sh,
-      Sc,
       hsp,
       ca_id,
       zc_id,
-      ac
+      ilpa,
+      tbase,
+      besoin_ch_mois,
+      s_chauffee_inst,
+      [gen_ch]
     );
 
     expect(gen_ch.donnee_intermediaire).toStrictEqual({

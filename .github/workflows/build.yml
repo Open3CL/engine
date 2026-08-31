@@ -45,7 +45,7 @@ jobs:
         run: npm run assets:sync
 
       - name: Run unit tests with coverage
-        run: npm run test:ci -- --reporter=default --reporter=junit --outputFile.junit=./test-results/junit.xml
+        run: npm run test:unit:ci -- --reporter=default --reporter=junit --outputFile.junit=./test-results/junit.xml
 
       - name: Publish test results
         uses: actions/upload-artifact@v4

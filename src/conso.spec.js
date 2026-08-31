@@ -82,8 +82,12 @@ describe('Recherche de bugs dans le calcul de la consommation', () => {
     ];
     const ecs = [];
     const fr = [];
+    // Clés de répartition ECS/chauffage : 1 pour un logement individuel (pas de collectif à
+    // proratiser). Sans ces arguments, la répartition vaut `undefined` et la conso devient NaN.
+    const prorataECS = 1;
+    const prorataChauffage = 1;
 
-    const result = calc_conso(Sh, zc_id, ca_id, vt, ch, ecs, fr);
+    const result = calc_conso(Sh, zc_id, ca_id, vt, ch, ecs, fr, prorataECS, prorataChauffage);
 
     expect(result.ef_conso.conso_ch).toBe(6322.706407855126);
     expect(result.ef_conso.conso_ch_depensier).toBe(7679.56883918009);

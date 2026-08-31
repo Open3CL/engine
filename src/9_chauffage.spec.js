@@ -14,6 +14,17 @@ describe('Recherche de bugs dans le calcul de la consommation', () => {
     const hsp = 2.5700000000000003; // Hauteur sous plafond
     const ac = 1; // Période de construction
 
+    // DPE minimal requis par calc_chauffage : l'enveloppe sert à déterminer si le bâtiment est à
+    // parois anciennes / inertie lourde (aucun mur ici => false).
+    const dpe = {
+      logement: {
+        enveloppe: {
+          inertie: { enum_classe_inertie_id: '5' },
+          mur_collection: { mur: [] }
+        }
+      }
+    };
+
     const ch = {
       donnee_entree: {
         description:
@@ -71,7 +82,7 @@ describe('Recherche de bugs dans le calcul de la consommation', () => {
       }
     };
 
-    calc_chauffage(ch, ca_id, zc_id, inertie_id, map_id, bch, bch_dep, GV, Sh, hsp, ac);
+    calc_chauffage(dpe, ch, ca_id, zc_id, inertie_id, map_id, bch, bch_dep, GV, Sh, hsp, ac);
 
     expect(ch.donnee_intermediaire).toStrictEqual({
       besoin_ch: 7998.446638037776,
