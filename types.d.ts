@@ -420,14 +420,17 @@ interface Ep_conso {
   ep_conso_fr: number;
   ep_conso_fr_depensier: number;
   ep_conso_5_usages: number;
+  coeff_1_7_ep_conso_5_usages?: number;
   coeff_2_3_ep_conso_5_usages?: number;
-  ep_conso_5_usages_2026?: number;
+  ep_conso_5_usages_2027?: number;
   ep_conso_5_usages_m2: number;
+  coeff_1_7_ep_conso_5_usages_m2?: number;
   coeff_2_3_ep_conso_5_usages_m2?: number;
-  ep_conso_5_usages_2026_m2?: number;
+  ep_conso_5_usages_2027_m2?: number;
   classe_bilan_dpe: string;
+  coeff_1_7_classe_bilan_dpe?: string;
   coeff_2_3_classe_bilan_dpe?: string;
-  classe_bilan_dpe_2026?: string;
+  classe_bilan_dpe_2027?: string;
 }
 interface Emission_ges {
   emission_ges_ch: number;
