@@ -668,19 +668,6 @@ export function get_classe_ges_dpe(dpe) {
 
 /**
  * Calcul de la nouvelle conso suite à la modification du coefficient pour le chauffage électrique
- * Applicable uniquement à partir de janvier 2026
- *
- * {@link https://www.ecologie.gouv.fr/actualites/evolutions-du-calcul-du-dpe-reponses-vos-questions#:~:text=Les%20DPE%20r%C3%A9alis%C3%A9s%20avant%20le,%2DAudit%20de%20l'Ademe.}
- *
- * @param dpe {FullDpe}
- * @returns {{ep_conso_5_usages: number; ep_conso_5_usages_m2: number; classe_bilan_dpe: string}}
- */
-export function get_conso_coeff_1_9_2026(dpe) {
-  return get_conso_with_coeff(dpe, 0.9 / 1.3);
-}
-
-/**
- * Calcul de la nouvelle conso suite à la modification du coefficient pour le chauffage électrique
  * Applicable uniquement à partir de janvier 2027
  *
  * {@link https://www.legifrance.gouv.fr/jorf/id/JORFTEXT000054747079}
