@@ -673,10 +673,15 @@ export function get_classe_ges_dpe(dpe) {
  * {@link https://www.legifrance.gouv.fr/jorf/id/JORFTEXT000054747079}
  *
  * @param dpe {FullDpe}
- * @returns {{ep_conso_5_usages: number; ep_conso_5_usages_m2: number; classe_bilan_dpe: string}}
+ * @returns {{ep_conso_5_usages_2027: number; ep_conso_5_usages_m2_2027: number; classe_bilan_dpe_2027: string}}
  */
 export function get_conso_coeff_1_7_2027(dpe) {
-  return get_conso_with_coeff(dpe, 0.7 / 0.9);
+  const coeff = get_conso_with_coeff(dpe, 0.7 / 0.9);
+  return {
+    classe_bilan_dpe_2027: coeff.classe_bilan_dpe,
+    ep_conso_5_usages_m2_2027: coeff.ep_conso_5_usages_m2,
+    ep_conso_5_usages_2027: coeff.ep_conso_5_usages
+  };
 }
 
 /**
