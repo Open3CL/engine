@@ -51,8 +51,7 @@ Implémentation open source du moteur Open3CL de l'ADEME.
 ## A propos du projet
 
 Open3CL est une librairie JavaScript open source, spécialement conçue pour faciliter le calcul des Diagnostics de
-Performance Énergétique (DPE).
-Elle implémente la norme définie
+Performance Énergétique (DPE). Elle implémente la norme définie
 dans [l'annexe 1 de l'arrêté du 31 mars 2021](https://rt-re-batiment.developpement-durable.gouv.fr/IMG/pdf/consolide_annexe_1_arrete_du_31_03_2021_relatif_aux_methodes_et_procedures_applicables.pdf).
 Elle est destinée aux développeurs qui souhaitent intégrer des calculs énergétiques précis et conformes à la
 réglementation dans leurs applications.
@@ -74,9 +73,9 @@ Vous devez d'abord installer [NodeJS](https://nodejs.org/en) en version 20 ou su
 ## Démonstration
 
 Il est possible d'analyser un dpe pour tester la lib
-Open3CL: [https://open3cl.github.io/engine](https://open3cl.github.io/engine/build/).
-Un dpe au format XML peut être chargé, il sera envoyé à la lib Open3CL. Un visuel permet de voir les informations
-du dpe d'origine ainsi que du dpe en sortie de la lib ainsi qu'un différentiel.
+Open3CL: [https://open3cl.github.io/engine](https://open3cl.github.io/engine/build/). Un dpe au format XML peut être
+chargé, il sera envoyé à la lib Open3CL. Un visuel permet de voir les informations du dpe d'origine ainsi que du dpe en
+sortie de la lib ainsi qu'un différentiel.
 
 C'est un bon moyen de détecter un éventuel problème dans le dpe ou la librairie.
 
@@ -105,7 +104,7 @@ const dpeData = {
           description: 'Chaudière individuelle gaz standard',
           surface_chauffee: 49.96,
           generateur_chauffage_collection: {
-            generateur_chauffage: [{ description: '...' }]
+            generateur_chauffage: [{description: '...'}]
           }
         }
       ]
@@ -115,10 +114,10 @@ const dpeData = {
 
 // Execution d'un dpe avec la librairie Open3CL avec pré-transformation / nettoyage du dpe (comportement par défaut)
 const result = calcul_3cl(dpeData);
-const result = calcul_3cl(dpeData, { sanitize: true });
+const result = calcul_3cl(dpeData, {sanitize: true});
 
 // Execution d'un dpe avec la librairie Open3CL sans pré-transformation / nettoyage du dpe
-const result = calcul_3cl(dpeData, { sanitize: false });
+const result = calcul_3cl(dpeData, {sanitize: false});
 
 // Execution d'un dpe au format xml avec la librairie Open3CL avec pré-transformation / nettoyage du dpe (comportement par défaut)
 const result = calcul_3cl_xml('<xml><dpe><numero_dpe>2113E1018248X</numero_dpe></dpe</xml>');
@@ -175,8 +174,8 @@ Les tests de corpus consistent à analyser une liste de numéro de DPE présent 
 
 ### Qu'est-ce qui est contrôlé ?
 
-Les informations contrôlées et qui doivent obligatoirement ne pas dépasser
-le seuil des **5%** entre le dpe d'origine et le dpe proposé par la librairie Open3CL sont :
+Les informations contrôlées et qui doivent obligatoirement ne pas dépasser le seuil des **5%** entre le dpe d'origine et
+le dpe proposé par la librairie Open3CL sont :
 
 - logement.sortie.ef_conso.conso_ecs
 - logement.sortie.ef_conso.conso_ch
@@ -207,8 +206,8 @@ Il existe actuellement 9 corpus (avec 10000 dpe analysés dans chaque corpus) :
 - `npm run test:corpus:all`: Joue l'intégralité des corpus et génère les rapports associés.
 - `npm run test:corpus`. Joue le corpus [corpus_dpe.csv](test/corpus/files/corpus_dpe.csv) et génère les rapports
   associés.
-- `npm run test:corpus -- corpus-file-path=corpus.csv`. Chemin relatif vers le fichier de corpus à analyser
-  Par défaut, le corpus utilisé est présent ici : [test/corpus/corpus_dpe.csv](test/corpus/files/corpus_dpe.csv)
+- `npm run test:corpus -- corpus-file-path=corpus.csv`. Chemin relatif vers le fichier de corpus à analyser Par défaut,
+  le corpus utilisé est présent ici : [test/corpus/corpus_dpe.csv](test/corpus/files/corpus_dpe.csv)
 - `npm run test:corpus -- dpes-folder-path=/home/user/dpes`. Chemin vers le dossier ou les DPE seront téléchargés. Si un
   fichier DPE est déjà présent dans ce dossier, il ne sera pas retéléchargé.
 - `npm run test:corpus -- dpes-code=2592E1233185X`. Execution du corpus sur le dpe spécifié.
@@ -330,20 +329,29 @@ Résultats des tests de corpus avec le mode de compatibilité activé.
 | 1.4.4                | dpe_immeuble_chauffage_collectif.csv                     | 6149                           | 61%                     |                                                   |
 | 1.4.4                | dpe_immeuble_chauffage_mixte.csv                         | 4805                           | 48%                     |                                                   |
 | 1.4.4                | dpe_individuel_a_partir_dpe_immeuble_2026.csv            | 2755                           | 27%                     |                                                   |
+| <ins>**1.4.5**<ins>  | <ins>**corpus_dpe.csv**<ins>                             | <ins>**4582 (+22)**<ins>       | <ins>**46% (+1%)**<ins> |                                                   |
+| 1.4.5                | dpe_logement_individuel_2025.csv                         | 8790 (+71)                     | 88% (+1%)               |                                                   |
+| 1.4.5                | dpe_maison_individuelle_2025.csv                         | 8791 (+76)                     | 88% (+1%)               |                                                   |
+| 1.4.5                | dpe_appartement_individuel_chauffage_individuel_2025.csv | 9143 (+73)                     | 91%                     |                                                   |
+| 1.4.5                | dpe_appartement_individuel_chauffage_collectif_2025.csv  | 6836 (+33)                     | 68%                     |                                                   |
+| 1.4.5                | dpe_immeuble_chauffage_individuel.csv                    | 7371 (+51)                     | 74% (+1%)               |                                                   |
+| 1.4.5                | dpe_immeuble_chauffage_collectif.csv                     | 6155 (+6)                      | 61%                     |                                                   |
+| 1.4.5                | dpe_immeuble_chauffage_mixte.csv                         | 4816 (+11S)                    | 48%                     |                                                   |
+| 1.4.5                | dpe_individuel_a_partir_dpe_immeuble_2026.csv            | 2755                           | 27%                     |                                                   |
 
 </details>
 
 | Version librairie   | corpus                                                   | Nb en dessous du taux d'erreur | Taux de réussite        | Description |
 | :------------------ | -------------------------------------------------------- | ------------------------------ | ----------------------- | ----------- |
-| <ins>**1.4.5**<ins> | <ins>**corpus_dpe.csv**<ins>                             | <ins>**4582 (+22)**<ins>       | <ins>**46% (+1%)**<ins> |             |
-| 1.4.5               | dpe_logement_individuel_2025.csv                         | 8790 (+71)                     | 88% (+1%)               |             |
-| 1.4.5               | dpe_maison_individuelle_2025.csv                         | 8791 (+76)                     | 88% (+1%)               |             |
-| 1.4.5               | dpe_appartement_individuel_chauffage_individuel_2025.csv | 9143 (+73)                     | 91%                     |             |
-| 1.4.5               | dpe_appartement_individuel_chauffage_collectif_2025.csv  | 6836 (+33)                     | 68%                     |             |
-| 1.4.5               | dpe_immeuble_chauffage_individuel.csv                    | 7371 (+51)                     | 74% (+1%)               |             |
-| 1.4.5               | dpe_immeuble_chauffage_collectif.csv                     | 6155 (+6)                      | 61%                     |             |
-| 1.4.5               | dpe_immeuble_chauffage_mixte.csv                         | 4816 (+11S)                    | 48%                     |             |
-| 1.4.5               | dpe_individuel_a_partir_dpe_immeuble_2026.csv            | 2755                           | 27%                     |             |
+| <ins>**1.4.6**<ins> | <ins>**corpus_dpe.csv**<ins>                             | <ins>**4582 (+22)**<ins>       | <ins>**46% (+1%)**<ins> |             |
+| 1.4.6               | dpe_logement_individuel_2025.csv                         | 8790 (+71)                     | 88% (+1%)               |             |
+| 1.4.6               | dpe_maison_individuelle_2025.csv                         | 8791 (+76)                     | 88% (+1%)               |             |
+| 1.4.6               | dpe_appartement_individuel_chauffage_individuel_2025.csv | 9143 (+73)                     | 91%                     |             |
+| 1.4.6               | dpe_appartement_individuel_chauffage_collectif_2025.csv  | 6836 (+33)                     | 68%                     |             |
+| 1.4.6               | dpe_immeuble_chauffage_individuel.csv                    | 7371 (+51)                     | 74% (+1%)               |             |
+| 1.4.6               | dpe_immeuble_chauffage_collectif.csv                     | 6155 (+6)                      | 61%                     |             |
+| 1.4.6               | dpe_immeuble_chauffage_mixte.csv                         | 4816 (+11S)                    | 48%                     |             |
+| 1.4.6               | dpe_individuel_a_partir_dpe_immeuble_2026.csv            | 2755                           | 27%                     |             |
 
 ## Roadmap
 
