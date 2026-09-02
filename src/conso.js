@@ -249,6 +249,7 @@ export default function calc_conso(
       null,
       prorataECS,
       prorataChauffage,
+      ecs,
       conso_aux_distribution_ecs_total
     ),
     ep_conso: calc_conso_pond(
@@ -262,6 +263,7 @@ export default function calc_conso(
       coeffEp,
       prorataECS,
       prorataChauffage,
+      ecs,
       conso_aux_distribution_ecs_total
     ),
     emission_ges: calc_conso_pond(
@@ -275,6 +277,7 @@ export default function calc_conso(
       coef_ges,
       prorataECS,
       prorataChauffage,
+      ecs,
       conso_aux_distribution_ecs_total
     ),
     cout: calc_conso_pond(
@@ -288,6 +291,7 @@ export default function calc_conso(
       coef_cout,
       prorataECS,
       prorataChauffage,
+      ecs,
       conso_aux_distribution_ecs_total
     )
   };
@@ -343,7 +347,8 @@ export default function calc_conso(
       '',
       null,
       prorataECS,
-      prorataChauffage
+      prorataChauffage,
+      type_energie === 'électricité' ? ecs : []
     );
     conso_en = {
       conso_ch: conso_en._ch,
@@ -474,6 +479,7 @@ function calc_conso_pond(
   coef,
   prorataECS,
   prorataChauffage,
+  ecs_installations,
   conso_aux_distribution_ecs_total
 ) {
   const ret = {};
@@ -538,11 +544,10 @@ function calc_conso_pond(
     return acc + getConso(coef, 'électricité auxiliaire', conso);
   }, 0);
 
-  ret.auxiliaire_distribution_ecs = getConso(
-    coef,
-    'électricité auxiliaire',
-    conso_aux_distribution_ecs_total || 0
-  );
+  ret.auxiliaire_distribution_ecs = (ecs_installations || []).reduce((acc, inst) => {
+    const conso = (inst.donnee_intermediaire || {}).conso_auxiliaire_distribution_ecs || 0;
+    return acc + getConso(coef, 'électricité auxiliaire', conso);
+  }, 0);
 
   ret.ecs = getEcsConso(gen_ecs, 'conso_ecs', coef, prorataECS, prefix);
 
