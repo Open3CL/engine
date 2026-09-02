@@ -433,7 +433,8 @@ export function calcul_3cl(inputDpe, options) {
       virtualisationECS,
       dpe.logement.caracteristique_generale.surface_habitable_immeuble,
       dpe.logement.caracteristique_generale.nombre_appartement,
-      isImmeubleSystemEcsIndividuels
+      isImmeubleSystemEcsIndividuels,
+      apport_et_besoin.besoin_ecs_par_mois || {}
     );
   });
 
