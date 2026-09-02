@@ -632,10 +632,9 @@ export function calcul_3cl(inputDpe, options) {
     coeff_1_7_ep_conso_5_usages_m2: conso1_7.ep_conso.ep_conso_5_usages_m2
   };
 
-  logement.sortie.ep_conso.classe_bilan_dpe_2027 = logement.sortie.ep_conso.classe_bilan_dpe;
-  logement.sortie.ep_conso.ep_conso_5_usages_2027 = logement.sortie.ep_conso.ep_conso_5_usages;
-  logement.sortie.ep_conso.ep_conso_5_usages_2027_m2 =
-    logement.sortie.ep_conso.ep_conso_5_usages_m2;
+  logement.sortie.ep_conso.classe_bilan_dpe_2027 = conso1_7.ep_conso.classe_bilan_dpe;
+  logement.sortie.ep_conso.ep_conso_5_usages_2027 = conso1_7.ep_conso.ep_conso_5_usages;
+  logement.sortie.ep_conso.ep_conso_5_usages_2027_m2 = conso1_7.ep_conso.ep_conso_5_usages_m2;
 
   return dpe;
 }

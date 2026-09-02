@@ -338,20 +338,29 @@ Résultats des tests de corpus avec le mode de compatibilité activé.
 | 1.4.5                | dpe_immeuble_chauffage_collectif.csv                     | 6155 (+6)                      | 61%                     |                                                   |
 | 1.4.5                | dpe_immeuble_chauffage_mixte.csv                         | 4816 (+11S)                    | 48%                     |                                                   |
 | 1.4.5                | dpe_individuel_a_partir_dpe_immeuble_2026.csv            | 2755                           | 27%                     |                                                   |
+| <ins>**1.5.1 **<ins> | <ins>**corpus_dpe.csv**<ins>                             | <ins>**4582**<ins>             | <ins>**46%**<ins>       |                                                   |
+| 1.5.1                | dpe_logement_individuel_2025.csv                         | 8790                           | 88%                     |                                                   |
+| 1.5.1                | dpe_maison_individuelle_2025.csv                         | 8791                           | 88%                     |                                                   |
+| 1.5.1                | dpe_appartement_individuel_chauffage_individuel_2025.csv | 9143                           | 91%                     |                                                   |
+| 1.5.1                | dpe_appartement_individuel_chauffage_collectif_2025.csv  | 6836                           | 68%                     |                                                   |
+| 1.5.1                | dpe_immeuble_chauffage_individuel.csv                    | 7371                           | 74%                     |                                                   |
+| 1.5.1                | dpe_immeuble_chauffage_collectif.csv                     | 6155                           | 61%                     |                                                   |
+| 1.5.1                | dpe_immeuble_chauffage_mixte.csv                         | 4816                           | 48%                     |                                                   |
+| 1.5.1                | dpe_individuel_a_partir_dpe_immeuble_2026.csv            | 2755                           | 27%                     |                                                   |
 
 </details>
 
 | Version librairie    | corpus                                                   | Nb en dessous du taux d'erreur | Taux de réussite  | Description |
 | :------------------- | -------------------------------------------------------- | ------------------------------ | ----------------- | ----------- |
-| <ins>**1.5.1 **<ins> | <ins>**corpus_dpe.csv**<ins>                             | <ins>**4582**<ins>             | <ins>**46%**<ins> |             |
-| 1.5.1                | dpe_logement_individuel_2025.csv                         | 8790                           | 88%               |             |
-| 1.5.1                | dpe_maison_individuelle_2025.csv                         | 8791                           | 88%               |             |
-| 1.5.1                | dpe_appartement_individuel_chauffage_individuel_2025.csv | 9143                           | 91%               |             |
-| 1.5.1                | dpe_appartement_individuel_chauffage_collectif_2025.csv  | 6836                           | 68%               |             |
-| 1.5.1                | dpe_immeuble_chauffage_individuel.csv                    | 7371                           | 74%               |             |
-| 1.5.1                | dpe_immeuble_chauffage_collectif.csv                     | 6155                           | 61%               |             |
-| 1.5.1                | dpe_immeuble_chauffage_mixte.csv                         | 4816                           | 48%               |             |
-| 1.5.1                | dpe_individuel_a_partir_dpe_immeuble_2026.csv            | 2755                           | 27%               |             |
+| <ins>**1.6.1 **<ins> | <ins>**corpus_dpe.csv**<ins>                             | <ins>**4591 (+3)**<ins>        | <ins>**46%**<ins> |             |
+| 1.6.1                | dpe_logement_individuel_2025.csv                         | 8791 (+1)                      | 88%               |             |
+| 1.6.1                | dpe_maison_individuelle_2025.csv                         | 8793 (+2)                      | 88%               |             |
+| 1.6.1                | dpe_appartement_individuel_chauffage_individuel_2025.csv | 9146 (+3)                      | 91%               |             |
+| 1.6.1                | dpe_appartement_individuel_chauffage_collectif_2025.csv  | 6837 (+1)                      | 68%               |             |
+| 1.6.1                | dpe_immeuble_chauffage_individuel.csv                    | 7371                           | 74%               |             |
+| 1.6.1                | dpe_immeuble_chauffage_collectif.csv                     | 6155                           | 61%               |             |
+| 1.6.1                | dpe_immeuble_chauffage_mixte.csv                         | 4819 (+3)                      | 48%               |             |
+| 1.6.1                | dpe_individuel_a_partir_dpe_immeuble_2026.csv            | 2755                           | 27%               |             |
 
 ## Roadmap
 
