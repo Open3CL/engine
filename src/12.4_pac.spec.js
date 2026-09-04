@@ -89,6 +89,35 @@ describe('scopOrCop - valeur forfaitaire (table scop)', () => {
     expect(di.rg).toBe(3.1);
   });
 
+  test('tv_scop_id du DPE différent de celui de la table : avertissement mais valeur de la table utilisée', () => {
+    tv.mockReturnValue({ scop_ou_cop: 'scop', scop: '4.2', tv_scop_id: '15' });
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    // tv_scop_id renseigné (18) et différent de celui de la ligne (15)
+    const di = {};
+    const de = { enum_type_generateur_ch_id: '160', tv_scop_id: 18 };
+
+    scopOrCop(di, de, {}, 'h1a', null, 'ch');
+
+    expect(errorSpy).toHaveBeenCalledTimes(1);
+    // la valeur de la table prime : tv_scop_id est corrigé
+    expect(de.tv_scop_id).toBe(15);
+    expect(di.rg).toBe(4.2);
+    errorSpy.mockRestore();
+  });
+
+  test('tv_scop_id du DPE identique à celui de la table : pas d’avertissement', () => {
+    tv.mockReturnValue({ scop_ou_cop: 'scop', scop: '4.2', tv_scop_id: '15' });
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const di = {};
+    const de = { enum_type_generateur_ch_id: '160', tv_scop_id: 15 };
+
+    scopOrCop(di, de, {}, 'h1a', null, 'ch');
+
+    expect(errorSpy).not.toHaveBeenCalled();
+    expect(de.tv_scop_id).toBe(15);
+    errorSpy.mockRestore();
+  });
+
   test('aucune ligne trouvée : ni rg ni rg_dep ne sont définis', () => {
     tv.mockReturnValue(null);
     const di = {};

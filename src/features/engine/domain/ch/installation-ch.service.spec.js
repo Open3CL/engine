@@ -38,4 +38,18 @@ describe('Calcul des installations de chauffage', () => {
     service.execute(ctx, logement);
     expect(generateurChService.execute).toHaveBeenCalledWith(ctx, logement, installationCh);
   });
+
+  test("Aucun générateur traité en l'absence d'installation de chauffage", () => {
+    vi.spyOn(generateurChService, 'execute').mockReturnThis();
+
+    /** @type {Contexte} */
+    const ctx = { zoneClimatique: { id: 1 } };
+
+    // Collection absente : la valeur de repli [] doit être utilisée (aucun appel au service générateur)
+    service.execute(ctx, {});
+    // Collection présente mais sans tableau d'installations
+    service.execute(ctx, { installation_chauffage_collection: {} });
+
+    expect(generateurChService.execute).not.toHaveBeenCalled();
+  });
 });

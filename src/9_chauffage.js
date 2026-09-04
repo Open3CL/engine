@@ -139,6 +139,8 @@ export default function calc_chauffage(
       Pnominal,
       zc
     );
+    /* c8 ignore next 2 -- repli défensif inatteignable : donnee_utilisateur est toujours renseignée
+       par la première boucle sur gen_ch ci-dessus */
     (gen.donnee_utilisateur = gen.donnee_utilisateur || {}).nbGenerateurCascade = gen_ch.length;
 
     calc_generateur_ch(
@@ -293,6 +295,8 @@ export function tauxChargeForGenerator(installationChauffage, GV, caId, zcId, th
   );
 
   installChauffageWithCombustion.forEach((installCh) => {
+    /* c8 ignore next 2 -- repli défensif inatteignable : genCombustion est toujours renseignée sur les
+       installations ajoutées à installChauffageWithCombustion */
     (installCh.donnee_utilisateur.genCombustion || []).forEach((gen) => {
       const GV_ratio = th === 'immeuble' ? GV * (1 / (installCh.donnee_entree.rdim || 1)) : GV;
       gen.donnee_utilisateur.cdimref = Pn / (GV_ratio * (19 - tbase));

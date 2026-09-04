@@ -8,6 +8,7 @@ import { DpeNormalizerService } from '../../../../normalizer/domain/dpe-normaliz
 import { ContexteBuilder } from '../../contexte.builder.js';
 import { DeperditionEnveloppeService } from '../deperdition-enveloppe.service.js';
 import { describeIntegration } from '../../../../../../test/helpers/integration-test.js';
+import { logger } from '../../../../../core/util/logger/log-service.js';
 
 /** @type {DeperditionVentilationService} **/
 let service;
@@ -86,6 +87,17 @@ describe('Calcul de déperdition des portes', () => {
         surfaceMenuiserieAvecJoint: 0,
         surfaceMenuiserieSansJoint: 0,
         expectedIsolationSurface: '1',
+        expectedPresenceJointsMenuiserie: undefined
+      },
+      {
+        // 1948-1974 mais moins de 50% de surface isolée => isolationSurface '0'
+        q4paConvSaisi: undefined,
+        enumPeriodeConstructionId: '2',
+        surfaceIsolee: 100,
+        surfaceNonIsolee: 200,
+        surfaceMenuiserieAvecJoint: 0,
+        surfaceMenuiserieSansJoint: 0,
+        expectedIsolationSurface: '0',
         expectedPresenceJointsMenuiserie: undefined
       },
       {
@@ -407,6 +419,59 @@ describe('Calcul de déperdition des portes', () => {
         expect(pventMoy).toBeCloseTo(expectedPventMoy, 2);
       }
     );
+  });
+
+  describe('execute (agrégation des déperditions et consommations de ventilation)', () => {
+    /** @type {Contexte} */
+    const ctx = {
+      surfaceHabitable: 100,
+      hauteurSousPlafond: 2.5,
+      typeHabitation: TypeHabitation.MAISON,
+      enumPeriodeConstructionId: '3'
+    };
+
+    test('assemble hvent, hperm et la consommation des auxiliaires', () => {
+      vi.spyOn(tvStore, 'getDebitsVentilation').mockReturnValue({
+        qvarep_conv: 10,
+        qvasouf_conv: 5,
+        smea_conv: 2
+      });
+      vi.spyOn(tvStore, 'getQ4paConv').mockReturnValue({ q4pa_conv: 1.7 });
+
+      /** @type {VentilationDE} */
+      const de = {
+        enum_type_ventilation_id: '4',
+        ventilation_post_2012: true,
+        plusieurs_facade_exposee: false
+      };
+
+      const di = service.execute(ctx, de, 120, 80, 40, 10, 5);
+
+      expect(tvStore.getDebitsVentilation).toHaveBeenCalledWith('4');
+      // hvent = 0.34 * qvarep_conv * surfaceHabitable
+      expect(di.hvent).toBeCloseTo(340, 5);
+      // pventMoy (SF auto, maison, post 2012) = 35 => conso = 8.76 * 35
+      expect(di.pvent_moy).toBe(35);
+      expect(di.conso_auxiliaire_ventilation).toBeCloseTo(306.6, 5);
+      // hperm : valeur de référence de régression
+      expect(di.hperm).toBeCloseTo(0.10692928032279153, 9);
+    });
+
+    test('conso des auxiliaires nulle sans type de ventilation ni indicateur post 2012', () => {
+      vi.spyOn(tvStore, 'getDebitsVentilation').mockReturnValue({});
+      vi.spyOn(tvStore, 'getQ4paConv').mockReturnValue({ q4pa_conv: 1.7 });
+      const errorSpy = vi.spyOn(logger, 'error').mockImplementation(() => {});
+
+      /** @type {VentilationDE} */
+      const de = { plusieurs_facade_exposee: false };
+
+      const di = service.execute(ctx, de, 0, 0, 0, 0, 0);
+
+      expect(errorSpy).toHaveBeenCalledOnce();
+      // La consommation retournée vaut 0 (nombre), les clés conso ne sont donc pas ajoutées
+      expect(di.conso_auxiliaire_ventilation).toBeUndefined();
+      expect(di.pvent_moy).toBeUndefined();
+    });
   });
 
   describeIntegration("Test d'intégration des ventilations", () => {

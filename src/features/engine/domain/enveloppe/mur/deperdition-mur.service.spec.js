@@ -334,6 +334,121 @@ describe('Calcul de déperdition des murs', () => {
       expect(di.umur0).toBeCloseTo(0.81545);
       expect(di.umur).toBeCloseTo(0.81545);
     });
+
+    test('Isolation inconnue (méthode 2) : umur est plafonné par la valeur forfaitaire de la table', () => {
+      // enum_methode_saisie_u_id = '2' => on prend le min entre umur_nu et la valeur tabulée.
+      /** @type {Contexte} */
+      const ctx = {
+        effetJoule: false,
+        enumPeriodeConstructionId: '2',
+        zoneClimatique: { id: '3' }
+      };
+      /** @type {MurDE} */
+      const de = {
+        enum_materiaux_structure_mur_id: '12',
+        enum_methode_saisie_u_id: '2',
+        enum_methode_saisie_u0_id: '2',
+        epaisseur_structure: 25,
+        enum_type_doublage_id: '2',
+        enum_type_isolation_id: '2'
+      };
+
+      const di = service.execute(ctx, de);
+      // Valeurs de référence de régression
+      expect(di.umur0).toBeCloseTo(2.3);
+      expect(di.umur).toBeCloseTo(2.3);
+    });
+
+    test("Épaisseur d'isolation saisie mais manquante (méthode 4) : repli sur min(umur0, 2.5)", () => {
+      // Sans epaisseur_isolation, un avertissement est émis et umur = min(umur0, 2.5).
+      /** @type {Contexte} */
+      const ctx = {
+        effetJoule: false,
+        enumPeriodeConstructionId: '2',
+        zoneClimatique: { id: '3' }
+      };
+      /** @type {MurDE} */
+      const de = {
+        enum_materiaux_structure_mur_id: '12',
+        enum_methode_saisie_u_id: '4',
+        enum_methode_saisie_u0_id: '2',
+        epaisseur_structure: 25,
+        enum_type_doublage_id: '2',
+        enum_type_isolation_id: '2',
+        description: 'mur sans épaisseur isolation'
+      };
+
+      const di = service.execute(ctx, de);
+      expect(di.umur0).toBeCloseTo(2.3);
+      expect(di.umur).toBeCloseTo(2.3);
+    });
+
+    test("Résistance d'isolation saisie (méthode 5) : umur calculé à partir de la résistance", () => {
+      /** @type {Contexte} */
+      const ctx = {
+        effetJoule: false,
+        enumPeriodeConstructionId: '2',
+        zoneClimatique: { id: '3' }
+      };
+      /** @type {MurDE} */
+      const de = {
+        enum_materiaux_structure_mur_id: '12',
+        enum_methode_saisie_u_id: '5',
+        enum_methode_saisie_u0_id: '2',
+        epaisseur_structure: 25,
+        enum_type_doublage_id: '2',
+        enum_type_isolation_id: '3',
+        resistance_isolation: 2.5
+      };
+
+      const di = service.execute(ctx, de);
+      expect(di.umur0).toBeCloseTo(2.3);
+      // 1 / (1 / 2.3 + 2.5) => valeur de référence de régression
+      expect(di.umur).toBeCloseTo(0.34074);
+    });
+
+    test('umur0 via matériau seul (méthode u0 = 1) sans épaisseur de structure', () => {
+      /** @type {Contexte} */
+      const ctx = {
+        effetJoule: false,
+        enumPeriodeConstructionId: '2',
+        zoneClimatique: { id: '3' }
+      };
+      /** @type {MurDE} */
+      const de = {
+        enum_materiaux_structure_mur_id: '12',
+        enum_methode_saisie_u_id: '1',
+        enum_methode_saisie_u0_id: '1',
+        enum_type_doublage_id: '2',
+        enum_type_isolation_id: '2'
+      };
+
+      const di = service.execute(ctx, de);
+      // Matériau seul => valeur forfaitaire plafonnée à 2.5
+      expect(di.umur0).toBeCloseTo(2.5);
+      expect(di.umur).toBeCloseTo(2.5);
+    });
+
+    test('umur0 saisi directement via une méthode u0 non gérée (défaut)', () => {
+      /** @type {Contexte} */
+      const ctx = {
+        effetJoule: false,
+        enumPeriodeConstructionId: '2',
+        zoneClimatique: { id: '3' }
+      };
+      /** @type {MurDE} */
+      const de = {
+        enum_methode_saisie_u_id: '1',
+        enum_methode_saisie_u0_id: '9',
+        umur0_saisi: 1.234,
+        enum_type_doublage_id: '2',
+        enum_type_isolation_id: '2'
+      };
+
+      const di = service.execute(ctx, de);
+      expect(di.umur0).toBeCloseTo(1.234);
+      expect(di.umur).toBeCloseTo(1.234);
+    });
   });
 
   test.each([

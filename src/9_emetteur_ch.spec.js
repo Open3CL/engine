@@ -8,14 +8,19 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
  * - `TvsStore` : store des rendements de distribution, remplacé par une classe
  *   factice dont on contrôle les méthodes via `vi.hoisted`.
  */
-const { getRendementDistributionCh, getRendementDistributionChById } = vi.hoisted(() => ({
-  getRendementDistributionCh: vi.fn(),
-  getRendementDistributionChById: vi.fn()
-}));
+const { getRendementDistributionCh, getRendementDistributionChById, utilState } = vi.hoisted(
+  () => ({
+    getRendementDistributionCh: vi.fn(),
+    getRendementDistributionChById: vi.fn(),
+    utilState: { bug: false }
+  })
+);
 
 vi.mock('./utils.js', () => ({
   tv: vi.fn(),
-  bug_for_bug_compat: false
+  get bug_for_bug_compat() {
+    return utilState.bug;
+  }
 }));
 
 vi.mock('./core/tv/infrastructure/tvs.store.js', () => ({
@@ -32,6 +37,7 @@ beforeEach(() => {
   vi.mocked(tv).mockReset();
   getRendementDistributionCh.mockReset();
   getRendementDistributionChById.mockReset();
+  utilState.bug = false;
 });
 
 /**
@@ -170,5 +176,164 @@ describe('calc_emetteur_ch - renseignement des données intermédiaires', () => 
     const matcher = vi.mocked(tv).mock.calls.find((c) => c[0] === 'intermittence')[1];
     expect(matcher.comptage_individuel).toBe('Absence');
     expect(matcher.enum_classe_inertie_id).toBeUndefined();
+  });
+
+  test('aucune ligne trouvée pour l’ensemble des rendements : messages d’erreur', () => {
+    const err = vi.spyOn(console, 'error').mockImplementation(() => {});
+    // toutes les tables renvoient null et le store ne fournit rien
+    vi.mocked(tv).mockReturnValue(null);
+    getRendementDistributionCh.mockReturnValue(undefined);
+    getRendementDistributionChById.mockReturnValue(undefined);
+
+    const em_ch = {
+      donnee_entree: { enum_type_emission_distribution_id: '10' }
+    };
+    calc_emetteur_ch(em_ch, { enum_type_installation_id: '1' }, '2', '3');
+
+    // distribution + émission + régulation + intermittence => 4 erreurs
+    expect(err).toHaveBeenCalledTimes(4);
+    expect(em_ch.donnee_intermediaire).toEqual({});
+    err.mockRestore();
+  });
+
+  test("fiche technique de comptage à 'oui' : présence détectée", () => {
+    stubTv();
+    getRendementDistributionCh.mockReturnValue({
+      rd: '0.92',
+      tv_rendement_distribution_ch_id: '44'
+    });
+
+    const em_ch = { donnee_entree: { enum_type_emission_distribution_id: '10' } };
+    calc_emetteur_ch(
+      em_ch,
+      { enum_type_installation_id: '1', ficheTechniqueComptage: { valeur: 'oui' } },
+      '2',
+      '3'
+    );
+
+    const matcher = vi.mocked(tv).mock.calls.find((c) => c[0] === 'intermittence')[1];
+    expect(matcher.comptage_individuel).toBe('Présence');
+  });
+
+  test('fiche technique de comptage vide : absence de comptage', () => {
+    stubTv();
+    getRendementDistributionCh.mockReturnValue({
+      rd: '0.92',
+      tv_rendement_distribution_ch_id: '44'
+    });
+
+    const em_ch = { donnee_entree: { enum_type_emission_distribution_id: '10' } };
+    calc_emetteur_ch(
+      em_ch,
+      { enum_type_installation_id: '1', ficheTechniqueComptage: { valeur: '' } },
+      '2',
+      '3'
+    );
+
+    const matcher = vi.mocked(tv).mock.calls.find((c) => c[0] === 'intermittence')[1];
+    expect(matcher.comptage_individuel).toBe('Absence');
+  });
+
+  test('intermittence introuvable : message d’erreur dédié', () => {
+    const err = vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.mocked(tv).mockImplementation((table) => {
+      if (table === 'rendement_emission') return { re: '0.95', tv_rendement_emission_id: '11' };
+      if (table === 'rendement_regulation') return { rr: '0.99', tv_rendement_regulation_id: '22' };
+      // intermittence => null
+      return null;
+    });
+    getRendementDistributionCh.mockReturnValue({
+      rd: '0.92',
+      tv_rendement_distribution_ch_id: '44'
+    });
+
+    const em_ch = { donnee_entree: { enum_type_emission_distribution_id: '10' } };
+    calc_emetteur_ch(em_ch, { enum_type_installation_id: '1' }, '2', '3');
+
+    expect(err).toHaveBeenCalled();
+    expect(em_ch.donnee_intermediaire.i0).toBeUndefined();
+    err.mockRestore();
+  });
+});
+
+/**
+ * Mode "bug for bug" : en l'absence de fiche technique, la présence d'un
+ * comptage individuel est déduite de la ligne d'intermittence de référence.
+ */
+describe('calc_emetteur_ch - déduction du comptage en mode "bug for bug"', () => {
+  /** Pilote `tv` avec une ligne d'intermittence paramétrable. */
+  function stubTvIntermittence(comptageRow) {
+    vi.mocked(tv).mockImplementation((table, matcher) => {
+      if (table === 'rendement_emission') return { re: '0.95', tv_rendement_emission_id: '11' };
+      if (table === 'rendement_regulation') return { rr: '0.99', tv_rendement_regulation_id: '22' };
+      if (table === 'intermittence') {
+        // 1er appel : matcher basé sur tv_intermittence_id (déduction du comptage)
+        if (matcher.tv_intermittence_id !== undefined && !matcher.enum_type_installation_id) {
+          return comptageRow;
+        }
+        return { i0: '0.85', tv_intermittence_id: '33' };
+      }
+      return null;
+    });
+    getRendementDistributionCh.mockReturnValue({
+      rd: '0.92',
+      tv_rendement_distribution_ch_id: '44'
+    });
+  }
+
+  const emetteur = () => ({
+    donnee_entree: { enum_type_emission_distribution_id: '10', tv_intermittence_id: 5 }
+  });
+
+  test('ligne de référence "Présence" => comptage individuel présent', () => {
+    utilState.bug = true;
+    stubTvIntermittence({ comptage_individuel: 'Présence d’un comptage' });
+
+    const em_ch = emetteur();
+    calc_emetteur_ch(em_ch, { enum_type_installation_id: '1' }, '2', '3');
+
+    const matcher = vi
+      .mocked(tv)
+      .mock.calls.find((c) => c[0] === 'intermittence' && c[1].enum_type_installation_id)[1];
+    expect(matcher.comptage_individuel).toBe('Présence');
+  });
+
+  test('ligne de référence sans "Présence" => absence de comptage', () => {
+    utilState.bug = true;
+    stubTvIntermittence({ comptage_individuel: 'Absence de comptage' });
+
+    const em_ch = emetteur();
+    calc_emetteur_ch(em_ch, { enum_type_installation_id: '1' }, '2', '3');
+
+    const matcher = vi
+      .mocked(tv)
+      .mock.calls.find((c) => c[0] === 'intermittence' && c[1].enum_type_installation_id)[1];
+    expect(matcher.comptage_individuel).toBe('Absence');
+  });
+
+  test('ligne de référence sans colonne comptage => absence de comptage', () => {
+    utilState.bug = true;
+    stubTvIntermittence({ i0: '0.5' });
+
+    const em_ch = emetteur();
+    calc_emetteur_ch(em_ch, { enum_type_installation_id: '1' }, '2', '3');
+
+    const matcher = vi
+      .mocked(tv)
+      .mock.calls.find((c) => c[0] === 'intermittence' && c[1].enum_type_installation_id)[1];
+    expect(matcher.comptage_individuel).toBe('Absence');
+  });
+
+  test('aucune ligne de référence trouvée => absence de comptage', () => {
+    utilState.bug = true;
+    stubTvIntermittence(null);
+
+    const em_ch = emetteur();
+    calc_emetteur_ch(em_ch, { enum_type_installation_id: '1' }, '2', '3');
+
+    const matcher = vi
+      .mocked(tv)
+      .mock.calls.find((c) => c[0] === 'intermittence' && c[1].enum_type_installation_id)[1];
+    expect(matcher.comptage_individuel).toBe('Absence');
   });
 });

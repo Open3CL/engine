@@ -240,6 +240,37 @@ describe('Calcul des pertes de génération de chauffage récupérées', () => {
     }
   });
 
+  test('Qrec vaut 0 pour un usage de générateur inconnu (aucune durée de récupération)', () => {
+    // enum_usage_generateur_id hors {1, 2, 3} : le switch ne définit pas Dperj (undefined),
+    // le produit devient NaN et la garde `|| 0` ramène la contribution à 0.
+    /** @type {GenerateurChauffage[]} */
+    const generateurs = [
+      {
+        donnee_entree: { presence_ventouse: 0, enum_usage_generateur_id: 99 },
+        donnee_intermediaire: { pn: 25000, qp0: 125 }
+      }
+    ];
+
+    expect(service.Qrec(generateurs, 12.5, 1532.9)).toBe(0);
+  });
+
+  test('Conversion en kWh des pertes de génération récupérées (execute)', () => {
+    // On isole execute de la formule mensuelle : pertesGenerateurChRecup est doublée pour
+    // ne vérifier que la conversion Wh -> kWh (division par 1000) et le mapping des 2 champs.
+    vi.spyOn(service, 'pertesGenerateurChRecup').mockImplementation((ctx, logement, depensier) =>
+      depensier ? 6000 : 3000
+    );
+
+    const res = service.execute({}, {});
+
+    expect(res).toStrictEqual({
+      pertes_generateur_ch_recup: 3,
+      pertes_generateur_ch_recup_depensier: 6
+    });
+    expect(service.pertesGenerateurChRecup).toHaveBeenCalledWith({}, {}, false);
+    expect(service.pertesGenerateurChRecup).toHaveBeenCalledWith({}, {}, true);
+  });
+
   describeIntegration("Test d'intégration des installations CH", () => {
     test.each(corpus)('vérification des pertes de génération ch pour dpe %s', (ademeId) => {
       let dpeRequest = getAdemeFileJson(ademeId);

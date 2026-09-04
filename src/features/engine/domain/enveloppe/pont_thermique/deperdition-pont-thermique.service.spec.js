@@ -422,6 +422,22 @@ describe('Calcul de déperdition des ponts thermiques', () => {
       expect(tvStore.getKForMurById).not.toHaveBeenCalled();
       expect(tvStore.getKForMenuiserie).toHaveBeenCalledWith(5, 'iti', 3, 0, 5);
     });
+
+    test('Pont thermique nul pour une paroi en brique de verre (vitrage 5)', () => {
+      // @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.4.5 Menuiserie / mur
+      // Les liaisons avec des parois en brique de verre (type_vitrage 5) sont prises nulles.
+      vi.spyOn(tvStore, 'getKForMenuiserie').mockReturnValue(0.25);
+
+      const pontThermiqueDE = { reference_1: 'reference' };
+      const enveloppe = {
+        baie_vitree_collection: {
+          baie_vitree: [{ donnee_entree: { reference: 'reference', enum_type_vitrage_id: '5' } }]
+        }
+      };
+
+      expect(service.pontThermiqueMenuiserieMur(pontThermiqueDE, enveloppe, 3)).toBe(0);
+      expect(tvStore.getKForMenuiserie).not.toHaveBeenCalled();
+    });
   });
 
   describe("Calcul de l'isolation du mur", () => {

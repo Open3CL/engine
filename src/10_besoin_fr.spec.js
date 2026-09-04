@@ -63,6 +63,15 @@ describe('calc_besoin_fr_j - besoin de froid journalier', () => {
     );
   });
 
+  test('taux Rbth exactement égal à 1 : facteur d’utilisation futj = a / (a + 1)', () => {
+    // Rbth = (aij + asj) / (GV * (textmoy - Tint) * nrefj) = 2000 / (100 * 2 * 10) = 1
+    // valeur de référence de régression
+    expect(calc_besoin_fr_j(100, 100, 'moyenne', 1000, 1000, 10, 30, 28)).toBeCloseTo(
+      3.604395604395604,
+      9
+    );
+  });
+
   test('le besoin de froid dépensier (26°C) est supérieur au besoin conventionnel (28°C)', () => {
     const conventionnel = calc_besoin_fr_j(100, 300, 'moyenne', 5000, 2000, 10, 30, 28);
     const depensier = calc_besoin_fr_j(100, 300, 'moyenne', 5000, 2000, 10, 30, 26);

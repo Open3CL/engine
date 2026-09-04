@@ -222,6 +222,16 @@ describe('Lecture des tables de valeurs', () => {
       const ug = tvStore.getSw('0', '0', 0);
       expect(ug).toBeUndefined();
     });
+
+    test('uw non interpolé lorsque le ug fourni correspond exactement à une valeur tabulée', () => {
+      // ug passé sous forme de chaîne présente dans la table => getRange renvoie deux
+      // bornes égales, delta_ug vaut 0 et uw prend directement la valeur tabulée (uw1).
+      expect(tvStore.getUw('4', '6', '0.5')).toBeCloseTo(1.3, 2);
+    });
+
+    test("uw indéfini lorsqu'aucune ligne ne correspond au type de baie / matériau", () => {
+      expect(tvStore.getUw('9', '99', 2)).toBeUndefined();
+    });
   });
 
   describe('lecture des valeurs de ujn', () => {
@@ -251,6 +261,12 @@ describe('Lecture des tables de valeurs', () => {
     test('pas de valeur de ujn', () => {
       const ug = tvStore.getUjn('0', 0);
       expect(ug).toBeUndefined();
+    });
+
+    test('ujn non interpolé lorsque le uw fourni correspond exactement à une valeur tabulée', () => {
+      // uw passé sous forme de chaîne présente dans la table => getRange renvoie deux
+      // bornes égales, delta_uw vaut 0 et ujn prend directement la valeur tabulée (ujn1).
+      expect(tvStore.getUjn('2', '0.8')).toBeCloseTo(0.8, 2);
     });
   });
 

@@ -97,6 +97,36 @@ describe('calc_sse_j - surface sud équivalente journalière', () => {
     // pas de baie extérieure : total = SseVeranda = 0.964
     expect(calc_sse_j(bvList, ets, 'ca1', 'h1a', 'Janvier')).toBeCloseTo(0.964, 10);
   });
+
+  test("baie d'espace tampon sans donnée intermédiaire ni inclinaison : valeurs par défaut", () => {
+    // La baie de l'ets n'a ni donnee_intermediaire (=> {} : fe1/fe2 valent 1) ni
+    // enum_inclinaison_vitrage_id (=> repli sur l'inclinaison verticale, id 3).
+    const ets = {
+      donnee_intermediaire: { bver: 0.5, coef_transparence_ets: 0.8 },
+      baie_ets_collection: {
+        baie_ets: {
+          donnee_entree: {
+            enum_type_adjacence_id: '1',
+            enum_orientation_id: '1',
+            surface_totale_baie: 4
+          }
+        }
+      }
+    };
+
+    // orientation 'sud' + inclinaison par défaut 'verticale' => clé 'sud verticale' (c1j = 0.5)
+    // coeff = 0.8 * T + 0.024 = 0.664 ; Sstj = 4 * 0.5 * 0.664 = 1.328
+    // pas de baie véranda => Ssdj = 0 ; ssInd = 1.328 ; SseVeranda = 1.328 * bver = 0.664
+    expect(calc_sse_j([], ets, 'ca1', 'h1a', 'Janvier')).toBeCloseTo(0.664, 10);
+  });
+
+  test('les facteurs fe1/fe2 de la baie extérieure sont appliqués au calcul', () => {
+    const bv = baie({ adjacence: '1', surface: 2, sw: 0.5 });
+    bv.donnee_intermediaire.fe1 = 0.5;
+    bv.donnee_intermediaire.fe2 = 0.8;
+    // getSsd = 2 * 0.5(c1) * 0.5(sw) * 0.5(fe1) * 0.8(fe2) = 0.2
+    expect(calc_sse_j([bv], null, 'ca1', 'h1a', 'Janvier')).toBeCloseTo(0.2, 10);
+  });
 });
 
 describe('calc_sse - surface sud équivalente annuelle', () => {

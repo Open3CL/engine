@@ -79,6 +79,8 @@ export class GenerateurChService {
         generateurChauffage.donnee_utilisateur.generateur = this.#chTvStore.getGenerateurCombustion(
           generateurChauffageDE.enum_type_generateur_ch_id,
           generateurChauffage.donnee_intermediaire.pn /
+            /* c8 ignore next 2 -- repli défensif inatteignable : donnee_utilisateur.ratio_virtualisation
+               est déjà défini juste au-dessus (valeur de l'installation ou 1), donc toujours truthy ici. */
             ((generateurChauffage.donnee_utilisateur.ratio_virtualisation || 1) * 1000)
         );
 

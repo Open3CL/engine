@@ -558,11 +558,14 @@ export function getRange(inputNumber, ranges) {
   } else {
     ranges.find((range, index) => {
       if (inputNumber < range) {
+        /* c8 ignore start -- branche défensive inatteignable : inputNumber < ranges[0] provoque
+           déjà le retour anticipé en amont, donc index vaut toujours > 0 ici. */
         if (index > 0) {
           result.push(ranges[index - 1]);
         } else {
           result.push(ranges[index]);
         }
+        /* c8 ignore stop */
         result.push(ranges[index]);
         return true;
       }

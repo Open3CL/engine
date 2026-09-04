@@ -194,6 +194,130 @@ describe('Calcul de déperdition des planchers haut', () => {
       expect(di.uph0).toBeCloseTo(2.5);
       expect(di.uph).toBeCloseTo(0.4);
     });
+
+    test('Plancher non isolé (méthode 1) : uph vaut uph_nu', () => {
+      /** @type {Contexte} */
+      const ctx = {
+        effetJoule: false,
+        enumPeriodeConstructionId: '2',
+        zoneClimatique: { id: '3' }
+      };
+      /** @type {PlancherHautDE} */
+      const de = {
+        enum_type_adjacence_id: '1',
+        enum_type_plancher_haut_id: '10',
+        enum_methode_saisie_u0_id: '2',
+        enum_type_isolation_id: '2',
+        enum_methode_saisie_u_id: '1'
+      };
+
+      const di = service.execute(ctx, de);
+      expect(di.uph0).toBeCloseTo(2.3);
+      expect(di.uph).toBeCloseTo(2.3);
+    });
+
+    test("Épaisseur d'isolation saisie (méthode 4) : uph calculé à partir de l'épaisseur", () => {
+      /** @type {Contexte} */
+      const ctx = {
+        effetJoule: false,
+        enumPeriodeConstructionId: '2',
+        zoneClimatique: { id: '3' }
+      };
+      /** @type {PlancherHautDE} */
+      const de = {
+        enum_type_adjacence_id: '1',
+        enum_type_plancher_haut_id: '10',
+        enum_methode_saisie_u0_id: '2',
+        enum_type_isolation_id: '3',
+        enum_methode_saisie_u_id: '4',
+        epaisseur_isolation: 10
+      };
+
+      const di = service.execute(ctx, de);
+      expect(di.uph0).toBeCloseTo(2.3);
+      // 1 / (1 / 2.3 + (10 * 0.01) / 0.04) => valeur de référence de régression
+      expect(di.uph).toBeCloseTo(0.34074);
+    });
+
+    test("Résistance d'isolation saisie (méthode 6) : uph calculé à partir de la résistance", () => {
+      /** @type {Contexte} */
+      const ctx = {
+        effetJoule: false,
+        enumPeriodeConstructionId: '2',
+        zoneClimatique: { id: '3' }
+      };
+      /** @type {PlancherHautDE} */
+      const de = {
+        enum_type_adjacence_id: '1',
+        enum_type_plancher_haut_id: '10',
+        enum_methode_saisie_u0_id: '2',
+        enum_type_isolation_id: '3',
+        enum_methode_saisie_u_id: '6',
+        resistance_isolation: 2.5
+      };
+
+      const di = service.execute(ctx, de);
+      expect(di.uph0).toBeCloseTo(2.3);
+      // 1 / (1 / 2.3 + 2.5) => valeur de référence de régression
+      expect(di.uph).toBeCloseTo(0.34074);
+    });
+
+    test.each([
+      // Isolation inconnue via table forfaitaire (méthode 2) et variantes épaisseur/résistance.
+      { enumMethodeSaisieUId: '2', uphExpected: 0.75 },
+      { enumMethodeSaisieUId: '3', epaisseurIsolation: 10, uphExpected: 0.34074 },
+      { enumMethodeSaisieUId: '5', resistanceIsolation: 2.5, uphExpected: 0.34074 }
+    ])(
+      'uph pour la méthode de saisie $enumMethodeSaisieUId',
+      ({ enumMethodeSaisieUId, epaisseurIsolation, resistanceIsolation, uphExpected }) => {
+        /** @type {Contexte} */
+        const ctx = {
+          effetJoule: false,
+          enumPeriodeConstructionId: '2',
+          zoneClimatique: { id: '3' }
+        };
+        /** @type {PlancherHautDE} */
+        const de = {
+          enum_type_adjacence_id: '1',
+          enum_type_plancher_haut_id: '10',
+          enum_methode_saisie_u0_id: '2',
+          enum_type_isolation_id: '3',
+          enum_periode_isolation_id: '3',
+          enum_methode_saisie_u_id: enumMethodeSaisieUId,
+          epaisseur_isolation: epaisseurIsolation,
+          resistance_isolation: resistanceIsolation
+        };
+
+        const di = service.execute(ctx, de);
+        expect(di.uph0).toBeCloseTo(2.3);
+        // Valeurs de référence de régression
+        expect(di.uph).toBeCloseTo(uphExpected);
+      }
+    );
+
+    test("Adjacence 'locaux non chauffés non accessible' (7) : uph_tab pris en catégorie terrasse", () => {
+      // @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.2.3.1
+      /** @type {Contexte} */
+      const ctx = {
+        effetJoule: false,
+        enumPeriodeConstructionId: '2',
+        zoneClimatique: { id: '3' }
+      };
+      /** @type {PlancherHautDE} */
+      const de = {
+        enum_type_adjacence_id: '7',
+        enum_type_plancher_haut_id: '1',
+        enum_methode_saisie_u0_id: '2',
+        enum_type_isolation_id: '3',
+        enum_periode_isolation_id: '6',
+        enum_methode_saisie_u_id: '8'
+      };
+
+      const di = service.execute(ctx, de);
+      expect(di.uph0).toBeCloseTo(2.5);
+      // Valeur de référence de régression (catégorie terrasse)
+      expect(di.uph).toBeCloseTo(0.4);
+    });
   });
 
   test.each([

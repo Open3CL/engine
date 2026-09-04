@@ -2,6 +2,21 @@ import { createLogger, format, transports } from 'winston';
 
 const { combine, timestamp, prettyPrint, colorize, errors, printf } = format;
 
+/**
+ * Formate une ligne de log. Si une pile (`stack`) est présente, elle est
+ * ajoutée à la suite du message. Fonction pure exportée pour être testée
+ * unitairement.
+ * @param {{level: string, message: string, timestamp: string, stack?: string}} info
+ * @return {string}
+ */
+export const formatLogLine = ({ level, message, timestamp, stack }) => {
+  if (stack) {
+    // print log trace
+    return `${timestamp} ${level}: ${message} - ${stack}`;
+  }
+  return `${timestamp} ${level}: ${message}`;
+};
+
 // Disable traditional console logs
 const copyLog = console.log;
 const copyWarn = console.warn;
@@ -15,13 +30,7 @@ export const logger = createLogger({
     colorize(),
     timestamp(),
     prettyPrint(),
-    printf(({ level, message, timestamp, stack }) => {
-      if (stack) {
-        // print log trace
-        return `${timestamp} ${level}: ${message} - ${stack}`;
-      }
-      return `${timestamp} ${level}: ${message}`;
-    })
+    printf(formatLogLine)
   ),
   transports: [new transports.Console()]
 });

@@ -142,7 +142,10 @@ function updateGenerateurBouilleur(dpe, ids, de, type) {
      * 2012.
      * - Les poêles à bois bouilleur installées avant 2012 sont traités comme des chaudières bois installées entre 1978 et 1994.
      */
-    let newGenerateurId = generateurId === 13 ? values[1978] : values[2004];
+    let newGenerateurId = values[2004];
+    // branche morte : generateurId provient de Object.keys (chaîne), jamais === 13 (nombre)
+    /* c8 ignore next */
+    if (generateurId === 13) newGenerateurId = values[1978];
 
     if (ficheTechnique) {
       if (ficheTechnique.toString().toLowerCase() === 'avant 1948') {

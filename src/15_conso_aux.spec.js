@@ -89,6 +89,41 @@ describe('conso_aux_gen - auxiliaires de génération', () => {
     expect(di.conso_auxiliaire_generation_ecs).toBeCloseTo(2.08, 10);
     expect(di.conso_auxiliaire_generation_ecs_depensier).toBeCloseTo(2.6, 10);
   });
+
+  test('générateur à air chaud avec Pn > 300 kW : puissance plafonnée à 300 kW', () => {
+    // enum_type_generateur_ch_id = 50 => générateur à air chaud (H=4), G=0
+    const diAir = { pn: 500000 };
+    conso_aux_gen(diAir, { enum_type_generateur_ch_id: '50' }, 'ch', 1000, 1200, 100);
+    // g=0, h=4, pe plafonné à 300000 => Paux = 0 + 4*300 = 1200
+    // conso = (1 * (1200 * 1000 * 1)) / 300000 = 4
+    expect(diAir.conso_auxiliaire_generation_ch).toBeCloseTo(4, 10);
+    // depensier utilise di.pn (500000, non plafonné) : (1200 * 1200) / 500000 = 2.88
+    expect(diAir.conso_auxiliaire_generation_ch_depensier).toBeCloseTo(2.88, 10);
+  });
+
+  test('chaudière bois avec ventilateur et Pn > 70 kW : puissance plafonnée à 70 kW', () => {
+    // enum_type_generateur_ch_id = 60 => chaudière bois (G=73.3, H=10.5)
+    const diBois = { pn: 100000 };
+    conso_aux_gen(
+      diBois,
+      { enum_type_generateur_ch_id: '60', presenceVentilateur: 1 },
+      'ch',
+      1000,
+      1200,
+      100
+    );
+    // pe plafonné à 70000 => Paux = 73.3 + 10.5*70 = 808.3
+    // conso = (1 * (808.3 * 1000 * 1)) / 70000
+    expect(diBois.conso_auxiliaire_generation_ch).toBeCloseTo((808.3 * 1000) / 70000, 10);
+  });
+
+  test('type de générateur inconnu (ni ch ni ecs) : facteurs nuls, consommation nulle', () => {
+    // Couvre la branche de repli `values[type] || []` de getFacteur
+    const diInconnu = { pn: 20000 };
+    conso_aux_gen(diInconnu, {}, 'autre', 1000, 1200, 100);
+    expect(diInconnu.conso_auxiliaire_generation_autre).toBe(0);
+    expect(diInconnu.conso_auxiliaire_generation_autre_depensier).toBe(0);
+  });
 });
 
 /**
@@ -117,5 +152,74 @@ describe('conso_aux_distribution_ch - auxiliaires de distribution', () => {
     const di = {};
     conso_aux_distribution_ch(emCh, {}, di, {}, 100, 1, 1, '0', 100000);
     expect(di.conso_auxiliaire_distribution_ch).toBeGreaterThan(3);
+  });
+
+  test('émetteur plancher/plafond chauffant (deltaPem=15, Fcot=0,156)', () => {
+    // Type 6 => première liste : deltaPem=15, Fcot=0,156, deltaDim=7,5 (temp id 3)
+    const em = [
+      {
+        donnee_entree: {
+          enum_type_emission_distribution_id: '6',
+          enum_temp_distribution_ch_id: '3'
+        }
+      }
+    ];
+    const di = {};
+    conso_aux_distribution_ch(em, {}, di, {}, 100, 1, 1, '0', 100000);
+    // valeur de référence de régression
+    expect(di.conso_auxiliaire_distribution_ch).toBeCloseTo(215.1781621610199, 9);
+  });
+
+  test('émetteur radiateur monotube (deltaPem=30)', () => {
+    // Type 24 => deuxième liste : deltaPem=30
+    const em = [
+      {
+        donnee_entree: {
+          enum_type_emission_distribution_id: '24',
+          enum_temp_distribution_ch_id: '3'
+        }
+      }
+    ];
+    const di = {};
+    conso_aux_distribution_ch(em, {}, di, {}, 100, 1, 1, '0', 100000);
+    // valeur de référence de régression
+    expect(di.conso_auxiliaire_distribution_ch).toBeCloseTo(372.082418731648, 9);
+  });
+
+  test('plusieurs émetteurs : Fcot forcé à 0,802 (cas le plus défavorable)', () => {
+    // Deux émetteurs de type plancher chauffant : sans le forçage, Fcot=0,156.
+    const em = [
+      {
+        donnee_entree: {
+          enum_type_emission_distribution_id: '6',
+          enum_temp_distribution_ch_id: '3'
+        }
+      },
+      {
+        donnee_entree: {
+          enum_type_emission_distribution_id: '6',
+          enum_temp_distribution_ch_id: '3'
+        }
+      }
+    ];
+    const di = {};
+    conso_aux_distribution_ch(em, {}, di, {}, 100, 1, 1, '0', 100000);
+    // valeur de référence de régression (Fcot=0,802 malgré des planchers chauffants)
+    expect(di.conso_auxiliaire_distribution_ch).toBeCloseTo(260.5604692803713, 9);
+  });
+
+  test('température de distribution haute (id 4) : deltaDim = 15', () => {
+    const em = [
+      {
+        donnee_entree: {
+          enum_type_emission_distribution_id: '10',
+          enum_temp_distribution_ch_id: '4'
+        }
+      }
+    ];
+    const di = {};
+    conso_aux_distribution_ch(em, {}, di, {}, 100, 1, 1, '0', 100000);
+    // valeur de référence de régression
+    expect(di.conso_auxiliaire_distribution_ch).toBeCloseTo(136.51553416032854, 9);
   });
 });

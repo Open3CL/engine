@@ -44,4 +44,29 @@ describe('SynchronizeSolicitationsTables unit tests', () => {
       });
     });
   });
+
+  test("regroupe sans clé quand la ligne n'a ni ilpa ni classe_altitude", () => {
+    const fileStore = new FileStore();
+    const appConfig = new ApplicationConfig();
+    const synchronizeSolicitationsTables = new SynchronizeSolicitationsTables(fileStore, appConfig);
+
+    // Feuille ne comportant que `mois` et une valeur : `groupKey` doit rester
+    // vide (branche `: ''`) et le chemin construit est `feuille.mois.clef`.
+    vi.spyOn(fileStore, 'readLocalOdsFileAndConvertToJson').mockResolvedValue({
+      text_ext: [{ mois: 'Janvier', h1a: '12.5' }]
+    });
+    vi.spyOn(ApplicationConfig.prototype, 'solicitationsExtFilePath', 'get').mockReturnValue(
+      'src/file.ods'
+    );
+
+    return synchronizeSolicitationsTables.execute().then((output) => {
+      expect(output).toEqual({
+        text_ext: {
+          Janvier: {
+            h1a: 12.5
+          }
+        }
+      });
+    });
+  });
 });

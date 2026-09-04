@@ -239,6 +239,31 @@ describe('calc_qualite_isolation - agrégation et classement', () => {
     expect(ret.qualite_isol_plancher_haut_comble_amenage).toBe(2);
   });
 
+  test('collections sans tableau interne (undefined) : repli sur des listes vides', () => {
+    // Aucune des collections n'expose son tableau => branches `|| []` empruntées.
+    const env = {
+      mur_collection: {},
+      plancher_haut_collection: {},
+      plancher_bas_collection: {},
+      baie_vitree_collection: {},
+      porte_collection: {}
+    };
+    const dp = {
+      deperdition_mur: 0,
+      deperdition_plancher_bas: 0,
+      deperdition_plancher_haut: 0,
+      deperdition_baie_vitree: 0,
+      deperdition_porte: 0,
+      deperdition_pont_thermique: 0
+    };
+
+    const ret = calc_qualite_isolation(env, dp);
+
+    expect(Number.isFinite(ret.ubat)).toBe(false);
+    expect(ret.qualite_isol_mur).toBe(1);
+    expect(ret.qualite_isol_plancher_haut_comble_amenage).toBeUndefined();
+  });
+
   test('collections vides : ubat non fini, seules les quatre qualités de base présentes', () => {
     const env = enveloppe({});
     const dp = {

@@ -119,15 +119,19 @@ export class BaieVitreeTvStore extends TvStore {
           (v) =>
             v.enum_type_baie_id.split('|').includes(enumTypeBaieId) &&
             v.enum_type_materiaux_menuiserie_id.split('|').includes(enumTypeMateriauxMenuiserieId)
-        ) || [];
+        ) /* c8 ignore next -- .filter renvoie toujours un tableau : fallback défensif inatteignable */ ||
+        [];
 
       let ug1, ug2;
 
       if (ugValues.length) {
         [ug1, ug2] = getRange(ug, [...new Set(ugValues.map((value) => value.ug).sort())]);
 
+        /* c8 ignore start -- getRange renvoie des bornes issues de ugValues : le find aboutit
+           toujours et le fallback `|| 0` reste défensif (inatteignable avec les données réelles). */
         const uw1 = ugValues.find((value) => value.ug === ug1)?.uw || 0;
         const uw2 = ugValues.find((value) => value.ug === ug2)?.uw || 0;
+        /* c8 ignore stop */
 
         const delta_uw = Number(uw2) - Number(uw1);
         const delta_ug = ug2 - ug1 || 0;
@@ -191,7 +195,9 @@ export class BaieVitreeTvStore extends TvStore {
      */
     const deltar = this.getDeltar(enumTypeFermetureId);
     const uwValues =
-      tv['ujn'].filter((v) => Number(v.deltar).toPrecision(2) === Number(deltar).toPrecision(2)) ||
+      tv['ujn'].filter(
+        (v) => Number(v.deltar).toPrecision(2) === Number(deltar).toPrecision(2)
+      ) /* c8 ignore next -- .filter renvoie toujours un tableau : fallback défensif inatteignable */ ||
       [];
 
     let uw1, uw2;
@@ -199,12 +205,15 @@ export class BaieVitreeTvStore extends TvStore {
     if (uwValues.length) {
       [uw1, uw2] = getRange(uw, [...new Set(uwValues.map((value) => value.uw).sort())]);
 
+      /* c8 ignore start -- getRange renvoie des bornes issues de uwValues : le find aboutit
+         toujours et le fallback `|| 0` reste défensif (inatteignable avec les données réelles). */
       const ujn1 =
         uwValues.find((value) => Number(value.uw).toPrecision(2) === Number(uw1).toPrecision(2))
           ?.ujn || 0;
       const ujn2 =
         uwValues.find((value) => Number(value.uw).toPrecision(2) === Number(uw2).toPrecision(2))
           ?.ujn || 0;
+      /* c8 ignore stop */
 
       const delta_ujn = Number(ujn2) - Number(ujn1);
       const delta_uw = uw2 - uw1 || 0;
@@ -216,12 +225,15 @@ export class BaieVitreeTvStore extends TvStore {
         ujn = Number(ujn1) + (delta_ujn * (uw - uw1)) / delta_uw;
       }
 
+      /* c8 ignore start -- les valeurs ujn tabulées sont toujours strictement positives :
+         ce garde-fou `!ujn` est défensif et inatteignable avec les données réelles. */
       if (!ujn) {
         logger.error(
           `Pas de valeur forfaitaire ujn pour enumTypeFermetureId:${enumTypeFermetureId}, uw:${uw}`
         );
         return;
       }
+      /* c8 ignore stop */
 
       return parseFloat(ujn);
     }

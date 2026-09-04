@@ -564,6 +564,120 @@ describe('Calcul des caractéristiques des générateurs de chauffage', () => {
     });
   });
 
+  test('Générateur à combustion sans pn : calcul de la puissance nominale et filtrage des émetteurs', () => {
+    // Type 76 (chaudière fioul) : générateur à combustion ET chaudière, pour que le calcul
+    // des températures de fonctionnement (utilisant les émetteurs filtrés) soit exécuté.
+    vi.spyOn(chTvStore, 'getCombustionGenerateurs').mockReturnValue([76]);
+    vi.spyOn(chTvStore, 'getPacGenerateurs').mockReturnValue([2]);
+    vi.spyOn(chTvStore, 'getGenerateurCombustion').mockReturnValue({});
+    // pn absent dans donnee_intermediaire -> execute doit appeler this.pn(ctx, logement).
+    const pnSpy = vi.spyOn(service, 'pn').mockReturnValue(20000);
+    vi.spyOn(emetteurChService, 'temperatureFonctionnement').mockReturnValue({
+      temp_fonc_30: 18,
+      temp_fonc_100: 25
+    });
+
+    /** @type {GenerateurChauffage} */
+    const generateurChauffage = {
+      donnee_entree: {
+        enum_methode_saisie_carac_sys_id: 4,
+        enum_type_generateur_ch_id: 76,
+        enum_lien_generateur_emetteur_id: 'L1',
+        presence_ventouse: 1
+      },
+      // pas de pn : oblige au calcul de la puissance nominale
+      donnee_intermediaire: { rpn: 0.95, rpint: 0.68, qp0: 125 }
+    };
+
+    // Deux émetteurs : un seul est lié au générateur (même enum_lien_generateur_emetteur_id).
+    const emetteurLie = {
+      donnee_entree: { enum_lien_generateur_emetteur_id: 'L1', surface_chauffee: 80 },
+      donnee_intermediaire: { rendement_emission: 0.86 }
+    };
+    const emetteurNonLie = {
+      donnee_entree: { enum_lien_generateur_emetteur_id: 'L2', surface_chauffee: 40 },
+      donnee_intermediaire: { rendement_emission: 0.9 }
+    };
+
+    const installationChauffage = {
+      donnee_entree: { ratio_virtualisation: 1 },
+      generateur_chauffage_collection: { generateur_chauffage: [generateurChauffage] },
+      emetteur_chauffage_collection: { emetteur_chauffage: [emetteurLie, emetteurNonLie] }
+    };
+
+    /** @type {Logement} */
+    const logement = {
+      installation_chauffage_collection: { installation_chauffage: [installationChauffage] },
+      sortie: { deperdition: { deperdition_enveloppe: 300 } }
+    };
+
+    /** @type {Contexte} */
+    const ctx = { altitude: { id: 1 }, zoneClimatique: { id: 1 } };
+
+    service.execute(ctx, logement, installationChauffage);
+
+    // La puissance nominale a été calculée puis affectée
+    expect(pnSpy).toHaveBeenCalledWith(ctx, logement);
+    expect(generateurChauffage.donnee_intermediaire.pn).toBe(20000);
+
+    // getGenerateurCombustion utilise pn / (ratio * 1000) = 20000 / 1000 = 20
+    expect(chTvStore.getGenerateurCombustion).toHaveBeenCalledWith(76, 20);
+
+    // Seul l'émetteur lié est transmis au calcul des températures de fonctionnement
+    expect(emetteurChService.temperatureFonctionnement).toHaveBeenCalledWith(
+      ctx,
+      generateurChauffage.donnee_entree,
+      [emetteurLie]
+    );
+  });
+
+  test('execute : installation sans collection de générateurs ne fait rien', () => {
+    // Valeur de repli [] quand generateur_chauffage_collection est absente.
+    const combustionSpy = vi.spyOn(chTvStore, 'getCombustionGenerateurs');
+
+    /** @type {Contexte} */
+    const ctx = { zoneClimatique: { id: 1 } };
+
+    expect(() => service.execute(ctx, {}, { donnee_entree: {} })).not.toThrow();
+    expect(combustionSpy).not.toHaveBeenCalled();
+  });
+
+  test('execute : ratio de virtualisation par défaut à 1 quand non renseigné', () => {
+    vi.spyOn(chTvStore, 'getCombustionGenerateurs').mockReturnValue([1]);
+    vi.spyOn(chTvStore, 'getPacGenerateurs').mockReturnValue([2]);
+    vi.spyOn(chTvStore, 'getGenerateurCombustion').mockReturnValue({});
+
+    /** @type {GenerateurChauffage} */
+    const generateurChauffage = {
+      donnee_entree: {
+        enum_methode_saisie_carac_sys_id: 4,
+        enum_type_generateur_ch_id: 1,
+        presence_ventouse: 1
+      },
+      donnee_intermediaire: { rpn: 0.95, rpint: 0.68, qp0: 125, pn: 15000 }
+    };
+
+    const installationChauffage = {
+      // donnee_entree sans ratio_virtualisation : repli sur 1
+      donnee_entree: {},
+      generateur_chauffage_collection: { generateur_chauffage: [generateurChauffage] }
+    };
+
+    /** @type {Logement} */
+    const logement = {
+      installation_chauffage_collection: { installation_chauffage: [installationChauffage] }
+    };
+
+    /** @type {Contexte} */
+    const ctx = { zoneClimatique: { id: 1 } };
+
+    service.execute(ctx, logement, installationChauffage);
+
+    expect(generateurChauffage.donnee_utilisateur.ratio_virtualisation).toBe(1);
+    // pn / (ratio * 1000) = 15000 / 1000 = 15
+    expect(chTvStore.getGenerateurCombustion).toHaveBeenCalledWith(1, 15);
+  });
+
   describeIntegration("Test d'intégration des installations de chauffage", () => {
     test.each(corpus)('vérification des DI qp0 des installations CH pour dpe %s', (ademeId) => {
       let dpeRequest = getAdemeFileJson(ademeId);

@@ -51,4 +51,52 @@ describe('SynchronizeValeurTables unit tests', () => {
       );
     });
   });
+
+  test('ajoute les valeurs Ue supplémentaires quand la table `ue` est présente', () => {
+    const fileStore = new FileStore();
+    const appConfig = new ApplicationConfig();
+    const synchronizeC1Tables = new SynchronizeC1Tables(fileStore, appConfig);
+    const synchronizeSolicitationTables = new SynchronizeSolicitationsTables(fileStore, appConfig);
+    const synchronizeDpeGesLimitValuesTables = new SynchronizeDpeGesLimitValuesTables(
+      fileStore,
+      appConfig
+    );
+    const addAdditionnalUeValuesTables = new AddAdditionnalUeValuesTables(fileStore, appConfig);
+    const synchronizeValeurTables = new SynchronizeValeurTables(
+      fileStore,
+      appConfig,
+      synchronizeSolicitationTables,
+      synchronizeDpeGesLimitValuesTables,
+      addAdditionnalUeValuesTables,
+      synchronizeC1Tables
+    );
+
+    vi.spyOn(ApplicationConfig.prototype, 'ademeValeurTablesFileUrl', 'get').mockReturnValue(
+      'http://localhost/file.xlsx'
+    );
+    vi.spyOn(ApplicationConfig.prototype, 'assetsOutputFolder', 'get').mockReturnValue(
+      'src/assets'
+    );
+
+    // Le classeur téléchargé contient une table `ue` : la branche d'ajout des
+    // valeurs Ue supplémentaires doit être empruntée.
+    vi.spyOn(fileStore, 'downloadXlsxFileAndConvertToJson').mockResolvedValue({
+      ue: [{ type_adjacence: 'ext', ue: '1.5' }]
+    });
+    vi.spyOn(fileStore, 'writeFileToLocalSystem').mockResolvedValue(null);
+    vi.spyOn(synchronizeC1Tables, 'execute').mockResolvedValue({});
+    vi.spyOn(synchronizeSolicitationTables, 'execute').mockResolvedValue({});
+    vi.spyOn(synchronizeDpeGesLimitValuesTables, 'execute').mockResolvedValue({});
+    const addUeSpy = vi
+      .spyOn(addAdditionnalUeValuesTables, 'execute')
+      .mockReturnValue({ ue: 'valeurs-ue-completees' });
+
+    return synchronizeValeurTables.execute().then(() => {
+      // La fonction d'ajout reçoit les valeurs fusionnées contenant la table ue.
+      expect(addUeSpy).toHaveBeenCalledWith(expect.objectContaining({ ue: expect.any(Array) }));
+      // Le fichier écrit contient le résultat renvoyé par l'ajout Ue.
+      const contenu = vi.mocked(fileStore.writeFileToLocalSystem).mock.calls[0][1];
+      expect(contenu).toContain('valeurs-ue-completees');
+    });
+  });
 });

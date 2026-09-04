@@ -7,11 +7,13 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
  * - `tv` : accès aux tables `uph0` / `uph`, on contrôle la ligne retournée par table ;
  * - `requestInput` : passe-plat renvoyant la donnée d'entrée demandée ;
  * - `getKeyByValue` : implémentation déterministe (pas de dépendance aux vraies enums) ;
- * - `bug_for_bug_compat` : désactivé pour isoler le comportement nominal.
+ * - `bug_for_bug_compat` : exposé via un getter afin de pouvoir le basculer par test.
  */
+let bugForBugCompat = false;
+
 vi.mock('./enums.js', () => ({
   default: {
-    periode_construction: { 1: 'avant 1948', 5: '1989-2000' },
+    periode_construction: { 1: 'avant 1948', 3: '1948-1974', 5: '1989-2000' },
     periode_isolation: { 2: '1975-1977', 6: '2006-2012' }
   }
 }));
@@ -24,7 +26,9 @@ vi.mock('./utils.js', () => ({
   tv: vi.fn(),
   requestInput: (de, du, field) => de[field],
   getKeyByValue: (object, value) => Object.keys(object).find((key) => object[key] === value),
-  bug_for_bug_compat: false
+  get bug_for_bug_compat() {
+    return bugForBugCompat;
+  }
 }));
 
 const { default: calc_ph } = await import('./3.2.3_plancher_haut.js');
@@ -36,6 +40,7 @@ const ROW_UPH0 = { uph0: '2', tv_uph0_id: '5' };
 const ROW_UPH = { uph: '0.3', tv_uph_id: '7' };
 
 beforeEach(() => {
+  bugForBugCompat = false;
   tv.mockReset();
   tv.mockImplementation((table) => {
     if (table === 'uph0') return { ...ROW_UPH0 };
@@ -62,6 +67,91 @@ describe('calc_ph - plancher non isolé', () => {
 
     expect(ph.donnee_intermediaire.uph0).toBe(2);
     expect(ph.donnee_intermediaire.uph).toBe(2);
+  });
+
+  test('Uph0 initialisé depuis une donnée intermédiaire préexistante', () => {
+    const ph = {
+      donnee_entree: {
+        methode_saisie_u: 'non isolé',
+        methode_saisie_u0: 'u0 non saisi car le u est saisi connu et justifié.'
+      },
+      donnee_intermediaire: { uph0: 1.5 }
+    };
+
+    calc_ph(ph, 'h1a', '1', '0');
+
+    // Aucune méthode ne recalcule Uph0 ici : la valeur préexistante est conservée
+    expect(ph.donnee_intermediaire.uph0).toBe(1.5);
+    expect(ph.donnee_intermediaire.uph).toBe(1.5);
+  });
+
+  test('Uph0 introuvable dans la table : erreur émise et uph0 non défini', () => {
+    tv.mockReturnValue(null);
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const ph = {
+      donnee_entree: {
+        methode_saisie_u: 'non isolé',
+        methode_saisie_u0:
+          'déterminé selon le matériau et épaisseur à partir de la table de valeur forfaitaire',
+        type_plancher_haut: 'terrasse'
+      }
+    };
+
+    calc_ph(ph, 'h1a', '1', '0');
+
+    expect(ph.donnee_intermediaire.uph0).toBeUndefined();
+    expect(error).toHaveBeenCalledWith(expect.stringContaining('uph0'));
+    error.mockRestore();
+  });
+});
+
+describe('calc_ph - calcul de Uph0 (calc_uph0)', () => {
+  test('saisie directe de Uph0 : valeur reprise depuis uph0_saisi sans accès table', () => {
+    const ph = {
+      donnee_entree: {
+        methode_saisie_u: 'non isolé',
+        methode_saisie_u0:
+          'saisie direct u0 justifiée à partir des documents justificatifs autorisés',
+        uph0_saisi: 0.9
+      }
+    };
+
+    calc_ph(ph, 'h1a', '1', '0');
+
+    expect(tv).not.toHaveBeenCalled();
+    expect(ph.donnee_intermediaire.uph0).toBe(0.9);
+    expect(ph.donnee_intermediaire.uph).toBe(0.9);
+  });
+
+  test('Uph0 non saisi car U est saisi : ni accès table, ni valeur Uph0', () => {
+    const ph = {
+      donnee_entree: {
+        methode_saisie_u: 'non isolé',
+        methode_saisie_u0: 'u0 non saisi car le u est saisi connu et justifié.'
+      }
+    };
+
+    calc_ph(ph, 'h1a', '1', '0');
+
+    expect(tv).not.toHaveBeenCalled();
+    expect(ph.donnee_intermediaire.uph0).toBeUndefined();
+    expect(ph.donnee_intermediaire.uph).toBeUndefined();
+  });
+
+  test('methode_saisie_u0 inconnue : avertissement émis et Uph0 non calculé', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const ph = {
+      donnee_entree: {
+        methode_saisie_u: 'non isolé',
+        methode_saisie_u0: 'valeur inexistante'
+      }
+    };
+
+    calc_ph(ph, 'h1a', '1', '0');
+
+    expect(warn).toHaveBeenCalledWith('methode_saisie_u0 inconnue:', 'valeur inexistante');
+    expect(ph.donnee_intermediaire.uph0).toBeUndefined();
+    warn.mockRestore();
   });
 });
 
@@ -136,6 +226,26 @@ describe('calc_ph - isolation inconnue (table forfaitaire)', () => {
     expect(ph.donnee_intermediaire.uph).toBe(0.3);
   });
 
+  test('Uph introuvable dans la table : erreur émise et uph non défini par tv_uph', () => {
+    tv.mockImplementation((table) => (table === 'uph0' ? { ...ROW_UPH0 } : null));
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const ph = {
+      donnee_entree: {
+        methode_saisie_u: 'isolation inconnue  (table forfaitaire)',
+        methode_saisie_u0: 'type de paroi inconnu (valeur par défaut)',
+        type_adjacence: 'extérieur',
+        type_plancher_haut: 'terrasse'
+      }
+    };
+
+    calc_ph(ph, 'h1a', '1', '0');
+
+    expect(error).toHaveBeenCalledWith(expect.stringContaining('uph'));
+    // di.uph vaut undefined avant le Math.min => min(undefined, 2) = NaN
+    expect(ph.donnee_intermediaire.uph).toBeNaN();
+    error.mockRestore();
+  });
+
   /**
    * Détermination du type de toiture (matcher de la table `uph`) selon l'adjacence.
    * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - page 21
@@ -184,6 +294,146 @@ describe('calc_ph - isolation inconnue (table forfaitaire)', () => {
     expect(tv).toHaveBeenCalledWith(
       'uph',
       expect.objectContaining({ enum_periode_construction_id: '6' })
+    );
+  });
+});
+
+/**
+ * Compatibilité "bug for bug" : lorsque le DPE fournit un `tv_uph_id`, on relit la ligne
+ * de la table `uph` pour, le cas échéant, corriger le type de toiture et l'effet Joule.
+ */
+describe('calc_ph - compatibilité bug for bug (récupération depuis tv_uph_id)', () => {
+  beforeEach(() => {
+    bugForBugCompat = true;
+  });
+
+  test('type_toiture "combles" du DPE : la valeur du DPE prime sur celle calculée', () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    // La ligne relue via tv_uph_id impose type_toiture = 'combles' et effet_joule = '0'
+    tv.mockImplementation((table, matcher) => {
+      if (table === 'uph0') return { ...ROW_UPH0 };
+      if (table === 'uph' && matcher.tv_uph_id) {
+        return { type_toiture: 'combles', effet_joule: '0' };
+      }
+      if (table === 'uph') {
+        // On vérifie ici que le matcher final utilise bien type_toiture = 'combles'
+        return matcher.type_toiture === 'combles' ? { ...ROW_UPH } : null;
+      }
+      return null;
+    });
+
+    const ph = {
+      donnee_entree: {
+        methode_saisie_u: 'isolation inconnue  (table forfaitaire)',
+        methode_saisie_u0: 'type de paroi inconnu (valeur par défaut)',
+        type_adjacence: 'extérieur', // calcul => 'terrasse'
+        type_plancher_haut: 'terrasse',
+        tv_uph_id: 7,
+        description: 'PH test'
+      }
+    };
+
+    calc_ph(ph, 'h1a', '1', '0');
+
+    expect(error).toHaveBeenCalled();
+    expect(tv).toHaveBeenCalledWith('uph', expect.objectContaining({ type_toiture: 'combles' }));
+    expect(ph.donnee_intermediaire.uph).toBe(0.3);
+    error.mockRestore();
+  });
+
+  test('effet_joule du DPE différent : la valeur du DPE est conservée dans le matcher', () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    tv.mockImplementation((table, matcher) => {
+      if (table === 'uph0') return { ...ROW_UPH0 };
+      if (table === 'uph' && matcher.tv_uph_id) {
+        // type_toiture 'terrasse' => pas de correction du type ; effet_joule différent => correction
+        return { type_toiture: 'terrasse', effet_joule: '1' };
+      }
+      if (table === 'uph') return { ...ROW_UPH };
+      return null;
+    });
+
+    const ph = {
+      donnee_entree: {
+        methode_saisie_u: 'isolation inconnue  (table forfaitaire)',
+        methode_saisie_u0: 'type de paroi inconnu (valeur par défaut)',
+        type_adjacence: 'extérieur',
+        type_plancher_haut: 'terrasse',
+        tv_uph_id: 7,
+        description: 'PH test'
+      }
+    };
+
+    calc_ph(ph, 'h1a', '1', '0');
+
+    expect(error).toHaveBeenCalled();
+    expect(tv).toHaveBeenCalledWith('uph', expect.objectContaining({ effet_joule: '1' }));
+    error.mockRestore();
+  });
+});
+
+describe('calc_ph - année de construction saisie (table forfaitaire)', () => {
+  test("période d'isolation renseignée : elle est utilisée comme période de la table", () => {
+    const ph = {
+      donnee_entree: {
+        methode_saisie_u: 'année de construction saisie (table forfaitaire)',
+        methode_saisie_u0: 'type de paroi inconnu (valeur par défaut)',
+        type_adjacence: 'extérieur',
+        type_plancher_haut: 'terrasse',
+        enum_periode_isolation_id: '6'
+      }
+    };
+
+    calc_ph(ph, 'h1a', '5', '0');
+
+    expect(tv).toHaveBeenCalledWith(
+      'uph',
+      expect.objectContaining({ enum_periode_construction_id: '6' })
+    );
+    expect(ph.donnee_intermediaire.uph).toBe(0.3);
+  });
+
+  test.each([
+    ['1', 'avant 1948'],
+    ['3', '1948-1974']
+  ])(
+    "période de construction ancienne (%s = %s) sans année d'isolation : isolation forcée à 1975-1977",
+    (pcId) => {
+      const ph = {
+        donnee_entree: {
+          methode_saisie_u: 'année de construction saisie (table forfaitaire)',
+          methode_saisie_u0: 'type de paroi inconnu (valeur par défaut)',
+          type_adjacence: 'extérieur',
+          type_plancher_haut: 'terrasse'
+        }
+      };
+
+      calc_ph(ph, 'h1a', pcId, '0');
+
+      // getKeyByValue(periode_isolation, '1975-1977') = '2'
+      expect(tv).toHaveBeenCalledWith(
+        'uph',
+        expect.objectContaining({ enum_periode_construction_id: '2' })
+      );
+    }
+  );
+
+  test("période de construction récente sans année d'isolation : période de construction conservée", () => {
+    const ph = {
+      donnee_entree: {
+        methode_saisie_u: 'année de construction saisie (table forfaitaire)',
+        methode_saisie_u0: 'type de paroi inconnu (valeur par défaut)',
+        type_adjacence: 'extérieur',
+        type_plancher_haut: 'terrasse'
+      }
+    };
+
+    calc_ph(ph, 'h1a', '5', '0');
+
+    // pc = '1989-2000' => pas de forçage, la période de construction '5' est conservée
+    expect(tv).toHaveBeenCalledWith(
+      'uph',
+      expect.objectContaining({ enum_periode_construction_id: '5' })
     );
   });
 });

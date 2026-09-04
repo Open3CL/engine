@@ -11,8 +11,12 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
  * - `getFicheTechnique` : présence d'un ventilateur.
  * La bibliothèque `mathjs` (evaluate) n'est pas mockée : c'est une fonction pure déterministe.
  */
+const state = vi.hoisted(() => ({ bug: false }));
+
 vi.mock('./utils.js', () => ({
-  bug_for_bug_compat: false,
+  get bug_for_bug_compat() {
+    return state.bug;
+  },
   tv: vi.fn(),
   tvColumnLines: vi.fn(() => []),
   convertExpression: vi.fn((x) => x)
@@ -20,8 +24,17 @@ vi.mock('./utils.js', () => ({
 
 vi.mock('./enums.js', () => ({
   default: {
-    type_generateur_ch: { 89: 'chaudière gaz standard 2001-2015' },
-    type_generateur_ecs: { 50: 'chaudière gaz standard' }
+    type_generateur_ch: {
+      89: 'chaudière gaz standard 2001-2015',
+      X: 'chaudière fioul',
+      Y: 'chaudière gaz'
+    },
+    type_generateur_ecs: {
+      50: 'chaudière gaz standard',
+      A: 'chaudière gaz',
+      B: 'chaudière fioul',
+      84: "système collectif par défaut en abscence d'information"
+    }
   }
 }));
 
@@ -55,6 +68,7 @@ beforeEach(() => {
   vi.mocked(updateGenerateurChaudieres).mockReset();
   vi.mocked(updateGenerateurPacs).mockReset();
   vi.mocked(getFicheTechnique).mockReset();
+  state.bug = false;
 });
 
 const ROW_DEFAUT = {
@@ -172,6 +186,323 @@ describe('tv_generateur_combustion - caractéristiques du générateur', () => {
     const de = { enum_type_generateur_ch_id: '89', ratio_virtualisation: 1, presence_ventouse: 0 };
     tv_generateur_combustion({}, di, de, 'ch', 200, -9, 1);
     expect(de.tv_generateur_combustion_id).toBeUndefined();
+  });
+
+  test('ratio de virtualisation absent : valeur de repli 1', () => {
+    tv.mockReturnValue({ ...ROW_DEFAUT, qp0_perc: 'Pn' });
+    const di = { pn: 20000 };
+    // pas de ratio_virtualisation -> `|| 1`
+    const de = { enum_type_generateur_ch_id: '89', presence_ventouse: 0 };
+    tv_generateur_combustion({}, di, de, 'ch', 200, -9, 1);
+    // qp0_perc = 'Pn' => qp0 = Pn(kW) * 1000 * ratio(=1) = pn
+    expect(di.qp0).toBe(20000);
+  });
+
+  test('qp0_perc exprimé en pourcentage : qp0 proportionnel à la puissance nominale', () => {
+    tv.mockReturnValue({ ...ROW_DEFAUT, qp0_perc: '2%' });
+    const di = { pn: 20000 };
+    const de = { enum_type_generateur_ch_id: '89', ratio_virtualisation: 1, presence_ventouse: 0 };
+    tv_generateur_combustion({}, di, de, 'ch', 200, -9, 1);
+    // '2%' => 0.02 (mathjs) ; contient '%' mais pas 'Pn' => qp0 = 0.02 * pn
+    expect(di.qp0).toBeCloseTo(400, 9);
+  });
+
+  test('qp0_perc absent : qp0 nul', () => {
+    const row = { ...ROW_DEFAUT };
+    delete row.qp0_perc;
+    tv.mockReturnValue(row);
+    const di = { pn: 20000 };
+    const de = { enum_type_generateur_ch_id: '89', ratio_virtualisation: 1, presence_ventouse: 0 };
+    tv_generateur_combustion({}, di, de, 'ch', 200, -9, 1);
+    expect(di.qp0).toBe(0);
+  });
+
+  test('pveil forfaitaire absent : valeur de repli 0', () => {
+    const row = { ...ROW_DEFAUT };
+    delete row.pveil;
+    tv.mockReturnValue(row);
+    const di = { pn: 20000 };
+    const de = { enum_type_generateur_ch_id: '89', ratio_virtualisation: 1, presence_ventouse: 0 };
+    tv_generateur_combustion({}, di, de, 'ch', 200, -9, 1);
+    expect(di.pveil).toBe(0);
+  });
+
+  test('critère de puissance : le critère satisfait est renseigné dans le matcher', () => {
+    tvColumnLines.mockReturnValue(['Pn ≤ 50', 'Pn > 50']);
+    tv.mockReturnValue({ ...ROW_DEFAUT });
+    const di = { pn: 20000 };
+    const de = { enum_type_generateur_ch_id: '89', ratio_virtualisation: 1, presence_ventouse: 0 };
+    tv_generateur_combustion({}, di, de, 'ch', 200, -9, 1);
+    // Pn = 20000 / (1 * 1000) = 20 ≤ 50 -> premier critère retenu, '≤' restauré
+    expect(tv).toHaveBeenCalledWith(
+      'generateur_combustion',
+      expect.objectContaining({ critere_pn: 'Pn ≤ 50' })
+    );
+  });
+
+  test('critère de puissance : aucun critère satisfait -> avertissement et critère nul', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    tvColumnLines.mockReturnValue(['Pn > 100']);
+    tv.mockReturnValue({ ...ROW_DEFAUT });
+    const di = { pn: 20000 };
+    const de = { enum_type_generateur_ch_id: '89', ratio_virtualisation: 1, presence_ventouse: 0 };
+    tv_generateur_combustion({}, di, de, 'ch', 200, -9, 1);
+    // Pn = 20 n'est pas > 100 -> aucun critère satisfait (ret reste undefined)
+    expect(tv).toHaveBeenCalledWith(
+      'generateur_combustion',
+      expect.objectContaining({ critere_pn: undefined })
+    );
+    expect(warnSpy).toHaveBeenCalled();
+    warnSpy.mockRestore();
+  });
+});
+
+/**
+ * 13.2 - Comportements spécifiques activés par bug_for_bug_compat (redressement de données DPE).
+ */
+describe('tv_generateur_combustion - compatibilité bug_for_bug_compat', () => {
+  test('générateur ECS collectif par défaut (84) : caractéristiques issues de tv_generateur_combustion_id', () => {
+    state.bug = true;
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    tv.mockReturnValue({ ...ROW_DEFAUT });
+    const di = { pn: 20000 };
+    const de = {
+      enum_type_generateur_ecs_id: '84',
+      tv_generateur_combustion_id: '42',
+      ratio_virtualisation: 1,
+      presence_ventouse: 0
+    };
+    tv_generateur_combustion({}, di, de, 'ecs', 200, -9, 1);
+    // La ligne est récupérée directement via l'identifiant du générateur à combustion
+    expect(tv).toHaveBeenCalledWith('generateur_combustion', {
+      tv_generateur_combustion_id: '42'
+    });
+    expect(de.tv_generateur_combustion_id).toBe(42);
+    expect(warnSpy).toHaveBeenCalled();
+    warnSpy.mockRestore();
+  });
+
+  test('générateur CH collectif par défaut (119) : même récupération directe', () => {
+    state.bug = true;
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    tv.mockReturnValue({ ...ROW_DEFAUT });
+    const di = { pn: 20000 };
+    const de = {
+      enum_type_generateur_ch_id: '119',
+      tv_generateur_combustion_id: '42',
+      ratio_virtualisation: 1,
+      presence_ventouse: 0
+    };
+    tv_generateur_combustion({}, di, de, 'ch', 200, -9, 1);
+    expect(tv).toHaveBeenCalledWith('generateur_combustion', {
+      tv_generateur_combustion_id: '42'
+    });
+    vi.restoreAllMocks();
+  });
+
+  test('type 84 sans tv_generateur_combustion_id : retour au chemin forfaitaire nominal', () => {
+    state.bug = true;
+    tv.mockReturnValue({ ...ROW_DEFAUT });
+    const di = { pn: 20000 };
+    const de = { enum_type_generateur_ecs_id: '84', ratio_virtualisation: 1, presence_ventouse: 0 };
+    tv_generateur_combustion({}, di, de, 'ecs', 200, -9, 1);
+    // Pas d'identifiant -> matcher forfaitaire construit avec le type de générateur
+    expect(tv).toHaveBeenCalledWith(
+      'generateur_combustion',
+      expect.objectContaining({ enum_type_generateur_ecs_id: '84' })
+    );
+  });
+
+  test('ECS : identifiant utilisé différent de celui du DPE non compatible -> erreur signalée', () => {
+    state.bug = true;
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    tv.mockImplementation((table, matcher) => {
+      // La ligne du DPE (id 99) ne référence pas le type de générateur ECS courant
+      if (matcher.tv_generateur_combustion_id === '99') {
+        return { tv_generateur_combustion_id: '99', enum_type_generateur_ecs_id: '60|61' };
+      }
+      return { ...ROW_DEFAUT };
+    });
+    const di = { pn: 20000 };
+    const de = {
+      enum_type_generateur_ecs_id: '50',
+      tv_generateur_combustion_id: '99',
+      ratio_virtualisation: 1,
+      presence_ventouse: 0
+    };
+    tv_generateur_combustion({}, di, de, 'ecs', 200, -9, 1);
+    expect(errSpy).toHaveBeenCalled();
+    errSpy.mockRestore();
+  });
+
+  test('ECS : identifiant du DPE cohérent avec le type de générateur -> aucune erreur', () => {
+    state.bug = true;
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    tv.mockImplementation((table, matcher) => {
+      if (matcher.tv_generateur_combustion_id === '99') {
+        return { tv_generateur_combustion_id: '99', enum_type_generateur_ecs_id: '50|60' };
+      }
+      return { ...ROW_DEFAUT };
+    });
+    const di = { pn: 20000 };
+    const de = {
+      enum_type_generateur_ecs_id: '50',
+      tv_generateur_combustion_id: '99',
+      ratio_virtualisation: 1,
+      presence_ventouse: 0
+    };
+    tv_generateur_combustion({}, di, de, 'ecs', 200, -9, 1);
+    // '50' figure dans '50|60' -> pas d'incohérence signalée
+    expect(errSpy).not.toHaveBeenCalled();
+    errSpy.mockRestore();
+  });
+
+  test('ECS : ligne DPE introuvable pour l’identifiant saisi -> aucune erreur', () => {
+    state.bug = true;
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    tv.mockImplementation((table, matcher) => {
+      if (matcher.tv_generateur_combustion_id === '99') return undefined;
+      return { ...ROW_DEFAUT };
+    });
+    const di = { pn: 20000 };
+    const de = {
+      enum_type_generateur_ecs_id: '50',
+      tv_generateur_combustion_id: '99',
+      ratio_virtualisation: 1,
+      presence_ventouse: 0
+    };
+    tv_generateur_combustion({}, di, de, 'ecs', 200, -9, 1);
+    expect(errSpy).not.toHaveBeenCalled();
+    errSpy.mockRestore();
+  });
+});
+
+/**
+ * 13.2 - Génération mixte Chauffage + ECS : redressement du type de générateur ECS.
+ */
+describe('tv_generateur_combustion - génération mixte (checkEcsVsChauffageForMixteGeneration)', () => {
+  /** Fabrique un dpe contenant un générateur de chauffage mixte (usage 3). */
+  function dpeAvecChMixte(chId) {
+    return {
+      logement: {
+        installation_chauffage_collection: {
+          installation_chauffage: [
+            {
+              generateur_chauffage_collection: {
+                generateur_chauffage: [
+                  {
+                    donnee_entree: {
+                      enum_usage_generateur_id: '3',
+                      enum_type_generateur_ch_id: chId
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    };
+  }
+
+  test('types ECS et CH différents : le type de générateur ECS est aligné sur celui du chauffage', () => {
+    state.bug = true;
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    tv.mockReturnValue({ ...ROW_DEFAUT });
+    const di = { pn: 20000 };
+    // ECS 'A' = chaudière gaz ; CH mixte 'X' = chaudière fioul -> alignement sur 'B' (chaudière fioul ECS)
+    const de = {
+      enum_type_generateur_ecs_id: 'A',
+      enum_usage_generateur_id: '3',
+      tv_generateur_combustion_id: '42',
+      ratio_virtualisation: 1,
+      presence_ventouse: 0
+    };
+    tv_generateur_combustion(dpeAvecChMixte('X'), di, de, 'ecs', 200, -9, 1);
+    expect(tv).toHaveBeenCalledWith(
+      'generateur_combustion',
+      expect.objectContaining({ enum_type_generateur_ecs_id: 'B' })
+    );
+    expect(errSpy).toHaveBeenCalled();
+    errSpy.mockRestore();
+  });
+
+  test('types ECS et CH identiques : type de générateur ECS conservé', () => {
+    state.bug = true;
+    tv.mockReturnValue({ ...ROW_DEFAUT });
+    const di = { pn: 20000 };
+    // ECS 'A' = chaudière gaz ; CH mixte 'Y' = chaudière gaz -> pas de changement
+    const de = {
+      enum_type_generateur_ecs_id: 'A',
+      enum_usage_generateur_id: '3',
+      tv_generateur_combustion_id: '42',
+      ratio_virtualisation: 1,
+      presence_ventouse: 0
+    };
+    tv_generateur_combustion(dpeAvecChMixte('Y'), di, de, 'ecs', 200, -9, 1);
+    expect(tv).toHaveBeenCalledWith(
+      'generateur_combustion',
+      expect.objectContaining({ enum_type_generateur_ecs_id: 'A' })
+    );
+  });
+
+  test('aucun générateur de chauffage mixte : type de générateur ECS conservé', () => {
+    state.bug = true;
+    tv.mockReturnValue({ ...ROW_DEFAUT });
+    const di = { pn: 20000 };
+    const dpe = {
+      logement: {
+        installation_chauffage_collection: {
+          installation_chauffage: [
+            {
+              generateur_chauffage_collection: {
+                // usage 1 (non mixte) -> filtré
+                generateur_chauffage: [
+                  {
+                    donnee_entree: {
+                      enum_usage_generateur_id: '1',
+                      enum_type_generateur_ch_id: 'X'
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    };
+    const de = {
+      enum_type_generateur_ecs_id: 'A',
+      enum_usage_generateur_id: '3',
+      tv_generateur_combustion_id: '42',
+      ratio_virtualisation: 1,
+      presence_ventouse: 0
+    };
+    tv_generateur_combustion(dpe, di, de, 'ecs', 200, -9, 1);
+    expect(tv).toHaveBeenCalledWith(
+      'generateur_combustion',
+      expect.objectContaining({ enum_type_generateur_ecs_id: 'A' })
+    );
+  });
+
+  test('générateur ECS par défaut (previous dans la liste d’exclusion) : aucun redressement', () => {
+    state.bug = true;
+    tv.mockReturnValue({ ...ROW_DEFAUT });
+    const di = { pn: 20000 };
+    const de = {
+      enum_type_generateur_ecs_id: 'A',
+      previous_enum_type_generateur_ecs_id: '78',
+      enum_usage_generateur_id: '3',
+      tv_generateur_combustion_id: '42',
+      ratio_virtualisation: 1,
+      presence_ventouse: 0
+    };
+    tv_generateur_combustion(dpeAvecChMixte('X'), di, de, 'ecs', 200, -9, 1);
+    // previous = '78' (autre système à combustion gaz) -> pas assez précis, on conserve 'A'
+    expect(tv).toHaveBeenCalledWith(
+      'generateur_combustion',
+      expect.objectContaining({ enum_type_generateur_ecs_id: 'A' })
+    );
   });
 });
 

@@ -8,12 +8,18 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
  * - `requestInput` / `requestInputID` : passe-plats vers les données d'entrée ;
  * - `bug_for_bug_compat` : désactivé pour isoler le comportement nominal.
  */
+const state = vi.hoisted(() => ({ bug: false }));
+
 vi.mock('./enums.js', () => ({
   default: {
     type_generateur_ch: {
       89: 'chaudière gaz standard 2001-2015',
       55: 'chaudière bois bûche avant 1978',
-      96: 'chaudière gaz à condensation 2001-2015'
+      96: 'chaudière gaz à condensation 2001-2015',
+      70: 'chaudière gaz basse température 2001-2015',
+      12: 'radiateur à gaz',
+      33: 'générateur à air chaud',
+      99: 'type de générateur inconnu'
     },
     type_energie: {
       2: 'gaz naturel',
@@ -23,7 +29,9 @@ vi.mock('./enums.js', () => ({
 }));
 
 vi.mock('./utils.js', () => ({
-  bug_for_bug_compat: false,
+  get bug_for_bug_compat() {
+    return state.bug;
+  },
   tv: vi.fn(),
   requestInput: vi.fn((de, du, field) => de[field]),
   requestInputID: vi.fn((de, du, field) => de[`enum_${field}_id`])
@@ -36,6 +44,7 @@ const { tv } = await import('./utils.js');
 
 beforeEach(() => {
   vi.mocked(tv).mockReset();
+  state.bug = false;
 });
 
 /**
@@ -99,6 +108,36 @@ describe('tv_temp_fonc_30_100 - températures de fonctionnement', () => {
     );
     expect(di.temp_fonc_30).toBe(55);
   });
+
+  test('conserve la température à 100 % la plus élevée entre plusieurs émetteurs', () => {
+    tv.mockImplementation((table, matcher) => {
+      if (table !== 'temp_fonc_100') return null;
+      return matcher.enum_temp_distribution_ch_id === '3'
+        ? { tv_temp_fonc_100_id: 'a', temp_fonc_100: '60' }
+        : { tv_temp_fonc_100_id: 'b', temp_fonc_100: '75' };
+    });
+    const di = {};
+    tv_temp_fonc_30_100(
+      di,
+      { enum_type_generateur_ch_id: '89' },
+      {},
+      [emetteur(), emetteur({ enum_temp_distribution_ch_id: '4' })],
+      1975
+    );
+    // La comparaison `>` conserve la plus grande des deux valeurs
+    expect(di.temp_fonc_100).toBe(75);
+  });
+
+  test('aucune ligne forfaitaire trouvée : erreurs signalées pour temp_fonc_30 et temp_fonc_100', () => {
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    tv.mockReturnValue(null);
+    const di = {};
+    tv_temp_fonc_30_100(di, { enum_type_generateur_ch_id: '89' }, {}, [emetteur()], 1975);
+    expect(di.temp_fonc_30).toBeUndefined();
+    expect(di.temp_fonc_100).toBeUndefined();
+    expect(errSpy).toHaveBeenCalledTimes(2);
+    errSpy.mockRestore();
+  });
 });
 
 /**
@@ -149,6 +188,101 @@ describe('calc_generateur_combustion_ch - rendement de génération', () => {
     // valeurs de référence de régression
     expect(di.rg).toBeCloseTo(0.9281152399114512, 9);
     expect(di.rg_dep).toBeCloseTo(0.9344861707155592, 9);
+  });
+
+  test('radiateur à gaz : branche de calcul dédiée', () => {
+    const di = { pn: 20000, rpn: 0.9, rpint: 0.85, qp0: 200, temp_fonc_30: 40, temp_fonc_100: 70 };
+    const de = {
+      enum_type_generateur_ch_id: '12',
+      enum_type_energie_id: '2',
+      type_energie: 'gaz naturel',
+      presence_regulation_combustion: false,
+      description: 't'
+    };
+    calc_generateur_combustion_ch({}, di, de, { cdimref: 0.8, cdimrefDep: 0.6 });
+    // valeurs de référence de régression
+    expect(di.rg).toBeCloseTo(0.8851321252668564, 9);
+    expect(di.rg_dep).toBeCloseTo(0.8869221230591896, 9);
+  });
+
+  test('générateur à air chaud : branche de calcul dédiée', () => {
+    const di = { pn: 20000, rpn: 0.9, rpint: 0.85, qp0: 200, temp_fonc_30: 40, temp_fonc_100: 70 };
+    const de = {
+      enum_type_generateur_ch_id: '33',
+      enum_type_energie_id: '2',
+      type_energie: 'gaz naturel',
+      presence_regulation_combustion: false,
+      description: 't'
+    };
+    calc_generateur_combustion_ch({}, di, de, { cdimref: 0.8, cdimrefDep: 0.6 });
+    // valeurs de référence de régression
+    expect(di.rg).toBeCloseTo(0.8655833354015402, 9);
+    expect(di.rg_dep).toBeCloseTo(0.8746954076850985, 9);
+  });
+
+  test('chaudière basse température : coefficients dédiés (a = 0.1, b = 40)', () => {
+    const di = { pn: 20000, rpn: 0.9, rpint: 0.85, qp0: 200, temp_fonc_30: 40, temp_fonc_100: 70 };
+    const de = {
+      enum_type_generateur_ch_id: '70',
+      enum_type_energie_id: '2',
+      type_energie: 'gaz naturel',
+      presence_regulation_combustion: false,
+      description: 't'
+    };
+    calc_generateur_combustion_ch({}, di, de, { cdimref: 0.8, cdimrefDep: 0.6 });
+    // valeurs de référence de régression
+    expect(di.rg).toBeCloseTo(0.8513271171577527, 9);
+    expect(di.rg_dep).toBeCloseTo(0.8655664711109103, 9);
+  });
+
+  test('type de générateur inconnu : aucun rendement calculé (avertissement)', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const di = { pn: 20000, rpn: 0.9, rpint: 0.85, qp0: 200, temp_fonc_30: 40, temp_fonc_100: 70 };
+    const de = {
+      enum_type_generateur_ch_id: '99',
+      enum_type_energie_id: '2',
+      type_energie: 'gaz naturel',
+      description: 't'
+    };
+    calc_generateur_combustion_ch({}, di, de, { cdimref: 0.8, cdimrefDep: 0.6 });
+    // QPx renvoie undefined pour un type non reconnu -> rendement NaN
+    expect(Number.isNaN(di.rg)).toBe(true);
+    expect(warnSpy).toHaveBeenCalled();
+    warnSpy.mockRestore();
+  });
+
+  test('cdimref absent (du vide) : valeur de repli 0 -> Tch_xfinal saturé à 1', () => {
+    const di = { pn: 20000, rpn: 0.9, rpint: 0.85, qp0: 200, temp_fonc_30: 40, temp_fonc_100: 70 };
+    const de = {
+      enum_type_generateur_ch_id: '89',
+      enum_type_energie_id: '2',
+      type_energie: 'gaz naturel',
+      presence_regulation_combustion: false,
+      description: 't'
+    };
+    calc_generateur_combustion_ch({}, di, de, {});
+    // Cdimref = 0 -> x/0 = Infinity -> min(1, ...) = 1 pour tous les x, nominal = dépensier
+    expect(di.rg).toBeCloseTo(0.8967281540325838, 9);
+    expect(di.rg_dep).toBeCloseTo(0.8967281540325838, 9);
+  });
+
+  test('bug_for_bug_compat : correction de qp0 exprimé en kW (< 1) vers des W', () => {
+    state.bug = true;
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const di = { pn: 20000, rpn: 0.9, rpint: 0.85, qp0: 0.2, temp_fonc_30: 40, temp_fonc_100: 70 };
+    const de = {
+      enum_type_generateur_ch_id: '89',
+      enum_type_energie_id: '2',
+      type_energie: 'gaz naturel',
+      presence_regulation_combustion: false,
+      description: 't'
+    };
+    calc_generateur_combustion_ch({}, di, de, { cdimref: 0.8, cdimrefDep: 0.6 });
+    // qp0 < 1 -> multiplié par 1000 => 200 (passage kW -> W)
+    expect(di.qp0).toBe(200);
+    // valeur de référence de régression (chaudière standard, pn = 20000, qp0 corrigé à 200)
+    expect(di.rg).toBeCloseTo(0.8566147558351076, 9);
+    warnSpy.mockRestore();
   });
 
   test('la présence de régulation modifie le rendement (tf30 vs tf100)', () => {

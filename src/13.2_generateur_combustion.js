@@ -190,6 +190,8 @@ export function tv_generateur_combustion(dpe, di, de, type, GV, tbase, methodeSa
   if (methodeSaisie === 1 || !di.pveilleuse) {
     di.pveil = Number(row.pveil) || 0;
   } else {
+    // La branche else n'est atteinte que si di.pveilleuse est vrai, donc le repli `|| 0` est mort.
+    /* c8 ignore next */
     di.pveil = di.pveilleuse || 0;
   }
 }

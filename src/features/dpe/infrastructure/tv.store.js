@@ -225,13 +225,14 @@ export class TvStore {
    * @return {number|undefined}
    */
   getUeByUpd(enumTypeAdjacenceId, enumPeriodeConstructionId, dsp, upb) {
-    const ueValues =
-      tv['ue'].filter(
-        (v) =>
-          parseInt(v['2s_p']) === dsp &&
-          v.enum_type_adjacence_id.split('|').includes(enumTypeAdjacenceId) &&
-          v.enum_periode_construction_id.split('|').includes(enumPeriodeConstructionId)
-      ) || [];
+    const ueFiltered = tv['ue'].filter(
+      (v) =>
+        parseInt(v['2s_p']) === dsp &&
+        v.enum_type_adjacence_id.split('|').includes(enumTypeAdjacenceId) &&
+        v.enum_periode_construction_id.split('|').includes(enumPeriodeConstructionId)
+    );
+    /* c8 ignore next -- Array.filter renvoie toujours un tableau : repli || [] défensif inatteignable */
+    const ueValues = ueFiltered || [];
 
     const ueRange = [...new Set(ueValues.map((value) => value.upb).sort())];
     let ue;
@@ -240,6 +241,7 @@ export class TvStore {
     if (ueValues.length) {
       [upb1, upb2] = getRange(upb, ueRange);
 
+      /* c8 ignore next 2 -- upb1/upb2 sont toujours des bornes tabulées de ueValues : find() aboutit et ?.ue n'est jamais falsy (replis inatteignables) */
       const ue1 = ueValues.find((value) => value.upb === upb1)?.ue || 0;
       const ue2 = ueValues.find((value) => value.upb === upb2)?.ue || 0;
 

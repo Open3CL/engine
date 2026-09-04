@@ -160,6 +160,27 @@ describe('Generateur du contexte du calcul', () => {
     });
   });
 
+  test("DPE appartement généré à partir des données d'un DPE immeuble", () => {
+    // Méthode 10 : appartement issu des données immeuble.
+    // -> typeDpe APPARTEMENT_A_PARTIR_IMMEUBLE et surface habitable = celle de l'immeuble.
+    const dpe = {
+      logement: {
+        meteo: {},
+        caracteristique_generale: {
+          enum_methode_application_dpe_log_id: '10',
+          surface_habitable_logement: 48.9,
+          surface_habitable_immeuble: 105
+        }
+      }
+    };
+
+    expect(contexteBuilder.fromDpe(dpe)).toMatchObject({
+      typeHabitation: TypeHabitation.APPARTEMENT,
+      typeDpe: TypeDpe.APPARTEMENT_A_PARTIR_IMMEUBLE,
+      surfaceHabitable: 105
+    });
+  });
+
   test('Contexte avec calcul ilpa', () => {
     const dpe = {
       logement: {

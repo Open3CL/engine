@@ -45,12 +45,16 @@ vi.mock('./9_generateur_ch.js', () => ({
   calc_Qrec_gen_j: vi.fn()
 }));
 
+const utilState = vi.hoisted(() => ({ bug: false }));
 vi.mock('./utils.js', () => ({
   mois_liste: ['Janvier'],
-  bug_for_bug_compat: false
+  get bug_for_bug_compat() {
+    return utilState.bug;
+  }
 }));
 
 const { default: calc_besoin_ch, calc_Fj, calc_bvj } = await import('./9_besoin_ch.js');
+const { default: tvsBch } = await import('./tv.js');
 const { calc_ai_j, calc_as_j } = await import('./6.1_apport_gratuit.js');
 const { calc_sse_j } = await import('./6.2_surface_sud_equivalente.js');
 const { calc_besoin_ecs_j } = await import('./11_besoin_ecs.js');
@@ -221,5 +225,157 @@ describe('calc_besoin_ch - agrégation mensuelle du besoin de chauffage', () => 
     expect(ret.pertes_distribution_ecs_recup).toBeGreaterThan(0);
     // la récupération ECS réduit le besoin sous la valeur sans récupération
     expect(ret.besoin_ch).toBeLessThan(93.04163529546415);
+  });
+});
+
+/**
+ * Branches complémentaires : récupération de stockage ECS, cas immeuble,
+ * degrés-heures nuls et compatibilité "bug for bug".
+ */
+describe('calc_besoin_ch - branches complémentaires', () => {
+  beforeEach(() => {
+    utilState.bug = false;
+    vi.mocked(calc_ai_j).mockReset().mockReturnValue(5000);
+    vi.mocked(calc_as_j).mockReset().mockReturnValue(2000);
+    vi.mocked(calc_sse_j).mockReset().mockReturnValue(10);
+    vi.mocked(calc_besoin_ecs_j).mockReset().mockReturnValue(10);
+    vi.mocked(calc_Qrec_gen_j).mockReset().mockReturnValue(0);
+  });
+
+  /**
+   * 11.4 - Plusieurs systèmes d'ECS : le besoin ECS est proratisé (1 / n).
+   */
+  test('plusieurs installations ECS : prorata appliqué au besoin ECS', () => {
+    const instal_ecs = [
+      {
+        donnee_entree: { enum_type_installation_id: '2', rdim: 1 },
+        generateur_ecs_collection: { generateur_ecs: [] }
+      },
+      {
+        donnee_entree: { enum_type_installation_id: '2', rdim: 1 },
+        generateur_ecs_collection: { generateur_ecs: [] }
+      }
+    ];
+    const ret = calc_besoin_ch(0, 0, 0, 0, 100, 100, 3, instal_ecs, [], [], null, 'maison', 1);
+    expect(ret.pertes_distribution_ecs_recup).toBeGreaterThan(0);
+  });
+
+  /**
+   * 17.2.1.1 - Installation ECS simple en volume chauffé : récupération de
+   * stockage (Qgw) prise en compte, sauf ballon/générateur hors volume chauffé.
+   */
+  test('installation ECS simple : récupération de stockage selon la position du ballon', () => {
+    const instal_ecs = [
+      {
+        donnee_entree: { enum_type_installation_id: '1' }, // rdim absent => repli sur 1
+        generateur_ecs_collection: {
+          generateur_ecs: [
+            {
+              // en volume chauffé => récupération comptée
+              donnee_entree: { position_volume_chauffe_stockage: 1, position_volume_chauffe: 1 },
+              donnee_intermediaire: { Qgw: 100 }
+            },
+            {
+              // stockage hors volume chauffé => ignoré
+              donnee_entree: { position_volume_chauffe_stockage: 0, position_volume_chauffe: 1 },
+              donnee_intermediaire: { Qgw: 100 }
+            },
+            {
+              // générateur hors volume chauffé => ignoré
+              donnee_entree: { position_volume_chauffe_stockage: 1, position_volume_chauffe: 0 },
+              donnee_intermediaire: { Qgw: 100 }
+            },
+            {
+              // en volume chauffé mais sans Qgw => contribution nulle (Qgw || 0)
+              donnee_entree: { position_volume_chauffe_stockage: 1, position_volume_chauffe: 1 },
+              donnee_intermediaire: {}
+            }
+          ]
+        }
+      }
+    ];
+    const ret = calc_besoin_ch(0, 0, 0, 0, 100, 100, 3, instal_ecs, [], [], null, 'maison', 1);
+    // un seul ballon récupérable (Qgw = 100) => pertes de stockage strictement positives
+    expect(ret.pertes_stockage_ecs_recup).toBeGreaterThan(0);
+  });
+
+  /**
+   * 9.1.1 - Un générateur sans position en volume chauffé renseignée (?? 0)
+   * n'est pas retenu pour la récupération de génération.
+   */
+  test("générateur sans position en volume chauffé renseignée n'est pas récupéré", () => {
+    vi.mocked(calc_Qrec_gen_j).mockReturnValue(1000);
+    const instal_ch = [
+      {
+        generateur_chauffage_collection: {
+          generateur_chauffage: [
+            {
+              donnee_intermediaire: { qp0: 1 },
+              donnee_entree: {} // position_volume_chauffe indéfinie => ?? 0 => exclu
+            }
+          ]
+        }
+      }
+    ];
+    const ret = calc_besoin_ch(0, 0, 0, 0, 100, 100, 3, [], instal_ch, [], null, 'maison', 1);
+    expect(calc_Qrec_gen_j).not.toHaveBeenCalled();
+    expect(ret.pertes_generateur_ch_recup).toBe(0);
+  });
+
+  /**
+   * Immeuble : la récupération ECS est mutualisée (prorata rdim / nombre de
+   * logements) et le besoin ECS est agrégé avant application du facteur Qrec.
+   */
+  test('cas immeuble : mutualisation de la récupération ECS (rdim / nbLogements)', () => {
+    const instal_ecs = [
+      {
+        donnee_entree: { enum_type_installation_id: '1', rdim: 2 },
+        generateur_ecs_collection: { generateur_ecs: [] }
+      }
+    ];
+    const ret = calc_besoin_ch(0, 0, 0, 0, 100, 100, 3, instal_ecs, [], [], null, 'immeuble', 4);
+    expect(ret.pertes_distribution_ecs_recup).toBeGreaterThan(0);
+  });
+
+  /**
+   * Un mois sans degrés-heures (dh19/dh21 = 0) donne des déperditions bvj nulles.
+   */
+  test('degrés-heures mensuels nuls : besoin nul sur le mois', () => {
+    const dh19 = tvsBch.dh19[0].ca1.Janvier.h1a;
+    const dh21 = tvsBch.dh21[0].ca1.Janvier.h1a;
+    tvsBch.dh19[0].ca1.Janvier.h1a = 0;
+    tvsBch.dh21[0].ca1.Janvier.h1a = 0;
+    try {
+      const ret = calc_besoin_ch(0, 0, 0, 0, 100, 100, 3, [], [], [], null, 'maison', 1);
+      expect(ret.besoin_ch).toBe(0);
+      expect(ret.besoin_ch_depensier).toBe(0);
+    } finally {
+      tvsBch.dh19[0].ca1.Janvier.h1a = dh19;
+      tvsBch.dh21[0].ca1.Janvier.h1a = dh21;
+    }
+  });
+
+  /**
+   * En mode "bug for bug", la récupération de génération est divisée par 1000
+   * (reproduction d'une anomalie historique).
+   */
+  test('compatibilité "bug for bug" : récupération de génération divisée par 1000', () => {
+    utilState.bug = true;
+    vi.mocked(calc_Qrec_gen_j).mockReturnValue(1000);
+    const instal_ch = [
+      {
+        generateur_chauffage_collection: {
+          generateur_chauffage: [
+            {
+              donnee_intermediaire: { qp0: 1 },
+              donnee_entree: { position_volume_chauffe: 1 }
+            }
+          ]
+        }
+      }
+    ];
+    const ret = calc_besoin_ch(0, 0, 0, 0, 100, 100, 3, [], instal_ch, [], null, 'maison', 1);
+    // 1000 / 1000 = 1 Wh récupéré sur le seul mois
+    expect(ret.pertes_generateur_ch_recup).toBeCloseTo(1, 9);
   });
 });

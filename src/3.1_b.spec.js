@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 /**
  * Dépendances mockées pour isoler la logique de `3.1_b.js` :
@@ -7,6 +7,12 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
  * - `bug_for_bug_compat` : désactivé pour isoler le comportement nominal ;
  * - `enums` : mapping minimal nécessaire au calcul.
  */
+/**
+ * `bug_for_bug_compat` est exposé via un accesseur adossé à un état hoisté afin de pouvoir
+ * l'activer sur les tests reproduisant les comportements bugués des DPE réels.
+ */
+const state = vi.hoisted(() => ({ bug: false }));
+
 vi.mock('./utils.js', () => ({
   tv: vi.fn(),
   requestInputID: (de, du, field) => {
@@ -15,7 +21,9 @@ vi.mock('./utils.js', () => ({
     return de[enumName];
   },
   requestInput: (de, du, field) => de[field],
-  bug_for_bug_compat: false
+  get bug_for_bug_compat() {
+    return state.bug;
+  }
 }));
 
 vi.mock('./enums.js', () => ({
@@ -31,8 +39,16 @@ const { tv } = await import('./utils.js');
 
 const TABLE = 'coef_reduction_deperdition';
 
+let errorSpy;
+
 beforeEach(() => {
   tv.mockReset();
+  state.bug = false;
+  errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+});
+
+afterEach(() => {
+  errorSpy.mockRestore();
 });
 
 /**
@@ -178,5 +194,174 @@ describe('b - calcul du coefficient de réduction des déperditions', () => {
     b(di, de, {}, 1);
 
     expect(di.b).toBeUndefined();
+  });
+
+  /**
+   * Configuration "local chauffé non accessible" (cfg_isolation_lnc = 1) : le rapport aiu/aue
+   * n'est pas connu, l'adjacence est retirée du matcher.
+   */
+  test('local chauffé non accessible (cfg 1) : adjacence retirée du matcher', () => {
+    tv.mockReturnValue({ b: '0.95', tv_coef_reduction_deperdition_id: '300' });
+    const di = {};
+    const de = {
+      enum_type_adjacence_id: '8',
+      enum_cfg_isolation_lnc_id: '1',
+      surface_aue: 20
+    };
+
+    b(di, de, {}, 1);
+
+    expect(tv).toHaveBeenCalledWith(TABLE, { enum_cfg_isolation_lnc_id: '1' });
+    expect(di.b).toBe(0.95);
+  });
+
+  /**
+   * Rapport surface_aiu / surface_aue égal exactement à la plus petite borne (0,25) :
+   * seule la borne supérieure aiu_aue_max est renseignée.
+   */
+  test('rapport égal à la borne minimale (0,25) : seule aiu_aue_max est renseignée', () => {
+    tv.mockReturnValue({ b: '0.85', tv_coef_reduction_deperdition_id: '150' });
+    const di = {};
+    const de = {
+      enum_type_adjacence_id: '8',
+      enum_cfg_isolation_lnc_id: '2',
+      surface_aiu: 5,
+      surface_aue: 20 // rapport = 0,25
+    };
+
+    b(di, de, {}, 1);
+
+    expect(tv).toHaveBeenCalledWith(TABLE, {
+      enum_type_adjacence_id: '8',
+      enum_cfg_isolation_lnc_id: '2',
+      aiu_aue_max: '≤ 0,25'
+    });
+    expect(di.b).toBe(0.85);
+  });
+
+  /**
+   * Compatibilité bug : surface_aiu === surface_aue mais le DPE a renseigné des bornes aiu/aue
+   * via tv_coef_reduction_deperdition_id différentes des bornes par défaut. Ces bornes sont
+   * conservées (avec émission d'une erreur explicative).
+   */
+  test('compat bug : bornes aiu/aue issues du DPE conservées malgré aiu === aue', () => {
+    state.bug = true;
+    tv.mockImplementation((table, matcher) => {
+      // 1er appel : lecture de la ligne référencée par tv_coef_reduction_deperdition_id
+      if (matcher.tv_coef_reduction_deperdition_id) {
+        return { aiu_aue_min: '0,50 <', aiu_aue_max: '≤ 0,75' };
+      }
+      // 2e appel : lecture de la valeur de b avec le matcher final
+      return { b: '0.8', tv_coef_reduction_deperdition_id: '200' };
+    });
+    const di = {};
+    const de = {
+      enum_type_adjacence_id: '8',
+      enum_cfg_isolation_lnc_id: '2',
+      surface_aiu: 20,
+      surface_aue: 20,
+      tv_coef_reduction_deperdition_id: 5,
+      description: 'paroi test'
+    };
+
+    b(di, de, {}, 1);
+
+    expect(tv).toHaveBeenLastCalledWith(TABLE, {
+      enum_type_adjacence_id: '8',
+      enum_cfg_isolation_lnc_id: '2',
+      aiu_aue_min: '0,50 <',
+      aiu_aue_max: '≤ 0,75'
+    });
+    expect(errorSpy).toHaveBeenCalled();
+    expect(di.b).toBe(0.8);
+  });
+
+  /**
+   * Compat bug : la ligne référencée ne fournit pas de bornes (valeurs absentes) : les bornes
+   * par défaut '0,75 <' et '≤ 1,00' sont conservées et aucune erreur n'est émise.
+   */
+  test('compat bug : bornes absentes dans le DPE, bornes par défaut conservées', () => {
+    state.bug = true;
+    tv.mockImplementation((table, matcher) => {
+      if (matcher.tv_coef_reduction_deperdition_id) {
+        return { aiu_aue_min: undefined, aiu_aue_max: undefined };
+      }
+      return { b: '0.7', tv_coef_reduction_deperdition_id: '201' };
+    });
+    const di = {};
+    const de = {
+      enum_type_adjacence_id: '8',
+      enum_cfg_isolation_lnc_id: '2',
+      surface_aiu: 20,
+      surface_aue: 20,
+      tv_coef_reduction_deperdition_id: 5
+    };
+
+    b(di, de, {}, 1);
+
+    expect(tv).toHaveBeenLastCalledWith(TABLE, {
+      enum_type_adjacence_id: '8',
+      enum_cfg_isolation_lnc_id: '2',
+      aiu_aue_min: '0,75 <',
+      aiu_aue_max: '≤ 1,00'
+    });
+    expect(errorSpy).not.toHaveBeenCalled();
+    expect(di.b).toBe(0.7);
+  });
+
+  /**
+   * Compat bug : aucune ligne référencée retournée (tv_coef_reduction_deperdition_id présent
+   * mais table vide) : les bornes par défaut sont conservées.
+   */
+  test('compat bug : aucune ligne référencée, bornes par défaut conservées', () => {
+    state.bug = true;
+    tv.mockImplementation((table, matcher) => {
+      if (matcher.tv_coef_reduction_deperdition_id) return null;
+      return { b: '0.72', tv_coef_reduction_deperdition_id: '202' };
+    });
+    const di = {};
+    const de = {
+      enum_type_adjacence_id: '8',
+      enum_cfg_isolation_lnc_id: '2',
+      surface_aiu: 20,
+      surface_aue: 20,
+      tv_coef_reduction_deperdition_id: 5
+    };
+
+    b(di, de, {}, 1);
+
+    expect(tv).toHaveBeenLastCalledWith(TABLE, {
+      enum_type_adjacence_id: '8',
+      enum_cfg_isolation_lnc_id: '2',
+      aiu_aue_min: '0,75 <',
+      aiu_aue_max: '≤ 1,00'
+    });
+    expect(di.b).toBe(0.72);
+  });
+
+  /**
+   * Compat bug activée mais tv_coef_reduction_deperdition_id absent : le bloc de reprise n'est
+   * pas exécuté, les bornes par défaut sont utilisées directement.
+   */
+  test('compat bug sans tv_coef_reduction_deperdition_id : bornes par défaut', () => {
+    state.bug = true;
+    tv.mockReturnValue({ b: '0.7', tv_coef_reduction_deperdition_id: '203' });
+    const di = {};
+    const de = {
+      enum_type_adjacence_id: '8',
+      enum_cfg_isolation_lnc_id: '2',
+      surface_aiu: 20,
+      surface_aue: 20
+    };
+
+    b(di, de, {}, 1);
+
+    expect(tv).toHaveBeenCalledWith(TABLE, {
+      enum_type_adjacence_id: '8',
+      enum_cfg_isolation_lnc_id: '2',
+      aiu_aue_min: '0,75 <',
+      aiu_aue_max: '≤ 1,00'
+    });
+    expect(di.b).toBe(0.7);
   });
 });

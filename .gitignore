@@ -27,3 +27,4 @@ dist/reports/corpus/*/*.csv
 !dist/reports/corpus/**/corpus_dpe_list_above_threshold_main.json
 
 *.db
+/test-results/junit.xml
