@@ -24,11 +24,14 @@ export function calc_besoin_ecs_j(ca, mois, zc, nadeq, depensier) {
 export default function calc_besoin_ecs(ca, zc, nadeq) {
   const ret = {
     besoin_ecs: 0,
-    besoin_ecs_depensier: 0
+    besoin_ecs_depensier: 0,
+    besoin_ecs_par_mois: {}
   };
   for (const mois of mois_liste) {
-    ret.besoin_ecs += calc_besoin_ecs_j(ca, mois, zc, nadeq, false);
+    const becs_j = calc_besoin_ecs_j(ca, mois, zc, nadeq, false);
+    ret.besoin_ecs += becs_j;
     ret.besoin_ecs_depensier += calc_besoin_ecs_j(ca, mois, zc, nadeq, true);
+    ret.besoin_ecs_par_mois[mois] = becs_j;
   }
   return ret;
 }
