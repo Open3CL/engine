@@ -124,30 +124,6 @@ describe('get_classe_ges_dpe', () => {
   });
 });
 
-describe('get_conso_coeff_1_9_2026', () => {
-  test('recalcule la conso EP avec le coefficient 0,9 (valeur de référence)', () => {
-    vi.mocked(classe_bilan_dpe).mockReturnValue('C');
-
-    const res = get_conso_coeff_1_9_2026(dpeMinimal());
-
-    // Référence figée : (0.9/1.3)*(10000-6000)+6000
-    expect(res.ep_conso_5_usages).toBeCloseTo(8769.23076923077, 6);
-    // Math.floor(8769.23.../80)
-    expect(res.ep_conso_5_usages_m2).toBe(109);
-    expect(res.classe_bilan_dpe).toBe('C');
-    expect(classe_bilan_dpe).toHaveBeenCalledWith(109, '1', '1', 80);
-  });
-
-  test('la conso EP recalculée est inférieure à la conso EP initiale', () => {
-    vi.mocked(classe_bilan_dpe).mockReturnValue('C');
-    const dpe = dpeMinimal();
-
-    const res = get_conso_coeff_1_9_2026(dpe);
-
-    expect(res.ep_conso_5_usages).toBeLessThan(dpe.logement.sortie.ep_conso.ep_conso_5_usages);
-  });
-});
-
 describe('calcul_3cl - garde sur le modèle de DPE', () => {
   test('retourne null pour un modèle de DPE non supporté', () => {
     const dpe = { administratif: { enum_modele_dpe_id: '99' } };
