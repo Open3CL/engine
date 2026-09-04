@@ -47,7 +47,7 @@ export class SurfaceSudEquivalenteService {
     let SseVerandaj = 0;
 
     /**
-     * Si une véranda est présente, on calcul l'mpact de l’espace tampon solarisé sur les apports solaires à travers
+     * Si une véranda est présente, on calcul l'impact de l'espace tampon solarisé sur les apports solaires à travers
      * les baies vitrées qui séparent le logement de l'espace tampon
      *
      * 6.3 Traitement des espaces tampons solarisés
@@ -59,17 +59,25 @@ export class SurfaceSudEquivalenteService {
         ets = ets[0];
       }
 
-      if (ets) {
+      /**
+       * S'il n'existe aucune baie vitrée séparant l'ETS du reste du logement
+       * (type_adjacence = 10), les apports solaires de l'ETS ne peuvent pas
+       * pénétrer dans la partie habitable : Sse_ver ne doit pas être calculé.
+       * Cf. méthode 3CL §6.3 et issue #140.
+       */
+      const baiesVersEts = this.getBaiesSurEspaceTampon(baiesVitrees);
+
+      if (ets && baiesVersEts.length > 0) {
         const bver = ets.donnee_intermediaire.bver;
         const T = ets.donnee_intermediaire.coef_transparence_ets;
 
         /**
-         * Surface sud équivalente représentant l’impact des apports solaires associés au rayonnement solaire
-         * traversant directement l’espace tampon pour arriver dans la partie habitable du logement
+         * Surface sud équivalente représentant l'impact des apports solaires associés au rayonnement solaire
+         * traversant directement l'espace tampon pour arriver dans la partie habitable du logement
          * Calculés pour les baies vitrées qui séparent le logement de l'espace tampon
          * @type {number}
          */
-        const Ssdj = this.getBaiesSurEspaceTampon(baiesVitrees).reduce((acc, bv) => {
+        const Ssdj = baiesVersEts.reduce((acc, bv) => {
           return acc + T * this.ssdBaieMois(bv, ctx.zoneClimatique.id, mois);
         }, 0);
 
@@ -91,14 +99,14 @@ export class SurfaceSudEquivalenteService {
         }, 0);
 
         /**
-         * Surface sud équivalente représentant l’impact des apports solaires indirects associés au rayonnement
-         * solaire entrant dans la partie habitable du logement après de multiples réflexions dans l’espace tampon solarisé
+         * Surface sud équivalente représentant l'impact des apports solaires indirects associés au rayonnement
+         * solaire entrant dans la partie habitable du logement après de multiples réflexions dans l'espace tampon solarisé
          * @type {number}
          */
         const Ssindj = Sstj - Ssdj;
 
         /**
-         * Impact de l’espace tampon solarisé sur les apports solaires à travers les baies vitrées qui séparent le logement
+         * Impact de l'espace tampon solarisé sur les apports solaires à travers les baies vitrées qui séparent le logement
          * de l'espace tampon
          * @type {number}
          */
