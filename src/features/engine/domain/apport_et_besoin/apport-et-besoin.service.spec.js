@@ -15,6 +15,7 @@ import { PRECISION_PERCENT } from '../../../../../test/constant.js';
 import { DpeNormalizerService } from '../../../normalizer/domain/dpe-normalizer.service.js';
 import { ContexteBuilder } from '../contexte.builder.js';
 import { InstallationChService } from '../ch/installation-ch.service.js';
+import { describeIntegration } from '../../../../../test/helpers/integration-test.js';
 
 /** @type {SurfaceSudEquivalenteService} **/
 let surfaceSudEquivalenteService;
@@ -157,7 +158,7 @@ describe('Calcul des apports et besoin du logement', () => {
     expect(installationChService.execute).toHaveBeenCalledWith(ctx, logement);
   });
 
-  describe("Test d'intégration pour les besoins en chauffage", () => {
+  describeIntegration("Test d'intégration pour les besoins en chauffage", () => {
     test.each(corpus)(
       'Vérification de la DI besoin_ch des besoins en chauffage pour dpe %s',
       (ademeId) => {

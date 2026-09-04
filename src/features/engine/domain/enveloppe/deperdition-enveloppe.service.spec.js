@@ -8,8 +8,9 @@ import { DeperditionPorteService } from './porte/deperdition-porte.service.js';
 import { DeperditionPlancherHautService } from './plancher_haut/deperdition-plancher-haut.service.js';
 import { DpeNormalizerService } from '../../../normalizer/domain/dpe-normalizer.service.js';
 import { TvStore } from '../../../dpe/infrastructure/tv.store.js';
-import { beforeEach, describe, expect, test } from 'vitest';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
 import b from '../../../../3.1_b.js';
+import { describeIntegration } from '../../../../../test/helpers/integration-test.js';
 
 /** @type {DeperditionPorteService} **/
 let deperditionPorteService;
@@ -215,6 +216,273 @@ describe('Calcul des déperditions', () => {
     );
   });
 
+  describe('deperditions (agrégation GV + ventilation) avec des doubles de test', () => {
+    /**
+     * Construit un service avec huit doubles de test dont la méthode `execute`
+     * renvoie le `__di` (donnée intermédiaire) attaché à chaque donnée d'entrée.
+     */
+    const buildService = () => {
+      const murService = { execute: vi.fn((ctx, de) => de.__di) };
+      const porteService = { execute: vi.fn((ctx, de) => de.__di) };
+      const plancherBasService = { execute: vi.fn((ctx, de) => de.__di) };
+      const plancherHautService = { execute: vi.fn((ctx, de) => de.__di) };
+      const baieVitreeService = { execute: vi.fn((ctx, bv) => bv.donnee_entree.__di) };
+      const espaceTamponService = { execute: vi.fn(() => ({ tag: 'ets-di' })) };
+      const pontThermiqueService = { execute: vi.fn((ctx, env, de) => de.__di) };
+      const ventilationService = { execute: vi.fn((ctx, de) => de.__di) };
+
+      const service = new DeperditionEnveloppeService(
+        murService,
+        porteService,
+        plancherBasService,
+        plancherHautService,
+        baieVitreeService,
+        espaceTamponService,
+        pontThermiqueService,
+        ventilationService
+      );
+
+      return {
+        service,
+        murService,
+        porteService,
+        plancherBasService,
+        plancherHautService,
+        baieVitreeService,
+        espaceTamponService,
+        pontThermiqueService,
+        ventilationService
+      };
+    };
+
+    test('somme les contributions de chaque paroi et alimente la ventilation avec les surfaces', () => {
+      const { service, espaceTamponService, ventilationService } = buildService();
+
+      const enveloppe = {
+        mur_collection: {
+          mur: [
+            {
+              // déperditif, isolé "connu" (1) => surfaceNonIsolee
+              donnee_entree: {
+                surface_paroi_opaque: 10,
+                enum_type_adjacence_id: '1',
+                enum_type_isolation_id: '1',
+                __di: { b: 0.5, umur: 2 }
+              }
+            },
+            {
+              // b > 0 mais adjacence 22 (local non déperditif) => non compté en surface déperditive,
+              // isolation hors ['1','2'] => surfaceIsolee
+              donnee_entree: {
+                surface_paroi_opaque: 20,
+                enum_type_adjacence_id: '22',
+                enum_type_isolation_id: '3',
+                __di: { b: 0.8, umur: 1 }
+              }
+            },
+            {
+              // b = 0 => aucune surface comptée
+              donnee_entree: {
+                surface_paroi_opaque: 5,
+                enum_type_adjacence_id: '1',
+                enum_type_isolation_id: '2',
+                __di: { b: 0, umur: 3 }
+              }
+            }
+          ]
+        },
+        porte_collection: {
+          porte: [
+            {
+              donnee_entree: {
+                surface_porte: 2,
+                presence_joint: true,
+                __di: { b: 0.5, uporte: 3 }
+              }
+            },
+            {
+              donnee_entree: {
+                surface_porte: 4,
+                presence_joint: false,
+                __di: { b: 0, uporte: 2 }
+              }
+            }
+          ]
+        },
+        plancher_bas_collection: {
+          plancher_bas: [
+            {
+              donnee_entree: {
+                surface_paroi_opaque: 8,
+                __di: { b: 0.9, upb_final: 1.5 }
+              }
+            }
+          ]
+        },
+        plancher_haut_collection: {
+          plancher_haut: [
+            {
+              donnee_entree: {
+                surface_paroi_opaque: 12,
+                enum_type_adjacence_id: '1',
+                enum_type_isolation_id: '1',
+                __di: { b: 0.7, uph: 1 }
+              }
+            },
+            {
+              donnee_entree: {
+                surface_paroi_opaque: 6,
+                enum_type_adjacence_id: '22',
+                enum_type_isolation_id: '5',
+                __di: { b: 0.5, uph: 2 }
+              }
+            },
+            {
+              donnee_entree: {
+                surface_paroi_opaque: 3,
+                enum_type_adjacence_id: '1',
+                enum_type_isolation_id: '1',
+                __di: { b: 0, uph: 1 }
+              }
+            }
+          ]
+        },
+        baie_vitree_collection: {
+          baie_vitree: [
+            {
+              donnee_entree: {
+                surface_totale_baie: 5,
+                presence_joint: true,
+                __di: { b: 0.6, u_menuiserie: 2 }
+              }
+            },
+            {
+              donnee_entree: {
+                surface_totale_baie: 3,
+                presence_joint: false,
+                __di: { b: 0, u_menuiserie: 1 }
+              }
+            }
+          ]
+        },
+        ets_collection: {
+          ets: { donnee_entree: {} }
+        },
+        pont_thermique_collection: {
+          pont_thermique: [
+            {
+              // pourcentage explicite
+              donnee_entree: { l: 4, pourcentage_valeur_pont_thermique: 0.5, __di: { k: 0.2 } }
+            },
+            {
+              // pourcentage absent => 1 par défaut
+              donnee_entree: { l: 2, __di: { k: 0.3 } }
+            }
+          ]
+        }
+      };
+
+      const logement = {
+        enveloppe,
+        ventilation_collection: {
+          ventilation: [{ donnee_entree: { __di: { hvent: 100, hperm: 50 } } }]
+        }
+      };
+
+      const ctx = { zoneClimatique: { value: 'h1a' } };
+      const resultat = service.deperditions(ctx, logement);
+
+      // Contributions GV (b * surface * u)
+      expect(resultat.deperdition_mur).toBeCloseTo(0.5 * 10 * 2 + 0.8 * 20 * 1 + 0, 9); // 26
+      expect(resultat.deperdition_porte).toBeCloseTo(0.5 * 2 * 3, 9); // 3
+      expect(resultat.deperdition_plancher_bas).toBeCloseTo(0.9 * 8 * 1.5, 9); // 10.8
+      expect(resultat.deperdition_plancher_haut).toBeCloseTo(0.7 * 12 * 1 + 0.5 * 6 * 2, 9); // 14.4
+      expect(resultat.deperdition_baie_vitree).toBeCloseTo(0.6 * 5 * 2, 9); // 6
+      expect(resultat.deperdition_pont_thermique).toBeCloseTo(4 * 0.2 * 0.5 + 2 * 0.3 * 1, 9); // 1
+      expect(resultat.hvent).toBe(100);
+      expect(resultat.hperm).toBe(50);
+
+      // deperdition_enveloppe = somme GV + hvent + hperm
+      expect(resultat.deperdition_enveloppe).toBeCloseTo(
+        26 + 3 + 10.8 + 14.4 + 6 + 1 + 100 + 50,
+        9
+      );
+
+      // L'espace tampon a bien été calculé et stocké
+      expect(espaceTamponService.execute).toHaveBeenCalledOnce();
+      expect(enveloppe.ets_collection.ets.donnee_intermediaire).toStrictEqual({ tag: 'ets-di' });
+
+      // La ventilation reçoit les surfaces agrégées :
+      // déperditive = 10 (mur A) + 2 (porte A) + 12 (ph A) + 5 (baie A) = 29
+      // isolée = 20 (mur B) + 6 (ph B) = 26
+      // non isolée = 10 (mur A) + 12 (ph A) = 22
+      // menuiserie avec joint = 2 (porte A) + 5 (baie A) = 7
+      // menuiserie sans joint = 4 (porte B) + 3 (baie B) = 7
+      expect(ventilationService.execute).toHaveBeenCalledWith(
+        ctx,
+        { __di: { hvent: 100, hperm: 50 } },
+        29,
+        26,
+        22,
+        7,
+        7
+      );
+    });
+
+    test('utilise la première véranda lorsque les ETS sont dupliqués (tableau)', () => {
+      const { service, espaceTamponService } = buildService();
+
+      const premierEts = { donnee_entree: { reference: 'ets-1' } };
+      const enveloppe = {
+        mur_collection: {},
+        porte_collection: {},
+        plancher_bas_collection: {},
+        plancher_haut_collection: {},
+        baie_vitree_collection: {},
+        ets_collection: { ets: [premierEts, { donnee_entree: { reference: 'ets-2' } }] },
+        pont_thermique_collection: {}
+      };
+      const logement = { enveloppe, ventilation_collection: {} };
+
+      service.deperditions({ zoneClimatique: { value: 'h1a' } }, logement);
+
+      // Seule la première véranda est traitée
+      expect(espaceTamponService.execute).toHaveBeenCalledOnce();
+      expect(premierEts.donnee_intermediaire).toStrictEqual({ tag: 'ets-di' });
+    });
+
+    test('renvoie des déperditions nulles pour une enveloppe et une ventilation vides', () => {
+      const { service, espaceTamponService, ventilationService } = buildService();
+
+      const enveloppe = {
+        mur_collection: {},
+        porte_collection: {},
+        plancher_bas_collection: {},
+        plancher_haut_collection: {},
+        baie_vitree_collection: {},
+        pont_thermique_collection: {}
+      };
+      const logement = { enveloppe, ventilation_collection: {} };
+
+      const resultat = service.deperditions({ zoneClimatique: { value: 'h1a' } }, logement);
+
+      // Aucune paroi, aucun ETS, aucune ventilation
+      expect(espaceTamponService.execute).not.toHaveBeenCalled();
+      expect(ventilationService.execute).not.toHaveBeenCalled();
+      expect(resultat).toStrictEqual({
+        deperdition_mur: 0,
+        deperdition_plancher_bas: 0,
+        deperdition_plancher_haut: 0,
+        deperdition_baie_vitree: 0,
+        deperdition_pont_thermique: 0,
+        deperdition_porte: 0,
+        hperm: 0,
+        hvent: 0,
+        deperdition_enveloppe: 0
+      });
+    });
+  });
+
   describe.skip('Benchmark', () => {
     test('reworked', () => {
       const data = {
@@ -249,7 +517,7 @@ describe('Calcul des déperditions', () => {
     });
   });
 
-  describe("Test d'intégration de calcul des deperditions", () => {
+  describeIntegration("Test d'intégration de calcul des deperditions", () => {
     test.each(corpus)('deperditions pour dpe %s', (ademeId) => {
       let dpeRequest = getAdemeFileJson(ademeId);
       dpeRequest = normalizerService.normalize(dpeRequest);

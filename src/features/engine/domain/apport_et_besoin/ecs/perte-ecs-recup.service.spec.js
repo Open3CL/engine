@@ -9,6 +9,7 @@ import { mois_liste } from '../../../../../utils.js';
 import { EcsTvStore } from '../../../../dpe/infrastructure/ecs/ecsTv.store.js';
 import { GenerateurEcsService } from '../../ecs/generateur-ecs.service.js';
 import { InstallationEcsService } from '../../ecs/installation-ecs.service.js';
+import { describeIntegration } from '../../../../../../test/helpers/integration-test.js';
 
 /** @type {PerteEcsRecupService} **/
 let service;
@@ -130,7 +131,46 @@ describe('Calcul des pertes de distribution et stockage récupérées', () => {
     }
   });
 
-  describe("Test d'intégration des installations ECS", () => {
+  test('Agrégation et conversion en kWh des pertes ECS récupérées (execute)', () => {
+    // On isole execute des formules mensuelles : les deux méthodes de calcul sont doublées
+    // pour ne vérifier que la conversion Wh -> kWh (division par 1000) et le mapping des 4 champs.
+    vi.spyOn(service, 'pertesDistributionEcsRecup').mockImplementation(
+      (ctx, logement, depensier) => (depensier ? 2000 : 1000)
+    );
+    vi.spyOn(service, 'pertesStockageEcsRecup').mockImplementation((ctx, logement, depensier) =>
+      depensier ? 4000 : 3000
+    );
+
+    const res = service.execute({}, {});
+
+    expect(res).toStrictEqual({
+      pertes_distribution_ecs_recup: 1,
+      pertes_distribution_ecs_recup_depensier: 2,
+      pertes_stockage_ecs_recup: 3,
+      pertes_stockage_ecs_recup_depensier: 4
+    });
+    expect(service.pertesDistributionEcsRecup).toHaveBeenCalledWith({}, {}, false);
+    expect(service.pertesDistributionEcsRecup).toHaveBeenCalledWith({}, {}, true);
+    expect(service.pertesStockageEcsRecup).toHaveBeenCalledWith({}, {}, false);
+    expect(service.pertesStockageEcsRecup).toHaveBeenCalledWith({}, {}, true);
+  });
+
+  test("Pertes nulles en l'absence d'installation ECS", () => {
+    // Valeur de repli [] quand installation_ecs_collection est absente : aucune installation à sommer.
+    vi.spyOn(tvStore, 'getData').mockReturnValue(1);
+
+    /** @type {Contexte} */
+    const ctx = {
+      altitude: { value: '400-800m' },
+      zoneClimatique: { value: 'h1a' },
+      inertie: { ilpa: 0 }
+    };
+
+    expect(service.pertesDistributionEcsRecup(ctx, {}, false)).toBe(0);
+    expect(service.pertesStockageEcsRecup(ctx, {}, false)).toBe(0);
+  });
+
+  describeIntegration("Test d'intégration des installations ECS", () => {
     test.each(corpus)(
       'vérification des pertes de distribution ecs recup des installations ECS pour dpe %s',
       (ademeId) => {

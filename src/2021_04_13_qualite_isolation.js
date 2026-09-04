@@ -1,7 +1,7 @@
 /**
  * @returns {number}
  */
-function qualite_isol(dep, surface, seuil1, seuil2, seuil3) {
+export function qualite_isol(dep, surface, seuil1, seuil2, seuil3) {
   /**
    * 1 - Très bonne
    * 2 - Bonne

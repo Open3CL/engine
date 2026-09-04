@@ -1,4 +1,4 @@
-import { DpePreProcessor } from '../../../../../preprocessor/index.js';
+import { DpePreProcessor } from '../../../preprocessor/index.js';
 
 /**
  * Service de normalisation du DPE d'entrée

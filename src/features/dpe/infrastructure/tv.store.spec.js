@@ -11,6 +11,23 @@ describe('Lecture des tables de valeurs', () => {
     tvStore = new TvStore();
   });
 
+  describe('lecture des valeurs de uPorte', () => {
+    test.each([
+      {
+        label: 'porte simple bois/PVC opaque pleine (id partagé 1|5)',
+        enumTypePorteId: '1',
+        expected: 3.5
+      },
+      { label: 'porte simple métal opaque pleine', enumTypePorteId: '9', expected: 5.8 }
+    ])('uPorte pour $label', ({ enumTypePorteId, expected }) => {
+      expect(tvStore.getUPorte(enumTypePorteId)).toBe(expected);
+    });
+
+    test('pas de valeur de uPorte', () => {
+      expect(tvStore.getUPorte('0')).toBeUndefined();
+    });
+  });
+
   describe('lecture des valeurs de b', () => {
     test.each([
       { enumTypeAdjacenceId: '1', label: 'extérieur', bExpected: 1 },
@@ -56,6 +73,26 @@ describe('Lecture des tables de valeurs', () => {
         expect(b).toBe(bExpected);
       }
     );
+
+    test('pas de valeur de b', () => {
+      // Aucune adjacence '0' dans la table : b introuvable -> undefined.
+      expect(tvStore.getB('0')).toBeUndefined();
+    });
+
+    test('b filtré par zone climatique (espace tampon solarisé)', () => {
+      // Adjacence 10 : les lignes portent une zone_climatique -> exerce le filtre
+      // zc.toLowerCase().startsWith(v.zone_climatique.toLowerCase()) (H1 <- h1a).
+      expect(tvStore.getB('10', undefined, '6', undefined, 'h1a')).toBe(0.95);
+    });
+
+    test.each([
+      // rAiuAue au-dessus d'une borne min : exerce parseAiuAueBound(aiu_aue_min) < rAiuAue.
+      { label: 'ratio dans un intervalle borné (min et max)', rAiuAue: 0.3, expected: 0.95 },
+      // rAiuAue très élevé : dernière ligne sans aiu_aue_max -> exerce la branche !v.aiu_aue_max.
+      { label: 'ratio au-dessus de la dernière borne (sans max)', rAiuAue: 60, expected: 0.2 }
+    ])('b filtré par le ratio aiu/aue pour $label', ({ rAiuAue, expected }) => {
+      expect(tvStore.getB('8', 3, '4', rAiuAue)).toBe(expected);
+    });
   });
 
   describe('lecture des valeurs de uVue', () => {
@@ -374,6 +411,13 @@ describe('Lecture des tables de valeurs', () => {
         expect(ue).toBeCloseTo(expected);
       }
     );
+
+    test('ue sans interpolation quand upb correspond exactement à une borne tabulée', () => {
+      // upb fourni comme borne exacte de la table ('0.83') : getRange renvoie deux bornes
+      // identiques, delta_upb vaut 0 et la valeur tabulée est retournée sans interpolation.
+      const ue = tvStore.getUeByUpd('3', '1', 4, '0.83');
+      expect(ue).toBe(0.37);
+    });
 
     test('pas de valeur de ue', () => {
       const ue = tvStore.getUeByUpd('0', '1', 0, 0);

@@ -156,6 +156,32 @@ describe('FicheTechnique service tests', () => {
     expect(fiche.valeur).toBe('aucune');
   });
 
+  test('should normalize a single sous_fiche_technique into an array when filtering on classifications', async () => {
+    // sous_fiche_technique est un objet unique (et non un tableau) : il doit être normalisé
+    const dpeSingleSousFiche = {
+      fiche_technique_collection: {
+        fiche_technique: {
+          enum_categorie_fiche_technique_id: '10',
+          sous_fiche_technique_collection: {
+            sous_fiche_technique: {
+              description: 'Type de ventilation: VMC SF',
+              valeur: 'VMC SF'
+            }
+          }
+        }
+      }
+    };
+
+    // la classification 'VMC SF' correspond => la fiche est retournée
+    const fiche = getFicheTechnique(dpeSingleSousFiche, '10', 'ventilation', ['VMC SF']);
+    expect(fiche).not.toBeNull();
+    expect(fiche.valeur).toBe('VMC SF');
+
+    // une classification absente => aucune fiche
+    const aucune = getFicheTechnique(dpeSingleSousFiche, '10', 'ventilation', ['absente']);
+    expect(aucune).toBeNull();
+  });
+
   test('should not return a non existing fiche technique', async () => {
     let fiche = getFicheTechnique(dpe, '40', 'exposées');
     expect(fiche).toBeNull();

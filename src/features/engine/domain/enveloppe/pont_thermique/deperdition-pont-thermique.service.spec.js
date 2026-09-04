@@ -8,6 +8,7 @@ import { PontThermiqueTvStore } from '../../../../dpe/infrastructure/enveloppe/p
 import { DeperditionMurService } from '../mur/deperdition-mur.service.js';
 import { DeperditionPlancherHautService } from '../plancher_haut/deperdition-plancher-haut.service.js';
 import { DeperditionPlancherBasService } from '../plancher_bas/deperdition-plancher-bas.service.js';
+import { describeIntegration } from '../../../../../../test/helpers/integration-test.js';
 
 /** @type {DeperditionPontThermiqueService} **/
 let service;
@@ -421,6 +422,22 @@ describe('Calcul de déperdition des ponts thermiques', () => {
       expect(tvStore.getKForMurById).not.toHaveBeenCalled();
       expect(tvStore.getKForMenuiserie).toHaveBeenCalledWith(5, 'iti', 3, 0, 5);
     });
+
+    test('Pont thermique nul pour une paroi en brique de verre (vitrage 5)', () => {
+      // @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.4.5 Menuiserie / mur
+      // Les liaisons avec des parois en brique de verre (type_vitrage 5) sont prises nulles.
+      vi.spyOn(tvStore, 'getKForMenuiserie').mockReturnValue(0.25);
+
+      const pontThermiqueDE = { reference_1: 'reference' };
+      const enveloppe = {
+        baie_vitree_collection: {
+          baie_vitree: [{ donnee_entree: { reference: 'reference', enum_type_vitrage_id: '5' } }]
+        }
+      };
+
+      expect(service.pontThermiqueMenuiserieMur(pontThermiqueDE, enveloppe, 3)).toBe(0);
+      expect(tvStore.getKForMenuiserie).not.toHaveBeenCalled();
+    });
   });
 
   describe("Calcul de l'isolation du mur", () => {
@@ -616,7 +633,7 @@ describe('Calcul de déperdition des ponts thermiques', () => {
     });
   });
 
-  describe("Test d'intégration des ponts thermiques", () => {
+  describeIntegration("Test d'intégration des ponts thermiques", () => {
     test.each(corpus)('vérification des DI des ponts thermiques pour dpe %s', (ademeId) => {
       let dpeRequest = getAdemeFileJson(ademeId);
       dpeRequest = normalizerService.normalize(dpeRequest);

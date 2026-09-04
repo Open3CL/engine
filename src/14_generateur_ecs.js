@@ -165,14 +165,14 @@ function type_generateur_ecs(di, de, du, usage_generateur) {
   return type_generateur;
 }
 
-function rg_chauffe_eau_gaz(di, besoin_ecs) {
+export function rg_chauffe_eau_gaz(di, besoin_ecs) {
   return (
     1 /
     (1 / di.rpn + 1790 * (di.qp0 / (besoin_ecs * 1000)) + 6970 * (di.pveil / (besoin_ecs * 1000)))
   );
 }
 
-function rgrs_chaudiere(di, besoin_ecs) {
+export function rgrs_chaudiere(di, besoin_ecs) {
   return (
     1 /
     (1 / di.rpn +
@@ -181,7 +181,7 @@ function rgrs_chaudiere(di, besoin_ecs) {
   );
 }
 
-function rg_accumulateur_gaz(di, besoin_ecs) {
+export function rg_accumulateur_gaz(di, besoin_ecs) {
   return (
     1 /
     (1 / di.rpn +
@@ -190,7 +190,7 @@ function rg_accumulateur_gaz(di, besoin_ecs) {
   );
 }
 
-function rgrsReseauUrbain(de, ecs_de) {
+export function rgrsReseauUrbain(de, ecs_de) {
   /**
    * Le rendement de génération d'un réseau de chaleur dépend de son caractère isolé ou non.
    * D'après la spécification 3CL-DPE, le type de RCU est porté par enum_type_generateur_ecs_id :

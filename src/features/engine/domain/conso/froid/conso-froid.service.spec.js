@@ -5,6 +5,7 @@ import corpus from '../../../../../../test/corpus-sano.json';
 import { getAdemeFileJson } from '../../../../../../test/test-helpers.js';
 import { FrTvStore } from '../../../../dpe/infrastructure/froid/frTv.store.js';
 import { ConsoFroidService } from './conso-froid.service.js';
+import { describeIntegration } from '../../../../../../test/helpers/integration-test.js';
 
 /** @type {ConsoFroidService} **/
 let service;
@@ -117,7 +118,87 @@ describe('Calcul des consos en froid du logement', () => {
     }
   );
 
-  describe("Test d'intégration pour le besoin en froid", () => {
+  test('consoFroid : données intermédiaires absentes -> EER lu dans la table (repli {})', () => {
+    // climatisation.donnee_intermediaire absente : repli sur {} puis lecture de l'EER forfaitaire.
+    vi.spyOn(tvStore, 'getEer').mockReturnValue(90);
+
+    /** @type {Contexte} */
+    const contexte = { zoneClimatique: { id: 1 }, surfaceHabitable: 100 };
+
+    /** @type {Climatisation} */
+    const climatisation = {
+      donnee_entree: { enum_methode_saisie_carac_sys_id: 6, enum_periode_installation_fr_id: 2 }
+    };
+
+    /** @type {ApportEtBesoin} */
+    const apportEtBesoin = { besoin_fr: 1000, besoin_fr_depensier: 1500 };
+
+    const consoFroid = service.consoFroid(contexte, apportEtBesoin, climatisation);
+
+    expect(tvStore.getEer).toHaveBeenCalledWith(1, 2);
+    // conso = 0.9 * besoin / eer
+    expect(consoFroid.conso_fr).toBeCloseTo((0.9 * 1000) / 90, 5);
+    expect(consoFroid.conso_fr_depensier).toBeCloseTo((0.9 * 1500) / 90, 5);
+  });
+
+  test('execute : renseigne les données intermédiaires de chaque climatisation', () => {
+    // On isole execute du calcul détaillé : consoFroid est doublée pour ne vérifier que
+    // l'itération sur les climatisations et l'affectation des champs (dont l'initialisation ??=).
+    vi.spyOn(service, 'consoFroid').mockReturnValue({
+      besoin_fr: 10,
+      besoin_fr_depensier: 15,
+      conso_fr: 2,
+      conso_fr_depensier: 3
+    });
+
+    /** @type {Contexte} */
+    const ctx = { zoneClimatique: { id: 1 }, surfaceHabitable: 100 };
+
+    // Première climatisation sans donnee_intermediaire (branche ??= {}),
+    // seconde avec un objet préexistant (branche ??= conservée).
+    const climSansDI = { donnee_entree: {} };
+    const climAvecDI = { donnee_entree: {}, donnee_intermediaire: { eer: 42 } };
+
+    /** @type {Logement} */
+    const logement = {
+      sortie: { apport_et_besoin: { besoin_fr: 1000, besoin_fr_depensier: 1500 } },
+      climatisation_collection: { climatisation: [climSansDI, climAvecDI] }
+    };
+
+    service.execute(ctx, logement);
+
+    expect(service.consoFroid).toHaveBeenCalledTimes(2);
+    expect(service.consoFroid).toHaveBeenCalledWith(
+      ctx,
+      logement.sortie.apport_et_besoin,
+      climSansDI
+    );
+
+    for (const clim of [climSansDI, climAvecDI]) {
+      expect(clim.donnee_intermediaire).toMatchObject({
+        besoin_fr: 10,
+        besoin_fr_depensier: 15,
+        conso_fr: 2,
+        conso_fr_depensier: 3
+      });
+    }
+    // L'objet préexistant a été conservé (eer non écrasé par ??=)
+    expect(climAvecDI.donnee_intermediaire.eer).toBe(42);
+  });
+
+  test("execute : aucune conso calculée en l'absence de climatisation", () => {
+    // Valeur de repli [] quand climatisation_collection est absente.
+    vi.spyOn(service, 'consoFroid');
+
+    /** @type {Contexte} */
+    const ctx = { zoneClimatique: { id: 1 }, surfaceHabitable: 100 };
+
+    service.execute(ctx, { sortie: { apport_et_besoin: {} } });
+
+    expect(service.consoFroid).not.toHaveBeenCalled();
+  });
+
+  describeIntegration("Test d'intégration pour le besoin en froid", () => {
     test.each(corpus)('vérification des sorties besoin_fr et conso_fr pour dpe %s', (ademeId) => {
       /**
        * @type {Dpe}

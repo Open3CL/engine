@@ -239,7 +239,7 @@ function calc_qrec(instal_ecs, nadeq, prorataEcs, ilpa, ca, zc, th, nbLogements)
   return { Qrec, Qrec_dep, sumNref19, sumNref21 };
 }
 
-function calc_Fj(GV, asj, aij, dhj, inertie) {
+export function calc_Fj(GV, asj, aij, dhj, inertie) {
   if (dhj === 0) return 0;
 
   let alpha;
@@ -251,6 +251,6 @@ function calc_Fj(GV, asj, aij, dhj, inertie) {
   return (Xj - Xj ** alpha) / (1 - Xj ** alpha);
 }
 
-function calc_bvj(GV, Fj) {
+export function calc_bvj(GV, Fj) {
   return GV * (1 - Fj);
 }

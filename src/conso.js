@@ -98,7 +98,7 @@ const coef_cout = {
  * @param destination {'ch' | 'ecs' | 'éclairage'}
  * @return {string} la clef à utiliser pour récupérer le coefficient depuis la table `coef_ges`
  */
-function getCoefKey(type_energie, destination) {
+export function getCoefKey(type_energie, destination) {
   if (type_energie === 'électricité') {
     if (!['ch', 'ecs', 'éclairage'].includes(destination)) {
       console.error(`Type d'électricité inconnu: ${destination}`);

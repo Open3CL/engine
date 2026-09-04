@@ -121,6 +121,17 @@ describe('Calcul des informations techniques des générateurs ECS', () => {
     });
   });
 
+  test("execute ne fait rien quand l'installation n'a pas de collection de générateurs", () => {
+    // Valeur de repli [] quand generateur_ecs_collection est absente : aucune mutation.
+    const pertesStockageSpy = vi.spyOn(service, 'pertesStockage');
+
+    /** @type {InstallationEcs} */
+    const installationEcs = {};
+    expect(() => service.execute(installationEcs)).not.toThrow();
+    expect(installationEcs).toStrictEqual({});
+    expect(pertesStockageSpy).not.toHaveBeenCalled();
+  });
+
   test("Determination du type d'énergie électrique du générateur", () => {
     vi.spyOn(tvStore, 'getElectriqueEcsGenerateurs').mockReturnValue([1]);
     expect(service.generateurElectrique({ enum_type_generateur_ecs_id: 1 })).toBeTruthy();

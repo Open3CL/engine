@@ -5,6 +5,7 @@ import { ContexteBuilder } from '../../contexte.builder.js';
 import { getAdemeFileJson } from '../../../../../../test/test-helpers.js';
 import { BesoinEcsService } from './besoin-ecs.service.js';
 import { EcsTvStore } from '../../../../dpe/infrastructure/ecs/ecsTv.store.js';
+import { describeIntegration } from '../../../../../../test/helpers/integration-test.js';
 
 /** @type {BesoinEcsService} **/
 let service;
@@ -45,7 +46,26 @@ describe('Calcul du besoin en eau chaude sanitaire', () => {
     expect(tvStore.getTefs).toHaveBeenCalledWith('400-800m', 'h1a', 'Janvier');
   });
 
-  describe("Test d'intégration pour le besoin en eau chaude sanitaire", () => {
+  test("Sommation du besoin ECS sur les douze mois de l'année", () => {
+    // On isole execute de la formule mensuelle : besoinEcsMois est doublé pour ne mesurer
+    // que la logique d'agrégation (une valeur conventionnelle, une valeur dépensière par mois).
+    vi.spyOn(service, 'besoinEcsMois').mockImplementation((ctx, mois, depensier) =>
+      depensier ? 10 : 1
+    );
+
+    /** @type {Contexte} */
+    const ctx = { altitude: { value: '400-800m' }, zoneClimatique: { value: 'h1a' }, nadeq: 2 };
+
+    const res = service.execute(ctx);
+
+    // 12 mois : conventionnel = 12 * 1, dépensier = 12 * 10
+    expect(res).toStrictEqual({ besoin_ecs: 12, besoin_ecs_depensier: 120 });
+    expect(service.besoinEcsMois).toHaveBeenCalledTimes(24);
+    expect(service.besoinEcsMois).toHaveBeenCalledWith(ctx, 'Janvier', false);
+    expect(service.besoinEcsMois).toHaveBeenCalledWith(ctx, 'Janvier', true);
+  });
+
+  describeIntegration("Test d'intégration pour le besoin en eau chaude sanitaire", () => {
     test.each(corpus)('vérification des sorties besoin_ecs pour dpe %s', (ademeId) => {
       /**
        * @type {Dpe}

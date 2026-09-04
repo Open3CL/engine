@@ -612,6 +612,9 @@ export function calcul_3cl(inputDpe, options) {
   );
 
   // get all baie_vitree orientations
+  // repli défensif inatteignable : la garde en amont réinitialise plancher_haut_collection
+  // à { plancher_haut: [] } (tableau vide truthy), donc plancher_haut est toujours défini
+  /* c8 ignore next */
   const ph_list = env.plancher_haut_collection.plancher_haut || [];
   logement.sortie = {
     deperdition,

@@ -1,10 +1,11 @@
-import { beforeEach, describe, expect, test } from 'vitest';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { GenerateurEcsService } from './generateur-ecs.service.js';
 import { InstallationEcsService } from './installation-ecs.service.js';
 import corpus from '../../../../../test/corpus-sano.json';
 import { expect_or, getAdemeFileJson } from '../../../../../test/test-helpers.js';
 import { DpeNormalizerService } from '../../../normalizer/domain/dpe-normalizer.service.js';
 import { ContexteBuilder } from '../contexte.builder.js';
+import { describeIntegration } from '../../../../../test/helpers/integration-test.js';
 
 /** @type {InstallationEcsService} **/
 let service;
@@ -247,7 +248,59 @@ describe('Calcul des besoins et des pertes des installations ECS', () => {
     expect(service.isInstallationIndividuelle({ enum_type_installation_id: 4 })).toBeFalsy();
   });
 
-  describe("Test d'intégration des installations ECS", () => {
+  test('execute : parcourt les installations ECS et renseigne besoins et pertes', () => {
+    // Le calcul des Qgw par générateur est délégué au GenerateurEcsService : on le double
+    // pour isoler la logique d'orchestration de l'installation.
+    vi.spyOn(generateurEcsService, 'execute').mockReturnValue(undefined);
+
+    /** @type {Contexte} */
+    const ctx = { surfaceHabitable: 100 };
+
+    /** @type {InstallationEcs} */
+    const installationEcs = {
+      donnee_entree: { enum_type_installation_id: 1, surface_habitable: 100 },
+      generateur_ecs_collection: {
+        generateur_ecs: [
+          {
+            donnee_entree: { position_volume_chauffe_stockage: 1 },
+            donnee_utilisateur: { Qgw: 500 }
+          }
+        ]
+      }
+    };
+
+    /** @type {Logement} */
+    const logement = { installation_ecs_collection: { installation_ecs: [installationEcs] } };
+
+    service.execute(ctx, logement, { besoin_ecs: 1000, besoin_ecs_depensier: 1500 });
+
+    // Délégation du calcul par générateur
+    expect(generateurEcsService.execute).toHaveBeenCalledWith(installationEcs);
+
+    // Besoins proratisés (surface installation === surface logement -> ratio 1)
+    expect(installationEcs.donnee_intermediaire).toStrictEqual({
+      besoin_ecs: 1000,
+      besoin_ecs_depensier: 1500
+    });
+
+    // Pertes de distribution individuelle : 0.1 * besoin (en Wh) ; installation individuelle -> QdwCol* = 0
+    expect(installationEcs.donnee_utilisateur.QdwIndVc.conventionnel).toBeCloseTo(100000, 5);
+    expect(installationEcs.donnee_utilisateur.QdwIndVc.depensier).toBeCloseTo(150000, 5);
+    expect(installationEcs.donnee_utilisateur.QdwColVc.conventionnel).toBe(0);
+    // Générateur en volume chauffé -> stockage récupérable = Qgw
+    expect(installationEcs.donnee_utilisateur.QgwRecuperable).toBe(500);
+  });
+
+  test('execute : aucune installation traitée quand la collection ECS est absente', () => {
+    // Valeur de repli [] quand installation_ecs_collection est absente.
+    const generateurSpy = vi.spyOn(generateurEcsService, 'execute');
+
+    service.execute({ surfaceHabitable: 100 }, {}, { besoin_ecs: 0, besoin_ecs_depensier: 0 });
+
+    expect(generateurSpy).not.toHaveBeenCalled();
+  });
+
+  describeIntegration("Test d'intégration des installations ECS", () => {
     test.each(corpus)('vérification des DI des installations ECS pour dpe %s', (ademeId) => {
       let dpeRequest = getAdemeFileJson(ademeId);
       dpeRequest = normalizerService.normalize(dpeRequest);

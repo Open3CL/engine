@@ -5,6 +5,7 @@ import { DpeNormalizerService } from '../../../../normalizer/domain/dpe-normaliz
 import { DeperditionPlancherBasService } from './deperdition-plancher-bas.service.js';
 import { TvStore } from '../../../../dpe/infrastructure/tv.store.js';
 import { beforeEach, describe, expect, test } from 'vitest';
+import { describeIntegration } from '../../../../../../test/helpers/integration-test.js';
 
 /** @type {DeperditionPlancherBasService} **/
 let service;
@@ -180,6 +181,138 @@ describe('Calcul de déperdition des planchers bas', () => {
       expect(di.upb0).toBeUndefined();
       expect(di.upb_final).toBeCloseTo(1.25);
     });
+
+    test('Isolation inconnue (méthode 2) : upb plafonné par la valeur forfaitaire de la table', () => {
+      /** @type {Contexte} */
+      const ctx = {
+        effetJoule: false,
+        enumPeriodeConstructionId: '6',
+        zoneClimatique: { id: '3' }
+      };
+      /** @type {PlancherBasDE} */
+      const de = {
+        enum_type_adjacence_id: '21',
+        enum_type_plancher_bas_id: '2',
+        enum_methode_saisie_u0_id: '2',
+        enum_type_isolation_id: '3',
+        enum_methode_saisie_u_id: '2',
+        enum_periode_isolation_id: '6',
+        calcul_ue: 0
+      };
+
+      const di = service.execute(ctx, de, []);
+      expect(di.upb0).toBeCloseTo(1.45);
+      // Valeur de référence de régression
+      expect(di.upb).toBeCloseTo(0.5);
+      expect(di.upb_final).toBeCloseTo(0.5);
+    });
+
+    test.each([
+      // Méthodes 7 (année d'isolation) et 8 (année de construction) : même table forfaitaire.
+      { enumMethodeSaisieUId: '7' },
+      { enumMethodeSaisieUId: '8' }
+    ])(
+      'upb via table forfaitaire pour la méthode de saisie $enumMethodeSaisieUId',
+      ({ enumMethodeSaisieUId }) => {
+        /** @type {Contexte} */
+        const ctx = {
+          effetJoule: false,
+          enumPeriodeConstructionId: '6',
+          zoneClimatique: { id: '3' }
+        };
+        /** @type {PlancherBasDE} */
+        const de = {
+          enum_type_adjacence_id: '21',
+          enum_type_plancher_bas_id: '2',
+          enum_methode_saisie_u0_id: '2',
+          enum_type_isolation_id: '3',
+          enum_methode_saisie_u_id: enumMethodeSaisieUId,
+          enum_periode_isolation_id: '6',
+          calcul_ue: 0
+        };
+
+        const di = service.execute(ctx, de, []);
+        expect(di.upb0).toBeCloseTo(1.45);
+        // Valeur de référence de régression
+        expect(di.upb).toBeCloseTo(0.5);
+      }
+    );
+
+    test("Résistance d'isolation saisie (méthode 6) : upb calculé à partir de la résistance", () => {
+      /** @type {Contexte} */
+      const ctx = {
+        effetJoule: false,
+        enumPeriodeConstructionId: '6',
+        zoneClimatique: { id: '3' }
+      };
+      /** @type {PlancherBasDE} */
+      const de = {
+        enum_type_adjacence_id: '21',
+        enum_type_plancher_bas_id: '2',
+        enum_methode_saisie_u0_id: '2',
+        enum_type_isolation_id: '3',
+        enum_methode_saisie_u_id: '6',
+        resistance_isolation: 2.5,
+        calcul_ue: 0
+      };
+
+      const di = service.execute(ctx, de, []);
+      expect(di.upb0).toBeCloseTo(1.45);
+      // 1 / (1 / 1.45 + 2.5) => valeur de référence de régression
+      expect(di.upb).toBeCloseTo(0.31351);
+    });
+
+    test("Résistance d'isolation saisie (méthode 5) : upb calculé à partir de la résistance", () => {
+      /** @type {Contexte} */
+      const ctx = {
+        effetJoule: false,
+        enumPeriodeConstructionId: '6',
+        zoneClimatique: { id: '3' }
+      };
+      /** @type {PlancherBasDE} */
+      const de = {
+        enum_type_adjacence_id: '21',
+        enum_type_plancher_bas_id: '2',
+        enum_methode_saisie_u0_id: '2',
+        enum_type_isolation_id: '3',
+        enum_methode_saisie_u_id: '5',
+        resistance_isolation: 2.5,
+        calcul_ue: 0
+      };
+
+      const di = service.execute(ctx, de, []);
+      expect(di.upb0).toBeCloseTo(1.45);
+      // 1 / (1 / 1.45 + 2.5) => valeur de référence de régression
+      expect(di.upb).toBeCloseTo(0.31351);
+    });
+
+    test('Calcul Ue avec repli sur surface de paroi et périmètre nul (dsp par défaut = 1)', () => {
+      // Adjacence terre-plein, calcul_ue = 0 : le upb_final passe par la table Ue.
+      // Le plancher n'a ni surface_ue ni perimetre_ue => on retombe sur surface_paroi_opaque
+      // et un dsp forfaitaire de 1.
+      /** @type {Contexte} */
+      const ctx = {
+        effetJoule: false,
+        enumPeriodeConstructionId: '6',
+        zoneClimatique: { id: '3' }
+      };
+      /** @type {PlancherBasDE} */
+      const de = {
+        enum_type_adjacence_id: '5',
+        enum_type_plancher_bas_id: '9',
+        enum_methode_saisie_u0_id: '2',
+        enum_type_isolation_id: '2',
+        enum_methode_saisie_u_id: '1',
+        calcul_ue: 0,
+        surface_paroi_opaque: 40
+      };
+
+      const di = service.execute(ctx, de, [{ donnee_entree: de }]);
+      expect(di.upb0).toBeCloseTo(2);
+      expect(di.upb).toBeCloseTo(2);
+      // Valeur de référence de régression (Ue table, dsp = 1)
+      expect(di.upb_final).toBeCloseTo(0.74421);
+    });
   });
 
   test.each([
@@ -267,7 +400,7 @@ describe('Calcul de déperdition des planchers bas', () => {
     }
   );
 
-  describe("Test d'intégration de plancher bas", () => {
+  describeIntegration("Test d'intégration de plancher bas", () => {
     test.each(corpus)('vérification des DI des pb pour dpe %s', (ademeId) => {
       /**
        * @type {Dpe}

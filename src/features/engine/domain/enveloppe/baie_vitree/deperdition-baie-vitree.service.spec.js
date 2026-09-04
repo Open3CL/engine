@@ -5,6 +5,7 @@ import { DpeNormalizerService } from '../../../../normalizer/domain/dpe-normaliz
 import { DeperditionBaieVitreeService } from './deperdition-baie-vitree.service.js';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { BaieVitreeTvStore } from '../../../../dpe/infrastructure/enveloppe/baieVitreeTv.store.js';
+import { describeIntegration } from '../../../../../../test/helpers/integration-test.js';
 
 /** @type {DeperditionBaieVitreeService} **/
 let service;
@@ -117,6 +118,32 @@ describe('Calcul de déperdition des baies vitrées', () => {
       expect(tvStore.getSw).toHaveBeenNthCalledWith(2, '2', '6', '4', '1', '3');
       expect(sw).toBe(18.8 * 18.8);
     });
+
+    test('Doit retomber sur un facteur 1 si le sw de la double-fenêtre est introuvable', () => {
+      // sw de la baie principale saisi, mais celui de la double-fenêtre indéterminé
+      // (getSw indéfini) => le facteur solaire équivalent reste celui de la baie principale.
+      vi.spyOn(tvStore, 'getSw').mockReturnValue(undefined);
+      /**
+       * @type {BaieVitree}
+       */
+      let bv = {
+        donnee_entree: {
+          sw_saisi: 0.5,
+          double_fenetre: 1
+        },
+        baie_vitree_double_fenetre: {
+          donnee_entree: {
+            enum_type_materiaux_menuiserie_id: '4',
+            enum_type_vitrage_id: '2',
+            enum_type_baie_id: '6'
+          }
+        }
+      };
+
+      let sw = service.sw(bv);
+      expect(tvStore.getSw).toHaveBeenCalledOnce();
+      expect(sw).toBe(0.5);
+    });
   });
 
   describe('Determination du coefficient uw', () => {
@@ -165,6 +192,30 @@ describe('Calcul de déperdition des baies vitrées', () => {
       let uw = service.uw(bv, 2.4);
       expect(tvStore.getUw).toHaveBeenNthCalledWith(2, '6', '4', 2.5);
       expect(uw).toBe(1 / (1 / 18.8 + 1 / 18.8 + 0.07));
+    });
+
+    test('Doit retomber sur un uw de 1 pour la double-fenêtre si celui-ci est introuvable', () => {
+      // uw de la baie principale saisi, uw de la double-fenêtre indéterminé (getUw indéfini)
+      // => le terme 1/uw_double est remplacé par 1/1 dans la mise en série.
+      vi.spyOn(tvStore, 'getUw').mockReturnValue(undefined);
+      /**
+       * @type {BaieVitree}
+       */
+      let bv = {
+        donnee_entree: {
+          uw_saisi: 3,
+          double_fenetre: 1
+        },
+        baie_vitree_double_fenetre: {
+          donnee_entree: {
+            enum_type_materiaux_menuiserie_id: '4',
+            enum_type_baie_id: '6'
+          }
+        }
+      };
+
+      let uw = service.uw(bv, 2.4);
+      expect(uw).toBe(1 / (1 / 3 + 1 / 1 + 0.07));
     });
   });
 
@@ -256,6 +307,52 @@ describe('Calcul de déperdition des baies vitrées', () => {
 
       expect(tvStore.getUg).toHaveBeenCalledWith('2', '1', '2', '1', 8);
       expect(uw).toBe(18.8);
+    });
+
+    test("Ne recherche pas l'épaisseur la plus proche si l'épaisseur de lame n'est pas renseignée", () => {
+      // Double vitrage sans epaisseur_lame : e vaut NaN (falsy), la recherche de
+      // l'épaisseur tabulée la plus proche est court-circuitée.
+      vi.spyOn(tvStore, 'getUg').mockReturnValue(18.8);
+      const availableSpy = vi.spyOn(tvStore, 'getEpaisseurAvailableForUg').mockReturnValue([6, 8]);
+
+      /**
+       * @type {BaieVitreeDE}
+       */
+      let bvDE = {
+        enum_type_vitrage_id: '2',
+        vitrage_vir: '1',
+        enum_inclinaison_vitrage_id: '2',
+        enum_type_gaz_lame_id: '1'
+      };
+
+      let ug = service.ug(bvDE);
+
+      expect(availableSpy).toHaveBeenCalledOnce();
+      expect(tvStore.getUg).toHaveBeenCalledWith('2', '1', '2', '1', NaN);
+      expect(ug).toBe(18.8);
+    });
+
+    test("Ignore les épaisseurs tabulées supérieures à l'épaisseur réelle en cherchant la plus proche", () => {
+      // Épaisseur réelle 18 absente de la table : on retient la plus grande épaisseur
+      // tabulée strictement inférieure (8), en ignorant les épaisseurs supérieures (25).
+      vi.spyOn(tvStore, 'getUg').mockReturnValue(18.8);
+      vi.spyOn(tvStore, 'getEpaisseurAvailableForUg').mockReturnValue([6, 8, 25]);
+
+      /**
+       * @type {BaieVitreeDE}
+       */
+      let bvDE = {
+        enum_type_vitrage_id: '2',
+        vitrage_vir: '1',
+        enum_inclinaison_vitrage_id: '2',
+        enum_type_gaz_lame_id: '1',
+        epaisseur_lame: '18'
+      };
+
+      let ug = service.ug(bvDE);
+
+      expect(tvStore.getUg).toHaveBeenCalledWith('2', '1', '2', '1', 8);
+      expect(ug).toBe(18.8);
     });
 
     test('Doit appeler tvStore avec un équivalent double vitrage pour un sur vitrage avec majoration de 0.1', () => {
@@ -445,7 +542,33 @@ describe('Calcul de déperdition des baies vitrées', () => {
     expect(bvDI.u_menuiserie).toBe(5.6);
   });
 
-  describe("Test d'intégration des baies vitrées", () => {
+  test('Transmet la valeur de la zone climatique au calcul de b quand le contexte la renseigne', () => {
+    // Contexte avec zoneClimatique défini : ctx.zoneClimatique?.value est bien résolu et
+    // transmis à b (utile notamment pour les espaces tampons solarisés, adjacence 10).
+    const bSpy = vi.spyOn(service, 'b').mockReturnValue(0.85);
+
+    const bv = {
+      donnee_entree: {
+        enum_type_adjacence_id: '10',
+        surface_aiu: 8,
+        surface_aue: 20,
+        enum_cfg_isolation_lnc_id: '9',
+        ug_saisi: 2.5,
+        uw_saisi: 2.8,
+        enum_type_fermeture_id: '1'
+      }
+    };
+
+    const di = service.execute({ zoneClimatique: { value: 'h1a' } }, bv);
+
+    expect(bSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ enumTypeAdjacenceId: '10', zoneClimatique: 'h1a' })
+    );
+    expect(di.b).toBe(0.85);
+    expect(di.u_menuiserie).toBe(2.8);
+  });
+
+  describeIntegration("Test d'intégration des baies vitrées", () => {
     test.each(corpus)('vérification des DI des baies vitrées pour dpe %s', (ademeId) => {
       let dpeRequest = getAdemeFileJson(ademeId);
       dpeRequest = normalizerService.normalize(dpeRequest);

@@ -53,4 +53,41 @@ describe('Nadeq unit tests', () => {
       expect(nadeq.calculateNadeq(logement)).toBeCloseTo(expectedNadeq, 2);
     }
   );
+
+  /**
+   * Pour un appartement individuel, la méthode collective est appelée avec la surface habitable du
+   * logement et un unique appartement (Nappart = 1).
+   * enum_methode_application_dpe_log_id ∈ {2,3,4,5,31,32,35,36,37}
+   */
+  test.each([
+    // Shmoy < 10 => Nmax = 1
+    [2, 1, 8],
+    [3, 1, 8],
+    // 10 <= Shmoy < 50 => Nmax = 1.75 - 0.01875 * (50 - Shmoy) ; Shmoy = 45 => 1.65625
+    [4, 1.65625, 45],
+    // Shmoy >= 50 => Nmax = 0.035 * Shmoy = 2.625 (> 1.75) => 1.75 + 0.3 * (2.625 - 1.75) = 2.0125
+    [37, 2.0125, 75]
+  ])(
+    'should get appartement nadeq (méthode %s) = %s pour surface_habitable_logement %s',
+    (enum_methode_application_dpe_log_id, expectedNadeq, surface_habitable_logement) => {
+      const logement = {
+        caracteristique_generale: {
+          enum_methode_application_dpe_log_id,
+          surface_habitable_logement
+        }
+      };
+      expect(nadeq.calculateNadeq(logement)).toBeCloseTo(expectedNadeq, 4);
+    }
+  );
+
+  test('les identifiants de méthode sont comparés numériquement (chaîne "1" acceptée)', () => {
+    const logement = {
+      caracteristique_generale: {
+        enum_methode_application_dpe_log_id: '1',
+        surface_habitable_logement: 8
+      }
+    };
+    // méthode individuelle : surface < 30 => Nmax = 1
+    expect(nadeq.calculateNadeq(logement)).toBe(1);
+  });
 });

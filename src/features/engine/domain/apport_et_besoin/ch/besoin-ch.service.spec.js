@@ -50,6 +50,24 @@ describe('Calcul des besoins en chauffage du logement', () => {
     }
   );
 
+  test('Fraction des apports gratuits nulle quand les degrés-heures de chauffage sont nuls', () => {
+    // dh === 0 : aucun besoin de chauffage sur le mois, la fraction est court-circuitée à 0
+    // (évite aussi la division par zéro dans le calcul de Xj).
+    /** @type {Contexte} */
+    const ctx = { inertie: { id: 1 } };
+
+    /** @type { Logement } **/
+    const logement = {
+      donnees_de_calcul: {
+        apportsInterneCh: { Janvier: 102.5 },
+        apportsSolaire: { Janvier: 12.5 }
+      },
+      sortie: { deperdition: { deperdition_enveloppe: 25.9 } }
+    };
+
+    expect(service.fractionBesoinCh(ctx, logement, 'Janvier', 0)).toBe(0);
+  });
+
   test('Besoin de chauffage hors pertes récupérées et fraction des apports gratuits pour un mois', () => {
     /** @type {Contexte} */
     const ctx = { inertie: { id: 1 } };

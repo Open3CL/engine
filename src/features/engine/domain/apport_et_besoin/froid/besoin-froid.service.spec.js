@@ -6,6 +6,7 @@ import { getAdemeFileJson } from '../../../../../../test/test-helpers.js';
 import { FrTvStore } from '../../../../dpe/infrastructure/froid/frTv.store.js';
 import { ApportGratuitService } from '../apport_gratuit/apport-gratuit.service.js';
 import { BesoinFroidService } from './besoin-froid.service.js';
+import { describeIntegration } from '../../../../../../test/helpers/integration-test.js';
 
 /** @type {ApportGratuitService} **/
 let apportGratuitService;
@@ -207,7 +208,49 @@ describe('Calcul des besoins en froid du logement', () => {
     );
   });
 
-  describe("Test d'intégration pour le besoin en froid", () => {
+  test('Sommation du besoin en froid sur les douze mois en présence de climatisation', () => {
+    // Climatisation présente : execute doit agréger besoinFrMois sur les 12 mois.
+    // besoinFrMois est doublé pour n'évaluer que la logique d'agrégation.
+    vi.spyOn(service, 'besoinFrMois').mockImplementation((ctx, logement, mois, depensier) =>
+      depensier ? 5 : 2
+    );
+
+    /** @type {Contexte} */
+    const ctx = { zoneClimatique: { id: 1 } };
+
+    /** @type {Logement} */
+    const logement = { climatisation_collection: { climatisation: [{}] } };
+
+    const res = service.execute(ctx, logement);
+
+    expect(res).toStrictEqual({ besoin_fr: 24, besoin_fr_depensier: 60 });
+    expect(service.besoinFrMois).toHaveBeenCalledTimes(24);
+  });
+
+  test('Facteur d’utilisation lorsque le ratio de bilan thermique Rbth vaut exactement 1', () => {
+    // Branche fut = a / (a + 1) : atteinte uniquement quand Rbth === 1.
+    // Rbth = (aijFr + asjFr) / (GV * (tempExtMoyClim - 28) * nref)
+    //      = 6000 / (100 * (30 - 28) * 30) = 1
+    vi.spyOn(tvStore, 'getData').mockReturnValue(30);
+    vi.spyOn(apportGratuitService, 'apportInterneMois').mockReturnValue(6000);
+    vi.spyOn(apportGratuitService, 'apportSolaireMois').mockReturnValue(0);
+
+    /** @type {Logement} **/
+    const logement = { enveloppe: {}, sortie: { deperdition: { deperdition_enveloppe: 100 } } };
+
+    /** @type {Contexte} */
+    const ctx = {
+      altitude: { value: '400-800m' },
+      zoneClimatique: { value: 'h1a' },
+      inertie: { id: 4 },
+      surfaceHabitable: 25
+    };
+
+    // Valeur de référence de régression (module réel exécuté avec ces entrées)
+    expect(service.besoinFrMois(ctx, logement, 'Janvier', false)).toBeCloseTo(9.608856088560886, 9);
+  });
+
+  describeIntegration("Test d'intégration pour le besoin en froid", () => {
     test.each(corpus)('vérification des sorties besoin_fr pour dpe %s', (ademeId) => {
       /**
        * @type {Dpe}
