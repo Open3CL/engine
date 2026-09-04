@@ -166,8 +166,17 @@ function calc_umur0(di, de, du) {
     }
   }
 
-  // Si présence d'un doublage
-  if (type_doublage > 2) {
+  /**
+   * Le doublage NE doit PAS être cumulé à une isolation ITE ou ITI.
+   * Il doit uniquement être pris en compte en l'absence d'isolation ITE/ITI (ex: ITR seule, non isolé, inconnu).
+   * Types avec ITE ou ITI : 3 (iti), 4 (ite), 6 (iti+ite), 7 (iti+itr), 8 (ite+itr)
+   * @see https://github.com/Open3CL/engine/issues/146
+   */
+  const type_isolation = parseInt(de.enum_type_isolation_id) || 1;
+  const hasIteOrIti = [3, 4, 6, 7, 8].includes(type_isolation);
+
+  // Si présence d'un doublage et pas d'isolation ITE/ITI
+  if (type_doublage > 2 && !hasIteOrIti) {
     let umur0Doublage;
 
     // 3 - doublage indéterminé ou lame d'air inf 15 mm
