@@ -188,6 +188,7 @@ function genEcs(energieId, di, deExtra = {}) {
 function installEcs(deExtra, gens) {
   return {
     donnee_entree: { ...deExtra },
+    donnee_intermediaire: {},
     generateur_ecs_collection: { generateur_ecs: gens }
   };
 }

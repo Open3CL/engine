@@ -65,6 +65,7 @@ vi.mock('./10_clim.js', () => ({ default: vi.fn() }));
 vi.mock('./11_ecs.js', () => ({ default: vi.fn() }));
 vi.mock('./9_besoin_ch.js', () => ({ default: vi.fn() }));
 vi.mock('./9_chauffage.js', () => ({ default: vi.fn(), tauxChargeForGenerator: vi.fn() }));
+vi.mock('./15_conso_aux.js', () => ({ conso_aux_distribution_ecs: vi.fn() }));
 vi.mock('./2021_04_13_confort_ete.js', () => ({ default: vi.fn() }));
 vi.mock('./2021_04_13_qualite_isolation.js', () => ({ default: vi.fn() }));
 vi.mock('./ficheTechnique.js', () => ({ default: vi.fn() }));
@@ -102,6 +103,7 @@ const calc_clim = (await import('./10_clim.js')).default;
 const calc_ecs = (await import('./11_ecs.js')).default;
 const calc_besoin_ch = (await import('./9_besoin_ch.js')).default;
 const { default: calc_chauffage, tauxChargeForGenerator } = await import('./9_chauffage.js');
+const { conso_aux_distribution_ecs } = await import('./15_conso_aux.js');
 const calc_confort_ete = (await import('./2021_04_13_confort_ete.js')).default;
 const calc_qualite_isolation = (await import('./2021_04_13_qualite_isolation.js')).default;
 const getFicheTechnique = (await import('./ficheTechnique.js')).default;
@@ -172,6 +174,7 @@ function makeDpe() {
         surface_habitable_logement: 80,
         surface_habitable_immeuble: 200,
         nombre_appartement: 4,
+        nombre_niveau_immeuble: 3,
         hsp: 2.5,
         annee_construction: 1990
       },
@@ -192,6 +195,7 @@ function makeDpe() {
         installation_ecs: [
           {
             donnee_entree: { enum_type_installation_id: '1' },
+            donnee_intermediaire: {},
             generateur_ecs_collection: { generateur_ecs: [] }
           }
         ]
@@ -455,6 +459,22 @@ describe('calcul_3cl - run intégral (maison)', () => {
     expect(calc_ecs.mock.calls[0][2]).toBe(100);
     expect(calc_ecs.mock.calls[0][11]).toBe(false);
 
+    // Auxiliaires de distribution ECS calculés pour l'installation (maison => map hors
+    // liste des DPE générés à partir des données d'immeuble).
+    const ecs = dpe.logement.installation_ecs_collection.installation_ecs[0];
+    expect(conso_aux_distribution_ecs).toHaveBeenCalledTimes(1);
+    expect(conso_aux_distribution_ecs).toHaveBeenCalledWith(
+      ecs,
+      ecs.donnee_entree,
+      ecs.donnee_intermediaire,
+      80, // Sh (maison)
+      200, // surface_habitable_immeuble
+      'ca1',
+      'zc1',
+      2, // nadeq
+      3 // nombre_niveau_immeuble
+    );
+
     // Climatisation présente : calc_clim appelé.
     expect(calc_clim).toHaveBeenCalledTimes(1);
   });
@@ -484,6 +504,7 @@ describe('calcul_3cl - run intégral (maison)', () => {
     expect(calc_apport_et_besoin.mock.calls[0][5]).toBe(1);
     // Pas d'ECS ni de clim à traiter.
     expect(calc_ecs).not.toHaveBeenCalled();
+    expect(conso_aux_distribution_ecs).not.toHaveBeenCalled();
     expect(calc_clim).not.toHaveBeenCalled();
   });
 });
@@ -538,6 +559,9 @@ describe('calcul_3cl - surfaces immeuble / appartement et prorata', () => {
     // isImmeubleSystemEcsIndividuels = true, besoin non divisé.
     expect(calc_ecs.mock.calls[0][11]).toBe(true);
     expect(calc_ecs.mock.calls[0][2]).toBe(100);
+    // Auxiliaires ECS calculés par installation, avec Sh = surface immeuble.
+    expect(conso_aux_distribution_ecs).toHaveBeenCalledTimes(2);
+    expect(conso_aux_distribution_ecs.mock.calls[0][3]).toBe(200);
   });
 
   test('immeuble : systèmes ECS non tous individuels => besoin divisé par deux', () => {
@@ -593,6 +617,77 @@ describe('calcul_3cl - surfaces immeuble / appartement et prorata', () => {
     expect(calc_conso.mock.calls[0][0]).toBe(80);
     expect(calc_conso.mock.calls[0][7]).toBeCloseTo(0.4, 9); // prorataECS
     expect(calc_conso.mock.calls[0][8]).toBeCloseTo(0.4, 9); // prorataChauffage
+    // Auxiliaires ECS : Sh = surface logement, ramenée à l'immeuble dans le calcul.
+    expect(conso_aux_distribution_ecs.mock.calls[0][3]).toBe(80);
+    expect(conso_aux_distribution_ecs.mock.calls[0][4]).toBe(200);
+  });
+});
+
+describe("calcul_3cl - auxiliaires de distribution d'ECS", () => {
+  // Méthodes d'application « appartement généré à partir des données DPE immeuble » :
+  // les auxiliaires de distribution d'ECS ne sont pas calculés pour ces DPE.
+  const MAP_IDS_GENERES_IMMEUBLE = ['10', '11', '12', '13', '33', '34', '38', '39', '40'];
+
+  test.each(MAP_IDS_GENERES_IMMEUBLE)(
+    "DPE appartement généré à partir des données d'immeuble (map %s) : auxiliaires non calculés",
+    (mapId) => {
+      enums.methode_application_dpe_log = {
+        [mapId]: 'dpe appartement généré à partir des données dpe immeuble chauffage collectif'
+      };
+      const dpe = makeDpe();
+      dpe.logement.caracteristique_generale.enum_methode_application_dpe_log_id = mapId;
+
+      calcul_3cl(dpe, { sanitize: false });
+
+      // L'installation est bien traitée par ailleurs, seul le calcul des auxiliaires est ignoré.
+      expect(calc_ecs).toHaveBeenCalledTimes(1);
+      expect(conso_aux_distribution_ecs).not.toHaveBeenCalled();
+    }
+  );
+
+  test('appartement non généré depuis un immeuble (map 15) : auxiliaires calculés', () => {
+    enums.methode_application_dpe_log = { 15: 'dpe appartement collectif' };
+    const dpe = makeDpe();
+    dpe.logement.caracteristique_generale.enum_methode_application_dpe_log_id = '15';
+
+    calcul_3cl(dpe, { sanitize: false });
+
+    expect(conso_aux_distribution_ecs).toHaveBeenCalledTimes(1);
+  });
+
+  test('une installation ECS par appel : chaque installation est traitée', () => {
+    const dpe = makeDpe();
+    const installations = [
+      {
+        donnee_entree: { enum_type_installation_id: '1' },
+        donnee_intermediaire: { tag: 'ecs1' },
+        generateur_ecs_collection: { generateur_ecs: [] }
+      },
+      {
+        donnee_entree: { enum_type_installation_id: '2' },
+        donnee_intermediaire: { tag: 'ecs2' },
+        generateur_ecs_collection: { generateur_ecs: [] }
+      }
+    ];
+    dpe.logement.installation_ecs_collection.installation_ecs = installations;
+
+    calcul_3cl(dpe, { sanitize: false });
+
+    expect(conso_aux_distribution_ecs).toHaveBeenCalledTimes(2);
+    installations.forEach((ecs, i) => {
+      expect(conso_aux_distribution_ecs.mock.calls[i][0]).toBe(ecs);
+      expect(conso_aux_distribution_ecs.mock.calls[i][1]).toBe(ecs.donnee_entree);
+      expect(conso_aux_distribution_ecs.mock.calls[i][2]).toBe(ecs.donnee_intermediaire);
+    });
+  });
+
+  test("nombre de niveaux de l'immeuble absent : transmis tel quel", () => {
+    const dpe = makeDpe();
+    dpe.logement.caracteristique_generale.nombre_niveau_immeuble = undefined;
+
+    calcul_3cl(dpe, { sanitize: false });
+
+    expect(conso_aux_distribution_ecs.mock.calls[0][8]).toBeUndefined();
   });
 });
 
