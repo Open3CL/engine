@@ -667,6 +667,94 @@
         color: var(--primary);
       }
 
+      /* ===== Detail tooltip (per-DPE property diffs) ===== */
+      .dpe-card.has-detail {
+        cursor: help;
+      }
+      .dpe-card.has-detail:hover {
+        border-color: var(--primary);
+      }
+      #detail-tip {
+        position: fixed;
+        z-index: 60;
+        display: none;
+        width: min(520px, calc(100vw - 24px));
+        max-height: min(60vh, 520px);
+        overflow: auto;
+        background: var(--bg-elev);
+        border: 1px solid var(--border-strong);
+        border-radius: var(--radius-sm);
+        box-shadow: var(--shadow-md);
+        padding: 12px 14px;
+        font-size: 12px;
+        color: var(--text);
+        pointer-events: none;
+      }
+      #detail-tip .tt-head {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-weight: 700;
+        font-size: 12.5px;
+        margin-bottom: 2px;
+      }
+      #detail-tip .tt-sub {
+        color: var(--text-muted);
+        font-size: 11px;
+        margin-bottom: 8px;
+      }
+      #detail-tip .tt-msg {
+        color: var(--text-muted);
+        padding: 6px 0 2px;
+      }
+      #detail-tip table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 11.5px;
+      }
+      #detail-tip th {
+        text-align: left;
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--text-muted);
+        font-weight: 600;
+        padding: 4px 6px;
+        border-bottom: 1px solid var(--border);
+      }
+      #detail-tip td {
+        padding: 4px 6px;
+        border-bottom: 1px solid var(--border);
+        vertical-align: middle;
+      }
+      #detail-tip tr:last-child td {
+        border-bottom: 0;
+      }
+      #detail-tip td.tt-prop {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 11px;
+      }
+      #detail-tip td.tt-num {
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+      }
+      #detail-tip td.tt-diff {
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+        font-weight: 700;
+        color: var(--bad);
+        white-space: nowrap;
+      }
+      #detail-tip .tt-star {
+        color: var(--primary);
+      }
+      #detail-tip .tt-arrow {
+        color: var(--text-dim);
+      }
+
       /* Tooltips on bar list rows */
       .check-row {
         transition: background 0.15s ease;
@@ -853,6 +941,8 @@
         </div>
       </div>
 
+      <div id="detail-tip" role="tooltip" aria-hidden="true"></div>
+
       <footer>
         Proposition d'UI — Open3CL · Données issues de <code>dist/reports/corpus/</code>
       </footer>
@@ -880,7 +970,8 @@
         checkFilter: 'all',
         dpeFilter: 'all',
         sortKey: 'kind',
-        sortAsc: false
+        sortAsc: false,
+        detailCache: {} // `${corpusFile}|${branch}` -> Promise<Map<code, rows>>
       };
 
       // ----- Utilities -----
@@ -1338,6 +1429,7 @@
 
       // ----- DPE list -----
       function renderDpeList() {
+        if (typeof hideTip === 'function') hideTip();
         const chipsRow = $('#dpe-filter-chips');
         chipsRow.style.display = state.compareBranch ? 'inline-flex' : 'none';
 
@@ -1376,7 +1468,7 @@
             .slice(0, 600) // safety cap on DOM size
             .map((e) => {
               const tagLabel = e.tag === 'new' ? 'NEW' : e.tag === 'fixed' ? 'FIX' : 'COMMUN';
-              return `<div class="dpe-card" title="${e.id}">
+              return `<div class="dpe-card has-detail" data-id="${e.id}" data-tag="${e.tag}">
                 <span class="id">${e.id}</span>
                 <span class="tag tag-${e.tag}">${tagLabel}</span>
               </div>`;
@@ -1390,6 +1482,225 @@
           ? `${fmtNum(totalShown)} affichés · ${fmtNum(main.size)} sur main · ${fmtNum((branch || new Set()).size)} sur ${state.compareBranch}`
           : `${fmtNum(totalShown)} DPE`;
       }
+
+      // ----- Detailed per-DPE report (properties above threshold) -----
+
+      /** Split one CSV line, honouring double-quoted fields. */
+      function splitCsvLine(line) {
+        const out = [];
+        let cur = '';
+        let quoted = false;
+        for (let i = 0; i < line.length; i++) {
+          const ch = line[i];
+          if (quoted) {
+            if (ch === '"') {
+              if (line[i + 1] === '"') {
+                cur += '"';
+                i++;
+              } else quoted = false;
+            } else cur += ch;
+          } else if (ch === '"') quoted = true;
+          else if (ch === ',') {
+            out.push(cur);
+            cur = '';
+          } else cur += ch;
+        }
+        out.push(cur);
+        return out;
+      }
+
+      /**
+       * Parse a corpus_detailed_report_<branch>.csv into
+       * Map<dpeCode, [{ prop, input, output, diff }]> keeping only the
+       * properties whose diff exceeds the threshold (sorted worst first).
+       */
+      function parseDetailedReport(text, threshold) {
+        const lines = text.split(/\r?\n/);
+        const header = splitCsvLine(lines[0] || '');
+        const idx = {};
+        header.forEach((h, i) => (idx[h] = i));
+        const codeIdx = idx['code'] ?? 0;
+        // Every "<prop>_diff" column backed by "<prop>_input" / "<prop>_output"
+        const props = header
+          .filter((h) => h.endsWith('_diff'))
+          .map((h) => h.slice(0, -'_diff'.length))
+          .filter((p) => idx[p + '_input'] != null && idx[p + '_output'] != null)
+          .map((p) => ({
+            prop: p,
+            di: idx[p + '_diff'],
+            ii: idx[p + '_input'],
+            oi: idx[p + '_output']
+          }));
+
+        const map = new Map();
+        for (let l = 1; l < lines.length; l++) {
+          const line = lines[l];
+          if (!line) continue;
+          const cells = splitCsvLine(line);
+          const code = cells[codeIdx];
+          if (!code) continue;
+          const over = [];
+          for (const p of props) {
+            const diff = Number(cells[p.di]);
+            if (!Number.isFinite(diff) || diff <= threshold) continue;
+            over.push({
+              prop: p.prop,
+              input: cells[p.ii],
+              output: cells[p.oi],
+              diff
+            });
+          }
+          over.sort((a, b) => b.diff - a.diff);
+          map.set(code, over);
+        }
+        return map;
+      }
+
+      function loadDetailedReport(branch) {
+        const cf = state.corpusFile;
+        const key = `${cf}|${branch}`;
+        if (!state.detailCache[key]) {
+          state.detailCache[key] = (async () => {
+            const path = `${cf}/corpus_detailed_report_${branch}.csv`;
+            const res = await fetch(path);
+            if (!res.ok) throw new Error(`Fichier introuvable : ${path}`);
+            const threshold = parsePct((state.branchReport || state.mainReport)?.threshold ?? '5%');
+            return parseDetailedReport(await res.text(), threshold);
+          })().catch((err) => {
+            console.warn(err);
+            delete state.detailCache[key]; // allow a retry on next hover
+            return null;
+          });
+        }
+        return state.detailCache[key];
+      }
+
+      const fmtVal = (v) => {
+        const n = Number(v);
+        if (v === '' || v == null || !Number.isFinite(n)) return v || '—';
+        return new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 2 }).format(n);
+      };
+
+      // ----- Detail tooltip -----
+      const tip = $('#detail-tip');
+      let tipToken = 0;
+
+      function tipBranchFor(tag) {
+        // "fixed" DPE are above threshold on main only -> read main's detail file
+        if (tag === 'fixed') return 'main';
+        return state.compareBranch || 'main';
+      }
+
+      function placeTip(x, y) {
+        tip.style.display = 'block';
+        const r = tip.getBoundingClientRect();
+        let left = x + 16;
+        let top = y + 16;
+        if (left + r.width > window.innerWidth - 8) left = Math.max(8, x - r.width - 16);
+        if (top + r.height > window.innerHeight - 8) top = Math.max(8, y - r.height - 16);
+        tip.style.left = left + 'px';
+        tip.style.top = top + 'px';
+      }
+
+      function hideTip() {
+        tipToken++;
+        tip.style.display = 'none';
+        tip.setAttribute('aria-hidden', 'true');
+      }
+
+      function tipHeader(id, branch, tagLabel) {
+        const threshold = (state.branchReport || state.mainReport)?.threshold ?? '5 %';
+        return `<div class="tt-head"><span>${id}</span><span class="tag tag-${tagLabel.tag}">${tagLabel.label}</span></div>
+          <div class="tt-sub">Propriétés au-dessus du seuil (${threshold}) — branche « ${branch} »</div>`;
+      }
+
+      async function showTip(card, x, y) {
+        const id = card.dataset.id;
+        const tag = card.dataset.tag || 'common';
+        const label = { new: 'NEW', fixed: 'FIX', common: 'COMMUN' }[tag] || 'COMMUN';
+        const branch = tipBranchFor(tag);
+        const token = ++tipToken;
+
+        tip.setAttribute('aria-hidden', 'false');
+        tip.innerHTML =
+          tipHeader(id, branch, { tag, label }) + `<div class="tt-msg">Chargement du détail…</div>`;
+        placeTip(x, y);
+
+        const map = await loadDetailedReport(branch);
+        if (token !== tipToken) return; // another card (or a hide) won the race
+
+        let body;
+        if (!map) {
+          body = `<div class="tt-msg">Rapport détaillé indisponible pour « ${branch} ».</div>`;
+        } else if (!map.has(id)) {
+          body = `<div class="tt-msg">Ce DPE n'apparaît pas dans le rapport détaillé.</div>`;
+        } else {
+          const rows = map.get(id);
+          const checks = (state.branchReport || state.mainReport)?.checks || {};
+          body = rows.length
+            ? `<table>
+                <thead><tr><th>Propriété</th><th class="tt-num">Attendu</th><th class="tt-num">Calculé</th><th class="tt-diff">Écart</th></tr></thead>
+                <tbody>${rows
+                  .map(
+                    (r) => `<tr>
+                      <td class="tt-prop">${checks[r.prop]?.mandatory ? '<span class="tt-star">★</span> ' : ''}${r.prop}</td>
+                      <td class="tt-num">${fmtVal(r.input)}</td>
+                      <td class="tt-num"><span class="tt-arrow">→</span> ${fmtVal(r.output)}</td>
+                      <td class="tt-diff">${fmtVal(r.diff)}%</td>
+                    </tr>`
+                  )
+                  .join('')}</tbody>
+              </table>
+              <div class="tt-sub" style="margin:8px 0 0">${rows.length} propriété${rows.length > 1 ? 's' : ''} au-dessus du seuil · ★ check obligatoire</div>`
+            : `<div class="tt-msg">Aucune propriété au-dessus du seuil sur cette branche.</div>`;
+        }
+        tip.innerHTML = tipHeader(id, branch, { tag, label }) + body;
+        placeTip(x, y);
+      }
+
+      (function bindTip() {
+        const grid = $('#dpe-grid');
+        let current = null;
+        grid.addEventListener('mouseover', (e) => {
+          const card = e.target.closest('.dpe-card.has-detail');
+          if (!card || card === current) return;
+          current = card;
+          showTip(card, e.clientX, e.clientY);
+        });
+        grid.addEventListener('mousemove', (e) => {
+          if (current && tip.style.display === 'block') placeTip(e.clientX, e.clientY);
+        });
+        grid.addEventListener('mouseout', (e) => {
+          const card = e.target.closest('.dpe-card.has-detail');
+          if (!card) return;
+          if (e.relatedTarget && card.contains(e.relatedTarget)) return;
+          current = null;
+          hideTip();
+        });
+        grid.addEventListener('scroll', () => {
+          current = null;
+          hideTip();
+        });
+        // Touch / keyboard: tap or focus a card to pin the tooltip
+        grid.addEventListener('click', (e) => {
+          const card = e.target.closest('.dpe-card.has-detail');
+          if (!card) return;
+          if (current === card && tip.style.display === 'block') {
+            current = null;
+            hideTip();
+          } else {
+            current = card;
+            const r = card.getBoundingClientRect();
+            showTip(card, r.left, r.bottom - 16);
+          }
+        });
+        window.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape') {
+            current = null;
+            hideTip();
+          }
+        });
+      })();
 
       // ----- Run-failed -----
       function renderRunFailed() {

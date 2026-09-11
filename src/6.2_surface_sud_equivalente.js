@@ -6,7 +6,8 @@ export function calc_sse_j(bv_list, ets, ca, zc, mois) {
   const baiesAdjVeranda = bv_list.filter((bv) => bv.donnee_entree.enum_type_adjacence_id === '10');
   const baiesAdjExt = bv_list.filter((bv) => bv.donnee_entree.enum_type_adjacence_id === '1');
 
-  if (!ets) {
+  //ets peut etre un tableau vide  ou undefined selon les DPE, d'où la vérification ajoutée sur le tableau et sa longueur
+  if (!ets || (Array.isArray(ets) && ets.length === 0)) {
     return baiesAdjExt.reduce((acc, bv) => {
       return acc + getSsd(bv, zc, mois, bv.donnee_intermediaire.sw);
     }, 0);
