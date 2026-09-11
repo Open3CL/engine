@@ -278,6 +278,7 @@ function getPuissanceCirculateur(em_ch, de, di, du, surfaceHabitable, GV, Tbase)
  * @param caId {number} id de la classe d'altitude
  * @param zcId {number} id de la zone climatique
  * @param nadeq {number} nombre d'unités d'équivalence
+ * @param nombre_niveau_immeuble {number} nombre de niveaux de l'immeuble
  */
 export function conso_aux_distribution_ecs(
   ecs,
@@ -287,7 +288,8 @@ export function conso_aux_distribution_ecs(
   Sh_immeuble,
   caId,
   zcId,
-  nadeq
+  nadeq,
+  nombre_niveau_immeuble
 ) {
   const typeInstallation = parseInt(de.enum_type_installation_id);
 
@@ -299,7 +301,7 @@ export function conso_aux_distribution_ecs(
   const enumBouclage = parseInt(de.enum_bouclage_reseau_ecs_id);
 
   // CAS 1 - enum_bouclage_reseau_ecs_id =1 (réseau d'ECS non bouclé)
-  if (enumBouclage === 1) {
+  if (enumBouclage === 1 || isNaN(enumBouclage)) {
     di.conso_auxiliaire_distribution_ecs = 0;
     return;
   }
@@ -316,13 +318,21 @@ export function conso_aux_distribution_ecs(
   const ca = enums.classe_altitude[caId];
   const zc = enums.zone_climatique[zcId];
 
-  const Sh_install = de.surface_habitable;
-  const Niv_inst_ecs = de.nombre_niveau_installation_ecs || 1;
+  const ratioVirtu = parseFloat(de.ratio_virtualisation);
+  let Sh_immeuble_ratio = Sh_immeuble;
+  let Sh_install = de.surface_habitable || Sh_logement;
+  let Niv_inst_ecs = de.nombre_niveau_installation_ecs || 1;
+
+  if (!(Sh_immeuble > Sh_logement) && ratioVirtu > 0 && ratioVirtu < 1) {
+    Sh_immeuble_ratio = Sh_logement / ratioVirtu;
+    Sh_install = Sh_logement;
+    Niv_inst_ecs = nombre_niveau_immeuble || Niv_inst_ecs;
+  }
 
   // Etape 3: Lb - longueur par défaut du bouclage ECS (m)
   // Sh est la surface habitable des logements desservis par l'installation d'ECS
   // Pour l'appartement, on utilise la surface à l'échelle de l'immeuble
-  const Sh = (Sh_install / Sh_logement) * Sh_immeuble;
+  const Sh = (Sh_install / Sh_logement) * Sh_immeuble_ratio;
   const Lb = 4 * Math.pow(Sh / Niv_inst_ecs, 0.5) + 6 * (Niv_inst_ecs - 0.5);
 
   // Etape 4: DeltaPb (kPa) - perte de charge dans le bouclage
@@ -342,8 +352,9 @@ export function conso_aux_distribution_ecs(
     // Qd,w,j = (0.5 * Lvc / Sh + 0.112 + 0.028) * BECS_j
     // Pour Ratecs=1 (bouclé): Lvc = 0.2 * Sh * Ratecs = 0.2 * Sh
     // So Qd,w,j = (0.1 + 0.112 + 0.028) * BECS_j = 0.24 * BECS_j (kWh)
-    // Pour l'appartement: Qd,w,j est multiplié par Sh_immeuble / Sh_logement
-    const Qdwj_i = (0.24 * BECS_j * 1000 * Sh_install * Sh_immeuble) / (Sh_logement * Sh_logement);
+    // Pour l'appartement: Qd,w,j est multiplié par Sh_immeuble_ratio / Sh_logement
+    const Qdwj_i =
+      (0.24 * BECS_j * 1000 * Sh_install * Sh_immeuble_ratio) / (Sh_logement * Sh_logement);
 
     // Etape 2: qdwj_i (m³/h) - débit de distribution ECS
     const Nh_puisage_j = njj * 5;
@@ -366,5 +377,5 @@ export function conso_aux_distribution_ecs(
   }
 
   // Etape 9: conso annuelle ramenée à l'appartement (kWh)
-  di.conso_auxiliaire_distribution_ecs = (conso * Sh_logement) / Sh_immeuble / 1000;
+  di.conso_auxiliaire_distribution_ecs = (conso * Sh_logement) / Sh_immeuble_ratio / 1000;
 }

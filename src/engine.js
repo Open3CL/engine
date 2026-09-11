@@ -91,6 +91,7 @@ export function calcul_3cl(inputDpe, options) {
 
   const cg = logement.caracteristique_generale;
   const map_id = cg.enum_methode_application_dpe_log_id;
+  const dpeGenereImmeuble = ['10', '11', '12', '13', '33', '34', '38', '39', '40'].includes(map_id);
   const th = calc_th(map_id);
 
   if (logement.enveloppe === undefined) {
@@ -437,7 +438,7 @@ export function calcul_3cl(inputDpe, options) {
       isImmeubleSystemEcsIndividuels
     );
 
-    if (th !== 'immeuble') {
+    if (!dpeGenereImmeuble) {
       conso_aux_distribution_ecs(
         ecs,
         ecs.donnee_entree,
@@ -446,7 +447,8 @@ export function calcul_3cl(inputDpe, options) {
         cg.surface_habitable_immeuble,
         ca_id,
         zc_id,
-        apport_et_besoin.nadeq
+        apport_et_besoin.nadeq,
+        dpe.logement.caracteristique_generale.nombre_niveau_immeuble
       );
     }
   });
