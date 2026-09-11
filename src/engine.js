@@ -23,6 +23,7 @@ import {
   collectionCanBeEmpty,
   containsAnySubstring,
   isEffetJoule,
+  set_bug_for_bug_compat,
   use_enum_as_string,
   useEnumAsString,
   xmlParser
@@ -71,6 +72,7 @@ export function calcul_3cl_xml(dpeXmlContent, options) {
  * @return {FullDpe}
  */
 export function calcul_3cl(inputDpe, options) {
+  set_bug_for_bug_compat();
   if (!options) options = { sanitize: true };
   let dpe;
   if (options.sanitize) {

@@ -980,10 +980,13 @@
       const parsePct = (s) => Number(String(s).replace('%', '').trim());
       const fmtPct = (n) => `${n.toFixed(2).replace(/\.00$/, '')}%`;
       const fmtNum = (n) => new Intl.NumberFormat('fr-FR').format(Number.isFinite(n) ? n : 0);
+      /** Chart.js dessine sur un canvas : les var(--x) doivent être résolues en amont. */
+      const cssVar = (name, fallback) =>
+        getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback;
       const colorFor = (ratio) => {
-        if (ratio >= 95) return 'var(--good)';
-        if (ratio >= 80) return 'var(--warn)';
-        return 'var(--bad)';
+        if (ratio >= 95) return cssVar('--good', '#10b981');
+        if (ratio >= 80) return cssVar('--warn', '#f59e0b');
+        return cssVar('--bad', '#ef4444');
       };
       const barClassFor = (ratio) => {
         if (ratio >= 95) return '';

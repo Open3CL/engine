@@ -19,7 +19,7 @@
     "test:int": "vitest run test",
     "test:int:ci": "vitest run test --coverage",
     "test:corpus": "node test/corpus/run_all_corpus_checks.js",
-    "test:corpus:all": "node test/corpus/run_all_corpus_checks.js",
+    "test:corpus:all": "node test/corpus/run_all_corpus_checks.js && npm run reports:readme",
     "test:corpus:all+database": "npm run test:corpus:all && node test/corpus/corpus_database.js",
     "qa:lint": "eslint .",
     "qa:lint:fix": "npm run qa:lint -- --fix",
@@ -30,7 +30,8 @@
     "prepare": "husky install",
     "assets:sync": "node scripts/synchronize_assets.js",
     "version:update": "node scripts/update_version.js",
-    "reports:preview": "npm run http-server dist/reports/corpus -o"
+    "reports:preview": "npm run http-server dist/reports/corpus -o",
+    "reports:readme": "node scripts/generate_corpus_readme.js"
   },
   "repository": {
     "type": "git",
