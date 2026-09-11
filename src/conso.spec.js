@@ -435,6 +435,25 @@ describe('calc_conso - agrégation des consommations', () => {
     expect(res.ep_conso.ep_conso_ecs).toBeCloseTo(190, 9);
   });
 
+  test.each([
+    ['absente', undefined],
+    ['nulle', null],
+    ['non tabulaire', { installation_ecs: [] }]
+  ])('collection ECS %s : traitée comme une liste vide', (_libelle, ecs) => {
+    const chFixture = () => [
+      installCh({ cle_repartition_ch: 1 }, [
+        genCh('1', { conso_ch: 1000, conso_ch_depensier: 1200 })
+      ])
+    ];
+
+    const res = calc_conso(100, 1, 1, [], chFixture(), ecs, [], 1, 1, DATE_DPE, coef_ep);
+
+    // Identique à un appel avec une collection ECS vide : aucune conso ni auxiliaire d'ECS
+    expect(res).toEqual(calc_conso(100, 1, 1, [], chFixture(), [], [], 1, 1, DATE_DPE, coef_ep));
+    expect(res.ef_conso.conso_ecs).toBe(0);
+    expect(res.ef_conso.conso_auxiliaire_distribution_ecs).toBe(0);
+  });
+
   test('ventilation et froid : auxiliaires et froid agrégés par énergie', () => {
     const vt = [
       {
