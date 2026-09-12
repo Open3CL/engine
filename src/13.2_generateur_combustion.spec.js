@@ -14,6 +14,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 const state = vi.hoisted(() => ({ bug: false }));
 
 vi.mock('./utils.js', () => ({
+  set_bug_for_bug_compat: vi.fn(),
   get bug_for_bug_compat() {
     return state.bug;
   },
@@ -51,9 +52,8 @@ vi.mock('./ficheTechnique.js', () => ({
   default: vi.fn()
 }));
 
-const { tv_generateur_combustion, updateGenerateurCombustion } = await import(
-  './13.2_generateur_combustion.js'
-);
+const { tv_generateur_combustion, updateGenerateurCombustion } =
+  await import('./13.2_generateur_combustion.js');
 const { tv, tvColumnLines } = await import('./utils.js');
 const { updateGenerateurBouilleurs } = await import('./13.2_generateur_combustion_bouilleur.js');
 const { updateGenerateurChaudieres } = await import('./13.2_generateur_combustion_chaudiere.js');

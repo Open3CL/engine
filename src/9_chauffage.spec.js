@@ -15,6 +15,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
  * hybride) et répartition des auxiliaires.
  */
 vi.mock('./utils.js', () => ({
+  set_bug_for_bug_compat: vi.fn(),
   requestInput: vi.fn(),
   tv: vi.fn(),
   tvColumnIDs: vi.fn(),
@@ -52,9 +53,8 @@ vi.mock('./enums.js', () => ({
 const { default: calc_chauffage, tauxChargeForGenerator } = await import('./9_chauffage.js');
 const { requestInput, tv, tvColumnIDs } = await import('./utils.js');
 const { calc_emetteur_ch } = await import('./9_emetteur_ch.js');
-const { calc_generateur_ch, checkForGeneratorType, hasConsoForAuxDistribution } = await import(
-  './9_generateur_ch.js'
-);
+const { calc_generateur_ch, checkForGeneratorType, hasConsoForAuxDistribution } =
+  await import('./9_generateur_ch.js');
 const { tv_generateur_combustion } = await import('./13.2_generateur_combustion.js');
 const { tv_temp_fonc_30_100 } = await import('./13.2_generateur_combustion_ch.js');
 

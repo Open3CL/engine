@@ -27,6 +27,7 @@ vi.mock('lodash-es', () => ({
 const state = vi.hoisted(() => ({ bug: false }));
 
 vi.mock('./utils.js', () => ({
+  set_bug_for_bug_compat: vi.fn(),
   tv: vi.fn(),
   requestInput: (de, du, field) => de[field],
   compareReferences: (a, b) => a === b,

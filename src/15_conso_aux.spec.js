@@ -25,14 +25,14 @@ vi.mock('./tv.js', () => ({
 }));
 
 vi.mock('./utils.js', () => ({
+  set_bug_for_bug_compat: vi.fn(),
   mois_liste: ['Janvier'],
   Njj: { Janvier: 31 },
   Tbase: { ca1: { h1: -9 } }
 }));
 
-const { conso_aux_gen, conso_aux_distribution_ch, conso_aux_distribution_ecs } = await import(
-  './15_conso_aux.js'
-);
+const { conso_aux_gen, conso_aux_distribution_ch, conso_aux_distribution_ecs } =
+  await import('./15_conso_aux.js');
 
 /**
  * 15.1 Consommation des auxiliaires de génération

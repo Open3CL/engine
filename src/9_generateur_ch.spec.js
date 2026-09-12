@@ -29,6 +29,7 @@ vi.mock('./enums.js', () => ({
 }));
 
 vi.mock('./utils.js', () => ({
+  set_bug_for_bug_compat: vi.fn(),
   requestInput: vi.fn(),
   requestInputID: vi.fn(),
   tv: vi.fn(),

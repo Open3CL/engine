@@ -29,6 +29,7 @@ vi.mock('./enums.js', () => ({
 }));
 
 vi.mock('./utils.js', () => ({
+  set_bug_for_bug_compat: vi.fn(),
   get bug_for_bug_compat() {
     return state.bug;
   },
@@ -37,9 +38,8 @@ vi.mock('./utils.js', () => ({
   requestInputID: vi.fn((de, du, field) => de[`enum_${field}_id`])
 }));
 
-const { tv_temp_fonc_30_100, calc_generateur_combustion_ch } = await import(
-  './13.2_generateur_combustion_ch.js'
-);
+const { tv_temp_fonc_30_100, calc_generateur_combustion_ch } =
+  await import('./13.2_generateur_combustion_ch.js');
 const { tv } = await import('./utils.js');
 
 beforeEach(() => {

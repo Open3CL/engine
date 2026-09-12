@@ -47,6 +47,7 @@ vi.mock('./9_generateur_ch.js', () => ({
 
 const utilState = vi.hoisted(() => ({ bug: false }));
 vi.mock('./utils.js', () => ({
+  set_bug_for_bug_compat: vi.fn(),
   mois_liste: ['Janvier'],
   get bug_for_bug_compat() {
     return utilState.bug;

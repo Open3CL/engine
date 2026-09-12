@@ -24,6 +24,7 @@ vi.mock('./tv.js', () => ({
 }));
 
 vi.mock('./utils.js', () => ({
+  set_bug_for_bug_compat: vi.fn(),
   mois_liste: ['Janvier']
 }));
 

@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
  * d'entrée `de` pour le champ demandé. Cela isole `calc_pvent` de la logique de `utils`.
  */
 vi.mock('./utils.js', () => ({
+  set_bug_for_bug_compat: vi.fn(),
   requestInput: (de, du, field) => de[field]
 }));
 

@@ -8,6 +8,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
  *   d'installation.
  */
 vi.mock('./utils.js', () => ({
+  set_bug_for_bug_compat: vi.fn(),
   tv: vi.fn(),
   requestInputID: (de, du, field) => {
     const enumName = `enum_${field}_id`;

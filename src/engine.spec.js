@@ -20,6 +20,7 @@ let bugForBugCompat = false;
 let useEnumAsStringFlag = false;
 
 vi.mock('./utils.js', () => ({
+  set_bug_for_bug_compat: vi.fn(),
   add_references: vi.fn(),
   get bug_for_bug_compat() {
     return bugForBugCompat;

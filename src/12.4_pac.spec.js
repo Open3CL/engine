@@ -7,6 +7,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
  * Le comportement de ces utilitaires n'est pas testé ici, seulement la logique du module.
  */
 vi.mock('./utils.js', () => ({
+  set_bug_for_bug_compat: vi.fn(),
   tv: vi.fn(),
   requestInputID: vi.fn((de, du, field) => {
     const enumName = `enum_${field}_id`;

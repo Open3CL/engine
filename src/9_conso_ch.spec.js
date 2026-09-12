@@ -13,6 +13,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
  * propre au module (choix des coefficients, prorata de surface, base+appoint).
  */
 vi.mock('./utils.js', () => ({
+  set_bug_for_bug_compat: vi.fn(),
   mois_liste: ['Janvier', 'Février'],
   requestInputID: vi.fn()
 }));

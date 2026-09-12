@@ -8,6 +8,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
  * - `calc_pvent` (5_conso_ventilation.js) : espion, la conso de ventilation est testée ailleurs.
  */
 vi.mock('./utils.js', () => ({
+  set_bug_for_bug_compat: vi.fn(),
   tv: vi.fn(),
   requestInput: (de, du, field) => de[field],
   requestInputID: (de, du, field) => de[`enum_${field}_id`],

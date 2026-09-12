@@ -11,6 +11,7 @@ vi.mock('./3.1_b.js', () => ({
 }));
 
 vi.mock('./utils.js', () => ({
+  set_bug_for_bug_compat: vi.fn(),
   tv: vi.fn(),
   requestInput: (de, du, field) => de[field]
 }));

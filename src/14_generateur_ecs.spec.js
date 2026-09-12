@@ -32,6 +32,7 @@ vi.mock('./enums.js', () => ({
 }));
 
 vi.mock('./utils.js', () => ({
+  set_bug_for_bug_compat: vi.fn(),
   get bug_for_bug_compat() {
     return state.bug;
   },

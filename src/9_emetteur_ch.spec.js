@@ -17,6 +17,7 @@ const { getRendementDistributionCh, getRendementDistributionChById, utilState } 
 );
 
 vi.mock('./utils.js', () => ({
+  set_bug_for_bug_compat: vi.fn(),
   tv: vi.fn(),
   get bug_for_bug_compat() {
     return utilState.bug;

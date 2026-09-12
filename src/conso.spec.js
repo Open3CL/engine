@@ -38,6 +38,7 @@ vi.mock('./tv.js', () => ({
 }));
 
 vi.mock('./utils.js', () => ({
+  set_bug_for_bug_compat: vi.fn(),
   tv: vi.fn((table, matcher) => {
     // Réseau de chaleur "R1" connu, "R2" inconnu
     if (matcher?.identifiant_reseau === 'R1') return { contenu_co2_acv: 0.15 };
