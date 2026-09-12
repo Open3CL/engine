@@ -84,7 +84,8 @@ Elle implémente la méthode **3CL-DPE 2021** définie dans
 [l'annexe 1 de l'arrêté du 31 mars 2021](https://rt-re-batiment.developpement-durable.gouv.fr/IMG/pdf/consolide_annexe_1_arrete_du_31_03_2021_relatif_aux_methodes_et_procedures_applicables.pdf),
 la même méthode que celle utilisée par les logiciels certifiés du marché.
 
-Concrètement : vous lui fournissez les **données d'entrée** d'un DPE (l'enveloppe du bâtiment, les systèmes de chauffage,
+Concrètement : vous lui fournissez les **données d'entrée** d'un DPE (l'enveloppe du bâtiment, les systèmes de
+chauffage,
 d'ECS, de ventilation, de climatisation) et elle recalcule **l'intégralité des sorties** — déperditions, besoins,
 consommations, émissions de gaz à effet de serre, coûts et étiquettes.
 
@@ -156,10 +157,12 @@ flowchart LR
 
 ### Pré-requis
 
-| Outil       | Version |
-| :---------- | :------ |
-| **Node.js** | ≥ 20    |
-| **npm**     | ≥ 10    |
+| Outil       | Version   |
+| :---------- | :-------- |
+| **Node.js** | ≥ 24.14.1 |
+| **npm**     | ≥ 11.11.0 |
+
+La version exacte utilisée en développement et en CI est fixée dans [`.nvmrc`](.nvmrc) (`nvm use`).
 
 ### Installation
 
@@ -313,7 +316,8 @@ flowchart LR
     D --> E["📊 Rapports<br/>JSON · CSV · HTML"]
 ```
 
-**22 grandeurs** sont comparées pour chaque DPE. Quatre d'entre elles sont **bloquantes** : un DPE n'est déclaré conforme
+**22 grandeurs** sont comparées pour chaque DPE. Quatre d'entre elles sont **bloquantes** : un DPE n'est déclaré
+conforme
 que si **toutes** restent sous le seuil de tolérance de **5 %**.
 
 | Contrôle bloquant                                      | Ce que c'est                        |
@@ -340,7 +344,8 @@ seuil avec le **détail des propriétés en écart**, et comparaison entre deux 
 </div>
 
 > [!NOTE]
-> GitHub neutralise les scripts et les `iframe` dans les fichiers markdown : le rapport ne peut donc pas être **intégré**
+> GitHub neutralise les scripts et les `iframe` dans les fichiers markdown : le rapport ne peut donc pas être
+> **intégré**
 > tel quel dans ce README. Il est affiché ici sous forme d'aperçu cliquable, et reste consultable en ligne ou en local :
 >
 > ```sh

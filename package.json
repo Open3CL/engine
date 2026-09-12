@@ -13,11 +13,9 @@
   },
   "scripts": {
     "http-server": "http-server",
-    "test": "vitest run",
+    "test": "vitest run src",
     "test:unit": "vitest run src",
     "test:unit:ci": "vitest run src --coverage",
-    "test:int": "vitest run test",
-    "test:int:ci": "vitest run test --coverage",
     "test:corpus": "node test/corpus/run_all_corpus_checks.js",
     "test:corpus:all": "node test/corpus/run_all_corpus_checks.js && npm run reports:readme",
     "test:corpus:all+database": "npm run test:corpus:all && node test/corpus/corpus_database.js",
@@ -43,11 +41,12 @@
   ],
   "dependencies": {
     "dioma": "^0.4.6",
-    "fast-xml-parser": "^4.5.0",
+    "fast-xml-parser": "^5.11.1",
     "http-server": "^14.1.1",
-    "lodash-es": "4.17.21",
-    "mathjs": "^15.1.0",
-    "winston": "3.13.0"
+    "lodash-es": "^4.18.1",
+    "mathjs": "^15.2.0",
+    "winston": "^3.19.0",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
   },
   "devDependencies": {
     "@aws-sdk/client-s3": "^3.1013.0",
@@ -60,11 +59,10 @@
     "@semantic-release/git": "^10.0.1",
     "@semantic-release/github": "^12.0.2",
     "@types/node": "^20.12.4",
-    "@vitest/coverage-v8": "^3.0.6",
+    "@vitest/coverage-v8": "^3.2.7",
     "ansi-colors": "^4.1.3",
     "cli-progress": "^3.12.0",
     "deep-object-diff": "^1.1.9",
-    "duckdb": "^1.3.2",
     "eslint": "^8.57.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-config-standard": "^17.1.0",
@@ -79,11 +77,13 @@
     "prettier": "^3.2.5",
     "pretty-quick": "^4.0.0",
     "semantic-release": "^25.0.2",
-    "vitest": "3.0.6",
-    "xlsx": "0.18.5"
+    "vitest": "3.2.7"
   },
   "author": "Open3Cl",
   "license": "GPL-3.0",
+  "engines": {
+    "node": ">=24.14.1"
+  },
   "bugs": {
     "url": "https://github.com/Open3CL/engine/issues"
   },

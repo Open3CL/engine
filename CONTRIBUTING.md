@@ -43,11 +43,17 @@ Il n'y a pas que le code.
 
 ### Pré-requis
 
-| Outil       | Version | Vérifier         |
-| :---------- | :------ | :--------------- |
-| **Node.js** | ≥ 20    | `node --version` |
-| **npm**     | ≥ 10    | `npm --version`  |
-| **git**     | —       | `git --version`  |
+| Outil       | Version   | Vérifier         |
+| :---------- | :-------- | :--------------- |
+| **Node.js** | ≥ 24.14.1 | `node --version` |
+| **npm**     | ≥ 10      | `npm --version`  |
+| **git**     | —         | `git --version`  |
+
+La version utilisée en développement et en intégration continue est fixée dans [`.nvmrc`](.nvmrc) :
+
+```sh
+nvm use
+```
 
 ### Installation
 
