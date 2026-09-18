@@ -23,6 +23,37 @@ function tv_ug(di, de, du) {
   }
 }
 
+/**
+ * Valeurs de Ug tabulées dans `uw`, indexées par (type de baie, matériau de menuiserie).
+ *
+ * Le scan des 723 lignes de `tvs.uw` — avec un `split('|')` par ligne — était refait
+ * pour chaque baie vitrée de chaque DPE, alors que la table est statique.
+ *
+ * Le tableau est partagé et `getRange()` le trie sur place : le tri par défaut de
+ * `Array#sort` étant déterministe, la première mise en cache le laisse trié et les
+ * appels suivants produisent exactement le même résultat qu'avec un tableau reconstruit.
+ */
+const uwUgValuesCache = new Map();
+
+function uwUgValues(enum_type_baie_id, enum_type_materiaux_menuiserie_id) {
+  const cacheKey = `${enum_type_baie_id}${enum_type_materiaux_menuiserie_id}`;
+  let values = uwUgValuesCache.get(cacheKey);
+  if (values === undefined) {
+    values = tvs.uw
+      .filter((row) => {
+        return (
+          row.enum_type_baie_id.split('|').includes(enum_type_baie_id) &&
+          row.enum_type_materiaux_menuiserie_id
+            .split('|')
+            .includes(enum_type_materiaux_menuiserie_id)
+        );
+      })
+      .map((row) => parseFloat(row.ug));
+    uwUgValuesCache.set(cacheKey, values);
+  }
+  return values;
+}
+
 function tv_uw(di, de) {
   const enum_type_baie_id = de.enum_type_baie_id;
   const matcher = { enum_type_baie_id };
@@ -46,16 +77,7 @@ function tv_uw(di, de) {
     matcher.enum_type_materiaux_menuiserie_id = enum_type_materiaux_menuiserie_id;
 
     // Récupération de toutes les valeurs de Ug présentes dans les tables Uw pour le type de baie et matériaux de la baie vitrée
-    const ugValues = tvs.uw
-      .filter((row) => {
-        return (
-          row.enum_type_baie_id.split('|').includes(enum_type_baie_id) &&
-          row.enum_type_materiaux_menuiserie_id
-            .split('|')
-            .includes(enum_type_materiaux_menuiserie_id)
-        );
-      })
-      .map((row) => parseFloat(row.ug));
+    const ugValues = uwUgValues(enum_type_baie_id, enum_type_materiaux_menuiserie_id);
 
     /**
      * 3.3.2 Coefficients Uw des fenêtres / portes-fenêtres

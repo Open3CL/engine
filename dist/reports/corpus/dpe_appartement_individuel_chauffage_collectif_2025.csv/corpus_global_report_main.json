@@ -35,20 +35,13 @@
       "successRatio": "99.19 %"
     },
     "hperm": { "nbBelowThreshold": 9814, "mandatory": false, "successRatio": "98.14 %" },
-    "deperdition_pont_thermique": {
-      "nbBelowThreshold": 9633,
-      "mandatory": false,
-      "successRatio": "96.33 %"
-    },
     "surface_sud_equivalente": {
       "nbBelowThreshold": 9908,
       "mandatory": false,
       "successRatio": "99.08 %"
     },
     "besoin_ecs": { "nbBelowThreshold": 10000, "mandatory": false, "successRatio": "100.00 %" },
-    "besoin_ch": { "nbBelowThreshold": 9634, "mandatory": false, "successRatio": "96.34 %" },
     "conso_ecs": { "nbBelowThreshold": 9434, "mandatory": true, "successRatio": "94.34 %" },
-    "conso_ch": { "nbBelowThreshold": 9374, "mandatory": true, "successRatio": "93.74 %" },
     "conso_auxiliaire_distribution_ch": {
       "nbBelowThreshold": 9574,
       "mandatory": false,
@@ -69,6 +62,18 @@
       "mandatory": false,
       "successRatio": "82.60 %"
     },
+    "conso_auxiliaire_ventilation": {
+      "nbBelowThreshold": 9797,
+      "mandatory": false,
+      "successRatio": "97.97 %"
+    },
+    "deperdition_pont_thermique": {
+      "nbBelowThreshold": 9633,
+      "mandatory": false,
+      "successRatio": "96.33 %"
+    },
+    "besoin_ch": { "nbBelowThreshold": 9634, "mandatory": false, "successRatio": "96.34 %" },
+    "conso_ch": { "nbBelowThreshold": 9374, "mandatory": true, "successRatio": "93.74 %" },
     "ep_conso_5_usages": { "nbBelowThreshold": 9312, "mandatory": true, "successRatio": "93.12 %" },
     "ep_conso_5_usages_m2": {
       "nbBelowThreshold": 9310,
@@ -84,11 +89,16 @@
       "nbBelowThreshold": 7207,
       "mandatory": true,
       "successRatio": "72.07 %"
-    },
-    "conso_auxiliaire_ventilation": {
-      "nbBelowThreshold": 9797,
-      "mandatory": false,
-      "successRatio": "97.97 %"
     }
+  },
+  "performance": {
+    "count": 10000,
+    "mean": 3.978,
+    "median": 3.76,
+    "min": 1.223,
+    "max": 37.648,
+    "p95": 6.346,
+    "p99": 8.002,
+    "totalMs": 39775.648
   }
 }

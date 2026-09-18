@@ -37,6 +37,12 @@ export class CorpusRunner {
   #dpeOutputs;
   /** @type {string} **/
   #curentGitBranch;
+  /**
+   * Durée de chaque appel à `calcul_3cl`, en millisecondes. Un nombre par DPE calculé avec
+   * succès — quelques centaines de kilo-octets pour un corpus de 50 000 DPE.
+   * @type {number[]}
+   **/
+  #dpeElapsedTimes;
 
   /**
    * @param csvStore {CsvParserStore}
@@ -44,6 +50,7 @@ export class CorpusRunner {
   constructor(csvStore) {
     this.#csvStore = csvStore;
     this.#dpeOutputs = [];
+    this.#dpeElapsedTimes = [];
     this.#totalDpes = 0;
     this.#downloadDedFiles = 0;
     this.#globalReport = {
@@ -56,7 +63,8 @@ export class CorpusRunner {
       successRatio: '',
       dpeRunFailed: [],
       checks: {},
-      dpeExceedThreshold: []
+      dpeExceedThreshold: [],
+      performance: undefined
     };
     this.#multiBar = new MultiBar({
       format: colors.cyan('{bar}') + '| {percentage}% | ETA: {eta}s | {value}/{total} DPE {action}',
@@ -102,6 +110,7 @@ export class CorpusRunner {
       this.#multiBar.stop();
 
       this.#globalReport.successRatio = `${Number((this.#globalReport.nbAllChecksBelowThreshold / this.#globalReport.totalDpesInFile) * 100).toFixed(2)} %`;
+      this.#globalReport.performance = this.#computePerformance();
 
       const fileName = corpusFilePath?.split('/').pop();
 
@@ -173,6 +182,36 @@ export class CorpusRunner {
         );
       }
     });
+  }
+
+  /**
+   * Statistiques sur le temps d'exécution de `calcul_3cl`, en millisecondes.
+   *
+   * La moyenne est tirée par la queue de distribution — quelques DPE collectifs coûtent
+   * plusieurs dizaines de fois la médiane — d'où la présence des deux, plus p95 et p99 qui
+   * disent où se situe réellement le cas défavorable.
+   *
+   * @return {{count: number, mean: number, median: number, min: number, max: number,
+   *           p95: number, p99: number, totalMs: number}|undefined}
+   */
+  #computePerformance() {
+    if (!this.#dpeElapsedTimes.length) return undefined;
+
+    const sorted = [...this.#dpeElapsedTimes].sort((a, b) => a - b);
+    const total = sorted.reduce((acc, ms) => acc + ms, 0);
+    const quantile = (p) => sorted[Math.min(sorted.length - 1, Math.floor(sorted.length * p))];
+    const round = (ms) => Number(ms.toFixed(3));
+
+    return {
+      count: sorted.length,
+      mean: round(total / sorted.length),
+      median: round(quantile(0.5)),
+      min: round(sorted[0]),
+      max: round(sorted[sorted.length - 1]),
+      p95: round(quantile(0.95)),
+      p99: round(quantile(0.99)),
+      totalMs: round(total)
+    };
   }
 
   #createCsv(rows, headers, filename) {
@@ -291,6 +330,10 @@ export class CorpusRunner {
       }
       case 'addFailedDpe': {
         this.#globalReport.dpeRunFailed.push(event.dpeCode);
+        break;
+      }
+      case 'addDpeElapsedTime': {
+        this.#dpeElapsedTimes.push(event.elapsedMs);
         break;
       }
       case 'incrementAllChecksThreshold': {

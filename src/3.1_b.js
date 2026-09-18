@@ -1,8 +1,47 @@
 import enums from './enums.js';
 import { tv, requestInput, requestInputID, bug_for_bug_compat } from './utils.js';
 
+const RANGES = [0.25, 0.5, 0.75, 1, 1.25, 2, 2.5, 3, 3.5, 4, 6, 8, 10, 25, 50];
+
+/**
+ * Identifiants de type d'adjacence pour lesquels le ratio aiu/aue est pris en compte.
+ */
+const ADJACENCE_AIU_AUE_IDS = new Set([
+  '8',
+  '9',
+  '11',
+  '12',
+  '13',
+  '14',
+  '15',
+  '16',
+  '17',
+  '18',
+  '19',
+  '21'
+]);
+
+const TYPE_ADJACENCE_IDS = Object.keys(enums.type_adjacence);
+
+/**
+ * Formate une borne du ratio aiu/aue au format des tables de valeurs (`0,25`, `1,00`…).
+ *
+ * `toLocaleString(undefined, { minimumFractionDigits: 2, … })` construisait un
+ * `Intl.NumberFormat` à chaque appel (~29 µs), ce qui représentait l'essentiel du
+ * temps CPU de `b()`. `toFixed(2)` produit exactement les mêmes chaînes pour toutes
+ * les valeurs de `RANGES`, en ~0,2 µs, et sans dépendre de la locale de la machine —
+ * le `.replace('.', ',')` qui suivait était d'ailleurs un no-op sur une machine en
+ * locale française et une vraie conversion ailleurs.
+ *
+ * @param borne {number}
+ * @returns {string}
+ */
+function formatBorneAiuAue(borne) {
+  return borne.toFixed(2).replace('.', ',');
+}
+
 export function findRanges(inputNumber) {
-  const ranges = [0.25, 0.5, 0.75, 1, 1.25, 2, 2.5, 3, 3.5, 4, 6, 8, 10, 25, 50];
+  const ranges = RANGES;
   const result = [];
 
   if (inputNumber < ranges[0]) {
@@ -28,7 +67,7 @@ export function findRanges(inputNumber) {
 export default function b(di, de, du, zc_id) {
   const zc = enums.zone_climatique[zc_id].slice(0, 2);
 
-  du.enum_type_adjacence_id = Object.keys(enums.type_adjacence);
+  du.enum_type_adjacence_id = TYPE_ADJACENCE_IDS;
   const matcher = {
     enum_type_adjacence_id: requestInputID(de, du, 'type_adjacence')
   };
@@ -37,11 +76,7 @@ export default function b(di, de, du, zc_id) {
     matcher.zone_climatique = zc;
     matcher.enum_cfg_isolation_lnc_id = requestInputID(de, du, 'cfg_isolation_lnc');
     /* du.enum_cfg_isolation_lnc_id = ['6', '7', '8', '9', '10', '11'] */
-  } else if (
-    ['8', '9', '11', '12', '13', '14', '15', '16', '17', '18', '19', '21'].includes(
-      de.enum_type_adjacence_id.toString()
-    )
-  ) {
+  } else if (ADJACENCE_AIU_AUE_IDS.has(de.enum_type_adjacence_id.toString())) {
     if (de.surface_aue === 0) {
       // cf page 10
       // NOTE: bizarre de regarder aue pour un local chauffé non accessible
@@ -96,36 +131,13 @@ export default function b(di, de, du, zc_id) {
           // Si le rapport des surfaces est égale à la borne inférieure, utilisation de la borne supérieure
           // et prise en compte de l'égalité
           if (ranges[0] === de.surface_aiu / de.surface_aue) {
-            matcher.aiu_aue_max =
-              '≤ ' +
-              ranges[0]
-                .toLocaleString(undefined, {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                  useGrouping: false
-                })
-                .replace('.', ',');
+            matcher.aiu_aue_max = '≤ ' + formatBorneAiuAue(ranges[0]);
           } else {
-            matcher.aiu_aue_min =
-              ranges[0]
-                .toLocaleString(undefined, {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                  useGrouping: false
-                })
-                .replace('.', ',') + ' <';
+            matcher.aiu_aue_min = formatBorneAiuAue(ranges[0]) + ' <';
           }
         }
         if (ranges[1]) {
-          matcher.aiu_aue_max =
-            '≤ ' +
-            ranges[1]
-              .toLocaleString(undefined, {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-                useGrouping: false
-              })
-              .replace('.', ',');
+          matcher.aiu_aue_max = '≤ ' + formatBorneAiuAue(ranges[1]);
         }
       }
     }

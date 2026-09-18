@@ -5,6 +5,7 @@ import enums from '../../src/enums.js';
 import { readFileSync } from 'fs';
 import { get } from 'lodash-es';
 import { parentPort } from 'node:worker_threads';
+import { hrtime } from 'node:process';
 import {
   DPE_PROPERTIES_TO_CHECK,
   DPE_PROPERTIES_TO_VALIDATE,
@@ -117,7 +118,18 @@ const runEngineAndVerifyOutput = (inputDpe, dpeOutputs) => {
      */
     set_bug_for_bug_compat();
     set_tv_match_optimized_version();
-    outputDpe = calcul_3cl(structuredClone(inputDpe));
+
+    /**
+     * Le clone défensif est fait AVANT de démarrer le chronomètre : on mesure le moteur seul,
+     * pas la copie de l'entrée — sur un gros DPE elle peut coûter plus cher que le calcul.
+     */
+    const dpeToCompute = structuredClone(inputDpe);
+    const startTime = hrtime.bigint();
+    outputDpe = calcul_3cl(dpeToCompute);
+    parentPort.postMessage({
+      action: 'addDpeElapsedTime',
+      elapsedMs: Number(hrtime.bigint() - startTime) / 1e6
+    });
   } catch (error) {
     parentPort.postMessage({ action: 'addFailedDpe', dpeCode: inputDpe.numero_dpe });
   }

@@ -2,7 +2,7 @@ import enums from './enums.js';
 import tvs from './tv.js';
 import { set } from 'lodash-es';
 import { XMLParser } from 'fast-xml-parser';
-import { evaluate } from 'mathjs';
+import { evaluateFormula } from './formula.js';
 
 export const xmlParser = new XMLParser({
   // We want to make sure collections of length 1 are still parsed as arrays
@@ -57,13 +57,99 @@ export function set_use_enum_as_string() {
   use_enum_as_string = true;
 }
 
+/**
+ * Implémentation de `tvMatch` réellement utilisée.
+ *
+ * Le choix est fait une seule fois, au moment du réglage, et non à chaque appel :
+ * `tv_match_new_version` est un *live binding* ESM, donc un `if (tv_match_new_version)`
+ * dans `tvMatch` force V8 à relire le slot de module à chaque appel et l'empêche
+ * d'inliner la délégation. Sur plusieurs millions d'appels par calcul, ce seul
+ * aiguillage représentait ~10% du temps CPU total.
+ *
+ * Les déclarations de fonction étant hoistées, la référence est valide ici.
+ */
+let tvMatchImpl = tvMatchLegacy;
+
+/**
+ * Cache mémoïsant `tv()`.
+ *
+ * Les tables de valeurs sont statiques et `tv()` est pure : pour un même couple
+ * (filePath, matcher) la ligne retournée est toujours la même. Le moteur rejoue
+ * les mêmes combinaisons des milliers de fois par DPE.
+ *
+ * Éviction FIFO : certains matchers contiennent des valeurs issues des données
+ * d'entrée (ug, aiu/aue…), la cardinalité n'est donc pas fermée sur un process
+ * qui tourne longtemps.
+ */
+let TV_CACHE_MAX = 20000;
+
+/**
+ * Change la borne du cache de `tv()`.
+ *
+ * `Infinity` désactive l'éviction — utile pour les outils de diagnostic, qui ont besoin de
+ * l'union réelle des matchers et non d'une taille plafonnée. Réduire la borne n'évince pas
+ * immédiatement : les entrées en trop partent au fil des insertions suivantes.
+ *
+ * @param max {number}
+ */
+export function setTvCacheMax(max) {
+  TV_CACHE_MAX = max;
+}
+
+/** @returns {number} borne courante du cache de `tv()`. */
+export function getTvCacheMax() {
+  return TV_CACHE_MAX;
+}
+const tvCache = new Map();
+
+/**
+ * Vide le cache de `tv()`.
+ * À appeler si les tables de valeurs ou la sémantique de matching changent.
+ */
+export function clearTvCache() {
+  tvCache.clear();
+}
+
+/**
+ * Nombre d'entrées actuellement mémoïsées, c'est-à-dire de matchers distincts rencontrés depuis
+ * le dernier `clearTvCache()`. Purement diagnostique (bancs de mesure, métriques) : aucun
+ * compteur n'est tenu sur le chemin chaud, la taille est lue à la demande.
+ *
+ * @returns {number}
+ */
+export function tvCacheSize() {
+  return tvCache.size;
+}
+
+/**
+ * Clés actuellement mémoïsées, au format interne : `table` puis, pour chaque entrée du matcher,
+ * `clévaleur`. Purement diagnostique — sert à analyser quelle table et quelle colonne
+ * génèrent de la cardinalité ouverte. Ne pas utiliser en production : la liste est copiée.
+ *
+ * @returns {string[]}
+ */
+export function tvCacheKeys() {
+  return [...tvCache.keys()];
+}
+
+/**
+ * Séparateurs utilisés dans les clés du cache, exposés pour que les outils de diagnostic
+ * n'aient pas à les redéclarer.
+ */
+export const TV_CACHE_KEY_SEPARATORS = { entry: '', value: '' };
+
 export let tv_match_new_version = false;
 export function set_tv_match_optimized_version() {
   tv_match_new_version = true;
+  tvMatchImpl = tvMatchOptimized;
+  // La sémantique de matching change : les résultats mémoïsés ne sont plus valides.
+  clearTvCache();
 }
 
 export function unset_tv_match_optimized_version() {
   tv_match_new_version = false;
+  tvMatchImpl = tvMatchLegacy;
+  clearTvCache();
 }
 
 export const Tbase = {
@@ -156,11 +242,29 @@ export function add_references(enveloppe) {
   }
 }
 
+/**
+ * `Object.keys(enums[field])` mémoïsé.
+ *
+ * ATTENTION : le tableau retourné est partagé entre tous les appels et affecté tel
+ * quel à `du[enum_*_id]`. C'est sans risque tant que personne ne mute ces tableaux
+ * (aucun appelant ne le fait aujourd'hui) ; si un jour c'est le cas, remplacer par
+ * `enumKeys(field).slice()`.
+ */
+const enumKeysCache = new Map();
+function enumKeys(field) {
+  let keys = enumKeysCache.get(field);
+  if (keys === undefined) {
+    keys = Object.keys(enums[field]);
+    enumKeysCache.set(field, keys);
+  }
+  return keys;
+}
+
 export function requestInputID(de, du, field, type) {
   // enums
   const enum_name = `enum_${field}_id`;
   if (type) du[enum_name] = type;
-  else du[enum_name] = Object.keys(enums[field]);
+  else du[enum_name] = enumKeys(field);
   return de[enum_name];
 }
 
@@ -169,7 +273,7 @@ export function requestInput(de, du, field, type) {
     // enums
     const enum_name = `enum_${field}_id`;
     if (type) du[enum_name] = type;
-    else du[enum_name] = Object.keys(enums[field]);
+    else du[enum_name] = enumKeys(field);
     return enums[field][de[enum_name]];
   } else {
     // not enums
@@ -186,21 +290,38 @@ export function getKeyByValue(object, value) {
   return Object.keys(object).find((key) => object[key] === value);
 }
 
+/**
+ * `tvColumnIDs` est une fonction pure de deux constantes (une table statique et un
+ * nom de colonne), mais elle était rappelée pour chaque générateur de chaque DPE.
+ * Le `unique_ids.includes(value)` en O(n²) est remplacé par un `Set`.
+ *
+ * Le tableau retourné est partagé : les appelants ne font que le lire (`includes`).
+ */
+const tvColumnIDsCache = new Map();
+
 export function tvColumnIDs(filePath, field) {
+  const cacheKey = `${filePath}${field}`;
+  const cached = tvColumnIDsCache.get(cacheKey);
+  if (cached !== undefined) return cached;
+
   const list = tvs[filePath];
   const enum_name = `enum_${field}_id`;
-  let ids = list.map((row) => row[enum_name]);
-  // remove undefineds
-  ids = ids.filter((id) => id);
   // split each by | and get uniques
+  const seen = new Set();
   const unique_ids = [];
-  for (const id of ids) {
-    const values = id.split('|');
-    for (const value of values) {
-      if (!unique_ids.includes(value)) unique_ids.push(value);
+  for (const row of list) {
+    const id = row[enum_name];
+    // remove undefineds
+    if (!id) continue;
+    for (const value of id.split('|')) {
+      if (!seen.has(value)) {
+        seen.add(value);
+        unique_ids.push(value);
+      }
     }
   }
-  // sort like numbers
+
+  tvColumnIDsCache.set(cacheKey, unique_ids);
   return unique_ids;
 }
 
@@ -211,7 +332,7 @@ export function tvColumnLines(filePath, column, matcher) {
   for (const row of list) {
     let match = true;
     for (const key in matcher) {
-      if (tvMatch(row, key, matcher) === false) {
+      if (tvMatchImpl(row, key, matcher) === false) {
         match = false;
         break;
       }
@@ -221,10 +342,7 @@ export function tvColumnLines(filePath, column, matcher) {
   return lines;
 }
 
-function tvMatch(row, key, matcher) {
-  if (tv_match_new_version) {
-    return tvMatchOptimized(row, key, matcher);
-  }
+function tvMatchLegacy(row, key, matcher) {
   if (!row.hasOwnProperty(key)) {
     // for empty csv columns
     // for q4pa_conv
@@ -291,7 +409,28 @@ function tvMatchOptimized(row, key, matcher) {
 }
 
 export function tv(filePath, matcher) {
+  let cacheKey = filePath;
+  for (const key in matcher) cacheKey += `${key}${matcher[key]}`;
+
+  const cached = tvCache.get(cacheKey);
+  // `tvLookup` ne retourne jamais `undefined` (une ligne ou `null`) : `undefined`
+  // distingue donc bien un défaut de cache d'un `null` mémoïsé.
+  if (cached !== undefined) return cached;
+
+  const result = tvLookup(filePath, matcher);
+
+  if (tvCache.size >= TV_CACHE_MAX) {
+    // Éviction FIFO : `Map` conserve l'ordre d'insertion.
+    tvCache.delete(tvCache.keys().next().value);
+  }
+  tvCache.set(cacheKey, result);
+
+  return result;
+}
+
+function tvLookup(filePath, matcher) {
   const list = tvs[filePath];
+  const matcher_size = Object.keys(matcher).length;
   let match_count = 0;
   let max_match_count = 0;
   let match = null;
@@ -299,10 +438,10 @@ export function tv(filePath, matcher) {
   for (const row of list) {
     match_count = 0;
     for (const key in matcher) {
-      if (tvMatch(row, key, matcher)) match_count += 1;
+      if (tvMatchImpl(row, key, matcher)) match_count += 1;
     }
     // if match_count is same as matcher, we are done
-    if (match_count === Object.keys(matcher).length) return row;
+    if (match_count === matcher_size) return row;
 
     /* if (filePath === 'q4pa_conv') console.warn(match_count) */
     if (match_count > max_match_count) {
@@ -386,21 +525,50 @@ export function getVolumeStockageFromDescription(description) {
 }
 
 /**
+ * Cache de `cleanReference`.
+ *
+ * Les r\u00e9f\u00e9rences proviennent des DPE en entr\u00e9e, leur cardinalit\u00e9 n'est donc pas ferm\u00e9e sur un
+ * process qui tourne longtemps (\u00e9coute NATS, worker) : le cache est born\u00e9 et \u00e9vinc\u00e9 en FIFO,
+ * comme celui de `tv()`.
+ */
+const CLEAN_REFERENCE_CACHE_MAX = 5000;
+const cleanReferenceCache = new Map();
+
+/**
  * Remove space and accented characters
+ *
+ * M\u00e9mo\u00efs\u00e9e : `normalize('NFD')` suivi de deux remplacements par expression r\u00e9guli\u00e8re co\u00fbte cher,
+ * et les m\u00eames r\u00e9f\u00e9rences sont compar\u00e9es en boucle (chaque pont thermique est confront\u00e9 \u00e0 toutes
+ * les parois).
+ *
  * @param reference {string}
  * return {string}
  */
 export function cleanReference(reference) {
-  if (reference) {
-    return reference
-      .toString()
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/\s+/g, '');
+  // Valeurs falsy (undefined, null, '', 0) : retourn\u00e9es telles quelles, sans passer par le cache.
+  if (!reference) {
+    return reference;
   }
 
-  return reference;
+  const cached = cleanReferenceCache.get(reference);
+  if (cached !== undefined) {
+    return cached;
+  }
+
+  const cleaned = reference
+    .toString()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, '');
+
+  if (cleanReferenceCache.size >= CLEAN_REFERENCE_CACHE_MAX) {
+    // \u00c9viction FIFO : `Map` conserve l'ordre d'insertion.
+    cleanReferenceCache.delete(cleanReferenceCache.keys().next().value);
+  }
+  cleanReferenceCache.set(reference, cleaned);
+
+  return cleaned;
 }
 
 /**
@@ -492,24 +660,7 @@ export function containsAnySubstring(mainString, substrings) {
  * @returns {number} Résultat de l'évaluation.
  */
 export function excel_to_js_exec(formulaOrValue, pn, E, F) {
-  // Les formules des tables utilisent la virgule comme séparateur décimal (ex. `0,085`),
-  // à convertir en point pour être évaluées.
-  const formula =
-    typeof formulaOrValue === 'string'
-      ? formulaOrValue.replace(/(\d),(\d)/g, '$1.$2')
-      : formulaOrValue;
-
-  if (!isNaN(formula)) {
-    return Number(formula);
-  }
-
-  const Pn = pn / 1000;
-  return evaluate(formula, {
-    Pn,
-    logPn: Math.log10(Pn),
-    E,
-    F
-  });
+  return evaluateFormula(formulaOrValue, pn, E, F);
 }
 
 /**
