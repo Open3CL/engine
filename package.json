@@ -42,11 +42,8 @@
   "dependencies": {
     "dioma": "^0.4.6",
     "fast-xml-parser": "^5.11.1",
-    "http-server": "^14.1.1",
     "lodash-es": "^4.18.1",
-    "mathjs": "^15.2.0",
-    "winston": "^3.19.0",
-    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
+    "winston": "^3.19.0"
   },
   "devDependencies": {
     "@aws-sdk/client-s3": "^3.1013.0",
@@ -71,13 +68,15 @@
     "eslint-plugin-n": "^16.6.2",
     "eslint-plugin-promise": "^6.1.1",
     "fast-csv": "^5.0.2",
+    "http-server": "^14.1.1",
     "husky": "^9.0.11",
     "jscpd": "^3.5.10",
     "piscina": "^5.1.2",
     "prettier": "^3.2.5",
     "pretty-quick": "^4.0.0",
     "semantic-release": "^25.0.2",
-    "vitest": "3.2.7"
+    "vitest": "3.2.7",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
   },
   "author": "Open3Cl",
   "license": "GPL-3.0",

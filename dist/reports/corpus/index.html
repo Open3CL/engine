@@ -156,7 +156,8 @@
         font-weight: 600;
         outline: none;
         padding-right: 18px;
-        background-image: linear-gradient(45deg, transparent 50%, var(--text-muted) 50%),
+        background-image:
+          linear-gradient(45deg, transparent 50%, var(--text-muted) 50%),
           linear-gradient(135deg, var(--text-muted) 50%, transparent 50%);
         background-position:
           calc(100% - 10px) center,
@@ -831,6 +832,45 @@
         </div>
       </div>
 
+      <!-- Temps d'exécution de calcul_3cl -->
+      <div class="section" id="perf-section" style="display: none">
+        <div class="section-title">
+          <h2>Temps d'exécution</h2>
+          <span class="hint">
+            Durée de l'appel à <b>calcul_3cl</b> par DPE. La copie défensive de l'entrée et la
+            lecture du fichier sont exclues de la mesure.
+          </span>
+        </div>
+        <div class="kpis" id="perf-kpis">
+          <div class="card kpi kpi-total">
+            <div class="icon-circle">x̄</div>
+            <div class="label">Moyenne</div>
+            <div class="value" id="perf-mean">—</div>
+            <div class="sub" id="perf-mean-sub">—</div>
+            <div class="delta flat" id="perf-mean-delta" style="display: none">—</div>
+          </div>
+          <div class="card kpi kpi-valid">
+            <div class="icon-circle">½</div>
+            <div class="label">Médiane</div>
+            <div class="value" id="perf-median">—</div>
+            <div class="sub" id="perf-median-sub">—</div>
+            <div class="delta flat" id="perf-median-delta" style="display: none">—</div>
+          </div>
+          <div class="card kpi kpi-success">
+            <div class="icon-circle">↓</div>
+            <div class="label">Minimum</div>
+            <div class="value" id="perf-min">—</div>
+            <div class="sub">le DPE le plus rapide</div>
+          </div>
+          <div class="card kpi kpi-above">
+            <div class="icon-circle">↑</div>
+            <div class="label">Maximum</div>
+            <div class="value" id="perf-max">—</div>
+            <div class="sub" id="perf-max-sub">—</div>
+          </div>
+        </div>
+      </div>
+
       <!-- Section 1: overview & checks -->
       <div class="section">
         <div class="section-title">
@@ -1159,6 +1199,7 @@
       function renderAll() {
         renderHero();
         renderKPIs();
+        renderPerformance();
         renderGauge();
         renderChecksChart();
         renderChecksTable();
@@ -1229,6 +1270,59 @@
         } else {
           dRatio.style.display = 'none';
           dAbove.style.display = 'none';
+        }
+      }
+
+      // ----- Temps d'exécution -----
+      const fmtMs = (ms) =>
+        ms === undefined || ms === null
+          ? '—'
+          : ms >= 1000
+            ? `${(ms / 1000).toFixed(2).replace('.', ',')}<small style="font-size:16px;color:var(--text-muted)"> s</small>`
+            : `${ms.toFixed(ms < 10 ? 2 : 1).replace('.', ',')}<small style="font-size:16px;color:var(--text-muted)"> ms</small>`;
+
+      function renderPerformance() {
+        const section = $('#perf-section');
+        const active = (state.branchReport || state.mainReport)?.performance;
+
+        // Les rapports générés avant l'ajout de la mesure n'ont pas de bloc `performance`.
+        if (!active) {
+          section.style.display = 'none';
+          return;
+        }
+        section.style.display = '';
+
+        $('#perf-mean').innerHTML = fmtMs(active.mean);
+        $('#perf-mean-sub').textContent =
+          `${fmtNum(active.count)} DPE · ${(active.totalMs / 1000).toFixed(1).replace('.', ',')} s au total`;
+
+        $('#perf-median').innerHTML = fmtMs(active.median);
+        $('#perf-median-sub').textContent =
+          `p95 ${active.p95.toFixed(1).replace('.', ',')} ms · p99 ${active.p99.toFixed(1).replace('.', ',')} ms`;
+
+        $('#perf-min').innerHTML = fmtMs(active.min);
+
+        $('#perf-max').innerHTML = fmtMs(active.max);
+        $('#perf-max-sub').textContent = active.median
+          ? `${(active.max / active.median).toFixed(0)}× la médiane`
+          : '—';
+
+        // Comparaison de branches : pour un temps, plus bas est meilleur.
+        const reference = state.branchReport ? state.mainReport?.performance : undefined;
+        for (const [id, key] of [
+          ['#perf-mean-delta', 'mean'],
+          ['#perf-median-delta', 'median']
+        ]) {
+          const node = $(id);
+          if (!reference || !reference[key]) {
+            node.style.display = 'none';
+            continue;
+          }
+          const delta = active[key] - reference[key];
+          const pct = (delta / reference[key]) * 100;
+          node.style.display = '';
+          node.className = 'delta ' + (delta < 0 ? 'up' : delta > 0 ? 'down' : 'flat');
+          node.textContent = `${delta >= 0 ? '+' : ''}${pct.toFixed(1).replace('.', ',')} % vs main`;
         }
       }
 

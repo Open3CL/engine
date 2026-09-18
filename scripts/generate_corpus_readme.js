@@ -142,7 +142,9 @@ function collectResults(branch) {
         valid: report.nbValidDpe || 0,
         total,
         ratio: total ? (below / total) * 100 : 0,
-        threshold: report.threshold || '5%'
+        threshold: report.threshold || '5%',
+        // Absent des rapports générés avant l'ajout de la mesure de temps.
+        perf: report.performance
       };
     })
     .filter(Boolean)
@@ -159,6 +161,12 @@ function collectResults(branch) {
 
 const fmtNum = (n) => new Intl.NumberFormat('fr-FR').format(n);
 const fmtRatio = (n) => `${n.toFixed(2).replace('.', ',')} %`;
+const fmtMs = (ms) =>
+  ms === undefined || ms === null
+    ? '—'
+    : ms >= 1000
+      ? `${(ms / 1000).toFixed(2).replace('.', ',')} s`
+      : `${ms.toFixed(ms < 10 ? 2 : 1).replace('.', ',')} ms`;
 
 /**
  * Barre de progression en blocs pleins / vides.
@@ -229,8 +237,78 @@ function renderBlock(rows, { version, branch, date }) {
   }
 
   lines.push('', '<sub>🟢 ≥ 85 % · 🟡 ≥ 60 % · 🔴 < 60 %</sub>', '');
+  lines.push(...renderPerformanceBlock(rows));
 
   return lines.join('\n');
+}
+
+/**
+ * Bloc « temps d'exécution ». Les rapports antérieurs à l'ajout de la mesure n'ont pas de
+ * section `performance` : le bloc est alors omis.
+ *
+ * @param rows {{label: string, corpus: string, perf: object|undefined}[]}
+ * @return {string[]}
+ */
+function renderPerformanceBlock(rows) {
+  const withPerf = rows.filter((row) => row.perf?.count);
+  if (!withPerf.length) return [];
+
+  const count = withPerf.reduce((acc, r) => acc + r.perf.count, 0);
+  const totalMs = withPerf.reduce((acc, r) => acc + r.perf.totalMs, 0);
+  const min = Math.min(...withPerf.map((r) => r.perf.min));
+  const max = Math.max(...withPerf.map((r) => r.perf.max));
+
+  const lines = [
+    '',
+    '#### Temps d’exécution',
+    '',
+    `> Durée de l’appel à \`calcul_3cl\` par DPE, sur ${fmtNum(count)} calculs.`,
+    '> La copie défensive de l’entrée et la lecture du fichier sont exclues de la mesure.',
+    '',
+    '<table>',
+    '<tr>',
+    `<td align="center"><strong>${fmtMs(totalMs / count)}</strong><br/><sub>moyenne</sub></td>`,
+    `<td align="center"><strong>${fmtMs(medianOfCorpora(withPerf))}</strong><br/><sub>médiane</sub></td>`,
+    `<td align="center"><strong>${fmtMs(min)}</strong><br/><sub>min</sub></td>`,
+    `<td align="center"><strong>${fmtMs(max)}</strong><br/><sub>max</sub></td>`,
+    '</tr>',
+    '</table>',
+    '',
+    '| Corpus | Moyenne | Médiane | Min | Max | p95 | p99 |',
+    '| :--- | ---: | ---: | ---: | ---: | ---: | ---: |'
+  ];
+
+  for (const row of withPerf) {
+    const p = row.perf;
+    lines.push(
+      `| **${row.label}** | ${fmtMs(p.mean)} | ${fmtMs(p.median)} | ${fmtMs(p.min)} | ${fmtMs(p.max)} | ${fmtMs(p.p95)} | ${fmtMs(p.p99)} |`
+    );
+  }
+
+  lines.push(
+    '',
+    '<sub>La moyenne est tirée vers le haut par les DPE collectifs, dont le coût atteint plusieurs',
+    'dizaines de fois la médiane : c’est la médiane qui décrit le cas courant, et p95/p99 le cas',
+    'défavorable réel.</sub>',
+    ''
+  );
+
+  return lines;
+}
+
+/**
+ * Médiane globale, approchée par la moyenne des médianes pondérée par le nombre de DPE.
+ *
+ * La médiane exacte demanderait de conserver les durées de tous les corpus réunis ; les rapports
+ * n’en gardent que les quantiles. L’approximation est fidèle tant que les corpus ont des profils
+ * proches, et reste un bien meilleur indicateur du cas courant que la moyenne.
+ *
+ * @param rows {{perf: {median: number, count: number}}[]}
+ * @return {number}
+ */
+function medianOfCorpora(rows) {
+  const count = rows.reduce((acc, r) => acc + r.perf.count, 0);
+  return rows.reduce((acc, r) => acc + r.perf.median * r.perf.count, 0) / count;
 }
 
 // ----------------------------------------------------------------------------

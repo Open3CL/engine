@@ -4,7 +4,7 @@ import { updateGenerateurBouilleurs } from './13.2_generateur_combustion_bouille
 import { updateGenerateurChaudieres } from './13.2_generateur_combustion_chaudiere.js';
 import { updateGenerateurPacs } from './13.2_generateur_pac.js';
 import getFicheTechnique from './ficheTechnique.js';
-import { evaluate } from 'mathjs';
+import { evaluateFormula as evaluateTvFormula } from './formula.js';
 
 function criterePn(Pn, matcher) {
   let critere_list = tvColumnLines('generateur_combustion', 'critere_pn', matcher);
@@ -38,15 +38,7 @@ const F_tab = {
 };
 
 function evaluateFormula(formulaOrValue, pn, E, F) {
-  const pnVariable = pn / 1000;
-  if (!isNaN(formulaOrValue)) {
-    return Number(formulaOrValue);
-  }
-  const variables = new Map();
-  variables.set('Pn', pnVariable);
-  variables.set('E', E);
-  variables.set('F', F);
-  return evaluate(formulaOrValue, variables);
+  return evaluateTvFormula(formulaOrValue, pn, E, F);
 }
 
 /**

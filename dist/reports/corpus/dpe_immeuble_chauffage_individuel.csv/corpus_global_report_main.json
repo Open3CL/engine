@@ -90,5 +90,15 @@
       "mandatory": true,
       "successRatio": "81.15 %"
     }
+  },
+  "performance": {
+    "count": 9995,
+    "mean": 7.169,
+    "median": 6.219,
+    "min": 0.111,
+    "max": 137.72,
+    "p95": 14.309,
+    "p99": 22.283,
+    "totalMs": 71651.855
   }
 }

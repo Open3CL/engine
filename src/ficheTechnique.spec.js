@@ -188,21 +188,53 @@ describe('FicheTechnique service tests', () => {
 
     fiche = getFicheTechnique(dpe, '10', 'non existing');
     expect(fiche).toBeNull();
+  });
 
-    dpe.fiche_technique_collection.fiche_technique[0].sous_fiche_technique_collection.sous_fiche_technique =
-      null;
+  /**
+   * Les fiches techniques sont indexées une fois par objet DPE : chaque cas utilise donc un DPE
+   * neuf, muter un DPE déjà interrogé n'aurait aucun effet.
+   */
+  describe('fiches techniques absentes ou incomplètes', () => {
+    const buildDpe = (ficheTechnique) => ({
+      fiche_technique_collection: { fiche_technique: ficheTechnique }
+    });
 
-    fiche = getFicheTechnique(dpe, '11', 'non existing');
-    expect(fiche).toBeNull();
+    test.each([
+      ['sans fiche_technique_collection', {}],
+      ['avec fiche_technique null', buildDpe(null)],
+      ['avec une fiche technique null', buildDpe([null])],
+      [
+        'sans sous_fiche_technique_collection',
+        buildDpe([
+          { enum_categorie_fiche_technique_id: '10', sous_fiche_technique_collection: null }
+        ])
+      ],
+      [
+        'avec des sous-fiches null ou sans description',
+        buildDpe([
+          {
+            enum_categorie_fiche_technique_id: '10',
+            sous_fiche_technique_collection: {
+              sous_fiche_technique: [null, { valeur: 'plusieurs' }]
+            }
+          }
+        ])
+      ]
+    ])('retourne null %s', (_, dpeIncomplet) => {
+      expect(getFicheTechnique(dpeIncomplet, '10', 'exposées')).toBeNull();
+    });
 
-    dpe.fiche_technique_collection.fiche_technique[0].sous_fiche_technique_collection = null;
+    test('ignore les fiches techniques null au milieu des autres', () => {
+      const fiche = { description: 'Façades exposées: plusieurs', valeur: 'plusieurs' };
+      const dpeAvecTrou = buildDpe([
+        null,
+        {
+          enum_categorie_fiche_technique_id: '10',
+          sous_fiche_technique_collection: { sous_fiche_technique: [fiche] }
+        }
+      ]);
 
-    fiche = getFicheTechnique(dpe, '11', 'non existing');
-    expect(fiche).toBeNull();
-
-    dpe.fiche_technique_collection.fiche_technique = null;
-
-    fiche = getFicheTechnique(dpe, '10', 'non existing');
-    expect(fiche).toBeNull();
+      expect(getFicheTechnique(dpeAvecTrou, '10', 'exposées')).toBe(fiche);
+    });
   });
 });

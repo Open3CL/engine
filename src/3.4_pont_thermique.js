@@ -1,6 +1,6 @@
 import enums from './enums.js';
 import { isNil } from 'lodash-es';
-import { tv, requestInput, compareReferences, bug_for_bug_compat } from './utils.js';
+import { tv, requestInput, cleanReference, bug_for_bug_compat } from './utils.js';
 
 function defaultValue(type_liaison, pt_di, de) {
   if (pt_di.k === 0) {
@@ -115,10 +115,20 @@ function tv_k(pt_di, di, de, du, pc_id, logement) {
     }
   }
 
+  /**
+   * Références du pont thermique nettoyées une seule fois : elles sont confrontées à toutes les
+   * parois de plusieurs listes ci-dessous, et `compareReferences` les renettoyait à chaque
+   * comparaison. Les affectations de `de.reference_1` / `de.reference_2` ont toutes eu lieu
+   * au-dessus, dans le bloc de récupération par description.
+   */
+  const cleaned_reference_1 = cleanReference(de.reference_1);
+  const cleaned_reference_2 = cleanReference(de.reference_2);
+
   let mur = mur_list.find((mur, murIndex) => {
+    const cleaned_mur_reference = cleanReference(mur.donnee_entree.reference);
     if (
-      compareReferences(mur.donnee_entree.reference, de.reference_1) ||
-      compareReferences(mur.donnee_entree.reference, de.reference_2)
+      cleaned_mur_reference === cleaned_reference_1 ||
+      cleaned_mur_reference === cleaned_reference_2
     ) {
       return true;
     }
@@ -190,11 +200,10 @@ function tv_k(pt_di, di, de, du, pc_id, logement) {
     case 'plancher bas / mur':
     case 'plancher haut lourd / mur': {
       const plancher_list = ph_list.concat(pb_list);
-      const plancher = plancher_list.find(
-        (plancher) =>
-          compareReferences(plancher.donnee_entree.reference, de.reference_1) ||
-          compareReferences(plancher.donnee_entree.reference, de.reference_2)
-      );
+      const plancher = plancher_list.find((plancher) => {
+        const cleaned = cleanReference(plancher.donnee_entree.reference);
+        return cleaned === cleaned_reference_1 || cleaned === cleaned_reference_2;
+      });
       if (!plancher) {
         di.k = defaultValue(type_liaison, pt_di, de);
         console.error(
@@ -331,11 +340,10 @@ function tv_k(pt_di, di, de, du, pc_id, logement) {
       }
 
       const menuiserie_list = bv_list.concat(porte_list);
-      const menuiserie = menuiserie_list.find(
-        (men) =>
-          compareReferences(men.donnee_entree.reference, de.reference_1) ||
-          compareReferences(men.donnee_entree.reference, de.reference_2)
-      );
+      const menuiserie = menuiserie_list.find((men) => {
+        const cleaned = cleanReference(men.donnee_entree.reference);
+        return cleaned === cleaned_reference_1 || cleaned === cleaned_reference_2;
+      });
       if (!menuiserie) {
         di.k = defaultValue(type_liaison, pt_di, de);
         console.error(
