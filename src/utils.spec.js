@@ -41,6 +41,12 @@ const {
   tvColumnIDs,
   tvColumnLines,
   tv,
+  clearTvCache,
+  setTvCacheMax,
+  getTvCacheMax,
+  tvCacheSize,
+  tvCacheKeys,
+  TV_CACHE_KEY_SEPARATORS,
   removeKeyFromJSON,
   clean_dpe,
   getThicknessFromDescription,
@@ -308,6 +314,11 @@ describe('Utils unit tests', () => {
     test('retourne les identifiants uniques éclatés', () => {
       expect(tvColumnIDs('colonnes', 'x')).toStrictEqual(['1', '2', '3']);
     });
+
+    test('met en cache le résultat : le même tableau est retourné au second appel', () => {
+      const first = tvColumnIDs('colonnes', 'x');
+      expect(tvColumnIDs('colonnes', 'x')).toBe(first);
+    });
   });
 
   // -------------------------------------------------------------------------------------------
@@ -421,6 +432,53 @@ describe('Utils unit tests', () => {
   });
 
   // -------------------------------------------------------------------------------------------
+  describe('tv / cache', () => {
+    // Règle : `tv()` mémoïse chaque couple (table, matcher), borné par une éviction FIFO.
+    let initialMax;
+
+    beforeEach(() => {
+      initialMax = getTvCacheMax();
+      clearTvCache();
+      return () => {
+        setTvCacheMax(initialMax);
+        clearTvCache();
+      };
+    });
+
+    test('mémoïse le résultat, y compris un résultat null', () => {
+      const row = tv('table_defaut', { enum_x_id: '1' });
+      expect(tv('table_defaut', { enum_x_id: '1' })).toBe(row);
+      expect(tv('table_defaut', { enum_x_id: 'absent' })).toBeNull();
+      expect(tv('table_defaut', { enum_x_id: 'absent' })).toBeNull();
+      expect(tvCacheSize()).toBe(2);
+    });
+
+    test('expose les clés du cache au format table + clé + valeur', () => {
+      tv('table_defaut', { enum_x_id: '1' });
+      const { entry, value } = TV_CACHE_KEY_SEPARATORS;
+      expect(tvCacheKeys()).toStrictEqual([`table_defaut${entry}enum_x_id${value}1`]);
+    });
+
+    test('évince la plus ancienne entrée au-delà de la borne', () => {
+      setTvCacheMax(2);
+      expect(getTvCacheMax()).toBe(2);
+
+      tv('table_defaut', { enum_x_id: '1' });
+      tv('table_defaut', { enum_x_id: '2' });
+      tv('table_defaut', { enum_x_id: '3' });
+
+      expect(tvCacheSize()).toBe(2);
+      expect(tvCacheKeys().some((key) => key.endsWith('1'))).toBe(false);
+    });
+
+    test('clearTvCache vide le cache', () => {
+      tv('table_defaut', { enum_x_id: '1' });
+      clearTvCache();
+      expect(tvCacheSize()).toBe(0);
+    });
+  });
+
+  // -------------------------------------------------------------------------------------------
   describe('removeKeyFromJSON', () => {
     // Règle : supprime récursivement la clé cible, sauf sous les branches listées dans skipKeys.
     test('supprime récursivement la clé sauf sous les branches ignorées', () => {
@@ -511,6 +569,17 @@ describe('Utils unit tests', () => {
       [undefined, undefined]
     ])('nettoie « %s » → %s', (input, expected) => {
       expect(cleanReference(input)).toBe(expected);
+    });
+
+    test('retourne le résultat mémoïsé au second appel', () => {
+      expect(cleanReference('Réf Mémo')).toBe('refmemo');
+      expect(cleanReference('Réf Mémo')).toBe('refmemo');
+    });
+
+    test('reste correct une fois la borne du cache dépassée (éviction FIFO)', () => {
+      for (let i = 0; i <= 5000; i += 1) cleanReference(`Réf éviction ${i}`);
+      expect(cleanReference('Réf éviction 0')).toBe('refeviction0');
+      expect(cleanReference('Réf éviction 5000')).toBe('refeviction5000');
     });
 
     test('compareReferences ignore espaces et accents', () => {
