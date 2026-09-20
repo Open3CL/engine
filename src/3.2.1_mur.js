@@ -122,7 +122,7 @@ function tv_umur(di, de, du, pc_id, zc, effetJoule) {
   }
 }
 
-function calc_umur0(di, de, du) {
+function calc_umur0(di, de, du, versionDpe) {
   const umur0_avant = du.umur0_avant;
   const umur_avant = du.umur_avant;
 
@@ -166,8 +166,17 @@ function calc_umur0(di, de, du) {
     }
   }
 
-  // Si présence d'un doublage
-  if (type_doublage > 2) {
+  /**
+   * Le doublage NE doit PAS être cumulé à une isolation ITE ou ITI.
+   * Il doit uniquement être pris en compte en l'absence d'isolation ITE/ITI (ex: ITR seule, non isolé, inconnu).
+   * Types avec ITE ou ITI : 3 (iti), 4 (ite), 6 (iti+ite), 7 (iti+itr), 8 (ite+itr)
+   * @see https://github.com/Open3CL/engine/issues/146
+   */
+  const type_isolation = parseInt(de.enum_type_isolation_id) || 1;
+  const hasIteOrIti = versionDpe >= 2.4 && [3, 4, 6, 7, 8].includes(type_isolation);
+
+  // Si présence d'un doublage et pas d'isolation ITE/ITI
+  if (type_doublage > 2 && !hasIteOrIti) {
     let umur0Doublage;
 
     // 3 - doublage indéterminé ou lame d'air inf 15 mm
@@ -212,7 +221,7 @@ function calc_umur0(di, de, du) {
   di.umur0 = Math.min(2.5, di.umur0);
 }
 
-export default function calc_mur(mur, zc, pc_id, effetJoule) {
+export default function calc_mur(mur, zc, pc_id, effetJoule, versionDpe) {
   const de = mur.donnee_entree;
   const du = {};
   const di = {};
@@ -228,12 +237,12 @@ export default function calc_mur(mur, zc, pc_id, effetJoule) {
   const methode_saisie_u = requestInput(de, du, 'methode_saisie_u');
   switch (methode_saisie_u) {
     case 'non isolé':
-      calc_umur0(di, de, du);
+      calc_umur0(di, de, du, versionDpe);
       di.umur = Math.min(di.umur0, 2.5);
       break;
     case 'epaisseur isolation saisie justifiée par mesure ou observation':
     case 'epaisseur isolation saisie justifiée à partir des documents justificatifs autorisés': {
-      calc_umur0(di, de, du);
+      calc_umur0(di, de, du, versionDpe);
       const epaisseurIsolation = requestInput(de, du, 'epaisseur_isolation', 'int') * 0.01;
 
       if (epaisseurIsolation) {
@@ -251,7 +260,7 @@ export default function calc_mur(mur, zc, pc_id, effetJoule) {
     }
     case "resistance isolation saisie justifiée observation de l'isolant installé et mesure de son épaisseur":
     case 'resistance isolation saisie justifiée  à partir des documents justificatifs autorisés': {
-      calc_umur0(di, de, du);
+      calc_umur0(di, de, du, versionDpe);
       const resistanceIsolation = requestInput(de, du, 'resistance_isolation', 'float');
 
       if (resistanceIsolation) {
@@ -268,19 +277,19 @@ export default function calc_mur(mur, zc, pc_id, effetJoule) {
       break;
     }
     case 'isolation inconnue  (table forfaitaire)':
-      calc_umur0(di, de, du);
+      calc_umur0(di, de, du, versionDpe);
       tv_umur(di, de, du, pc_id, zc, effetJoule);
       di.umur = Math.min(di.umur, di.umur0);
       break;
     case "année d'isolation différente de l'année de construction saisie justifiée (table forfaitaire)": {
-      calc_umur0(di, de, du);
+      calc_umur0(di, de, du, versionDpe);
       const pi_id = requestInputID(de, du, 'periode_isolation') || pc_id;
       tv_umur(di, de, du, pi_id, zc, effetJoule);
       di.umur = Math.min(di.umur, di.umur0);
       break;
     }
     case 'année de construction saisie (table forfaitaire)': {
-      calc_umur0(di, de, du);
+      calc_umur0(di, de, du, versionDpe);
       // Si l'année d'isolation est connue, il faut l'utiliser et pas l'année de construction
       let pi_id = de.enum_periode_isolation_id || pc_id;
       if (!de.enum_periode_isolation_id) {

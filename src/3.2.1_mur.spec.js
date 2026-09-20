@@ -819,3 +819,108 @@ describe('calc_mur - méthode de saisie de U inconnue', () => {
     warn.mockRestore();
   });
 });
+
+/**
+ * Le doublage n'est plus cumulé à une isolation ITE ou ITI à partir de la version 2.4 du DPE.
+ * Les DPE antérieurs (2 à 2.3) ont été établis avec le cumul : on conserve ce comportement.
+ * @see https://github.com/Open3CL/engine/issues/146
+ */
+describe('calc_mur - doublage et isolation ITE/ITI (#146)', () => {
+  /** Umur0 issu de la table forfaitaire mockée. */
+  const UMUR0_TABLE = 2;
+  /** Umur0 avec doublage type 4 ou 5 cumulé : 1 / (1/2 + 0,21). */
+  const UMUR0_AVEC_DOUBLAGE = 1.4084507042253522;
+
+  /**
+   * @param enum_type_isolation_id {string}
+   * @param enum_type_doublage_id {string}
+   * @return {object}
+   */
+  const murIsoleAvecDoublage = (enum_type_isolation_id, enum_type_doublage_id = '5') => ({
+    donnee_entree: {
+      methode_saisie_u: 'epaisseur isolation saisie justifiée par mesure ou observation',
+      methode_saisie_u0:
+        'déterminé selon le matériau et épaisseur à partir de la table de valeur forfaitaire',
+      enum_materiaux_structure_mur_id: '5',
+      epaisseur_structure: 30,
+      epaisseur_isolation: 10,
+      enum_type_doublage_id,
+      enum_type_isolation_id
+    }
+  });
+
+  describe('DPE en version 2.4 et supérieure', () => {
+    test.each([
+      ['iti', '3'],
+      ['ite', '4'],
+      ['iti+ite', '6'],
+      ['iti+itr', '7'],
+      ['ite+itr', '8']
+    ])("isolation %s : le doublage n'est pas cumulé", (_label, typeIsolation) => {
+      const mur = murIsoleAvecDoublage(typeIsolation);
+
+      calc_mur(mur, 'h1a', '1', '0', 2.4);
+
+      expect(mur.donnee_intermediaire.umur0).toBeCloseTo(UMUR0_TABLE, 9);
+    });
+
+    test.each([
+      ['inconnu', '1'],
+      ['non isolé', '2'],
+      ['itr', '5'],
+      ["isolé mais type d'isolation inconnu", '9']
+    ])('isolation %s : le doublage est cumulé', (_label, typeIsolation) => {
+      const mur = murIsoleAvecDoublage(typeIsolation);
+
+      calc_mur(mur, 'h1a', '1', '0', 2.4);
+
+      expect(mur.donnee_intermediaire.umur0).toBeCloseTo(UMUR0_AVEC_DOUBLAGE, 9);
+    });
+
+    test('type_isolation absent : le doublage est cumulé', () => {
+      const mur = murIsoleAvecDoublage(undefined);
+
+      calc_mur(mur, 'h1a', '1', '0', 2.5);
+
+      expect(mur.donnee_intermediaire.umur0).toBeCloseTo(UMUR0_AVEC_DOUBLAGE, 9);
+    });
+  });
+
+  describe('DPE antérieurs à la version 2.4', () => {
+    test.each([[2], [2.1], [2.2], [2.3]])(
+      'version %s : le doublage reste cumulé à une isolation ITI',
+      (versionDpe) => {
+        const mur = murIsoleAvecDoublage('3');
+
+        calc_mur(mur, 'h1a', '1', '0', versionDpe);
+
+        expect(mur.donnee_intermediaire.umur0).toBeCloseTo(UMUR0_AVEC_DOUBLAGE, 9);
+      }
+    );
+
+    test('version absente : le doublage reste cumulé à une isolation ITE', () => {
+      const mur = murIsoleAvecDoublage('4');
+
+      calc_mur(mur, 'h1a', '1', '0');
+
+      expect(mur.donnee_intermediaire.umur0).toBeCloseTo(UMUR0_AVEC_DOUBLAGE, 9);
+    });
+  });
+
+  test.each([
+    ['isolation inconnue  (table forfaitaire)'],
+    [
+      "année d'isolation différente de l'année de construction saisie justifiée (table forfaitaire)"
+    ],
+    ['année de construction saisie (table forfaitaire)'],
+    ['resistance isolation saisie justifiée  à partir des documents justificatifs autorisés']
+  ])('methode_saisie_u "%s" : la version du DPE est prise en compte', (methode_saisie_u) => {
+    const mur = murIsoleAvecDoublage('3');
+    mur.donnee_entree.methode_saisie_u = methode_saisie_u;
+    mur.donnee_entree.resistance_isolation = 2.5;
+
+    calc_mur(mur, 'h1a', '1', '0', 2.4);
+
+    expect(mur.donnee_intermediaire.umur0).toBeCloseTo(UMUR0_TABLE, 9);
+  });
+});
