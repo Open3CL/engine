@@ -125,6 +125,7 @@ describe('Upt - déperdition linéique des ponts thermiques', () => {
 
 /** Fabrique un DPE minimal avec une enveloppe pré-calculée. */
 function makeDpe({
+  enum_version_id = '2.4',
   mur = [],
   pb = [],
   ph = [],
@@ -141,6 +142,7 @@ function makeDpe({
   }
   return {
     numero_dpe: 'TEST',
+    administratif: enum_version_id === null ? undefined : { enum_version_id },
     logement: {
       sortie: { deperdition },
       enveloppe: {
@@ -237,6 +239,51 @@ describe("calc_deperdition - agrégation des déperditions de l'enveloppe", () =
 
     expect(calc_mur).toHaveBeenCalledTimes(1);
     expect(calc_ventilation).toHaveBeenCalledTimes(1);
+  });
+
+  /**
+   * Certains calculs de Umur dépendent de la version de la méthode appliquée au DPE
+   * (cumul du doublage avec une isolation ITE/ITI avant la version 2.4).
+   * @see https://github.com/Open3CL/engine/issues/146
+   */
+  describe('version du DPE transmise au calcul des murs', () => {
+    /** @return {object[]} */
+    const murCollection = () => [
+      {
+        donnee_entree: { surface_paroi_opaque: 10, enum_type_adjacence_id: '1' },
+        donnee_intermediaire: { umur: 0.5, b: 1 }
+      }
+    ];
+
+    test.each([
+      ['2.3', 2.3],
+      ['2.4', 2.4],
+      ['2.5', 2.5]
+    ])('enum_version_id "%s" transmis à calc_mur', (enum_version_id, expected) => {
+      const dpe = makeDpe({
+        enum_version_id,
+        mur: murCollection(),
+        ventilation: [{ donnee_intermediaire: { hvent: 0, hperm: 0 } }],
+        deperdition_mur: 5
+      });
+
+      calc_deperdition({ enum_periode_construction_id: '1' }, 'h1a', 'th', '0', dpe, 100);
+
+      expect(calc_mur).toHaveBeenCalledWith(expect.anything(), 'h1a', '1', '0', expected);
+    });
+
+    test('bloc administratif absent : calc_mur reçoit NaN et conserve le comportement historique', () => {
+      const dpe = makeDpe({
+        enum_version_id: null,
+        mur: murCollection(),
+        ventilation: [{ donnee_intermediaire: { hvent: 0, hperm: 0 } }],
+        deperdition_mur: 5
+      });
+
+      calc_deperdition({ enum_periode_construction_id: '1' }, 'h1a', 'th', '0', dpe, 100);
+
+      expect(calc_mur).toHaveBeenCalledWith(expect.anything(), 'h1a', '1', '0', NaN);
+    });
   });
 
   /**

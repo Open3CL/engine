@@ -818,102 +818,109 @@ describe('calc_mur - méthode de saisie de U inconnue', () => {
     expect(warn).toHaveBeenCalledWith('methode_saisie_u inconnue:', 'valeur inexistante');
     warn.mockRestore();
   });
+});
+
+/**
+ * Le doublage n'est plus cumulé à une isolation ITE ou ITI à partir de la version 2.4 du DPE.
+ * Les DPE antérieurs (2 à 2.3) ont été établis avec le cumul : on conserve ce comportement.
+ * @see https://github.com/Open3CL/engine/issues/146
+ */
+describe('calc_mur - doublage et isolation ITE/ITI (#146)', () => {
+  /** Umur0 issu de la table forfaitaire mockée. */
+  const UMUR0_TABLE = 2;
+  /** Umur0 avec doublage type 4 ou 5 cumulé : 1 / (1/2 + 0,21). */
+  const UMUR0_AVEC_DOUBLAGE = 1.4084507042253522;
 
   /**
-   * @see https://github.com/Open3CL/engine/issues/146
-   * Le doublage NE doit PAS être cumulé à une isolation ITE ou ITI.
+   * @param enum_type_isolation_id {string}
+   * @param enum_type_doublage_id {string}
+   * @return {object}
    */
-  describe('[MURS] Doublage non cumulé à une isolation ITE/ITI (#146)', () => {
-    const baseDE = {
-      enum_type_adjacence_id: '1', // Paroi sur l'extérieur (b=1)
-      enum_materiaux_structure_mur_id: '11', // Béton ≤20 cm
-      epaisseur_structure: 20,
-      enum_methode_saisie_u0_id: '2',
-      paroi_ancienne: 0
-    };
+  const murIsoleAvecDoublage = (enum_type_isolation_id, enum_type_doublage_id = '5') => ({
+    donnee_entree: {
+      methode_saisie_u: 'epaisseur isolation saisie justifiée par mesure ou observation',
+      methode_saisie_u0:
+        'déterminé selon le matériau et épaisseur à partir de la table de valeur forfaitaire',
+      enum_materiaux_structure_mur_id: '5',
+      epaisseur_structure: 30,
+      epaisseur_isolation: 10,
+      enum_type_doublage_id,
+      enum_type_isolation_id
+    }
+  });
 
-    test('doublage avec ITI : le doublage ne doit pas être pris en compte dans Umur0', () => {
-      const zc = 3; // H2a
-      const pc_id = 6;
-      const ej = 0;
-      // Mur béton 20 cm (umur0 ~ 2.5), avec doublage connu (type 5) ET isolation ITI (type 3)
-      const mur = {
-        donnee_entree: {
-          ...baseDE,
-          description: 'Mur béton avec doublage et ITI',
-          enum_methode_saisie_u_id: '3', // épaisseur isolation saisie
-          epaisseur_isolation: 10, // 10 cm
-          enum_type_doublage_id: '5', // doublage connu (plâtre brique bois)
-          enum_type_isolation_id: '3' // ITI
-        },
-        donnee_intermediaire: {}
-      };
-      calc_mur(mur, zc, pc_id, ej);
+  describe('DPE en version 2.4 et supérieure', () => {
+    test.each([
+      ['iti', '3'],
+      ['ite', '4'],
+      ['iti+ite', '6'],
+      ['iti+itr', '7'],
+      ['ite+itr', '8']
+    ])("isolation %s : le doublage n'est pas cumulé", (_label, typeIsolation) => {
+      const mur = murIsoleAvecDoublage(typeIsolation);
 
-      // Sans doublage cumulé, umur0 = 2.5 (valeur brute du mur béton ≤20cm)
-      // Avec doublage cumulé à tort : umur0 = 1 / (1/2.5 + 0.21) ≈ 1.724
-      expect(mur.donnee_intermediaire.umur0).toBeCloseTo(2.5, 2);
+      calc_mur(mur, 'h1a', '1', '0', 2.4);
+
+      expect(mur.donnee_intermediaire.umur0).toBeCloseTo(UMUR0_TABLE, 9);
     });
 
-    test('doublage avec ITE : le doublage ne doit pas être pris en compte dans Umur0', () => {
-      const zc = 3;
-      const pc_id = 6;
-      const ej = 0;
-      const mur = {
-        donnee_entree: {
-          ...baseDE,
-          description: 'Mur béton avec doublage et ITE',
-          enum_methode_saisie_u_id: '3',
-          epaisseur_isolation: 8,
-          enum_type_doublage_id: '4', // doublage indéterminé lame d'air sup 15mm
-          enum_type_isolation_id: '4' // ITE
-        },
-        donnee_intermediaire: {}
-      };
-      calc_mur(mur, zc, pc_id, ej);
+    test.each([
+      ['inconnu', '1'],
+      ['non isolé', '2'],
+      ['itr', '5'],
+      ["isolé mais type d'isolation inconnu", '9']
+    ])('isolation %s : le doublage est cumulé', (_label, typeIsolation) => {
+      const mur = murIsoleAvecDoublage(typeIsolation);
 
-      // umur0 = 2.5 (béton ≤20cm, doublage ignoré car ITE présent)
-      expect(mur.donnee_intermediaire.umur0).toBeCloseTo(2.5, 2);
+      calc_mur(mur, 'h1a', '1', '0', 2.4);
+
+      expect(mur.donnee_intermediaire.umur0).toBeCloseTo(UMUR0_AVEC_DOUBLAGE, 9);
     });
 
-    test('doublage avec ITR seule : le doublage DOIT être pris en compte dans Umur0', () => {
-      const zc = 3;
-      const pc_id = 6;
-      const ej = 0;
-      const mur = {
-        donnee_entree: {
-          ...baseDE,
-          description: 'Mur béton avec doublage et ITR',
-          enum_methode_saisie_u_id: '1', // non isolé
-          enum_type_doublage_id: '5', // doublage connu
-          enum_type_isolation_id: '5' // ITR
-        },
-        donnee_intermediaire: {}
-      };
-      calc_mur(mur, zc, pc_id, ej);
+    test('type_isolation absent : le doublage est cumulé', () => {
+      const mur = murIsoleAvecDoublage(undefined);
 
-      // ITR seule → le doublage est pris en compte : umur0 < 2.5
-      expect(mur.donnee_intermediaire.umur0).toBeLessThan(2.5);
+      calc_mur(mur, 'h1a', '1', '0', 2.5);
+
+      expect(mur.donnee_intermediaire.umur0).toBeCloseTo(UMUR0_AVEC_DOUBLAGE, 9);
     });
+  });
 
-    test('doublage sans isolation : le doublage DOIT être pris en compte dans Umur0', () => {
-      const zc = 3;
-      const pc_id = 6;
-      const ej = 0;
-      const mur = {
-        donnee_entree: {
-          ...baseDE,
-          description: 'Mur béton avec doublage sans isolation',
-          enum_methode_saisie_u_id: '1', // non isolé
-          enum_type_doublage_id: '5',
-          enum_type_isolation_id: '2' // non isolé
-        },
-        donnee_intermediaire: {}
-      };
-      calc_mur(mur, zc, pc_id, ej);
+  describe('DPE antérieurs à la version 2.4', () => {
+    test.each([[2], [2.1], [2.2], [2.3]])(
+      'version %s : le doublage reste cumulé à une isolation ITI',
+      (versionDpe) => {
+        const mur = murIsoleAvecDoublage('3');
 
-      // Non isolé → doublage pris en compte : umur0 < umur0_nu_brut (le doublage réduit bien la valeur)
-      expect(mur.donnee_intermediaire.umur0).toBeLessThan(2.5);
+        calc_mur(mur, 'h1a', '1', '0', versionDpe);
+
+        expect(mur.donnee_intermediaire.umur0).toBeCloseTo(UMUR0_AVEC_DOUBLAGE, 9);
+      }
+    );
+
+    test('version absente : le doublage reste cumulé à une isolation ITE', () => {
+      const mur = murIsoleAvecDoublage('4');
+
+      calc_mur(mur, 'h1a', '1', '0');
+
+      expect(mur.donnee_intermediaire.umur0).toBeCloseTo(UMUR0_AVEC_DOUBLAGE, 9);
     });
+  });
+
+  test.each([
+    ['isolation inconnue  (table forfaitaire)'],
+    [
+      "année d'isolation différente de l'année de construction saisie justifiée (table forfaitaire)"
+    ],
+    ['année de construction saisie (table forfaitaire)'],
+    ['resistance isolation saisie justifiée  à partir des documents justificatifs autorisés']
+  ])('methode_saisie_u "%s" : la version du DPE est prise en compte', (methode_saisie_u) => {
+    const mur = murIsoleAvecDoublage('3');
+    mur.donnee_entree.methode_saisie_u = methode_saisie_u;
+    mur.donnee_entree.resistance_isolation = 2.5;
+
+    calc_mur(mur, 'h1a', '1', '0', 2.4);
+
+    expect(mur.donnee_intermediaire.umur0).toBeCloseTo(UMUR0_TABLE, 9);
   });
 });
