@@ -544,8 +544,8 @@ function calc_conso_pond(
     return acc + getConso(coef, 'électricité auxiliaire', conso);
   }, 0);
 
-  ret.auxiliaire_distribution_ecs = (ecs_installations || []).reduce((acc, inst) => {
-    const conso = (inst.donnee_intermediaire || {}).conso_auxiliaire_distribution_ecs || 0;
+  ret.auxiliaire_distribution_ecs = ecs_installations.reduce((acc, inst) => {
+    const conso = inst.donnee_intermediaire.conso_auxiliaire_distribution_ecs || 0;
     return acc + getConso(coef, 'électricité auxiliaire', conso);
   }, 0);
 

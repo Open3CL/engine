@@ -21,7 +21,10 @@ vi.mock('./enums.js', () => ({
 vi.mock('./utils.js', () => ({
   set_bug_for_bug_compat: vi.fn(),
   tv: vi.fn(),
-  requestInput: vi.fn()
+  requestInput: vi.fn(),
+  // Calendrier réduit à deux mois pour le calcul mensuel des auxiliaires de distribution
+  mois_liste: ['Janvier', 'Février'],
+  Njj: { Janvier: 31, Février: 28 }
 }));
 
 vi.mock('./14_generateur_ecs.js', () => ({
@@ -279,5 +282,140 @@ describe('calc_ecs - agrégation des consommations', () => {
     expect(calc_gen_ecs).toHaveBeenCalledTimes(2);
     expect(ecs.donnee_intermediaire.conso_ecs).toBe(15);
     expect(ecs.donnee_intermediaire.conso_ecs_depensier).toBe(28);
+  });
+});
+
+/**
+ * Consommation des auxiliaires de distribution ECS - cas immeuble
+ * Seuls les réseaux collectifs bouclés ou avec traçage consomment de l'énergie.
+ */
+describe('calc_ecs - auxiliaires de distribution ECS (immeuble)', () => {
+  /** Calcule l'ECS d'un immeuble et retourne la conso des auxiliaires de distribution [kWh]. */
+  function consoAuxDistribution(deExtra, becsParMois, surfaceImmeuble = 400, th = 'immeuble') {
+    const ecs = makeEcs({ tv_rendement_distribution_ecs_id: '5', ...deExtra });
+    calc_ecs(
+      {},
+      ecs,
+      100,
+      200,
+      1,
+      'ca1',
+      'h1a',
+      th,
+      false,
+      surfaceImmeuble,
+      null,
+      false,
+      becsParMois
+    );
+    return ecs.donnee_intermediaire.conso_auxiliaire_distribution_ecs;
+  }
+
+  test.each([
+    ['logement autre qu’un immeuble', 'maison', { Janvier: 1000 }],
+    ['besoin mensuel absent', 'immeuble', undefined],
+    ['besoin mensuel vide', 'immeuble', {}]
+  ])('%s : pas de consommation', (_libelle, th, becsParMois) => {
+    expect(
+      consoAuxDistribution(
+        { enum_type_installation_id: '2', enum_bouclage_reseau_ecs_id: '2' },
+        becsParMois,
+        400,
+        th
+      )
+    ).toBe(0);
+  });
+
+  test.each([
+    ['type d’installation inconnu', { enum_type_installation_id: '9' }],
+    ['installation individuelle', { enum_type_installation_id: '1' }],
+    [
+      'réseau collectif non bouclé',
+      { enum_type_installation_id: '2', enum_bouclage_reseau_ecs_id: '1' }
+    ],
+    ['type de bouclage non renseigné', { enum_type_installation_id: '2' }]
+  ])('%s : pas de consommation', (_libelle, de) => {
+    expect(consoAuxDistribution(de, { Janvier: 1000 })).toBe(0);
+  });
+
+  test('réseau avec traçage : 0,14 × besoin annuel × ratio de surface', () => {
+    const conso = consoAuxDistribution(
+      { enum_type_installation_id: '2', enum_bouclage_reseau_ecs_id: 3, surface_habitable: 100 },
+      { Janvier: 100, Février: 50 }
+    );
+
+    // 0,14 × 150 kWh × 1000 × (100 / 400) = 5250 Wh => 5,25 kWh
+    expect(conso).toBeCloseTo(5.25, 9);
+  });
+
+  test('réseau avec traçage sans surfaces renseignées : ratio de surface nul', () => {
+    const conso = consoAuxDistribution(
+      { enum_type_installation_id: '3', enum_bouclage_reseau_ecs_id: '3' },
+      { Janvier: 100 },
+      null
+    );
+
+    // surface_habitable absente => 0 ; surface de l'immeuble absente => 1
+    expect(conso).toBe(0);
+  });
+
+  test('réseau bouclé sans besoin : puissance minimale du circulateur de 20 W', () => {
+    const conso = consoAuxDistribution(
+      { enum_type_installation_id: '2', enum_bouclage_reseau_ecs_id: '2', surface_habitable: 100 },
+      { Janvier: 0 }
+    );
+
+    // Pcirb = 20 W chaque mois : (5 × 20 + 19 × 20) × (31 + 28) jours = 28320 Wh
+    expect(conso).toBeCloseTo(28.32, 9);
+  });
+
+  test('réseau bouclé à faible besoin : puissance du circulateur ramenée au minimum de 20 W', () => {
+    const conso = consoAuxDistribution(
+      {
+        enum_type_installation_id: '2',
+        enum_bouclage_reseau_ecs_id: '2',
+        surface_habitable: 100,
+        nombre_niveau_installation_ecs: 2
+      },
+      { Janvier: 1000, Février: 1000 }
+    );
+
+    // Phyd / Effcirb < 20 W => Pcirb = 20 W, identique au cas sans besoin
+    expect(conso).toBeCloseTo(28.32, 9);
+  });
+
+  test('réseau bouclé : calcul complet de la consommation du circulateur', () => {
+    const conso = consoAuxDistribution(
+      {
+        enum_type_installation_id: '2',
+        enum_bouclage_reseau_ecs_id: '2',
+        surface_habitable: 100,
+        nombre_niveau_installation_ecs: '2'
+      },
+      { Janvier: 10000 }
+    );
+
+    // Lb = 1,2 × (1,1 × 100 / 2 + 4 × 2) = 75,6 m ; ΔPb = 0,2 × Lb + 10 = 25,12 kPa
+    // Janvier : Phyd ≈ 4,645 W => Pcirb ≈ 66,49 W ; Février (besoin absent) : Pcirb = 20 W
+    // Référence de régression (calcul des 9 étapes de la méthode) : 35526,3879475995 Wh
+    expect(conso).toBeCloseTo(35.526387947599495, 9);
+  });
+
+  test('réseau bouclé sans nombre de niveaux : un seul niveau par défaut', () => {
+    const avecUnNiveau = consoAuxDistribution(
+      {
+        enum_type_installation_id: '2',
+        enum_bouclage_reseau_ecs_id: '2',
+        surface_habitable: 100,
+        nombre_niveau_installation_ecs: 1
+      },
+      { Janvier: 10000 }
+    );
+    const sansNiveau = consoAuxDistribution(
+      { enum_type_installation_id: '2', enum_bouclage_reseau_ecs_id: '2', surface_habitable: 100 },
+      { Janvier: 10000 }
+    );
+
+    expect(sansNiveau).toBe(avecUnNiveau);
   });
 });
