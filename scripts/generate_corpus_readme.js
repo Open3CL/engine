@@ -6,7 +6,9 @@
  *
  * Source  : dist/reports/corpus/<corpus>.csv/corpus_global_report_<branche>.json
  * Cible   : bloc délimité par <!-- CORPUS:START --> / <!-- CORPUS:END -->
- * Archive : docs/CORPUS-HISTORY.md (une section par exécution)
+ * Archive : docs/CORPUS-HISTORY.md (une section par version, branche main uniquement)
+ * Données : docs/corpus-history.json (une entrée par version) et sa copie
+ *           dist/reports/corpus/corpus_history.json, lue par la courbe du rapport HTML
  *
  * Utilisation :
  *   node scripts/generate_corpus_readme.js
@@ -17,7 +19,9 @@
  *   --readme=<path>    Fichier markdown à mettre à jour   (défaut: README.md)
  *   --branch=<name>    Branche des rapports à lire        (défaut: branche git courante)
  *   --version=<x.y.z>  Version affichée                   (défaut: dernier tag git)
+ *   --date=<aaaa-mm-jj> Date affichée                     (défaut: aujourd'hui)
  *   --history=<path>   Historique markdown                (défaut: docs/CORPUS-HISTORY.md)
+ *   --history-branch=<name> Branche archivée dans l'historique (défaut: main)
  *   --no-history       N'alimente pas l'historique
  *   --dry-run          Affiche le bloc généré sans rien écrire
  */
@@ -32,6 +36,16 @@ const REPORTS_FOLDER_PATH = resolve(ROOT, 'dist/reports/corpus');
 
 const START_MARKER = '<!-- CORPUS:START -->';
 const END_MARKER = '<!-- CORPUS:END -->';
+
+/** Bloc de la courbe, régénéré à chaque écriture de l'historique. */
+const CHART_START_MARKER = '<!-- CORPUS-CHART:START -->';
+const CHART_END_MARKER = '<!-- CORPUS-CHART:END -->';
+
+/**
+ * Seule branche archivée dans l'historique : les exécutions de branche servent à
+ * comparer une PR à `main`, elles n'ont pas leur place dans le suivi des versions.
+ */
+const HISTORY_BRANCH = 'main';
 
 /** Largeur de la barre de progression en caractères. */
 const BAR_WIDTH = 20;
@@ -329,36 +343,166 @@ function replaceBlock(content, block) {
 }
 
 /**
- * Ajoute la génération courante en tête de l'historique.
+ * Compare deux numéros de version (ordre croissant).
+ * @param a {string}
+ * @param b {string}
+ * @return {number}
+ */
+function compareVersions(a, b) {
+  const pa = a.split('.').map(Number);
+  const pb = b.split('.').map(Number);
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    const diff = (pa[i] || 0) - (pb[i] || 0);
+    if (diff) return diff;
+  }
+  return 0;
+}
+
+/**
+ * Enregistre les résultats de la version courante dans le fichier de données, une
+ * entrée par version. Réexécuter la même version écrase son entrée.
+ *
  * @param path {string}
  * @param rows {object[]}
- * @param context {{version: string, branch: string, date: string}}
+ * @param context {{version: string, date: string}}
+ * @return {{versions: {version: string, date: string|null, results: Object<string, {below: number, total: number}>}[]}}
  */
-function appendHistory(path, rows, context) {
+function updateHistoryData(path, rows, { version, date }) {
+  const history = existsSync(path)
+    ? JSON.parse(readFileSync(path, { encoding: 'utf8' }))
+    : { versions: [] };
+
+  const results = {};
+  for (const row of rows) {
+    results[row.corpus] = { below: row.below, total: row.total };
+  }
+
+  const entry = { version, date, results };
+  const index = history.versions.findIndex((item) => item.version === version);
+  if (index === -1) {
+    history.versions.push(entry);
+  } else {
+    history.versions[index] = entry;
+  }
+  history.versions.sort((a, b) => compareVersions(a.version, b.version));
+
+  writeFileSync(path, `${JSON.stringify(history, null, 2)}\n`, { encoding: 'utf8' });
+  return history;
+}
+
+/**
+ * Publie les données d'historique à côté des rapports : le rapport HTML les lit en
+ * relatif (`corpus_history.json`) pour tracer la courbe d'évolution.
+ *
+ * @param history {object}
+ * @return {string} chemin écrit
+ */
+function writeReportHistoryData(history) {
+  const path = resolve(REPORTS_FOLDER_PATH, 'corpus_history.json');
+  writeFileSync(path, `${JSON.stringify(history)}\n`, { encoding: 'utf8' });
+  return path;
+}
+
+/**
+ * Bloc de la courbe : l'image dans ses deux thèmes, puis les données qui la
+ * composent, pour que le graphe ne soit pas la seule façon de lire les chiffres.
+ *
+ * @param history {object}
+ * @return {string}
+ */
+function renderChartBlock(history) {
+  const seen = new Set(history.versions.flatMap((entry) => Object.keys(entry.results)));
+  const corpora = [
+    ...Object.keys(CORPUS_LABELS).filter((corpus) => seen.has(corpus)),
+    ...[...seen].filter((corpus) => !CORPUS_LABELS[corpus]).sort()
+  ].map((corpus) => ({ corpus, label: CORPUS_LABELS[corpus] || corpus.replace(/\.csv$/, '') }));
+
+  const lines = [
+    '',
+    '> 📈 **Courbe interactive** : `npm run reports:preview`, section « Historique des versions ».',
+    '> Une courbe par corpus, survol pour comparer les versions, bascule nombre / taux.',
+    '',
+    '<details>',
+    '<summary>Données de la courbe — DPE conformes par version</summary>',
+    '',
+    `| Version | ${corpora.map((c) => c.label).join(' | ')} |`,
+    `| :--- | ${corpora.map(() => '---:').join(' | ')} |`
+  ];
+
+  for (const entry of [...history.versions].reverse()) {
+    const cells = corpora.map((c) =>
+      typeof entry.results[c.corpus]?.below === 'number'
+        ? fmtNum(entry.results[c.corpus].below)
+        : '—'
+    );
+    lines.push(`| **${entry.version}** | ${cells.join(' | ')} |`);
+  }
+
+  lines.push(
+    '',
+    '</details>',
+    '',
+    '<sub>Un corpus absent d’une version n’était pas encore joué à cette date : la courbe démarre',
+    'à sa première mesure. Les versions antérieures à 1.6.2 proviennent du tableau tenu à la main,',
+    'dont deux valeurs manquantes ou erronées ont été écartées (`corpus_dpe.csv` en 1.2.8 et 1.3.25).</sub>',
+    ''
+  );
+
+  return lines.join('\n');
+}
+
+/**
+ * Insère ou remplace le bloc de la courbe, avant la première section de version.
+ * @param content {string}
+ * @param block {string}
+ * @return {string}
+ */
+function replaceChartBlock(content, block) {
+  const start = content.indexOf(CHART_START_MARKER);
+  const end = content.indexOf(CHART_END_MARKER);
+  if (start !== -1 && end !== -1 && end > start) {
+    return (
+      content.slice(0, start + CHART_START_MARKER.length) + '\n' + block + '\n' + content.slice(end)
+    );
+  }
+
+  const wrapped = `${CHART_START_MARKER}\n${block}\n${CHART_END_MARKER}\n`;
+  const firstSection = content.indexOf('\n## ');
+  return firstSection === -1
+    ? `${content}\n${wrapped}`
+    : `${content.slice(0, firstSection + 1)}${wrapped}\n${content.slice(firstSection + 1)}`;
+}
+
+/**
+ * Met l'historique à jour : une seule section par version, la plus récente en
+ * premier, précédée de la courbe.
+ *
+ * @param path {string}
+ * @param history {object}
+ * @param rows {object[]}
+ * @param context {{version: string, date: string}}
+ */
+function writeHistory(path, history, rows, context) {
   const header = [
     '# Historique des résultats de corpus',
     '',
-    'Une section par génération, la plus récente en premier. Ce fichier est alimenté',
-    'automatiquement par `npm run reports:readme`.',
+    'Une section par version publiée, la plus récente en premier, pour la branche `main`',
+    'uniquement. Ce fichier est alimenté automatiquement par `npm run reports:readme`.',
     ''
   ].join('\n');
 
-  const title = `## ${context.version} — ${context.date} (\`${context.branch}\`)`;
+  const title = `## ${context.version} — ${context.date}`;
   const section = [title, renderBlock(rows, context), ''].join('\n');
 
-  const existing = existsSync(path) ? readFileSync(path, { encoding: 'utf8' }) : `${header}\n`;
+  let existing = existsSync(path) ? readFileSync(path, { encoding: 'utf8' }) : `${header}\n`;
 
-  // Une seule section par (version, date, branche) : une nouvelle génération le
-  // même jour remplace la précédente au lieu de s'empiler.
-  const sameSection = existing.indexOf(`\n${title}`);
-  if (sameSection !== -1) {
-    const after = existing.indexOf('\n## ', sameSection + 1);
-    const tail = after === -1 ? '' : existing.slice(after + 1);
-    writeFileSync(path, `${existing.slice(0, sameSection + 1)}${section}${tail}`, {
-      encoding: 'utf8'
-    });
-    return;
-  }
+  // Une seule section par version : toutes les sections de cette version sont
+  // retirées, y compris celles générées par une exécution antérieure.
+  const versionPattern = new RegExp(
+    `\n## ${context.version.replace(/\./g, '\\.')} —[^\n]*\n[\\s\\S]*?(?=\n## |$)`,
+    'g'
+  );
+  existing = existing.replace(versionPattern, '\n');
 
   // Insertion avant la première section existante pour garder l'ordre antéchronologique.
   const firstSection = existing.indexOf('\n## ');
@@ -367,7 +511,11 @@ function appendHistory(path, rows, context) {
       ? `${existing}\n${section}`
       : `${existing.slice(0, firstSection + 1)}${section}${existing.slice(firstSection + 1)}`;
 
-  writeFileSync(path, content, { encoding: 'utf8' });
+  // Le retrait d'anciennes sections laisse des lignes vides en trop : on les réduit
+  // ici plutôt que de compter sur prettier, qui peut ne pas être installé.
+  const markdown = replaceChartBlock(content, renderChartBlock(history)).replace(/\n{3,}/g, '\n\n');
+
+  writeFileSync(path, markdown, { encoding: 'utf8' });
 }
 
 /**
@@ -401,9 +549,11 @@ const version = arg(
 );
 const readmePath = resolve(ROOT, arg('readme', 'README.md'));
 const historyPath = resolve(ROOT, arg('history', 'docs/CORPUS-HISTORY.md'));
+const historyBranch = arg('history-branch', HISTORY_BRANCH);
+const historyDataPath = resolve(dirname(historyPath), 'corpus-history.json');
 const dryRun = flag('dry-run');
 
-const date = new Date().toISOString().slice(0, 10);
+const date = arg('date', new Date().toISOString().slice(0, 10));
 const rows = collectResults(branch);
 const block = renderBlock(rows, { version, branch, date });
 
@@ -434,9 +584,25 @@ console.log(
 
 if (!rows.length) process.exit(0);
 
-if (!flag('no-history')) {
-  appendHistory(historyPath, rows, { version, branch, date });
-  console.log(`✅ Historique mis à jour : ${historyPath}`);
+if (flag('no-history')) {
+  formatWithPrettier([readmePath]);
+  process.exit(0);
 }
 
-formatWithPrettier([readmePath, flag('no-history') ? undefined : historyPath].filter(Boolean));
+// L'historique suit les versions publiées : une exécution de branche compare une PR
+// à `main` et n'a pas à y laisser de trace.
+if (branch !== historyBranch) {
+  console.log(`↪️  Historique inchangé : branche ${branch} (seule ${historyBranch} est archivée).`);
+  formatWithPrettier([readmePath]);
+  process.exit(0);
+}
+
+const history = updateHistoryData(historyDataPath, rows, { version, date });
+writeHistory(historyPath, history, rows, { version, branch, date });
+const reportData = writeReportHistoryData(history);
+
+console.log(`✅ Historique mis à jour : ${historyPath} (version ${version})`);
+console.log(`✅ Données d'historique : ${historyDataPath} (${history.versions.length} versions)`);
+console.log(`✅ Courbe du rapport HTML : ${reportData}`);
+
+formatWithPrettier([readmePath, historyPath, historyDataPath]);

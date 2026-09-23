@@ -981,6 +981,30 @@
         </div>
       </div>
 
+      <!-- Section 5: historique des versions -->
+      <div class="section" id="history-section" style="display: none">
+        <div class="section-title">
+          <h2>Historique des versions</h2>
+          <span class="hint" id="history-hint">—</span>
+        </div>
+        <div class="card chart-card">
+          <div class="head">
+            <div>
+              <div class="section-title" style="margin: 0">
+                <h2 style="font-size: 14px">DPE conformes par version</h2>
+              </div>
+              <div class="hint" style="margin-top: 4px">
+                Résultats de la branche <code>main</code>, un point par version publiée. Cliquez une
+                entrée de la légende pour masquer un corpus.
+              </div>
+            </div>
+          </div>
+          <div class="chart-host" style="height: 420px">
+            <canvas id="historyChart"></canvas>
+          </div>
+        </div>
+      </div>
+
       <div id="detail-tip" role="tooltip" aria-hidden="true"></div>
 
       <footer>
@@ -1011,6 +1035,7 @@
         dpeFilter: 'all',
         sortKey: 'kind',
         sortAsc: false,
+        history: null, // contenu de corpus_history.json
         detailCache: {} // `${corpusFile}|${branch}` -> Promise<Map<code, rows>>
       };
 
@@ -1052,6 +1077,7 @@
         // Re-render charts so they pick up the new text colour
         renderGauge();
         renderChecksChart();
+        renderHistoryChart();
       });
 
       // ----- Boot -----
@@ -1141,6 +1167,7 @@
           );
 
           await loadAll();
+          await loadHistory();
         } catch (err) {
           console.error(err);
           document.body.innerHTML = `<div class="wrap"><div class="card" style="padding:24px; border-color:var(--bad)"><b>Erreur de chargement.</b><br/>${err.message}</div></div>`;
@@ -1391,6 +1418,162 @@
           return a.ratio - b2.ratio;
         });
         return rows;
+      }
+
+      // ----- Historique des versions -----
+      /**
+       * Palette catégorielle validée (contrastes et daltonisme), déclinée pour chaque thème.
+       * L'ordre est fixe : un corpus garde sa couleur quand un autre est masqué.
+       */
+      const HISTORY_COLORS = {
+        light: [
+          '#2a78d6',
+          '#eb6834',
+          '#1baf7a',
+          '#eda100',
+          '#e87ba4',
+          '#008300',
+          '#4a3aa7',
+          '#e34948'
+        ],
+        dark: [
+          '#3987e5',
+          '#d95926',
+          '#199e70',
+          '#c98500',
+          '#d55181',
+          '#008300',
+          '#9085e9',
+          '#e66767'
+        ]
+      };
+
+      /**
+       * Au-delà de huit corpus, la couleur seule ne suffit plus à distinguer les
+       * courbes : la forme des points et le pointillé prennent le relais.
+       */
+      const HISTORY_POINT_STYLES = [
+        'circle',
+        'triangle',
+        'rect',
+        'rectRot',
+        'star',
+        'cross',
+        'rectRounded',
+        'crossRot',
+        'circle'
+      ];
+
+      const CORPUS_LABELS = {
+        'corpus_dpe.csv': 'Généraliste',
+        'dpe_logement_individuel_2025.csv': 'Logement individuel (2025)',
+        'dpe_maison_individuelle_2025.csv': 'Maison individuelle (2025)',
+        'dpe_appartement_individuel_chauffage_individuel_2025.csv':
+          'Appart. · ch. individuel (2025)',
+        'dpe_appartement_individuel_chauffage_collectif_2025.csv': 'Appart. · ch. collectif (2025)',
+        'dpe_immeuble_chauffage_individuel.csv': 'Immeuble · ch. individuel',
+        'dpe_immeuble_chauffage_collectif.csv': 'Immeuble · ch. collectif',
+        'dpe_immeuble_chauffage_mixte.csv': 'Immeuble · ch. mixte',
+        'dpe_individuel_a_partir_dpe_immeuble_2026.csv': "Individuel depuis l'immeuble (2026)"
+      };
+
+      const corpusLabel = (corpus) => CORPUS_LABELS[corpus] || corpus.replace(/\.csv$/, '');
+
+      /**
+       * Corpus tracés, dans l'ordre des libellés connus puis les inconnus.
+       * @return {string[]}
+       */
+      function historyCorpora() {
+        const seen = new Set(state.history.versions.flatMap((v) => Object.keys(v.results)));
+        const known = Object.keys(CORPUS_LABELS).filter((c) => seen.has(c));
+        return [...known, ...[...seen].filter((c) => !CORPUS_LABELS[c]).sort()];
+      }
+
+      let historyChart = null;
+      function renderHistoryChart() {
+        if (!state.history?.versions?.length) return;
+
+        const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+        const colors = dark ? HISTORY_COLORS.dark : HISTORY_COLORS.light;
+        const textColor = dark ? '#e6e9f3' : '#0f172a';
+        const gridColor = dark ? 'rgba(255,255,255,0.06)' : 'rgba(15,23,42,0.06)';
+
+        const versions = state.history.versions;
+        const labels = versions.map((v) => v.version);
+
+        const datasets = historyCorpora().map((corpus, i) => {
+          // Une version sans mesure pour ce corpus laisse un trou : la courbe relie
+          // les versions encadrantes plutôt que de retomber à zéro (`spanGaps`).
+          const data = versions.map((v) =>
+            typeof v.results[corpus]?.below === 'number' ? v.results[corpus].below : null
+          );
+
+          return {
+            label: corpusLabel(corpus),
+            data,
+            borderColor: colors[i % colors.length],
+            backgroundColor: colors[i % colors.length],
+            pointStyle: HISTORY_POINT_STYLES[i % HISTORY_POINT_STYLES.length],
+            // La neuvième courbe réutilise une teinte : le pointillé la distingue.
+            borderDash: i >= colors.length ? [5, 4] : undefined,
+            borderWidth: 2,
+            pointRadius: 3,
+            pointHoverRadius: 6,
+            tension: 0.2,
+            spanGaps: true
+          };
+        });
+
+        const ctx = document.getElementById('historyChart');
+        if (historyChart) historyChart.destroy();
+        historyChart = new Chart(ctx, {
+          type: 'line',
+          data: { labels, datasets },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            scales: {
+              x: {
+                ticks: { color: textColor, maxRotation: 0, autoSkipPadding: 12 },
+                grid: { display: false }
+              },
+              y: {
+                beginAtZero: true,
+                ticks: { color: textColor, callback: (v) => fmtNum(v) },
+                grid: { color: gridColor },
+                title: { display: true, color: textColor, text: 'DPE conformes' }
+              }
+            },
+            plugins: {
+              legend: {
+                position: 'bottom',
+                labels: { color: textColor, usePointStyle: true, boxHeight: 8, padding: 14 }
+              },
+              tooltip: {
+                itemSort: (a, b) => b.parsed.y - a.parsed.y,
+                callbacks: { label: (c) => `${c.dataset.label} : ${fmtNum(c.parsed.y)}` }
+              }
+            }
+          }
+        });
+
+        const first = versions[0].version;
+        const last = versions[versions.length - 1].version;
+        $('#history-hint').textContent = `${versions.length} versions · ${first} → ${last}`;
+      }
+
+      /** Charge l'historique ; la section reste masquée si le fichier est absent. */
+      async function loadHistory() {
+        try {
+          const history = await fetchJSON('corpus_history.json');
+          if (!history?.versions?.length) return;
+          state.history = history;
+          $('#history-section').style.display = '';
+          renderHistoryChart();
+        } catch {
+          // Historique optionnel : un rapport généré avant son introduction n'en a pas.
+        }
       }
 
       // ----- Checks chart -----

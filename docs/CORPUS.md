@@ -230,15 +230,25 @@ Ce script ([`scripts/generate_corpus_readme.js`](../scripts/generate_corpus_read
 
 1. lit les rapports globaux de la branche courante ;
 2. regénère le bloc situé entre `<!-- CORPUS:START -->` et `<!-- CORPUS:END -->` dans le README ;
-3. archive la génération dans [`docs/CORPUS-HISTORY.md`](CORPUS-HISTORY.md).
+3. sur `main` uniquement, archive les résultats dans [`docs/CORPUS-HISTORY.md`](CORPUS-HISTORY.md),
+   une section par version : réexécuter une version déjà présente remplace sa section ;
+4. met à jour [`docs/corpus-history.json`](corpus-history.json), la source de données de l'historique,
+   et sa copie `dist/reports/corpus/corpus_history.json`, lue par la section « Historique des
+   versions » du rapport interactif : une courbe par corpus, un point par version publiée, survol
+   pour comparer les corpus d'une version, légende cliquable pour en masquer.
 
-| Option              | Description                                                |
-| :------------------ | :--------------------------------------------------------- |
-| `--readme=<path>`   | Fichier markdown à mettre à jour. Défaut : `README.md`     |
-| `--branch=<name>`   | Branche des rapports à lire. Défaut : branche git courante |
-| `--version=<x.y.z>` | Version affichée. Défaut : dernier tag git                 |
-| `--dry-run`         | Affiche le bloc généré sans rien écrire                    |
-| `--no-history`      | N'alimente pas `CORPUS-HISTORY.md`                         |
+Une exécution sur une branche de travail met donc à jour le README, ce qui permet de comparer une PR
+à `main`, mais ne laisse aucune trace dans l'historique ni dans la courbe.
+
+| Option                    | Description                                                |
+| :------------------------ | :--------------------------------------------------------- |
+| `--readme=<path>`         | Fichier markdown à mettre à jour. Défaut : `README.md`     |
+| `--branch=<name>`         | Branche des rapports à lire. Défaut : branche git courante |
+| `--version=<x.y.z>`       | Version affichée. Défaut : dernier tag git                 |
+| `--date=<aaaa-mm-jj>`     | Date affichée. Défaut : aujourd'hui                        |
+| `--history-branch=<name>` | Branche archivée dans l'historique. Défaut : `main`        |
+| `--dry-run`               | Affiche le bloc généré sans rien écrire                    |
+| `--no-history`            | N'alimente ni `CORPUS-HISTORY.md`, ni la courbe            |
 
 ---
 

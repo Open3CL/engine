@@ -25,6 +25,8 @@ dist/reports/corpus/*/*.csv
 !dist/reports/corpus/**/corpus_detailed_report_main.csv
 !dist/reports/corpus/**/corpus_global_report_main.json
 !dist/reports/corpus/**/corpus_dpe_list_above_threshold_main.json
+# Données de la courbe d'historique du rapport interactif
+!dist/reports/corpus/corpus_history.json
 
 *.db
 /test-results/junit.xml

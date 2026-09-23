@@ -28,8 +28,9 @@
     "prepare": "husky install",
     "assets:sync": "node scripts/synchronize_assets.js",
     "version:update": "node scripts/update_version.js",
+    "reports:charts": "node scripts/generate_corpus_history_chart.js",
     "reports:preview": "npm run http-server dist/reports/corpus -o",
-    "reports:readme": "node scripts/generate_corpus_readme.js"
+    "reports:readme": "node scripts/generate_corpus_readme.js && npm run reports:charts"
   },
   "repository": {
     "type": "git",
