@@ -1,12 +1,13 @@
 # Historique des résultats de corpus
 
-Une section par version publiée, la plus récente en premier, pour la branche `main`
-uniquement. Ce fichier est alimenté automatiquement par `npm run reports:readme`.
+Une section par version publiée, la plus récente en premier. Les chiffres sont relus dans
+les rapports que chaque tag de release embarque, sur la branche `main` : ce fichier se
+reconstruit à l'identique avec `npm run reports:readme`.
 
 <!-- CORPUS-CHART:START -->
 
 > 📈 **Courbe interactive** : `npm run reports:preview`, section « Historique des versions ».
-> Une courbe par corpus, survol pour comparer les versions, bascule nombre / taux.
+> Une courbe par corpus, survol pour comparer les versions, légende cliquable.
 
 <details>
 <summary>Données de la courbe — DPE conformes par version</summary>
@@ -14,41 +15,63 @@ uniquement. Ce fichier est alimenté automatiquement par `npm run reports:readme
 | Version    | Généraliste | Logement individuel (2025) | Maison individuelle (2025) | Appartement · chauffage individuel (2025) | Appartement · chauffage collectif (2025) | Immeuble · chauffage individuel | Immeuble · chauffage collectif | Immeuble · chauffage mixte | Individuel généré depuis l'immeuble (2026) |
 | :--------- | ----------: | -------------------------: | -------------------------: | ----------------------------------------: | ---------------------------------------: | ------------------------------: | -----------------------------: | -------------------------: | -----------------------------------------: |
 | **1.7.3**  |       4 597 |                      8 812 |                      8 793 |                                     9 155 |                                    6 947 |                           7 375 |                          6 226 |                      4 837 |                                      2 755 |
-| **1.6.2**  |       4 597 |                      8 812 |                      8 793 |                                     9 155 |                                    6 947 |                           7 375 |                          6 226 |                      4 837 |                                      2 755 |
+| **1.7.2**  |       4 597 |                      8 812 |                      8 793 |                                     9 155 |                                    6 947 |                           7 375 |                          6 226 |                      4 837 |                                      2 755 |
+| **1.7.1**  |       4 597 |                      8 812 |                      8 793 |                                     9 155 |                                    6 947 |                           7 375 |                          6 226 |                      4 837 |                                      2 755 |
+| **1.7.0**  |       4 591 |                      8 791 |                      8 793 |                                     9 146 |                                    6 837 |                           7 371 |                          6 155 |                      4 819 |                                      2 755 |
+| **1.6.2**  |       4 591 |                      8 791 |                      8 793 |                                     9 146 |                                    6 837 |                           7 371 |                          6 155 |                      4 819 |                                      2 755 |
 | **1.6.1**  |       4 591 |                      8 791 |                      8 793 |                                     9 146 |                                    6 837 |                           7 371 |                          6 155 |                      4 819 |                                      2 755 |
+| **1.6.0**  |       4 582 |                      8 790 |                      8 791 |                                     9 143 |                                    6 836 |                           7 371 |                          6 155 |                      4 816 |                                      2 755 |
+| **1.5.2**  |       4 582 |                      8 790 |                      8 791 |                                     9 143 |                                    6 836 |                           7 371 |                          6 155 |                      4 816 |                                      2 755 |
 | **1.5.1**  |       4 582 |                      8 790 |                      8 791 |                                     9 143 |                                    6 836 |                           7 371 |                          6 155 |                      4 816 |                                      2 755 |
-| **1.4.5**  |       4 582 |                      8 790 |                      8 791 |                                     9 143 |                                    6 836 |                           7 371 |                          6 155 |                      4 816 |                                      2 755 |
-| **1.4.4**  |       4 560 |                      8 719 |                      8 715 |                                     9 070 |                                    6 803 |                           7 320 |                          6 149 |                      4 805 |                                      2 755 |
-| **1.4.3**  |       4 556 |                      8 716 |                      8 715 |                                     9 070 |                                    6 804 |                           7 320 |                          6 149 |                      4 805 |                                      2 755 |
-| **1.4.2**  |       4 515 |                      8 512 |                      8 674 |                                     8 581 |                                    6 680 |                           7 143 |                          6 144 |                      4 758 |                                      2 757 |
-| **1.4.0**  |       4 515 |                      8 512 |                      8 674 |                                     8 581 |                                    6 680 |                           7 142 |                          6 144 |                      4 758 |                                          — |
-| **1.3.25** |           — |                      8 512 |                      8 674 |                                     8 581 |                                    6 680 |                           7 142 |                          6 144 |                      4 758 |                                          — |
-| **1.3.21** |       4 502 |                      8 504 |                      8 652 |                                     8 578 |                                    6 681 |                           7 144 |                          6 144 |                      4 760 |                                          — |
-| **1.3.20** |       4 500 |                      8 459 |                      8 638 |                                     8 561 |                                        — |                           7 106 |                          6 083 |                      4 751 |                                          — |
+| **1.5.0**  |       4 582 |                      8 790 |                      8 791 |                                     9 143 |                                    6 836 |                           7 371 |                          6 155 |                      4 816 |                                      2 755 |
+| **1.4.6**  |       4 582 |                      8 790 |                      8 791 |                                     9 143 |                                    6 836 |                           7 371 |                          6 155 |                      4 816 |                                      2 755 |
+| **1.4.5**  |       4 560 |                      8 719 |                      8 715 |                                     9 070 |                                    6 803 |                           7 320 |                          6 149 |                      4 805 |                                      2 755 |
+| **1.4.4**  |       4 556 |                      8 716 |                      8 715 |                                     9 070 |                                    6 804 |                           7 320 |                          6 149 |                      4 805 |                                      2 755 |
+| **1.4.3**  |       4 515 |                      8 512 |                      8 674 |                                     8 581 |                                    6 680 |                           7 143 |                          6 144 |                      4 758 |                                      2 757 |
+| **1.4.2**  |       4 515 |                      8 512 |                      8 674 |                                     8 581 |                                    6 680 |                           7 143 |                          6 144 |                      4 758 |                                          — |
+| **1.4.1**  |       4 515 |                      8 512 |                      8 674 |                                     8 581 |                                    6 680 |                           7 143 |                          6 144 |                      4 758 |                                          — |
+| **1.4.0**  |       4 515 |                      8 512 |                      8 674 |                                     8 581 |                                    6 680 |                           7 143 |                          6 144 |                      4 758 |                                          — |
+| **1.3.25** |       4 515 |                      8 512 |                      8 674 |                                     8 581 |                                    6 680 |                           7 142 |                          6 144 |                      4 758 |                                          — |
+| **1.3.24** |       4 502 |                      8 504 |                      8 652 |                                     8 578 |                                    6 681 |                           7 144 |                          6 144 |                      4 760 |                                          — |
+| **1.3.23** |       4 502 |                      8 504 |                      8 652 |                                     8 578 |                                    6 681 |                           7 144 |                          6 144 |                      4 760 |                                          — |
+| **1.3.22** |       4 502 |                      8 504 |                      8 652 |                                     8 578 |                                    6 681 |                           7 144 |                          6 144 |                      4 760 |                                          — |
+| **1.3.21** |       4 500 |                      8 459 |                      8 638 |                                     8 561 |                                        — |                           7 106 |                          6 083 |                      4 751 |                                          — |
+| **1.3.20** |       4 500 |                      8 459 |                      8 638 |                                         — |                                        — |                           7 106 |                          6 083 |                      4 751 |                                          — |
+| **1.3.19** |       4 500 |                      8 459 |                      8 638 |                                         — |                                        — |                           7 106 |                          6 083 |                      4 751 |                                          — |
+| **1.3.18** |       4 500 |                      8 459 |                      8 638 |                                         — |                                        — |                           7 106 |                          6 083 |                      4 751 |                                          — |
+| **1.3.17** |       4 500 |                      8 459 |                      8 638 |                                         — |                                        — |                           7 106 |                          6 083 |                      4 751 |                                          — |
+| **1.3.16** |       4 481 |                      8 453 |                          — |                                         — |                                        — |                           7 106 |                          6 083 |                      4 751 |                                          — |
 | **1.3.15** |       4 481 |                      8 453 |                          — |                                         — |                                        — |                           7 106 |                          6 083 |                      4 751 |                                          — |
-| **1.3.12** |       4 467 |                      8 429 |                          — |                                         — |                                        — |                           6 900 |                          6 058 |                      4 725 |                                          — |
-| **1.3.11** |       4 468 |                          — |                          — |                                         — |                                        — |                           6 901 |                          6 058 |                      4 727 |                                          — |
-| **1.3.9**  |       4 460 |                          — |                          — |                                         — |                                        — |                           6 901 |                          6 058 |                      4 728 |                                          — |
-| **1.3.8**  |       4 522 |                          — |                          — |                                         — |                                        — |                           6 965 |                          6 110 |                      4 735 |                                          — |
-| **1.3.7**  |       4 522 |                          — |                          — |                                         — |                                        — |                           6 960 |                          6 106 |                      4 730 |                                          — |
-| **1.3.6**  |       4 522 |                          — |                          — |                                         — |                                        — |                           5 650 |                          5 894 |                      4 141 |                                          — |
+| **1.3.14** |       4 481 |                      8 453 |                          — |                                         — |                                        — |                           7 106 |                          6 083 |                      4 751 |                                          — |
+| **1.3.13** |       4 467 |                      8 429 |                          — |                                         — |                                        — |                           6 900 |                          6 058 |                      4 725 |                                          — |
+| **1.3.12** |       4 468 |                          — |                          — |                                         — |                                        — |                           6 901 |                          6 058 |                      4 727 |                                          — |
+| **1.3.11** |       4 468 |                          — |                          — |                                         — |                                        — |                           6 900 |                          6 056 |                      4 727 |                                          — |
+| **1.3.10** |       4 460 |                          — |                          — |                                         — |                                        — |                           6 901 |                          6 058 |                      4 728 |                                          — |
+| **1.3.9**  |       4 522 |                          — |                          — |                                         — |                                        — |                           6 960 |                          6 106 |                      4 730 |                                          — |
+| **1.3.8**  |       4 522 |                          — |                          — |                                         — |                                        — |                           6 960 |                          6 106 |                      4 730 |                                          — |
+| **1.3.7**  |       4 522 |                          — |                          — |                                         — |                                        — |                           5 650 |                          5 894 |                      4 141 |                                          — |
+| **1.3.6**  |       4 522 |                          — |                          — |                                         — |                                        — |                           5 488 |                          5 869 |                      4 082 |                                          — |
 | **1.3.5**  |       4 522 |                          — |                          — |                                         — |                                        — |                           5 488 |                          5 869 |                      4 082 |                                          — |
-| **1.3.2**  |       4 519 |                          — |                          — |                                         — |                                        — |                           5 476 |                          5 869 |                      4 040 |                                          — |
+| **1.3.4**  |       4 522 |                          — |                          — |                                         — |                                        — |                           5 488 |                          5 869 |                      4 082 |                                          — |
+| **1.3.3**  |       4 519 |                          — |                          — |                                         — |                                        — |                           5 476 |                          5 869 |                      4 040 |                                          — |
+| **1.3.2**  |       4 508 |                          — |                          — |                                         — |                                        — |                           5 459 |                          5 848 |                      4 018 |                                          — |
 | **1.3.1**  |       4 508 |                          — |                          — |                                         — |                                        — |                           5 459 |                          5 848 |                      4 018 |                                          — |
-| **1.2.8**  |           — |                          — |                          — |                                         — |                                        — |                           5 275 |                          5 747 |                      3 142 |                                          — |
-| **1.2.3**  |       4 489 |                          — |                          — |                                         — |                                        — |                           3 257 |                          5 279 |                      2 728 |                                          — |
+| **1.3.0**  |       4 489 |                          — |                          — |                                         — |                                        — |                           5 275 |                          5 747 |                      3 142 |                                          — |
+| **1.2.9**  |       4 489 |                          — |                          — |                                         — |                                        — |                           5 275 |                          5 747 |                      3 142 |                                          — |
+| **1.2.8**  |       4 489 |                          — |                          — |                                         — |                                        — |                           3 257 |                          5 279 |                      2 728 |                                          — |
+| **1.2.7**  |       4 489 |                          — |                          — |                                         — |                                        — |                           3 257 |                          5 279 |                      2 728 |                                          — |
+| **1.2.6**  |           — |                          — |                          — |                                         — |                                        — |                           3 257 |                          5 279 |                      2 728 |                                          — |
 
 </details>
 
-<sub>Un corpus absent d’une version n’était pas encore joué à cette date : la courbe démarre
-à sa première mesure. Les versions antérieures à 1.6.2 proviennent du tableau tenu à la main,
-dont deux valeurs manquantes ou erronées ont été écartées (`corpus_dpe.csv` en 1.2.8 et 1.3.25).</sub>
+<sub>Chiffres relevés dans les rapports embarqués par chaque tag de release. Un corpus absent
+d'une version n'était pas encore joué à cette date : la courbe démarre à sa première mesure.</sub>
 
 <!-- CORPUS-CHART:END -->
 
-## 1.7.3 — 2026-09-23
+## 1.7.3 — 2026-09-20
 
-> **Version `1.7.3`** · branche `main` · généré le 2026-09-23
+> **Version `1.7.3`** · publiée le 2026-09-20
 > Seuil de tolérance **5%**
 
 <table>
@@ -104,9 +127,9 @@ dont deux valeurs manquantes ou erronées ont été écartées (`corpus_dpe.csv`
 dizaines de fois la médiane : c’est la médiane qui décrit le cas courant, et p95/p99 le cas
 défavorable réel.</sub>
 
-## 1.6.2 — 2026-09-18
+## 1.7.2 — 2026-09-18
 
-> **Version `1.6.2`** · branche `main` · généré le 2026-09-18
+> **Version `1.7.2`** · publiée le 2026-09-18
 > Seuil de tolérance **5%**
 
 <table>
@@ -161,6 +184,90 @@ défavorable réel.</sub>
 <sub>La moyenne est tirée vers le haut par les DPE collectifs, dont le coût atteint plusieurs
 dizaines de fois la médiane : c’est la médiane qui décrit le cas courant, et p95/p99 le cas
 défavorable réel.</sub>
+
+## 1.7.1 — 2026-09-12
+
+> **Version `1.7.1`** · publiée le 2026-09-12
+> Seuil de tolérance **5%**
+
+<table>
+<tr>
+<td align="center"><strong>9</strong><br/><sub>corpus</sub></td>
+<td align="center"><strong>89 996</strong><br/><sub>DPE analysés</sub></td>
+<td align="center"><strong>59 497</strong><br/><sub>DPE conformes</sub></td>
+<td align="center"><strong>66,11 %</strong><br/><sub>réussite globale</sub></td>
+</tr>
+</table>
+
+|     | Corpus                                                                                                                  |    Réussite |                        |  DPE conformes |
+| :-: | :---------------------------------------------------------------------------------------------------------------------- | ----------: | :--------------------- | -------------: |
+| 🔴  | **Généraliste**<br/><sub>`corpus_dpe.csv`</sub>                                                                         | **45,97 %** | `█████████░░░░░░░░░░░` | 4 597 / 10 000 |
+| 🟢  | **Appartement · chauffage individuel (2025)**<br/><sub>`dpe_appartement_individuel_chauffage_individuel_2025.csv`</sub> | **91,55 %** | `██████████████████░░` | 9 155 / 10 000 |
+| 🟢  | **Logement individuel (2025)**<br/><sub>`dpe_logement_individuel_2025.csv`</sub>                                        | **88,14 %** | `██████████████████░░` |  8 812 / 9 998 |
+| 🟢  | **Maison individuelle (2025)**<br/><sub>`dpe_maison_individuelle_2025.csv`</sub>                                        | **87,93 %** | `██████████████████░░` | 8 793 / 10 000 |
+| 🟡  | **Immeuble · chauffage individuel**<br/><sub>`dpe_immeuble_chauffage_individuel.csv`</sub>                              | **73,76 %** | `███████████████░░░░░` |  7 375 / 9 999 |
+| 🟡  | **Appartement · chauffage collectif (2025)**<br/><sub>`dpe_appartement_individuel_chauffage_collectif_2025.csv`</sub>   | **69,47 %** | `██████████████░░░░░░` | 6 947 / 10 000 |
+| 🟡  | **Immeuble · chauffage collectif**<br/><sub>`dpe_immeuble_chauffage_collectif.csv`</sub>                                | **62,27 %** | `████████████░░░░░░░░` |  6 226 / 9 999 |
+| 🔴  | **Immeuble · chauffage mixte**<br/><sub>`dpe_immeuble_chauffage_mixte.csv`</sub>                                        | **48,37 %** | `██████████░░░░░░░░░░` | 4 837 / 10 000 |
+| 🔴  | **Individuel généré depuis l'immeuble (2026)**<br/><sub>`dpe_individuel_a_partir_dpe_immeuble_2026.csv`</sub>           | **27,55 %** | `██████░░░░░░░░░░░░░░` | 2 755 / 10 000 |
+
+<sub>🟢 ≥ 85 % · 🟡 ≥ 60 % · 🔴 < 60 %</sub>
+
+## 1.7.0 — 2026-09-11
+
+> **Version `1.7.0`** · publiée le 2026-09-11
+> Seuil de tolérance **5%**
+
+<table>
+<tr>
+<td align="center"><strong>9</strong><br/><sub>corpus</sub></td>
+<td align="center"><strong>89 996</strong><br/><sub>DPE analysés</sub></td>
+<td align="center"><strong>59 258</strong><br/><sub>DPE conformes</sub></td>
+<td align="center"><strong>65,85 %</strong><br/><sub>réussite globale</sub></td>
+</tr>
+</table>
+
+|     | Corpus                                                                                                                  |    Réussite |                        |  DPE conformes |
+| :-: | :---------------------------------------------------------------------------------------------------------------------- | ----------: | :--------------------- | -------------: |
+| 🔴  | **Généraliste**<br/><sub>`corpus_dpe.csv`</sub>                                                                         | **45,91 %** | `█████████░░░░░░░░░░░` | 4 591 / 10 000 |
+| 🟢  | **Appartement · chauffage individuel (2025)**<br/><sub>`dpe_appartement_individuel_chauffage_individuel_2025.csv`</sub> | **91,46 %** | `██████████████████░░` | 9 146 / 10 000 |
+| 🟢  | **Maison individuelle (2025)**<br/><sub>`dpe_maison_individuelle_2025.csv`</sub>                                        | **87,93 %** | `██████████████████░░` | 8 793 / 10 000 |
+| 🟢  | **Logement individuel (2025)**<br/><sub>`dpe_logement_individuel_2025.csv`</sub>                                        | **87,93 %** | `██████████████████░░` |  8 791 / 9 998 |
+| 🟡  | **Immeuble · chauffage individuel**<br/><sub>`dpe_immeuble_chauffage_individuel.csv`</sub>                              | **73,72 %** | `███████████████░░░░░` |  7 371 / 9 999 |
+| 🟡  | **Appartement · chauffage collectif (2025)**<br/><sub>`dpe_appartement_individuel_chauffage_collectif_2025.csv`</sub>   | **68,37 %** | `██████████████░░░░░░` | 6 837 / 10 000 |
+| 🟡  | **Immeuble · chauffage collectif**<br/><sub>`dpe_immeuble_chauffage_collectif.csv`</sub>                                | **61,56 %** | `████████████░░░░░░░░` |  6 155 / 9 999 |
+| 🔴  | **Immeuble · chauffage mixte**<br/><sub>`dpe_immeuble_chauffage_mixte.csv`</sub>                                        | **48,19 %** | `██████████░░░░░░░░░░` | 4 819 / 10 000 |
+| 🔴  | **Individuel généré depuis l'immeuble (2026)**<br/><sub>`dpe_individuel_a_partir_dpe_immeuble_2026.csv`</sub>           | **27,55 %** | `██████░░░░░░░░░░░░░░` | 2 755 / 10 000 |
+
+<sub>🟢 ≥ 85 % · 🟡 ≥ 60 % · 🔴 < 60 %</sub>
+
+## 1.6.2 — 2026-09-04
+
+> **Version `1.6.2`** · publiée le 2026-09-04
+> Seuil de tolérance **5%**
+
+<table>
+<tr>
+<td align="center"><strong>9</strong><br/><sub>corpus</sub></td>
+<td align="center"><strong>89 996</strong><br/><sub>DPE analysés</sub></td>
+<td align="center"><strong>59 258</strong><br/><sub>DPE conformes</sub></td>
+<td align="center"><strong>65,85 %</strong><br/><sub>réussite globale</sub></td>
+</tr>
+</table>
+
+|     | Corpus                                                                                                                  |    Réussite |                        |  DPE conformes |
+| :-: | :---------------------------------------------------------------------------------------------------------------------- | ----------: | :--------------------- | -------------: |
+| 🔴  | **Généraliste**<br/><sub>`corpus_dpe.csv`</sub>                                                                         | **45,91 %** | `█████████░░░░░░░░░░░` | 4 591 / 10 000 |
+| 🟢  | **Appartement · chauffage individuel (2025)**<br/><sub>`dpe_appartement_individuel_chauffage_individuel_2025.csv`</sub> | **91,46 %** | `██████████████████░░` | 9 146 / 10 000 |
+| 🟢  | **Maison individuelle (2025)**<br/><sub>`dpe_maison_individuelle_2025.csv`</sub>                                        | **87,93 %** | `██████████████████░░` | 8 793 / 10 000 |
+| 🟢  | **Logement individuel (2025)**<br/><sub>`dpe_logement_individuel_2025.csv`</sub>                                        | **87,93 %** | `██████████████████░░` |  8 791 / 9 998 |
+| 🟡  | **Immeuble · chauffage individuel**<br/><sub>`dpe_immeuble_chauffage_individuel.csv`</sub>                              | **73,72 %** | `███████████████░░░░░` |  7 371 / 9 999 |
+| 🟡  | **Appartement · chauffage collectif (2025)**<br/><sub>`dpe_appartement_individuel_chauffage_collectif_2025.csv`</sub>   | **68,37 %** | `██████████████░░░░░░` | 6 837 / 10 000 |
+| 🟡  | **Immeuble · chauffage collectif**<br/><sub>`dpe_immeuble_chauffage_collectif.csv`</sub>                                | **61,56 %** | `████████████░░░░░░░░` |  6 155 / 9 999 |
+| 🔴  | **Immeuble · chauffage mixte**<br/><sub>`dpe_immeuble_chauffage_mixte.csv`</sub>                                        | **48,19 %** | `██████████░░░░░░░░░░` | 4 819 / 10 000 |
+| 🔴  | **Individuel généré depuis l'immeuble (2026)**<br/><sub>`dpe_individuel_a_partir_dpe_immeuble_2026.csv`</sub>           | **27,55 %** | `██████░░░░░░░░░░░░░░` | 2 755 / 10 000 |
+
+<sub>🟢 ≥ 85 % · 🟡 ≥ 60 % · 🔴 < 60 %</sub>
 
 ## Historique antérieur (1.2.3 → 1.6.1)
 

@@ -994,8 +994,14 @@
                 <h2 style="font-size: 14px">DPE conformes par version</h2>
               </div>
               <div class="hint" style="margin-top: 4px">
-                Résultats de la branche <code>main</code>, un point par version publiée. Cliquez une
+                Chiffres relevés dans les rapports embarqués par chaque tag de release. Cliquez une
                 entrée de la légende pour masquer un corpus.
+              </div>
+            </div>
+            <div class="toggles">
+              <div class="seg" id="history-mode">
+                <button data-mode="count" class="active">Nombre</button>
+                <button data-mode="ratio">Taux</button>
               </div>
             </div>
           </div>
@@ -1036,6 +1042,7 @@
         sortKey: 'kind',
         sortAsc: false,
         history: null, // contenu de corpus_history.json
+        historyMode: 'count', // 'count' | 'ratio'
         detailCache: {} // `${corpusFile}|${branch}` -> Promise<Map<code, rows>>
       };
 
@@ -1163,6 +1170,15 @@
                 state.sortAsc = true;
               }
               renderChecksTable();
+            })
+          );
+
+          $$('#history-mode button').forEach((b) =>
+            b.addEventListener('click', () => {
+              $$('#history-mode button').forEach((bb) => bb.classList.remove('active'));
+              b.classList.add('active');
+              state.historyMode = b.dataset.mode;
+              renderHistoryChart();
             })
           );
 
@@ -1497,6 +1513,7 @@
         const colors = dark ? HISTORY_COLORS.dark : HISTORY_COLORS.light;
         const textColor = dark ? '#e6e9f3' : '#0f172a';
         const gridColor = dark ? 'rgba(255,255,255,0.06)' : 'rgba(15,23,42,0.06)';
+        const ratioMode = state.historyMode === 'ratio';
 
         const versions = state.history.versions;
         const labels = versions.map((v) => v.version);
@@ -1504,9 +1521,12 @@
         const datasets = historyCorpora().map((corpus, i) => {
           // Une version sans mesure pour ce corpus laisse un trou : la courbe relie
           // les versions encadrantes plutôt que de retomber à zéro (`spanGaps`).
-          const data = versions.map((v) =>
-            typeof v.results[corpus]?.below === 'number' ? v.results[corpus].below : null
-          );
+          const data = versions.map((v) => {
+            const result = v.results[corpus];
+            if (typeof result?.below !== 'number') return null;
+            if (!ratioMode) return result.below;
+            return result.total ? (result.below / result.total) * 100 : null;
+          });
 
           return {
             label: corpusLabel(corpus),
@@ -1540,9 +1560,14 @@
               },
               y: {
                 beginAtZero: true,
-                ticks: { color: textColor, callback: (v) => fmtNum(v) },
+                suggestedMax: ratioMode ? 100 : undefined,
+                ticks: { color: textColor, callback: (v) => (ratioMode ? v + '%' : fmtNum(v)) },
                 grid: { color: gridColor },
-                title: { display: true, color: textColor, text: 'DPE conformes' }
+                title: {
+                  display: true,
+                  color: textColor,
+                  text: ratioMode ? 'Taux de réussite' : 'DPE conformes'
+                }
               }
             },
             plugins: {
@@ -1552,7 +1577,10 @@
               },
               tooltip: {
                 itemSort: (a, b) => b.parsed.y - a.parsed.y,
-                callbacks: { label: (c) => `${c.dataset.label} : ${fmtNum(c.parsed.y)}` }
+                callbacks: {
+                  label: (c) =>
+                    `${c.dataset.label} : ${ratioMode ? c.parsed.y.toFixed(2) + '%' : fmtNum(c.parsed.y)}`
+                }
               }
             }
           }

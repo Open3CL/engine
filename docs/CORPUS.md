@@ -230,25 +230,31 @@ Ce script ([`scripts/generate_corpus_readme.js`](../scripts/generate_corpus_read
 
 1. lit les rapports globaux de la branche courante ;
 2. regénère le bloc situé entre `<!-- CORPUS:START -->` et `<!-- CORPUS:END -->` dans le README ;
-3. sur `main` uniquement, archive les résultats dans [`docs/CORPUS-HISTORY.md`](CORPUS-HISTORY.md),
-   une section par version : réexécuter une version déjà présente remplace sa section ;
-4. met à jour [`docs/corpus-history.json`](corpus-history.json), la source de données de l'historique,
-   et sa copie `dist/reports/corpus/corpus_history.json`, lue par la section « Historique des
-   versions » du rapport interactif : une courbe par corpus, un point par version publiée, survol
+3. reconstruit [`docs/CORPUS-HISTORY.md`](CORPUS-HISTORY.md) **à partir des tags git** : pour chaque
+   tag `vX.Y.Z`, il relit les rapports globaux que la release embarque
+   (`corpus_global_report_main.json`), ce qui donne une entrée par release et une seule. Les cinq
+   dernières releases sont détaillées, les sections rédigées à la main sont conservées ;
+4. met à jour [`docs/corpus-history.json`](corpus-history.json) et sa copie
+   `dist/reports/corpus/corpus_history.json`, lue par la section « Historique des versions » du
+   rapport interactif : une courbe par corpus, un point par release, bascule nombre / taux, survol
    pour comparer les corpus d'une version, légende cliquable pour en masquer.
 
-Une exécution sur une branche de travail met donc à jour le README, ce qui permet de comparer une PR
-à `main`, mais ne laisse aucune trace dans l'historique ni dans la courbe.
+> [!IMPORTANT]
+> L'historique n'est pas alimenté par l'exécution courante : l'arbre de travail est en avance sur le
+> dernier tag, et ses résultats seraient étiquetés avec le numéro de la release précédente. Une
+> release n'apparaît donc qu'une fois son tag posé et récupéré (`git fetch --tags`).
 
-| Option                    | Description                                                |
-| :------------------------ | :--------------------------------------------------------- |
-| `--readme=<path>`         | Fichier markdown à mettre à jour. Défaut : `README.md`     |
-| `--branch=<name>`         | Branche des rapports à lire. Défaut : branche git courante |
-| `--version=<x.y.z>`       | Version affichée. Défaut : dernier tag git                 |
-| `--date=<aaaa-mm-jj>`     | Date affichée. Défaut : aujourd'hui                        |
-| `--history-branch=<name>` | Branche archivée dans l'historique. Défaut : `main`        |
-| `--dry-run`               | Affiche le bloc généré sans rien écrire                    |
-| `--no-history`            | N'alimente ni `CORPUS-HISTORY.md`, ni la courbe            |
+Le bloc du README décrit l'exécution courante, sur n'importe quelle branche, ce qui permet de
+comparer une PR à `main`. L'historique, lui, ne dépend que des tags : il se recalcule à l'identique.
+
+| Option                | Description                                                |
+| :-------------------- | :--------------------------------------------------------- |
+| `--readme=<path>`     | Fichier markdown à mettre à jour. Défaut : `README.md`     |
+| `--branch=<name>`     | Branche des rapports à lire. Défaut : branche git courante |
+| `--version=<x.y.z>`   | Version affichée dans le README. Défaut : dernier tag git  |
+| `--date=<aaaa-mm-jj>` | Date affichée dans le README. Défaut : aujourd'hui         |
+| `--dry-run`           | Affiche le bloc généré sans rien écrire                    |
+| `--no-history`        | N'alimente ni `CORPUS-HISTORY.md`, ni la courbe            |
 
 ---
 
