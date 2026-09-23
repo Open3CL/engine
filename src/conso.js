@@ -479,8 +479,7 @@ function calc_conso_pond(
   coef,
   prorataECS,
   prorataChauffage,
-  ecs_installations,
-  conso_aux_distribution_ecs_total
+  ecs_installations
 ) {
   const ret = {};
   ret.auxiliaire_ventilation = vt_list.reduce((acc, vt) => {
