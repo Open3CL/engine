@@ -1,9 +1,0 @@
-@use '../../styles';
-
-.jse-config {
-  @include styles.jse-modal-menu-button;
-
-  &.hide {
-    display: none;
-  }
-}
