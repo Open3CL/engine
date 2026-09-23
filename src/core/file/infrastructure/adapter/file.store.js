@@ -10,7 +10,11 @@ export class FileStore {
    * @return {Promise<any>}
    */
   async downloadXlsxFileAndConvertToJson(url) {
-    return fetch(url)
+    const parsedUrl = new URL(url);
+    if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+      throw new Error(`Unsupported protocol for url: ${url}`);
+    }
+    return fetch(parsedUrl)
       .then((res) => res.arrayBuffer())
       .then((buffer) =>
         this.#excelWorkBookToJson(XLSX.read(buffer, { type: 'string', raw: false }))
