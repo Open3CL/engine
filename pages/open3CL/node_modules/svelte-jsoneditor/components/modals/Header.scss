@@ -1,0 +1,18 @@
+@use '../../styles';
+@use '../../themes/defaults';
+
+.jse-header {
+  display: flex;
+  background: defaults.$theme-color;
+  color: defaults.$menu-color;
+
+  .jse-title {
+    flex: 1;
+    padding: styles.$input-padding;
+    vertical-align: middle;
+  }
+
+  button {
+    @include styles.jse-modal-menu-button;
+  }
+}

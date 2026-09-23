@@ -1,0 +1,11 @@
+@use '../../../styles';
+@use '../../../themes/defaults';
+
+.jse-timestamp {
+  padding: 0;
+  margin: 0;
+  vertical-align: middle;
+  display: inline-flex;
+
+  color: defaults.$value-color-number;
+}

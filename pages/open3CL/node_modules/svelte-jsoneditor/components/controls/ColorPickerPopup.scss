@@ -1,0 +1,33 @@
+@use '../../styles';
+@use '../../themes/defaults';
+
+.jse-color-picker-popup {
+  :global(.picker_wrapper.popup),
+  :global(.picker_wrapper.popup .picker_arrow::before),
+  :global(.picker_wrapper.popup .picker_arrow::after) {
+    background: defaults.$color-picker-background;
+    line-height: normal;
+  }
+
+  :global(.picker_slider),
+  :global(.picker_sl),
+  :global(.picker_editor input),
+  :global(.picker_sample),
+  :global(.picker_done button) {
+    box-shadow: defaults.$color-picker-border-box-shadow;
+  }
+
+  :global(.picker_editor input) {
+    background: defaults.$background-color;
+    color: defaults.$text-color;
+  }
+
+  :global(.picker_done button) {
+    background: defaults.$button-background;
+    color: defaults.$button-color;
+  }
+
+  :global(.picker_done button:hover) {
+    background: defaults.$button-background-highlight;
+  }
+}

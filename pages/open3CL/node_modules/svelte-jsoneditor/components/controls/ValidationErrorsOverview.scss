@@ -1,0 +1,75 @@
+@use '../../styles.scss';
+@use '../../themes/defaults';
+
+.jse-validation-errors-overview {
+  font-family: defaults.$font-family-mono;
+  font-size: defaults.$font-size-mono;
+  overflow: auto;
+  max-height: styles.$errors-overview-max-height;
+
+  table {
+    border-collapse: collapse;
+    width: 100%;
+
+    tr {
+      cursor: pointer;
+
+      &.jse-validation-error {
+        background: defaults.$message-error-background;
+        color: defaults.$message-error-color;
+      }
+
+      &.jse-validation-warning {
+        background: defaults.$message-warning-background;
+        color: defaults.$message-warning-color;
+        &:hover {
+          filter: brightness(105%);
+        }
+      }
+
+      &.jse-validation-info {
+        background: defaults.$message-info-background;
+        color: defaults.$message-info-color;
+      }
+
+      &:hover {
+        filter: brightness(110%);
+      }
+
+      td {
+        padding: 4px defaults.$padding;
+        vertical-align: middle;
+
+        &.jse-validation-error-icon {
+          width: 36px;
+          box-sizing: border-box;
+        }
+
+        &.jse-validation-error-action {
+          width: 36px;
+          box-sizing: border-box;
+          padding: 0;
+
+          button.jse-validation-errors-collapse {
+            @include styles.jsoneditor-button;
+
+            width: 36px;
+            height: 26px;
+            cursor: pointer;
+
+            &:hover {
+              background-color: rgba(255, 255, 255, 0.2);
+            }
+          }
+        }
+
+        div.jse-validation-errors-expand {
+          display: inline-block;
+          position: relative;
+          top: 3px;
+          // TODO: position this icon in a better way
+        }
+      }
+    }
+  }
+}

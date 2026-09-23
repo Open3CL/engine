@@ -1,0 +1,47 @@
+@use '../../../styles';
+@use '../../../themes/defaults';
+
+.jse-welcome {
+  flex: 1;
+  overflow: auto;
+  font-family: defaults.$font-family;
+  font-size: defaults.$font-size;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  border-left: defaults.$main-border;
+  border-right: defaults.$main-border;
+
+  &:last-child {
+    border-bottom: defaults.$main-border;
+  }
+
+  .jse-space.jse-before {
+    flex: 1;
+  }
+
+  .jse-space.jse-after {
+    flex: 2;
+  }
+
+  .jse-contents {
+    display: flex;
+    flex-direction: column;
+    max-width: 300px;
+    margin: 2em defaults.$padding;
+    gap: defaults.$padding;
+
+    .jse-welcome-title {
+    }
+
+    .jse-welcome-info {
+      color: defaults.$panel-color-readonly;
+    }
+
+    button {
+      @include styles.jsoneditor-button-primary;
+    }
+  }
+}

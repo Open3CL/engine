@@ -1,0 +1,23 @@
+@use '../../../../styles';
+@use '../../../../themes/defaults';
+
+.jse-inline-value {
+  font-family: defaults.$font-family-mono;
+  font-size: defaults.$font-size-mono;
+  line-height: defaults.$line-height;
+  border: none;
+  padding: 0 styles.$padding-half;
+  background: transparent;
+  color: inherit;
+  cursor: inherit;
+
+  &.jse-highlight {
+    background-color: defaults.$search-match-color;
+    outline: defaults.$search-match-outline;
+
+    &.jse-active {
+      background-color: defaults.$search-match-active-color;
+      outline: defaults.$search-match-active-outline;
+    }
+  }
+}

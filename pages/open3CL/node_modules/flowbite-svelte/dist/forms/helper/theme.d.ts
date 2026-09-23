@@ -1,0 +1,75 @@
+import { type VariantProps } from "tailwind-variants";
+export type HelperVariants = VariantProps<typeof helper>;
+export declare const helper: import("tailwind-variants").TVReturnType<{
+    color: {
+        disabled: string;
+        primary: string;
+        secondary: string;
+        green: string;
+        emerald: string;
+        red: string;
+        blue: string;
+        yellow: string;
+        orange: string;
+        gray: string;
+        teal: string;
+        cyan: string;
+        sky: string;
+        indigo: string;
+        lime: string;
+        amber: string;
+        violet: string;
+        purple: string;
+        fuchsia: string;
+        pink: string;
+        rose: string;
+    };
+}, undefined, "text-xs font-normal text-gray-500 dark:text-gray-300", {
+    color: {
+        disabled: string;
+        primary: string;
+        secondary: string;
+        green: string;
+        emerald: string;
+        red: string;
+        blue: string;
+        yellow: string;
+        orange: string;
+        gray: string;
+        teal: string;
+        cyan: string;
+        sky: string;
+        indigo: string;
+        lime: string;
+        amber: string;
+        violet: string;
+        purple: string;
+        fuchsia: string;
+        pink: string;
+        rose: string;
+    };
+}, undefined, import("tailwind-variants").TVReturnType<{
+    color: {
+        disabled: string;
+        primary: string;
+        secondary: string;
+        green: string;
+        emerald: string;
+        red: string;
+        blue: string;
+        yellow: string;
+        orange: string;
+        gray: string;
+        teal: string;
+        cyan: string;
+        sky: string;
+        indigo: string;
+        lime: string;
+        amber: string;
+        violet: string;
+        purple: string;
+        fuchsia: string;
+        pink: string;
+        rose: string;
+    };
+}, undefined, "text-xs font-normal text-gray-500 dark:text-gray-300", unknown, unknown, undefined>>;

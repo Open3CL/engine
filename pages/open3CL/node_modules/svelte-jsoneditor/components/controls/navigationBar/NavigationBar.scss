@@ -1,0 +1,48 @@
+@use '../../../styles';
+@use '../../../themes/defaults';
+
+.jse-navigation-bar {
+  font-family: defaults.$font-family-mono;
+  font-size: defaults.$font-size-mono;
+  background: defaults.$panel-background;
+  color: defaults.$panel-button-color;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  overflow: auto;
+
+  border-left: defaults.$main-border;
+  border-right: defaults.$main-border;
+
+  .jse-navigation-bar-edit {
+    font-family: defaults.$font-family-mono;
+    font-size: defaults.$font-size-mono;
+    padding: styles.$padding-half defaults.$padding;
+    color: defaults.$panel-color-readonly;
+    background: transparent;
+    border: none;
+    display: flex;
+    cursor: pointer;
+    outline: none;
+    align-items: center;
+
+    &.flex {
+      flex: 1;
+    }
+
+    &:focus,
+    &:hover,
+    &.editing {
+      background: defaults.$panel-button-background-highlight;
+      color: defaults.$panel-button-color-highlight;
+      transition:
+        color 0.2s ease-in,
+        background 0.2s ease-in;
+    }
+
+    .jse-navigation-bar-space {
+      flex: 1;
+      text-align: left;
+    }
+  }
+}

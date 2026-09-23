@@ -1,0 +1,121 @@
+@use '../../styles';
+@use '../../themes/defaults';
+
+$search-size: 28px;
+$button-width: 20px;
+$padding-section-left: 32px;
+$input-min-width: 50px;
+
+.jse-search-box {
+  border: defaults.$panel-border;
+  border-radius: styles.$border-radius;
+
+  font-family: defaults.$font-family;
+  font-size: defaults.$font-size;
+  background: defaults.$panel-background;
+  color: defaults.$panel-color-readonly;
+  box-shadow: defaults.$controls-box-shadow;
+  display: inline-block;
+  width: 400px;
+  max-width: 100%;
+  overflow: auto;
+
+  .jse-search-form {
+    display: flex;
+    align-items: stretch;
+
+    button,
+    input {
+      font-family: inherit;
+      font-size: inherit;
+    }
+
+    button {
+      display: block;
+      text-align: center;
+      border: none;
+      padding: 0 styles.$input-padding;
+      margin: 0;
+      cursor: pointer;
+
+      color: defaults.$panel-button-color;
+      background: defaults.$panel-button-background;
+
+      &:hover {
+        color: defaults.$panel-button-color-highlight;
+        background: defaults.$panel-button-background-highlight;
+      }
+    }
+
+    input {
+      color: defaults.$panel-color;
+      border: defaults.$input-border;
+      border-radius: styles.$border-radius;
+      background: defaults.$input-background;
+      height: $search-size;
+      padding: 0 styles.$input-padding;
+      margin: 0;
+      flex: 1;
+      width: 0;
+      min-width: $input-min-width;
+      outline: none;
+    }
+
+    .jse-replace-toggle {
+      padding: defaults.$padding styles.$padding-half;
+      min-width: 20px;
+      background: defaults.$panel-button-background-highlight;
+    }
+
+    .jse-search-contents {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: styles.$padding-half;
+      gap: styles.$padding-half;
+
+      .jse-search-section {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        position: relative;
+
+        .jse-search-icon {
+          color: inherit;
+          cursor: inherit;
+          background: inherit;
+          width: $padding-section-left;
+          text-align: center;
+        }
+
+        label.jse-search-input-label {
+          flex: 1;
+          display: flex;
+        }
+
+        .jse-search-count {
+          color: inherit;
+          font-size: 80%;
+          visibility: hidden;
+          padding: 0 styles.$input-padding;
+          min-width: 36px;
+          text-align: center;
+
+          &.jse-visible {
+            visibility: visible;
+          }
+        }
+      }
+
+      .jse-replace-section {
+        flex: 1;
+        display: flex;
+        padding-left: $padding-section-left;
+
+        button {
+          width: auto;
+        }
+      }
+    }
+  }
+}

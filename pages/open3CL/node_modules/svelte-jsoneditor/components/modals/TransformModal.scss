@@ -1,0 +1,168 @@
+@use '../../styles';
+@use '../../themes/defaults';
+
+.jse-transform-modal-inner {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+
+  .jse-modal-contents {
+    color: inherit;
+
+    @include styles.jse-modal-contents($modal-padding: 0);
+
+    .jse-main-contents {
+      flex: 1;
+      display: flex;
+      gap: styles.$padding-double;
+      min-height: 0;
+      box-sizing: border-box;
+
+      padding: 0 styles.$padding-double defaults.$padding;
+
+      .jse-query-contents {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+
+        .jse-description {
+          :global(p) {
+            margin: defaults.$padding 0;
+
+            &:first-child {
+              margin-top: 0;
+            }
+
+            &:last-child {
+              margin-bottom: 0;
+            }
+          }
+
+          :global(code) {
+            background: defaults.$modal-code-background;
+            font-family: defaults.$font-family-mono;
+            font-size: defaults.$font-size-mono;
+          }
+        }
+
+        .query-error {
+          color: defaults.$error-color;
+        }
+
+        textarea.jse-query {
+          flex: 1;
+          outline: none;
+          resize: vertical; // prevent resizing horizontally
+        }
+      }
+
+      .jse-data-contents {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: styles.$padding-double;
+
+        .jse-original-data {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          min-height: 0;
+          box-sizing: border-box;
+
+          &.jse-hide {
+            flex: none;
+          }
+        }
+
+        .jse-preview-data {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          min-height: 0;
+          box-sizing: border-box;
+        }
+
+        &.jse-hide-original-data {
+          flex-direction: column;
+          gap: 0;
+          margin-bottom: 0;
+        }
+      }
+    }
+
+    .jse-actions {
+      padding: defaults.$padding styles.$padding-double styles.$padding-double;
+    }
+
+    @media screen and (max-width: 1200px) {
+      .jse-main-contents {
+        flex-direction: column;
+        overflow: auto;
+
+        .jse-query-contents {
+          textarea.jse-query {
+            min-height: 150px;
+            flex: none;
+          }
+        }
+
+        .jse-data-contents {
+          :global(.jse-tree-mode) {
+            height: 300px;
+            flex: none;
+          }
+        }
+      }
+    }
+  }
+
+  .jse-label {
+    font-weight: bold;
+    display: block;
+    box-sizing: border-box;
+
+    .jse-label-inner {
+      margin-top: styles.$padding-double;
+      margin-bottom: styles.$padding-half;
+      box-sizing: border-box;
+
+      button {
+        @include styles.jsoneditor-button;
+        font-weight: bold;
+        padding: 0;
+      }
+    }
+  }
+
+  :global(.jse-tree-mode) {
+    flex: 1;
+    background: defaults.$input-background-readonly;
+    box-shadow: none;
+    box-sizing: border-box;
+
+    --jse-main-border: #{defaults.$input-border};
+  }
+
+  input,
+  textarea {
+    @include styles.modal-input-mixin;
+  }
+
+  .jse-preview.jse-error {
+    flex: 1;
+    background: defaults.$input-background-readonly;
+    border: defaults.$input-border;
+    color: defaults.$error-color;
+    padding: styles.$padding-half;
+  }
+
+  :global(a) {
+    color: defaults.$a-color;
+  }
+
+  :global(a:hover) {
+    color: defaults.$a-color-highlight;
+  }
+}

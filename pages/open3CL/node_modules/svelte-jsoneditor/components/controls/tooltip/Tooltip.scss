@@ -1,0 +1,14 @@
+@use '../../../styles';
+@use '../../../themes/defaults';
+
+.jse-tooltip {
+  font-family: defaults.$font-family;
+  font-size: defaults.$font-size;
+  line-height: normal;
+  padding: styles.$padding-half defaults.$padding;
+  border-radius: styles.$border-radius;
+  background: defaults.$context-menu-background;
+  color: defaults.$context-menu-color;
+  white-space: nowrap;
+  box-shadow: defaults.$controls-box-shadow;
+}

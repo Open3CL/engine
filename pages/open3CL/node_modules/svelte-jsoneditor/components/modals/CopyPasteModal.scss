@@ -1,0 +1,20 @@
+@use '../../styles';
+@use '../../themes/defaults';
+
+.jse-modal-contents {
+  @include styles.jse-modal-contents;
+}
+
+.jse-shortcuts {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-around;
+  margin: styles.$padding-double 0;
+
+  .jse-shortcut {
+    .jse-key {
+      font-size: 200%;
+      color: defaults.$theme-color;
+    }
+  }
+}

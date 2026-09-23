@@ -1,0 +1,30 @@
+@use '../../../styles';
+@use '../../../themes/defaults';
+
+.jse-json-repair-component {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: defaults.$background-color;
+  color: defaults.$text-color;
+
+  .jse-info {
+    padding: styles.$padding-half;
+    font-family: defaults.$font-family;
+    font-size: defaults.$font-size;
+    vertical-align: center;
+  }
+
+  .jse-json-text {
+    flex: 1;
+    border: none;
+    padding: styles.$contents-padding;
+    font-family: defaults.$font-family-mono;
+    font-size: defaults.$font-size-mono;
+    background: defaults.$input-background;
+    color: defaults.$text-color;
+
+    resize: none;
+    outline: none;
+  }
+}

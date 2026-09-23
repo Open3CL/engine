@@ -1,0 +1,92 @@
+@use '../../styles';
+@use '../../themes/defaults';
+
+.jse-menu {
+  background: defaults.$theme-color;
+  font-family: defaults.$font-family;
+  font-size: defaults.$font-size-main-menu;
+  color: defaults.$menu-color;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  position: relative;
+
+  // FIXME: should utilize the generic styling in styles.scss
+  .jse-button {
+    font-family: inherit;
+    font-size: inherit;
+    line-height: 1.5em;
+    border: none;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+
+    width: defaults.$menu-button-size;
+    height: defaults.$menu-button-size;
+    padding: styles.$padding-half;
+    margin: 0;
+    border-radius: 0;
+
+    display: inline-flex;
+    align-items: center;
+    text-align: center;
+    justify-content: center;
+
+    &:hover,
+    &:focus {
+      background: defaults.$theme-color-highlight;
+    }
+
+    &:disabled {
+      color: defaults.$menu-color;
+      opacity: 0.5;
+
+      background: transparent;
+    }
+
+    &.jse-group-button {
+      $group-button-color: defaults.$menu-color;
+
+      width: auto;
+      height: calc(defaults.$menu-button-size - defaults.$padding);
+      margin: styles.$padding-half 0;
+      padding: 0 styles.$padding-half 1px; // 1px bottom padding for better center alignment (text baseline)
+      border: 1px solid $group-button-color;
+
+      &:not(.jse-last) {
+        border-right: none;
+      }
+
+      &.jse-first {
+        margin-left: styles.$padding-half;
+      }
+
+      &.jse-last {
+        margin-right: styles.$padding-half;
+      }
+
+      &:hover,
+      &:focus {
+        background: defaults.$theme-color-highlight;
+      }
+
+      &.jse-selected {
+        background: $group-button-color;
+        color: defaults.$theme-color;
+      }
+    }
+  }
+
+  .jse-space {
+    flex: 1;
+  }
+
+  .jse-separator {
+    $margin: 3px;
+
+    background: defaults.$menu-color;
+    opacity: 0.3;
+    width: 1px;
+    margin: $margin;
+  }
+}

@@ -1,0 +1,39 @@
+@use '../../../styles';
+@use '../../../themes/defaults';
+
+.jse-navigation-bar-item {
+  position: relative;
+  display: flex;
+
+  button.jse-navigation-bar-button {
+    font-family: inherit;
+    font-size: inherit;
+    padding: styles.$padding-half 2px;
+    border: none;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    outline: none;
+    min-width: 2em;
+    white-space: nowrap;
+
+    &:focus,
+    &:hover {
+      background: defaults.$panel-button-background-highlight;
+      color: defaults.$panel-button-color-highlight;
+    }
+
+    &.jse-navigation-bar-arrow {
+      padding: 2px defaults.$padding 0;
+
+      &.jse-open {
+        background: defaults.$navigation-bar-background;
+        color: defaults.$navigation-bar-dropdown-color;
+      }
+    }
+  }
+
+  &:last-child {
+    padding-right: defaults.$padding;
+  }
+}

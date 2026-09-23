@@ -1,0 +1,162 @@
+@use '../../../styles';
+@use '../../../themes/defaults';
+
+.jse-table-mode {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  background: defaults.$background-color;
+  min-width: 0;
+  min-height: 0;
+  font-family: defaults.$font-family-mono;
+  font-size: defaults.$font-size-mono;
+  color: defaults.$text-color;
+  line-height: defaults.$line-height;
+
+  &.no-main-menu {
+    border-top: defaults.$main-border;
+  }
+
+  .jse-search-box-container {
+    position: relative;
+    height: 0;
+    top: calc(defaults.$line-height + 2 * defaults.$padding);
+    margin-right: calc(defaults.$padding + 20px);
+    margin-left: defaults.$padding;
+    text-align: right;
+    z-index: 3; // must be above the ContextMenuButton
+  }
+
+  .jse-hidden-input-label {
+    position: fixed;
+    right: 0;
+    top: 0;
+    width: 0;
+    height: 0;
+
+    .jse-hidden-input {
+      width: 0;
+      height: 0;
+      padding: 0;
+      border: 0;
+      outline: none;
+    }
+  }
+
+  .jse-contents {
+    flex: 1;
+    align-items: flex-start;
+    flex-direction: column;
+    display: flex;
+    overflow: auto;
+    overflow-anchor: none; // important to prevent Chrome from adjusting the scrollTop based on changing contents (causing an infinite loop)
+    scrollbar-gutter: stable;
+
+    border-left: defaults.$main-border;
+    border-right: defaults.$main-border;
+
+    &:last-child {
+      border-bottom: defaults.$main-border;
+    }
+
+    table.jse-table-main {
+      border-collapse: collapse;
+      border-spacing: 0;
+
+      .jse-table-invisible-start-section,
+      .jse-table-invisible-end-section {
+        td {
+          margin: 0;
+          padding: 0;
+        }
+      }
+
+      .jse-search-box-background {
+        background: defaults.$table-header-background;
+      }
+
+      .jse-table-invisible-end-section {
+        td {
+          padding-bottom: defaults.$padding;
+        }
+      }
+
+      .jse-table-row {
+        &:hover {
+          background-color: defaults.$table-row-odd-background;
+        }
+
+        .jse-table-cell {
+          padding: 0 defaults.$padding 0 0;
+          vertical-align: top;
+          white-space: nowrap;
+          height: defaults.$line-height;
+
+          &.jse-table-cell-header,
+          &.jse-table-cell-gutter {
+            font-weight: normal;
+            text-align: left;
+            color: defaults.$text-readonly;
+            background: defaults.$table-header-background;
+          }
+
+          &.jse-table-cell-header {
+            padding: 0;
+            position: sticky;
+            top: 0;
+
+            .jse-table-root-error {
+              // same padding as .jse-column-header
+              padding: styles.$padding-half defaults.$padding styles.$padding-half
+                styles.$padding-half;
+            }
+
+            // FIXME: border and/or border shadow?
+          }
+
+          &.jse-table-cell-gutter {
+            padding: 0 defaults.$padding 0 styles.$padding-half;
+            // FIXME: border and/or border shadow?
+          }
+
+          .jse-value-outer {
+            display: inline-block;
+            cursor: defaults.$contents-cursor;
+
+            &:hover {
+              background: defaults.$hover-background-color;
+            }
+
+            &.jse-selected-value {
+              background: defaults.$selection-background-color;
+            }
+          }
+
+          .jse-context-menu-anchor {
+            display: inline-flex;
+            position: relative;
+            vertical-align: top;
+          }
+        }
+      }
+    }
+
+    &.jse-contents-loading {
+      align-items: unset;
+
+      .jse-loading-space {
+        flex: 1;
+      }
+
+      .jse-loading {
+        flex: 2;
+        text-align: center;
+        color: defaults.$panel-color-readonly;
+        box-sizing: border-box;
+        font-family: defaults.$font-family;
+        font-size: defaults.$font-size;
+      }
+    }
+  }
+}

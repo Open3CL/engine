@@ -1,0 +1,85 @@
+@use '../../styles';
+@use '../../themes/defaults';
+
+.jse-dropdown-button {
+  flex: 1;
+  line-height: normal;
+
+  $background: defaults.$context-menu-background;
+  $background-highlight: defaults.$context-menu-background-highlight;
+
+  @include styles.jsoneditor-button;
+  position: relative;
+  padding: 0;
+  display: flex;
+
+  ul {
+    margin: 0;
+    padding: 0;
+
+    li {
+      margin: 0;
+      padding: 0;
+      list-style-type: none;
+    }
+  }
+
+  button.jse-open-dropdown {
+    @include styles.jsoneditor-button;
+
+    width: 2em;
+    background: defaults.$context-menu-background;
+    color: defaults.$context-menu-color;
+    border-radius: 0;
+
+    &.jse-visible {
+      background: $background;
+    }
+
+    &:hover {
+      background: defaults.$context-menu-background-highlight;
+    }
+
+    &:focus {
+      z-index: 1;
+    }
+
+    &:disabled {
+      color: defaults.$context-menu-color-disabled;
+      background: unset;
+    }
+  }
+
+  .jse-dropdown-items {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    z-index: 1;
+    background: $background;
+    color: defaults.$context-menu-color;
+    box-shadow: defaults.$controls-box-shadow;
+
+    &.jse-visible {
+      display: block;
+    }
+
+    button {
+      @include styles.jsoneditor-button;
+
+      width: 100%;
+      text-align: left;
+      padding: defaults.$padding;
+      margin: 0;
+
+      &:hover {
+        background: $background-highlight;
+      }
+
+      &:disabled {
+        color: defaults.$context-menu-color-disabled;
+        background: unset;
+      }
+    }
+  }
+}

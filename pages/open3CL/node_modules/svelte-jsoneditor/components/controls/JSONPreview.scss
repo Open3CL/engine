@@ -1,0 +1,17 @@
+@use '../../styles';
+@use '../../themes/defaults';
+
+.jse-json-preview {
+  flex: 1;
+  font-family: defaults.$font-family-mono;
+  font-size: defaults.$font-size-mono;
+  color: defaults.$panel-color-readonly;
+  overflow: auto;
+  white-space: pre-wrap;
+  padding: 2px;
+
+  // TODO: JSONPreview shouldn't add borders I think
+  border-left: defaults.$main-border;
+  border-right: defaults.$main-border;
+  border-bottom: defaults.$main-border;
+}

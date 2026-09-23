@@ -1,0 +1,21 @@
+@use '../styles';
+@use '../themes/defaults';
+
+.jse-main {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: styles.$contents-min-height;
+  font-family: defaults.$font-family;
+  font-size: defaults.$font-size;
+  line-height: normal;
+  position: relative;
+  display: flex;
+  flex-direction: row;
+
+  // lighter selection color when the editor doesn't have focus
+  &:not(.jse-focus) {
+    --jse-selection-background-color: #{defaults.$selection-background-inactive-color};
+    --jse-context-menu-pointer-background: #{defaults.$context-menu-pointer-hover-background};
+  }
+}

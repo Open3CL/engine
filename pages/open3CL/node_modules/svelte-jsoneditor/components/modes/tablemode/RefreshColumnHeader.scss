@@ -1,0 +1,5 @@
+@use '../../../styles';
+
+.jse-column-header {
+  @include styles.jse-column-header-mixin;
+}

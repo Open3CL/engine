@@ -23,8 +23,6 @@ Implémentation open source du moteur Open3CL de l'ADEME.
     &middot;
     <a href="https://github.com/Open3CL/engine/issues/new?labels=enhancement&template=feature-request---.md">Créer une feature</a>
     &middot;
-    <a href="https://open3cl.github.io/engine/build/">Démo en ligne</a>
-    &middot;
     <a href="https://open3cl.github.io/engine/reports/corpus">Rapports de corpus</a>
   </p>
 </div>
@@ -57,7 +55,6 @@ Implémentation open source du moteur Open3CL de l'ADEME.
         <li><a href="#api-publique">API publique</a></li>
         <li><a href="#options-de-calcul">Options de calcul</a></li>
         <li><a href="#lire-le-résultat">Lire le résultat</a></li>
-        <li><a href="#tester-un-dpe-sans-écrire-de-code">Tester un DPE sans écrire de code</a></li>
       </ul>
     </li>
     <li><a href="#-tests-de-corpus">Tests de corpus</a>
@@ -142,12 +139,11 @@ flowchart LR
 
 ### L'écosystème Open3CL
 
-| Ressource                                                             | Description                                                    |
-| :-------------------------------------------------------------------- | :------------------------------------------------------------- |
-| [open3cl.fr](https://open3cl.fr)                                      | Le site du projet                                              |
-| [Démonstrateur](https://open3cl.github.io/engine/build/)              | Chargez un DPE XML et comparez les sorties du moteur, en ligne |
-| [Rapports de corpus](https://open3cl.github.io/engine/reports/corpus) | Le tableau de bord interactif des résultats sur DPE réels      |
-| [@open3cl/engine](https://www.npmjs.com/package/@open3cl/engine)      | Le paquet npm                                                  |
+| Ressource                                                             | Description                                               |
+| :-------------------------------------------------------------------- | :-------------------------------------------------------- |
+| [open3cl.fr](https://open3cl.fr)                                      | Le site du projet                                         |
+| [Rapports de corpus](https://open3cl.github.io/engine/reports/corpus) | Le tableau de bord interactif des résultats sur DPE réels |
+| [@open3cl/engine](https://www.npmjs.com/package/@open3cl/engine)      | Le paquet npm                                             |
 
 <p align="right">(<a href="#readme-top">Retour sommaire</a>)</p>
 
@@ -292,17 +288,6 @@ Le DPE renvoyé est l'objet d'entrée, enrichi de `logement.sortie` :
 | `sortie.confort_ete` / `qualite_isolation` | Indicateurs de confort d'été et de qualité d'isolation |
 | `sortie.production_electricite`            | Production photovoltaïque                              |
 
-### Tester un DPE sans écrire de code
-
-Le [démonstrateur en ligne](https://open3cl.github.io/engine/build/) accepte un DPE au format XML, l'envoie au moteur et
-affiche **côte à côte** les valeurs du DPE d'origine, celles calculées par Open3CL, et le différentiel.
-
-C'est le moyen le plus rapide de qualifier un écart : problème dans le DPE d'origine, ou bug dans la librairie ?
-
-<p align="right">(<a href="#readme-top">Retour sommaire</a>)</p>
-
----
-
 ## 🧪 Tests de corpus
 
 > Un corpus, c'est une liste de numéros de DPE réels. Le moteur les rejoue **tous**, compare ses sorties à celles du
@@ -385,7 +370,7 @@ Ces résultats sont **générés automatiquement** à la fin de `npm run test:co
 
 <!-- CORPUS:START -->
 
-> **Version `1.7.3`** · branche `main` · généré le 2026-09-23
+> **Version `1.6.2`** · branche `main` · généré le 2026-09-18
 > Seuil de tolérance **5%**
 
 <table>

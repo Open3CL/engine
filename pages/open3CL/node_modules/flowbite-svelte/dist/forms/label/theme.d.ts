@@ -1,0 +1,75 @@
+import { type VariantProps } from "tailwind-variants";
+export type LabelVariants = VariantProps<typeof label>;
+export declare const label: import("tailwind-variants").TVReturnType<{
+    color: {
+        disabled: string;
+        primary: string;
+        secondary: string;
+        green: string;
+        emerald: string;
+        red: string;
+        blue: string;
+        yellow: string;
+        orange: string;
+        gray: string;
+        teal: string;
+        cyan: string;
+        sky: string;
+        indigo: string;
+        lime: string;
+        amber: string;
+        violet: string;
+        purple: string;
+        fuchsia: string;
+        pink: string;
+        rose: string;
+    };
+}, undefined, "text-sm rtl:text-right font-medium block", {
+    color: {
+        disabled: string;
+        primary: string;
+        secondary: string;
+        green: string;
+        emerald: string;
+        red: string;
+        blue: string;
+        yellow: string;
+        orange: string;
+        gray: string;
+        teal: string;
+        cyan: string;
+        sky: string;
+        indigo: string;
+        lime: string;
+        amber: string;
+        violet: string;
+        purple: string;
+        fuchsia: string;
+        pink: string;
+        rose: string;
+    };
+}, undefined, import("tailwind-variants").TVReturnType<{
+    color: {
+        disabled: string;
+        primary: string;
+        secondary: string;
+        green: string;
+        emerald: string;
+        red: string;
+        blue: string;
+        yellow: string;
+        orange: string;
+        gray: string;
+        teal: string;
+        cyan: string;
+        sky: string;
+        indigo: string;
+        lime: string;
+        amber: string;
+        violet: string;
+        purple: string;
+        fuchsia: string;
+        pink: string;
+        rose: string;
+    };
+}, undefined, "text-sm rtl:text-right font-medium block", unknown, unknown, undefined>>;

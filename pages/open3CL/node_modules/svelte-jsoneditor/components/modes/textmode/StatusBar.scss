@@ -1,0 +1,25 @@
+@use '../../../styles';
+@use '../../../themes/defaults';
+
+.jse-status-bar {
+  background: defaults.$panel-background;
+  color: defaults.$panel-color-readonly;
+  font-family: defaults.$font-family-mono;
+  font-size: defaults.$font-size-mono;
+  margin: 0;
+
+  border-top: defaults.$panel-border;
+  border-left: defaults.$main-border;
+  border-right: defaults.$main-border;
+
+  display: flex;
+  gap: defaults.$padding;
+
+  &:last-child {
+    border-bottom: defaults.$main-border;
+  }
+
+  .jse-status-bar-info {
+    padding: 2px;
+  }
+}

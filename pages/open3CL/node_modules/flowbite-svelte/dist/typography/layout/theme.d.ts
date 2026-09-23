@@ -1,0 +1,1 @@
+export declare const layout: import("tailwind-variants").TVReturnType<{} | {} | {}, undefined, "grid grid-cols-1 sm:grid-cols-2", {} | {}, undefined, import("tailwind-variants").TVReturnType<unknown, undefined, "grid grid-cols-1 sm:grid-cols-2", unknown, unknown, undefined>>;

@@ -1,0 +1,244 @@
+@use '../../../styles';
+@use '../../../themes/defaults';
+
+.jse-text-mode {
+  --internal-key-color: #{defaults.$key-color};
+  --internal-value-color-number: #{defaults.$value-color-number};
+  --internal-value-color-boolean: #{defaults.$value-color-boolean};
+  --internal-value-color-string: #{defaults.$value-color-string};
+  --internal-value-color-null: #{defaults.$value-color-null};
+  flex: 1;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  background: defaults.$background-color;
+
+  &.no-main-menu {
+    border-top: defaults.$main-border;
+  }
+
+  .jse-contents {
+    flex: 1;
+    display: flex;
+    position: relative;
+    flex-direction: column;
+    overflow: hidden;
+    min-width: 0;
+    min-height: 0;
+
+    border-left: defaults.$main-border;
+    border-right: defaults.$main-border;
+
+    &:last-child {
+      border-bottom: defaults.$main-border;
+    }
+
+    &.jse-hidden {
+      // the code mirror editor must stay rendered
+      // and must keep height, else it will get into
+      // an infinite loop when rendering it again.
+      visibility: hidden;
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+
+    :global(.cm-editor) {
+      flex: 1;
+      overflow: hidden;
+
+      :global(.cm-scroller) {
+        font-family: defaults.$font-family-mono;
+        font-size: defaults.$font-size-mono;
+        line-height: defaults.$line-height;
+        color: defaults.$delimiter-color;
+      }
+
+      :global(.cm-gutters) {
+        background: defaults.$panel-background;
+        color: defaults.$panel-color-readonly;
+        border-right: defaults.$panel-border;
+      }
+
+      :global(.cm-activeLine),
+      :global(.cm-activeLineGutter) {
+        background: defaults.$active-line-background-color;
+      }
+
+      :global(.cm-selectionBackground) {
+        background: defaults.$selection-background-color;
+      }
+
+      :global(.cm-searchMatch) {
+        background-color: defaults.$search-match-color;
+        outline: defaults.$search-match-outline;
+      }
+
+      :global(.cm-searchMatch.cm-searchMatch-selected) {
+        background-color: defaults.$search-match-active-color;
+        outline: defaults.$search-match-active-outline;
+      }
+
+      :global(.cm-selectionMatch) {
+        background-color: defaults.$search-match-background-color;
+      }
+
+      :global(.cm-foldPlaceholder) {
+        background: defaults.$tag-background;
+        color: defaults.$tag-color;
+        border: none;
+        padding: 0 defaults.$padding;
+      }
+
+      :global(.cm-tooltip) {
+        font-size: defaults.$font-size;
+        font-family: defaults.$font-family;
+        color: defaults.$tooltip-color;
+        background: defaults.$tooltip-background;
+        border: defaults.$tooltip-border;
+      }
+
+      :global(.cm-diagnosticAction) {
+        background: defaults.$tooltip-action-button-color;
+        background: defaults.$tooltip-action-button-background;
+      }
+
+      :global(.cm-panels) {
+        border-bottom: defaults.$panel-border;
+      }
+
+      :global(.cm-search) {
+        background: defaults.$panel-background;
+        color: defaults.$panel-color;
+        font-family: defaults.$font-family;
+        font-size: defaults.$font-size;
+      }
+
+      :global(.cm-search input) {
+        font-family: defaults.$font-family;
+        font-size: defaults.$font-size-text-mode-search;
+        color: defaults.$input-color;
+        border: defaults.$input-border;
+        background: defaults.$input-background;
+        margin-right: 2px;
+      }
+
+      :global(.cm-search button) {
+        font-family: defaults.$font-family;
+        font-size: defaults.$font-size-text-mode-search;
+
+        color: defaults.$panel-button-color;
+        background: defaults.$panel-button-background;
+
+        border: none;
+        cursor: pointer;
+        text-transform: capitalize;
+        padding: styles.$padding-half defaults.$padding;
+        margin: 0;
+
+        &:hover {
+          color: defaults.$panel-button-color-highlight;
+          background: defaults.$panel-button-background-highlight;
+        }
+      }
+
+      :global(.cm-search label) {
+        font-family: defaults.$font-family;
+        font-size: defaults.$font-size-text-mode-search;
+        padding-left: defaults.$padding;
+      }
+
+      :global(.cm-search label input) {
+        margin-right: 2px;
+      }
+
+      :global(.cm-search button[name='close']) {
+        width: 32px;
+        height: 32px;
+        font-size: 24px;
+        line-height: 24px;
+        padding: 0;
+        right: 0;
+        top: -4px;
+      }
+
+      :global(.cm-cursor-primary) {
+        border-color: defaults.$text-color;
+      }
+    }
+
+    .jse-loading-space {
+      flex: 1;
+    }
+
+    .jse-loading {
+      flex: 2;
+      text-align: center;
+      color: defaults.$panel-color-readonly;
+      box-sizing: border-box;
+      font-family: defaults.$font-family;
+      font-size: defaults.$font-size;
+    }
+
+    &.jse-preview {
+      flex: 1;
+      font-family: defaults.$font-family-mono;
+      font-size: defaults.$font-size-mono;
+      color: defaults.$panel-color-readonly;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      padding: 2px;
+    }
+  }
+
+  .jse-fold-progress {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: defaults.$background-color;
+    border-top: defaults.$panel-border;
+    border-bottom: defaults.$panel-border;
+
+    .jse-fold-tip {
+      font-family: defaults.$font-family;
+      font-size: defaults.$font-size-mono;
+      color: defaults.$panel-color-readonly;
+    }
+    .jse-fold-progress-track {
+      flex: 1;
+      height: 6px;
+      background: defaults.$panel-background;
+      border-radius: 3px;
+      overflow: hidden;
+      border: 1px solid defaults.$panel-border;
+    }
+
+    .jse-fold-progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, defaults.$theme-color, defaults.$theme-color-highlight);
+      border-radius: 2px;
+      transition: width 0.1s ease;
+      min-width: 2px;
+    }
+
+    .jse-fold-cancel-button {
+      padding: 4px 12px;
+      font-size: 12px;
+      font-family: defaults.$font-family;
+      background: defaults.$theme-color;
+      color: defaults.$white;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+      flex-shrink: 0;
+      border: 1px solid defaults.$main-border;
+
+      &:hover {
+        background: defaults.$theme-color-highlight;
+        color: defaults.$white;
+      }
+    }
+  }
+}

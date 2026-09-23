@@ -1,0 +1,64 @@
+@use '../../../styles';
+@use '../../../themes/defaults';
+
+.jse-table-mode-welcome {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+  align-items: center;
+
+  border-left: defaults.$main-border;
+  border-right: defaults.$main-border;
+
+  &:last-child {
+    border-bottom: defaults.$main-border;
+  }
+
+  .jse-space.jse-before {
+    flex: 1;
+  }
+
+  .jse-nested-arrays {
+    display: flex;
+    flex-direction: column;
+    gap: defaults.$padding;
+    max-width: 400px;
+    margin: 2em defaults.$padding;
+
+    font-family: defaults.$font-family;
+    font-size: defaults.$font-size;
+
+    .jse-nested-arrays-title {
+    }
+
+    .jse-nested-arrays-info {
+      color: defaults.$panel-color-readonly;
+    }
+
+    .jse-nested-property {
+      display: flex;
+      align-items: center;
+      gap: defaults.$padding;
+
+      .jse-nested-property-path {
+        flex: 1;
+
+        .jse-nested-property-count {
+          opacity: 0.5;
+          white-space: nowrap;
+        }
+      }
+    }
+
+    button.jse-nested-array-action {
+      text-align: left;
+
+      @include styles.jsoneditor-button-primary;
+    }
+  }
+
+  .jse-space.jse-after {
+    flex: 2;
+  }
+}

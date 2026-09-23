@@ -1,0 +1,48 @@
+@use '../../styles';
+@use 'EditableDivShared';
+@use '../../themes/defaults';
+
+// for key and value
+div.jse-editable-div {
+  min-width: 2em;
+  padding: 0 styles.$input-padding;
+  box-sizing: border-box;
+  outline: none;
+  border-radius: 1px;
+  vertical-align: top;
+  cursor: text !important; // TODO: get rid of the !important
+
+  word-break: normal;
+  white-space: pre-wrap; // important for rendering multiple consecutive spaces
+  overflow-wrap: anywhere;
+
+  &.jse-short-text {
+    overflow-wrap: normal;
+  }
+
+  &.jse-table-cell {
+    overflow-wrap: normal;
+    white-space: nowrap;
+  }
+
+  &[contenteditable='true'] {
+    outline: defaults.$edit-outline;
+    background: defaults.$background-color;
+    position: relative;
+    display: inline-block;
+    border-radius: 0;
+    z-index: 3; // must be on top of hovering the entry below it
+  }
+
+  &.jse-empty {
+    &:not(:focus) {
+      outline: 1px dotted defaults.$tag-background;
+      -moz-outline-radius: 2px;
+    }
+
+    &::after {
+      pointer-events: none;
+      color: defaults.$tag-background;
+    }
+  }
+}

@@ -1,0 +1,9 @@
+@use '../../../styles';
+
+.jse-column-header {
+  @include styles.jse-column-header-mixin;
+
+  span.jse-column-sort-icon {
+    height: 1em;
+  }
+}

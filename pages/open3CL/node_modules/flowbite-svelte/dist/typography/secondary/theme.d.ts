@@ -1,0 +1,1 @@
+export declare const secondary: import("tailwind-variants").TVReturnType<{} | {} | {}, undefined, "text-gray-500 dark:text-gray-400 font-semibold", {} | {}, undefined, import("tailwind-variants").TVReturnType<unknown, undefined, "text-gray-500 dark:text-gray-400 font-semibold", unknown, unknown, undefined>>;

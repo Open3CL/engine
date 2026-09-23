@@ -1,0 +1,1 @@
+export declare const mark: import("tailwind-variants").TVReturnType<{} | {} | {}, undefined, "text-white dark:bg-blue-500 bg-blue-600 px-2 rounded-sm", {} | {}, undefined, import("tailwind-variants").TVReturnType<unknown, undefined, "text-white dark:bg-blue-500 bg-blue-600 px-2 rounded-sm", unknown, unknown, undefined>>;
