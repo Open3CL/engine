@@ -6,7 +6,8 @@
  *
  * Source  : dist/reports/corpus/<corpus>.csv/corpus_global_report_<branche>.json
  * Cible   : bloc délimité par <!-- CORPUS:START --> / <!-- CORPUS:END -->
- * Archive : docs/CORPUS-HISTORY.md, reconstruit à partir des tags git (une entrée par release)
+ * Archive : docs/CORPUS-HISTORY.md, reconstruit à partir des tags git (une entrée par release,
+ *           plus la version en préparation, marquée « à publier »)
  * Données : docs/corpus-history.json (une entrée par version) et sa copie
  *           dist/reports/corpus/corpus_history.json, lue par la courbe du rapport HTML
  *
@@ -18,7 +19,7 @@
  * Options :
  *   --readme=<path>    Fichier markdown à mettre à jour   (défaut: README.md)
  *   --branch=<name>    Branche des rapports à lire        (défaut: branche git courante)
- *   --version=<x.y.z>  Version affichée                   (défaut: dernier tag git)
+ *   --version=<x.y.z>  Version affichée                   (défaut: prévue par semantic-release)
  *   --date=<aaaa-mm-jj> Date affichée                     (défaut: aujourd'hui)
  *   --history=<path>   Historique markdown                (défaut: docs/CORPUS-HISTORY.md)
  *   --no-history       N'alimente pas l'historique
@@ -30,6 +31,7 @@ import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { collectHistoryFromTags, toPublishedHistory } from './collect_corpus_history.js';
+import { PENDING_LABEL, resolveCorpusVersion } from './corpus_version.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const REPORTS_FOLDER_PATH = resolve(ROOT, 'dist/reports/corpus');
@@ -200,12 +202,26 @@ function statusDot(ratio) {
 }
 
 /**
+ * @param context {{version: string, branch?: string, date: string, pending?: boolean}}
+ * @return {string} ligne d'en-tête du bloc
+ */
+function renderHeadline({ version, branch, date, pending }) {
+  const status = pending ? ` · ${PENDING_LABEL}` : '';
+  if (branch)
+    return `> **Version \`${version}\`**${status} · branche \`${branch}\` · généré le ${date}`;
+  return pending
+    ? `> **Version \`${version}\`**${status} · résultats du ${date}`
+    : `> **Version \`${version}\`** · publiée le ${date}`;
+}
+
+/**
  * @param rows {object[]}
- * @param context {{version: string, branch?: string, date: string}} `branch` pour une
- *   exécution en cours, absent pour une release relue depuis son tag
+ * @param context {{version: string, branch?: string, date: string, pending?: boolean}} `branch`
+ *   pour une exécution en cours, absent pour une release relue dans l'historique ; `pending`
+ *   pour une version pas encore publiée
  * @return {string} contenu markdown du bloc (sans les marqueurs)
  */
-function renderBlock(rows, { version, branch, date }) {
+function renderBlock(rows, context) {
   if (!rows.length) {
     return [
       '',
@@ -221,9 +237,7 @@ function renderBlock(rows, { version, branch, date }) {
 
   const lines = [
     '',
-    branch
-      ? `> **Version \`${version}\`** · branche \`${branch}\` · généré le ${date}`
-      : `> **Version \`${version}\`** · publiée le ${date}`,
+    renderHeadline(context),
     `> Seuil de tolérance **${threshold}**`,
     '',
     '<table>',
@@ -354,8 +368,11 @@ function writeHistoryData(history, dataPath) {
   const published = toPublishedHistory(history);
   const reportPath = resolve(REPORTS_FOLDER_PATH, 'corpus_history.json');
 
-  writeFileSync(dataPath, `${JSON.stringify(published, null, 2)}\n`, { encoding: 'utf8' });
-  writeFileSync(reportPath, `${JSON.stringify(published)}\n`, { encoding: 'utf8' });
+  // Les deux fichiers sont indentés comme prettier le ferait : le hook de pre-commit les
+  // reformaterait sinon, et chaque génération produirait un diff parasite.
+  const json = `${JSON.stringify(published, null, 2)}\n`;
+  writeFileSync(dataPath, json, { encoding: 'utf8' });
+  writeFileSync(reportPath, json, { encoding: 'utf8' });
 
   return [dataPath, reportPath];
 }
@@ -430,14 +447,17 @@ function renderChartBlock(history) {
         ? fmtNum(entry.results[c.corpus].below)
         : '—'
     );
-    lines.push(`| **${entry.version}** | ${cells.join(' | ')} |`);
+    const version = entry.pending
+      ? `**${entry.version}** (${PENDING_LABEL})`
+      : `**${entry.version}**`;
+    lines.push(`| ${version} | ${cells.join(' | ')} |`);
   }
 
   lines.push(
     '',
     '</details>',
     '',
-    '<sub>Chiffres relevés dans les rapports embarqués par chaque tag de release. Un corpus absent',
+    '<sub>Chiffres relevés dans les rapports de `main` de chaque release. Un corpus absent',
     "d'une version n'était pas encore joué à cette date : la courbe démarre à sa première mesure.</sub>",
     ''
   );
@@ -476,8 +496,8 @@ function writeHistory(path, history) {
     '# Historique des résultats de corpus',
     '',
     'Une section par version publiée, la plus récente en premier. Les chiffres sont relus dans',
-    'les rapports que chaque tag de release embarque, sur la branche `main` : ce fichier se',
-    'reconstruit à l’identique avec `npm run reports:readme`.',
+    'les rapports de `main` au dernier commit de chaque release : ce fichier se reconstruit à',
+    'l’identique avec `npm run reports:readme`.',
     ''
   ].join('\n');
 
@@ -496,8 +516,12 @@ function writeHistory(path, history) {
     .slice(0, HISTORY_DETAILED_SECTIONS)
     .map((entry) =>
       [
-        `## ${entry.version} — ${entry.date}`,
-        renderBlock(historyRows(entry), { version: entry.version, date: entry.date }),
+        `## ${entry.version} — ${entry.pending ? PENDING_LABEL : entry.date}`,
+        renderBlock(historyRows(entry), {
+          version: entry.version,
+          date: entry.date,
+          pending: entry.pending
+        }),
         ''
       ].join('\n')
     );
@@ -543,11 +567,12 @@ function formatWithPrettier(paths) {
 // ----------------------------------------------------------------------------
 
 const branch = arg('branch', git('git rev-parse --abbrev-ref HEAD') || 'main');
-const version = arg(
-  'version',
-  (git('git describe --tags --abbrev=0') || '').replace(/^v/, '') ||
-    JSON.parse(readFileSync(resolve(ROOT, 'package.json'), { encoding: 'utf8' })).version
-);
+// Sans version imposée, les résultats sont rattachés à la release qui contiendra ce code :
+// la dernière publiée si rien de publiable ne l'a suivie, sinon la prochaine, prévue comme
+// semantic-release la calculera au merge sur `main`.
+const resolved = arg('version') ? undefined : await resolveCorpusVersion(ROOT);
+const version = arg('version') || resolved.version;
+const pending = Boolean(resolved?.pending);
 const readmePath = resolve(ROOT, arg('readme', 'README.md'));
 const historyPath = resolve(ROOT, arg('history', 'docs/CORPUS-HISTORY.md'));
 const historyDataPath = resolve(dirname(historyPath), 'corpus-history.json');
@@ -555,7 +580,7 @@ const dryRun = flag('dry-run');
 
 const date = arg('date', new Date().toISOString().slice(0, 10));
 const rows = collectResults(branch);
-const block = renderBlock(rows, { version, branch, date });
+const block = renderBlock(rows, { version, branch, date, pending });
 
 if (dryRun) {
   console.log(block);
@@ -579,7 +604,7 @@ if (!updated) {
 
 writeFileSync(readmePath, updated, { encoding: 'utf8' });
 console.log(
-  `✅ Résultats corpus écrits dans ${readmePath} (${rows.length} corpus, branche ${branch})`
+  `✅ Résultats corpus écrits dans ${readmePath} (${rows.length} corpus, branche ${branch}, version ${version}${pending ? ` ${PENDING_LABEL}` : ''})`
 );
 
 if (!rows.length) process.exit(0);
@@ -589,9 +614,11 @@ if (flag('no-history')) {
   process.exit(0);
 }
 
-// L'historique ne dépend pas de la branche courante : il est relu dans les tags, donc
-// identique d'une exécution à l'autre.
-const history = collectHistoryFromTags(ROOT);
+// Les releases sont relues dans git, indépendamment de la branche courante ; seule la version
+// en préparation provient de l'exécution en cours.
+const history = await collectHistoryFromTags(ROOT, {
+  pending: pending ? { version, date, branch } : undefined
+});
 
 if (!history.versions.length) {
   console.warn('⚠️  Aucun tag de release ne contient de rapport : historique inchangé.');
@@ -603,8 +630,8 @@ writeHistory(historyPath, history);
 const dataPaths = writeHistoryData(history, historyDataPath);
 
 const last = history.versions.at(-1);
-console.log(`✅ Historique reconstruit : ${historyPath} (${history.versions.length} releases)`);
+console.log(`✅ Historique reconstruit : ${historyPath} (${history.versions.length} versions)`);
 console.log(`✅ Données d'historique : ${dataPaths.join(', ')}`);
-console.log(`✅ Dernière release relue : ${last.version} (${last.date})`);
+console.log(`✅ Dernière version : ${last.version} (${last.pending ? PENDING_LABEL : last.date})`);
 
 formatWithPrettier([readmePath, historyPath, historyDataPath]);

@@ -109,8 +109,12 @@ jobs:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     steps:
+      # `main` plutôt que le commit déclencheur : le commit de release, poussé par
+      # semantic-release, contient les résultats de corpus marqués publiés.
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: main
       # Le site ne publie que le rapport de corpus : la racine y renvoie, ce qui garde
       # valides les liens existants vers /reports/corpus.
       - name: Rediriger la racine vers le rapport de corpus

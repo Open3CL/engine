@@ -28,9 +28,10 @@
     "prepare": "husky install",
     "assets:sync": "node scripts/synchronize_assets.js",
     "version:update": "node scripts/update_version.js",
-    "reports:charts": "node scripts/generate_corpus_history_chart.js",
     "reports:preview": "npm run http-server dist/reports/corpus -o",
-    "reports:readme": "node scripts/generate_corpus_readme.js && npm run reports:charts"
+    "reports:readme": "node scripts/generate_corpus_readme.js",
+    "reports:stamp": "node scripts/stamp_corpus_release.js",
+    "reports:version": "node scripts/corpus_version.js"
   },
   "repository": {
     "type": "git",
@@ -53,6 +54,7 @@
     "@commitlint/cz-commitlint": "^19.2.0",
     "@duckdb/node-api": "^1.3.2-alpha.25",
     "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/commit-analyzer": "^13.0.1",
     "@semantic-release/exec": "^7.1.0",
     "@semantic-release/git": "^10.0.1",
     "@semantic-release/github": "^12.0.2",
@@ -71,6 +73,7 @@
     "fast-csv": "^5.0.2",
     "http-server": "^14.1.1",
     "husky": "^9.0.11",
+    "js-yaml": "^4.3.2",
     "jscpd": "^3.5.10",
     "piscina": "^5.1.2",
     "prettier": "^3.2.5",

@@ -1516,7 +1516,9 @@
         const ratioMode = state.historyMode === 'ratio';
 
         const versions = state.history.versions;
-        const labels = versions.map((v) => v.version);
+        // La version en préparation (résultats générés avant sa release) est signalée dans
+        // l'axe et reliée en pointillé : son numéro n'est qu'une prévision.
+        const labels = versions.map((v) => (v.pending ? `${v.version} (à publier)` : v.version));
 
         const datasets = historyCorpora().map((corpus, i) => {
           // Une version sans mesure pour ce corpus laisse un trou : la courbe relie
@@ -1540,7 +1542,10 @@
             pointRadius: 3,
             pointHoverRadius: 6,
             tension: 0.2,
-            spanGaps: true
+            spanGaps: true,
+            segment: {
+              borderDash: (c) => (versions[c.p1DataIndex]?.pending ? [4, 4] : undefined)
+            }
           };
         });
 
@@ -1587,7 +1592,7 @@
         });
 
         const first = versions[0].version;
-        const last = versions[versions.length - 1].version;
+        const last = labels[labels.length - 1];
         $('#history-hint').textContent = `${versions.length} versions · ${first} → ${last}`;
       }
 

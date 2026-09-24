@@ -370,7 +370,7 @@ Ces résultats sont **générés automatiquement** à la fin de `npm run test:co
 
 <!-- CORPUS:START -->
 
-> **Version `1.7.3`** · branche `main` · généré le 2026-09-23
+> **Version `1.8.0`** · à publier · branche `main` · généré le 2026-09-24
 > Seuil de tolérance **5%**
 
 <table>

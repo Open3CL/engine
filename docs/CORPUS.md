@@ -228,30 +228,50 @@ npm run reports:readme
 
 Ce script ([`scripts/generate_corpus_readme.js`](../scripts/generate_corpus_readme.js)) :
 
-1. lit les rapports globaux de la branche courante ;
-2. regénère le bloc situé entre `<!-- CORPUS:START -->` et `<!-- CORPUS:END -->` dans le README ;
-3. reconstruit [`docs/CORPUS-HISTORY.md`](CORPUS-HISTORY.md) **à partir des tags git** : pour chaque
-   tag `vX.Y.Z`, il relit les rapports globaux que la release embarque
-   (`corpus_global_report_main.json`), ce qui donne une entrée par release et une seule. Les cinq
-   dernières releases sont détaillées, les sections rédigées à la main sont conservées ;
-4. met à jour [`docs/corpus-history.json`](corpus-history.json) et sa copie
+1. détermine la **version** à laquelle rattacher les résultats
+   ([`scripts/corpus_version.js`](../scripts/corpus_version.js), `npm run reports:version` pour
+   l'afficher) : les commits postérieurs au dernier tag sont analysés avec le même analyseur et les
+   mêmes `releaseRules` que semantic-release (`.releaserc`) :
+   - aucun commit publiable (`docs`, `test`, `ci`...) : c'est la dernière release ;
+   - sinon, c'est la **prochaine** : `fix`/`perf`/`refactor` → patch, `feat` → minor,
+     `BREAKING CHANGE` ou `!` → major. Elle est marquée **« à publier »** ;
+2. lit les rapports globaux de la branche courante ;
+3. regénère le bloc situé entre `<!-- CORPUS:START -->` et `<!-- CORPUS:END -->` dans le README ;
+4. reconstruit [`docs/CORPUS-HISTORY.md`](CORPUS-HISTORY.md) **à partir de git** : pour chaque
+   tag `vX.Y.Z`, il relit `corpus_global_report_main.json` au **dernier commit de `main` dont le
+   code est encore celui de cette version** (juste avant le commit publiable suivant). Les rapports
+   commités après le merge (`docs: update reports`) sont ainsi rattachés à la bonne release, alors
+   que le tag, posé au merge, embarque encore ceux de la précédente. La version « à publier » y est
+   ajoutée à partir de l'exécution courante. Les cinq dernières versions sont détaillées, les
+   sections rédigées à la main sont conservées ;
+5. met à jour [`docs/corpus-history.json`](corpus-history.json) et sa copie
    `dist/reports/corpus/corpus_history.json`, lue par la section « Historique des versions » du
-   rapport interactif : une courbe par corpus, un point par release, bascule nombre / taux, survol
-   pour comparer les corpus d'une version, légende cliquable pour en masquer.
+   rapport interactif : une courbe par corpus, un point par version (le point « à publier » est
+   relié en pointillé), bascule nombre / taux, survol pour comparer les corpus d'une version,
+   légende cliquable pour en masquer.
 
-> [!IMPORTANT]
-> L'historique n'est pas alimenté par l'exécution courante : l'arbre de travail est en avance sur le
-> dernier tag, et ses résultats seraient étiquetés avec le numéro de la release précédente. Une
-> release n'apparaît donc qu'une fois son tag posé et récupéré (`git fetch --tags`).
+### À la release
 
-Le bloc du README décrit l'exécution courante, sur n'importe quelle branche, ce qui permet de
-comparer une PR à `main`. L'historique, lui, ne dépend que des tags : il se recalcule à l'identique.
+Au merge sur `main`, semantic-release exécute `npm run reports:stamp <version>`
+([`scripts/stamp_corpus_release.js`](../scripts/stamp_corpus_release.js)) avant son commit de
+release : si les résultats commités sont « à publier » sous la version effectivement publiée, le
+libellé est retiré du README, de l'historique et des données de la courbe, et ces fichiers entrent
+dans le commit de release, donc dans le tag et sur GitHub Pages. Les chiffres ne sont pas recalculés.
+
+Si la version prévue diffère de la version publiée (autre PR fusionnée entre-temps, type de commit
+modifié au squash...), rien n'est réécrit et un avertissement est affiché dans le job : relancez
+`npm run test:corpus:all` sur `main` puis commitez en `docs:`.
+
+> [!TIP]
+> Les deux usages sont couverts : lancer les corpus **sur `main` avant la release** (résultats
+> « à publier », marqués publiés automatiquement au release), ou **après la release** (résultats
+> directement rattachés au dernier tag, le commit `docs:` ne déclenchant pas de nouvelle release).
 
 | Option                | Description                                                |
 | :-------------------- | :--------------------------------------------------------- |
 | `--readme=<path>`     | Fichier markdown à mettre à jour. Défaut : `README.md`     |
 | `--branch=<name>`     | Branche des rapports à lire. Défaut : branche git courante |
-| `--version=<x.y.z>`   | Version affichée dans le README. Défaut : dernier tag git  |
+| `--version=<x.y.z>`   | Version affichée dans le README. Défaut : version prévue   |
 | `--date=<aaaa-mm-jj>` | Date affichée dans le README. Défaut : aujourd'hui         |
 | `--dry-run`           | Affiche le bloc généré sans rien écrire                    |
 | `--no-history`        | N'alimente ni `CORPUS-HISTORY.md`, ni la courbe            |

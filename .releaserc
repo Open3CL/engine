@@ -25,6 +25,7 @@
     [
       "@semantic-release/exec",
       {
+        "prepareCmd": "npm run reports:stamp ${nextRelease.version}",
         "publishCmd": "npm run version:update ${nextRelease.version}"
       }
     ],
@@ -33,7 +34,13 @@
       "pkgRoot": "src"
      }],
      ["@semantic-release/git", {
-        "assets": ["package.json", "README.md"],
+        "assets": [
+          "package.json",
+          "README.md",
+          "docs/CORPUS-HISTORY.md",
+          "docs/corpus-history.json",
+          "dist/reports/corpus/corpus_history.json"
+        ],
         "message": "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
      }],
     "@semantic-release/github"
