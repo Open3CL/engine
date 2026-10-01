@@ -38,7 +38,7 @@ vi.mock('./utils.js', () => ({
   requestInputID: vi.fn((de, du, field) => de[`enum_${field}_id`])
 }));
 
-const { tv_temp_fonc_30_100, calc_generateur_combustion_ch } =
+const { tv_temp_fonc_30_100, tempDistributionChPourTempFonc, calc_generateur_combustion_ch } =
   await import('./13.2_generateur_combustion_ch.js');
 const { tv } = await import('./utils.js');
 
@@ -137,6 +137,75 @@ describe('tv_temp_fonc_30_100 - températures de fonctionnement', () => {
     expect(di.temp_fonc_100).toBeUndefined();
     expect(errSpy).toHaveBeenCalledTimes(2);
     errSpy.mockRestore();
+  });
+
+  /**
+   * Plancher / plafond chauffant à eau < 65 °C : la ligne « basse » est retenue même si le DPE
+   * déclare « moyenne » (comportement du moteur de référence CSTB / Tribu).
+   */
+  test.each(['12', '14', '16', '18'])(
+    'plancher/plafond chauffant BT (émission %s) déclaré « moyenne » : ligne « basse » utilisée',
+    (typeEmission) => {
+      tv.mockReturnValue({ tv_temp_fonc_30_id: '1', temp_fonc_30: '24.5' });
+      tv_temp_fonc_30_100(
+        {},
+        { enum_type_generateur_ch_id: '97' },
+        {},
+        [emetteur({ enum_type_emission_distribution_id: typeEmission })],
+        2018
+      );
+      expect(tv).toHaveBeenCalledWith(
+        'temp_fonc_30',
+        expect.objectContaining({ enum_temp_distribution_ch_id: '2' })
+      );
+      expect(tv).toHaveBeenCalledWith(
+        'temp_fonc_100',
+        expect.objectContaining({ enum_temp_distribution_ch_id: '2' })
+      );
+    }
+  );
+
+  test.each([
+    ['radiateur (35), moyenne', '35', '3', '3'],
+    ['plancher chauffant HT (13), moyenne', '13', '3', '3'],
+    ['plancher chauffant BT (14), haute', '14', '4', '4'],
+    ['plancher chauffant BT (14), basse', '14', '2', '2']
+  ])(
+    '%s : température de distribution déclarée conservée',
+    (_, typeEmission, declaree, attendue) => {
+      tv.mockReturnValue({ tv_temp_fonc_30_id: '1', temp_fonc_30: '40' });
+      tv_temp_fonc_30_100(
+        {},
+        { enum_type_generateur_ch_id: '97' },
+        {},
+        [
+          emetteur({
+            enum_type_emission_distribution_id: typeEmission,
+            enum_temp_distribution_ch_id: declaree
+          })
+        ],
+        2018
+      );
+      expect(tv).toHaveBeenCalledWith(
+        'temp_fonc_30',
+        expect.objectContaining({ enum_temp_distribution_ch_id: attendue })
+      );
+    }
+  );
+});
+
+describe('tempDistributionChPourTempFonc', () => {
+  test('émetteur sans type d’émission : température déclarée renvoyée telle quelle', () => {
+    expect(tempDistributionChPourTempFonc({ enum_temp_distribution_ch_id: '3' }, {})).toBe('3');
+  });
+
+  test('type d’émission numérique (14) : reconnu comme plancher chauffant BT', () => {
+    expect(
+      tempDistributionChPourTempFonc(
+        { enum_temp_distribution_ch_id: 3, enum_type_emission_distribution_id: 14 },
+        {}
+      )
+    ).toBe('2');
   });
 });
 

@@ -32,13 +32,43 @@ const K = {
   'réseau de froid urbain': undefined
 };
 
+/**
+ * Planchers / plafonds chauffants sur réseau d'eau chaude « basse ou moyenne température
+ * (inf 65°c) » (enum_type_emission_distribution_id 12, 14, 16, 18).
+ */
+export const EMISSION_PLANCHER_PLAFOND_CHAUFFANT_BT = ['12', '14', '16', '18'];
+
+/**
+ * Température de distribution à utiliser pour les tables temp_fonc_30 / temp_fonc_100.
+ *
+ * Un plancher (ou plafond) chauffant à eau < 65 °C fonctionne en basse température : comme le
+ * moteur de référence CSTB (Tribu), qui déduit la ligne « basse » du type d'émetteur plancher
+ * chauffant, on retient « basse » (id 2) lorsque le DPE déclare « moyenne » (id 3) pour ces
+ * émetteurs. Les logiciels du marché (ex. LICIEL) calculent ainsi mais exportent « moyenne ».
+ *
+ * @param emChDe {object} donnee_entree de l'émetteur
+ * @param emChDu {object} donnee_utilisateur de l'émetteur
+ * @return {string|undefined}
+ */
+export function tempDistributionChPourTempFonc(emChDe, emChDu) {
+  const tempDistribution = requestInputID(emChDe, emChDu, 'temp_distribution_ch');
+  const typeEmission = String(emChDe?.enum_type_emission_distribution_id ?? '');
+  if (
+    String(tempDistribution) === '3' &&
+    EMISSION_PLANCHER_PLAFOND_CHAUFFANT_BT.includes(typeEmission)
+  ) {
+    return '2';
+  }
+  return tempDistribution;
+}
+
 export function tv_temp_fonc_30_100(di, de, du, em_ch, ac) {
   for (const em of em_ch) {
     const em_ch_de = em.donnee_entree;
     const em_ch_du = em.donnee_utilisateur;
     const matcher = {
       enum_type_generateur_ch_id: de.enum_type_generateur_ch_id,
-      enum_temp_distribution_ch_id: requestInputID(em_ch_de, em_ch_du, 'temp_distribution_ch'),
+      enum_temp_distribution_ch_id: tempDistributionChPourTempFonc(em_ch_de, em_ch_du),
       periode_emetteurs: requestInput(em_ch_de, em_ch_du, 'periode_installation_emetteur')
     };
 
