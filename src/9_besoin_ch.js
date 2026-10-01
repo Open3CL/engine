@@ -171,6 +171,13 @@ export default function calc_besoin_ch(
     besoin_ch_depensier += besoin_ch_mois_dep[mois] / 1000;
   }
 
+  /**
+   * Fraction des besoins de chauffage couverts par les apports gratuits sur l'année :
+   * moyenne des Fj mensuels pondérée par les déperditions mensuelles (GV × DHj).
+   * C'est une fraction sans unité comprise entre 0 et 1, elle n'est PAS arrondie à 1.
+   * Certains logiciels publient 1 dans le XML ADEME : ce n'est pas une valeur calculée
+   * et elle ne doit pas servir de référence (cf. issue #51).
+   */
   fraction_apport_gratuit_ch /= sumDh19;
   fraction_apport_gratuit_depensier_ch /= sumDh21;
 

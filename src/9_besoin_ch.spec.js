@@ -130,6 +130,27 @@ describe('calc_besoin_ch - agrégation mensuelle du besoin de chauffage', () => 
     expect(ret.fraction_apport_gratuit_depensier_ch).toBeCloseTo(0.05808492254600494, 9);
   });
 
+  /**
+   * La fraction des apports gratuits est une moyenne pondérée des Fj :
+   * elle reste dans [0, 1] et n'est jamais arrondie à 1 (cf. issue #51).
+   */
+  test("la fraction des apports gratuits n'est pas arrondie à 1 et reste dans [0, 1]", () => {
+    const ret = appelSansRecup();
+    const Fj = calc_Fj(100, 2000, 5000, 1000, 'moyenne');
+    const FjDep = calc_Fj(100, 2000, 5000, 1200, 'moyenne');
+
+    // sur un seul mois, la moyenne pondérée vaut exactement Fj
+    expect(ret.fraction_apport_gratuit_ch).toBeCloseTo(Fj, 12);
+    expect(ret.fraction_apport_gratuit_depensier_ch).toBeCloseTo(FjDep, 12);
+    for (const fraction of [
+      ret.fraction_apport_gratuit_ch,
+      ret.fraction_apport_gratuit_depensier_ch
+    ]) {
+      expect(fraction).toBeGreaterThan(0);
+      expect(fraction).toBeLessThan(1);
+    }
+  });
+
   test('sans récupération, toutes les pertes récupérées retournées sont nulles', () => {
     const ret = appelSansRecup();
     expect(ret.pertes_distribution_ecs_recup).toBe(0);
