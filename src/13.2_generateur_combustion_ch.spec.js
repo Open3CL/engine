@@ -38,7 +38,7 @@ vi.mock('./utils.js', () => ({
   requestInputID: vi.fn((de, du, field) => de[`enum_${field}_id`])
 }));
 
-const { tv_temp_fonc_30_100, calc_generateur_combustion_ch } =
+const { tv_temp_fonc_30_100, tempDistributionChPourTempFonc, calc_generateur_combustion_ch } =
   await import('./13.2_generateur_combustion_ch.js');
 const { tv } = await import('./utils.js');
 
@@ -138,6 +138,75 @@ describe('tv_temp_fonc_30_100 - températures de fonctionnement', () => {
     expect(errSpy).toHaveBeenCalledTimes(2);
     errSpy.mockRestore();
   });
+
+  /**
+   * Plancher / plafond chauffant à eau < 65 °C : la ligne « basse » est retenue même si le DPE
+   * déclare « moyenne » (comportement du moteur de référence CSTB / Tribu).
+   */
+  test.each(['12', '14', '16', '18'])(
+    'plancher/plafond chauffant BT (émission %s) déclaré « moyenne » : ligne « basse » utilisée',
+    (typeEmission) => {
+      tv.mockReturnValue({ tv_temp_fonc_30_id: '1', temp_fonc_30: '24.5' });
+      tv_temp_fonc_30_100(
+        {},
+        { enum_type_generateur_ch_id: '97' },
+        {},
+        [emetteur({ enum_type_emission_distribution_id: typeEmission })],
+        2018
+      );
+      expect(tv).toHaveBeenCalledWith(
+        'temp_fonc_30',
+        expect.objectContaining({ enum_temp_distribution_ch_id: '2' })
+      );
+      expect(tv).toHaveBeenCalledWith(
+        'temp_fonc_100',
+        expect.objectContaining({ enum_temp_distribution_ch_id: '2' })
+      );
+    }
+  );
+
+  test.each([
+    ['radiateur (35), moyenne', '35', '3', '3'],
+    ['plancher chauffant HT (13), moyenne', '13', '3', '3'],
+    ['plancher chauffant BT (14), haute', '14', '4', '4'],
+    ['plancher chauffant BT (14), basse', '14', '2', '2']
+  ])(
+    '%s : température de distribution déclarée conservée',
+    (_, typeEmission, declaree, attendue) => {
+      tv.mockReturnValue({ tv_temp_fonc_30_id: '1', temp_fonc_30: '40' });
+      tv_temp_fonc_30_100(
+        {},
+        { enum_type_generateur_ch_id: '97' },
+        {},
+        [
+          emetteur({
+            enum_type_emission_distribution_id: typeEmission,
+            enum_temp_distribution_ch_id: declaree
+          })
+        ],
+        2018
+      );
+      expect(tv).toHaveBeenCalledWith(
+        'temp_fonc_30',
+        expect.objectContaining({ enum_temp_distribution_ch_id: attendue })
+      );
+    }
+  );
+});
+
+describe('tempDistributionChPourTempFonc', () => {
+  test('émetteur sans type d’émission : température déclarée renvoyée telle quelle', () => {
+    expect(tempDistributionChPourTempFonc({ enum_temp_distribution_ch_id: '3' }, {})).toBe('3');
+  });
+
+  test('type d’émission numérique (14) : reconnu comme plancher chauffant BT', () => {
+    expect(
+      tempDistributionChPourTempFonc(
+        { enum_temp_distribution_ch_id: 3, enum_type_emission_distribution_id: 14 },
+        {}
+      )
+    ).toBe('2');
+  });
 });
 
 /**
@@ -156,9 +225,9 @@ describe('calc_generateur_combustion_ch - rendement de génération', () => {
     };
     calc_generateur_combustion_ch({}, di, de, { cdimref: 0.8, cdimrefDep: 0.6 });
     // valeurs de référence de régression (module réel, enums réels équivalents)
-    expect(di.rg).toBeCloseTo(0.8582190936918361, 9);
-    expect(di.rg_dep).toBeCloseTo(0.8706053178411902, 9);
-    expect(di.rendement_generation).toBeCloseTo(0.8582190936918361, 9);
+    expect(di.rg).toBeCloseTo(0.8575549045559866, 9);
+    expect(di.rg_dep).toBeCloseTo(0.8700736982536121, 9);
+    expect(di.rendement_generation).toBeCloseTo(0.8575549045559866, 9);
   });
 
   test('chaudière bois : branche de calcul dédiée (QP50 / QP100)', () => {
@@ -171,8 +240,8 @@ describe('calc_generateur_combustion_ch - rendement de génération', () => {
     };
     calc_generateur_combustion_ch({}, di, de, { cdimref: 0.9, cdimrefDep: 0.7 });
     // valeurs de référence de régression
-    expect(di.rg).toBeCloseTo(0.7044775930164003, 9);
-    expect(di.rg_dep).toBeCloseTo(0.7138933157828895, 9);
+    expect(di.rg).toBeCloseTo(0.7040089707689774, 9);
+    expect(di.rg_dep).toBeCloseTo(0.713512984577247, 9);
   });
 
   test('chaudière à condensation avec régulation : température de fonctionnement à 30 % utilisée', () => {
@@ -186,8 +255,8 @@ describe('calc_generateur_combustion_ch - rendement de génération', () => {
     };
     calc_generateur_combustion_ch({}, di, de, { cdimref: 0.8, cdimrefDep: 0.6 });
     // valeurs de référence de régression
-    expect(di.rg).toBeCloseTo(0.9281152399114512, 9);
-    expect(di.rg_dep).toBeCloseTo(0.9344861707155592, 9);
+    expect(di.rg).toBeCloseTo(0.9275325681176758, 9);
+    expect(di.rg_dep).toBeCloseTo(0.9340267431264844, 9);
   });
 
   test('radiateur à gaz : branche de calcul dédiée', () => {
@@ -201,8 +270,8 @@ describe('calc_generateur_combustion_ch - rendement de génération', () => {
     };
     calc_generateur_combustion_ch({}, di, de, { cdimref: 0.8, cdimrefDep: 0.6 });
     // valeurs de référence de régression
-    expect(di.rg).toBeCloseTo(0.8851321252668564, 9);
-    expect(di.rg_dep).toBeCloseTo(0.8869221230591896, 9);
+    expect(di.rg).toBeCloseTo(0.8842491989709215, 9);
+    expect(di.rg_dep).toBeCloseTo(0.8862325713702337, 9);
   });
 
   test('générateur à air chaud : branche de calcul dédiée', () => {
@@ -231,8 +300,8 @@ describe('calc_generateur_combustion_ch - rendement de génération', () => {
     };
     calc_generateur_combustion_ch({}, di, de, { cdimref: 0.8, cdimrefDep: 0.6 });
     // valeurs de référence de régression
-    expect(di.rg).toBeCloseTo(0.8513271171577527, 9);
-    expect(di.rg_dep).toBeCloseTo(0.8655664711109103, 9);
+    expect(di.rg).toBeCloseTo(0.8505103134051144, 9);
+    expect(di.rg_dep).toBeCloseTo(0.8649097139284332, 9);
   });
 
   test('type de générateur inconnu : aucun rendement calculé (avertissement)', () => {
@@ -262,8 +331,8 @@ describe('calc_generateur_combustion_ch - rendement de génération', () => {
     };
     calc_generateur_combustion_ch({}, di, de, {});
     // Cdimref = 0 -> x/0 = Infinity -> min(1, ...) = 1 pour tous les x, nominal = dépensier
-    expect(di.rg).toBeCloseTo(0.8967281540325838, 9);
-    expect(di.rg_dep).toBeCloseTo(0.8967281540325838, 9);
+    expect(di.rg).toBeCloseTo(0.8963697027040485, 9);
+    expect(di.rg_dep).toBeCloseTo(0.8963697027040485, 9);
   });
 
   test('bug_for_bug_compat : correction de qp0 exprimé en kW (< 1) vers des W', () => {
@@ -281,7 +350,7 @@ describe('calc_generateur_combustion_ch - rendement de génération', () => {
     // qp0 < 1 -> multiplié par 1000 => 200 (passage kW -> W)
     expect(di.qp0).toBe(200);
     // valeur de référence de régression (chaudière standard, pn = 20000, qp0 corrigé à 200)
-    expect(di.rg).toBeCloseTo(0.8566147558351076, 9);
+    expect(di.rg).toBeCloseTo(0.8557877790761849, 9);
     warnSpy.mockRestore();
   });
 
@@ -319,5 +388,69 @@ describe('calc_generateur_combustion_ch - rendement de génération', () => {
     );
     // Avec régulation (tf plus basse) le rendement est plus élevé
     expect(diAvec.rg).toBeGreaterThan(diSans.rg);
+  });
+
+  /**
+   * Référence externe (et non régression) : autotest État CSTB `APP2-0-1`, moteur
+   * Moteur_DPE.dll v2025.11.1.0 (Tribu). Chaudière gaz à condensation 2001-2015, Pn = 23 kW,
+   * valeurs par défaut. Les grandeurs intermédiaires ci-dessous sont celles de la sortie Tribu
+   * (Rpn, Rpint, Qp0, Tfonc30/100, Cdimref = 0.05 / TchFinal(Ch_5)).
+   * Avant correctif (QP0 non converti sur PCS) : rg = 0.8597041838253313. Cf. issue #205.
+   */
+  test('autotest État APP2-0-1 : rg identique à Tribu (QP0 exprimé sur PCS)', () => {
+    const di = {
+      pn: 23000,
+      rpn: 0.9236172783601759,
+      rpint: 0.983617278360176,
+      qp0: 230,
+      pveil: 0,
+      temp_fonc_30: 38,
+      temp_fonc_100: 80
+    };
+    const de = {
+      enum_type_generateur_ch_id: '96',
+      enum_type_energie_id: '2',
+      type_energie: 'gaz naturel',
+      presence_regulation_combustion: true,
+      description: 'Chaudière gaz condensation'
+    };
+    const cdimref = 0.05 / 0.00603495141488493;
+    calc_generateur_combustion_ch({}, di, de, { cdimref, cdimrefDep: cdimref });
+    // Rg Tribu (sortie APP2-0-1_Sortie.xml) : 0.8511886946001722
+    expect(di.rg).toBeCloseTo(0.8511886946001722, 12);
+  });
+
+  test('les pertes à charge nulle QP0 réduisent le rendement de génération', () => {
+    const di = () => ({
+      pn: 23000,
+      rpn: 0.92,
+      rpint: 0.98,
+      qp0: 230,
+      pveil: 0,
+      temp_fonc_30: 38,
+      temp_fonc_100: 80
+    });
+    const de = {
+      enum_type_generateur_ch_id: '96',
+      enum_type_energie_id: '2',
+      presence_regulation_combustion: true,
+      description: 't'
+    };
+    const avecPertes = di();
+    calc_generateur_combustion_ch(
+      {},
+      avecPertes,
+      { ...de, type_energie: 'gaz naturel' },
+      { cdimref: 8 }
+    );
+    const sansPertes = { ...di(), qp0: 0 };
+    calc_generateur_combustion_ch(
+      {},
+      sansPertes,
+      { ...de, type_energie: 'gaz naturel' },
+      { cdimref: 8 }
+    );
+    // le terme 0.45 × QP0 réduit bien le rendement
+    expect(avecPertes.rg).toBeLessThan(sansPertes.rg);
   });
 });

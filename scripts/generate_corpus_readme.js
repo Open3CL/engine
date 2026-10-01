@@ -615,6 +615,16 @@ if (!existsSync(readmePath)) {
   process.exit(1);
 }
 
+// Sans rapport lisible, le bloc généré ne dirait que « aucun rapport trouvé » : écraser le
+// README avec ça ferait perdre les résultats de la dernière exécution valide.
+if (!rows.length) {
+  console.warn(
+    `⚠️  Aucun rapport de corpus pour la branche \`${branch}\` : README et historique inchangés.`
+  );
+  console.warn('   Lancez `npm run test:corpus:all` pour les générer.');
+  process.exit(0);
+}
+
 const content = readFileSync(readmePath, { encoding: 'utf8' });
 const updated = replaceBlock(content, block);
 
@@ -629,8 +639,6 @@ writeFileSync(readmePath, updated, { encoding: 'utf8' });
 console.log(
   `✅ Résultats corpus écrits dans ${readmePath} (${rows.length} corpus, branche ${branch}, version ${version}${pending ? ` ${PENDING_LABEL}` : ''})`
 );
-
-if (!rows.length) process.exit(0);
 
 if (flag('no-history')) {
   formatWithPrettier([readmePath]);
