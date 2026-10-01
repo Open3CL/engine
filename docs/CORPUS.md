@@ -233,7 +233,6 @@ npm run reports:readme
 Ce script ([`scripts/generate_corpus_readme.js`](../scripts/generate_corpus_readme.js)) n'écrit
 **que sur `main`** : sur une branche de travail, il affiche un rappel et s'arrête sans rien modifier,
 le README gardant les chiffres de `main`. Il s'arrête de même, sans rien écraser, quand aucun
-rapport n'est lisible.
 Les rapports de la branche, eux, sont bien produits par le corpus et restent comparables à `main`
 dans le rapport interactif. `--dry-run` affiche quand même le bloc, `--force` écrit quand même.
 
