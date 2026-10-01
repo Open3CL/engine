@@ -157,3 +157,117 @@ describe('tv_rendement_distribution_ch - rendement de distribution CH', () => {
     expect(result).toBeCloseTo(0.5814, 10);
   });
 });
+
+/**
+ * Type d'émission « Autres équipements » (enum_type_emission_distribution_id = 41) : toutes les
+ * lignes de la table des rendements de distribution lui sont applicables, la recherche par type
+ * renverrait systématiquement la première. On conserve donc le rendement du DPE d'origine.
+ * @see https://github.com/Open3CL/engine/issues/170
+ */
+describe('calc_emetteur_ch - rendement de distribution des « Autres équipements » (41)', () => {
+  beforeEach(() => {
+    vi.mocked(tv).mockImplementation((table) => {
+      if (table === 'rendement_emission') return { re: '0.95', tv_rendement_emission_id: '11' };
+      if (table === 'rendement_regulation') return { rr: '0.99', tv_rendement_regulation_id: '22' };
+      if (table === 'intermittence') return { i0: '0.85', tv_intermittence_id: '33' };
+      return null;
+    });
+  });
+
+  test('id du DPE d’origine présent : la ligne est recherchée par identifiant, pas par type', () => {
+    // ligne qui serait (à tort) retournée par la recherche par type
+    getRendementDistributionCh.mockReturnValue({ rd: '1', tv_rendement_distribution_ch_id: '1' });
+    getRendementDistributionChById.mockReturnValue({
+      rd: '0.91',
+      tv_rendement_distribution_ch_id: '6'
+    });
+
+    const em_ch = {
+      donnee_entree: {
+        enum_type_emission_distribution_id: '41',
+        reseau_distribution_isole: 0,
+        tv_rendement_distribution_ch_id: 6
+      }
+    };
+    calc_emetteur_ch(em_ch, { enum_type_installation_id: '1' }, '2', '3');
+
+    expect(getRendementDistributionChById).toHaveBeenCalledWith(6);
+    expect(getRendementDistributionCh).not.toHaveBeenCalled();
+    expect(em_ch.donnee_intermediaire.rendement_distribution).toBe(0.91);
+    expect(em_ch.donnee_entree.tv_rendement_distribution_ch_id).toBe(6);
+  });
+
+  test('identifiant de type numérique (41) : même comportement que la chaîne', () => {
+    getRendementDistributionCh.mockReturnValue({ rd: '1', tv_rendement_distribution_ch_id: '1' });
+    getRendementDistributionChById.mockReturnValue({
+      rd: '0.87',
+      tv_rendement_distribution_ch_id: '8'
+    });
+
+    const em_ch = {
+      donnee_entree: { enum_type_emission_distribution_id: 41, tv_rendement_distribution_ch_id: 8 }
+    };
+    calc_emetteur_ch(em_ch, { enum_type_installation_id: '1' }, '2', '3');
+
+    expect(getRendementDistributionCh).not.toHaveBeenCalled();
+    expect(em_ch.donnee_intermediaire.rendement_distribution).toBe(0.87);
+  });
+
+  test('sans id dans le DPE d’origine : repli sur la recherche par type', () => {
+    getRendementDistributionCh.mockReturnValue({ rd: '1', tv_rendement_distribution_ch_id: '1' });
+
+    const em_ch = {
+      donnee_entree: { enum_type_emission_distribution_id: '41', reseau_distribution_isole: 1 }
+    };
+    calc_emetteur_ch(em_ch, { enum_type_installation_id: '1' }, '2', '3');
+
+    expect(getRendementDistributionChById).not.toHaveBeenCalled();
+    expect(getRendementDistributionCh).toHaveBeenCalledWith('41', 1);
+    expect(em_ch.donnee_intermediaire.rendement_distribution).toBe(1);
+    expect(em_ch.donnee_entree.tv_rendement_distribution_ch_id).toBe(1);
+  });
+
+  test('id inconnu de la table : repli sur la recherche par type', () => {
+    getRendementDistributionChById.mockReturnValue(undefined);
+    getRendementDistributionCh.mockReturnValue({ rd: '1', tv_rendement_distribution_ch_id: '1' });
+
+    const em_ch = {
+      donnee_entree: {
+        enum_type_emission_distribution_id: '41',
+        reseau_distribution_isole: 0,
+        tv_rendement_distribution_ch_id: 99
+      }
+    };
+    calc_emetteur_ch(em_ch, { enum_type_installation_id: '1' }, '2', '3');
+
+    expect(getRendementDistributionChById).toHaveBeenCalledWith(99);
+    expect(getRendementDistributionCh).toHaveBeenCalledWith('41', 0);
+    expect(em_ch.donnee_intermediaire.rendement_distribution).toBe(1);
+    expect(em_ch.donnee_entree.tv_rendement_distribution_ch_id).toBe(1);
+  });
+
+  test('autre type d’émission avec id : la recherche par type reste prioritaire', () => {
+    getRendementDistributionCh.mockReturnValue({
+      rd: '0.85',
+      tv_rendement_distribution_ch_id: '3'
+    });
+    getRendementDistributionChById.mockReturnValue({
+      rd: '0.91',
+      tv_rendement_distribution_ch_id: '6'
+    });
+
+    const em_ch = {
+      donnee_entree: {
+        enum_type_emission_distribution_id: '14',
+        reseau_distribution_isole: 0,
+        tv_rendement_distribution_ch_id: 6
+      }
+    };
+    calc_emetteur_ch(em_ch, { enum_type_installation_id: '1' }, '2', '3');
+
+    expect(getRendementDistributionCh).toHaveBeenCalledWith('14', 0);
+    expect(getRendementDistributionChById).not.toHaveBeenCalled();
+    expect(em_ch.donnee_intermediaire.rendement_distribution).toBe(0.85);
+    expect(em_ch.donnee_entree.tv_rendement_distribution_ch_id).toBe(3);
+  });
+});
