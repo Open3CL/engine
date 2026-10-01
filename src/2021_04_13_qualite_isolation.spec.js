@@ -4,9 +4,8 @@ import { describe, expect, test } from 'vitest';
  * Module purement calculatoire (aucune dépendance externe) : on teste
  * directement les seuils de qualité et l'agrégation des déperditions.
  */
-const { default: calc_qualite_isolation, qualite_isol } = await import(
-  './2021_04_13_qualite_isolation.js'
-);
+const { default: calc_qualite_isolation, qualite_isol } =
+  await import('./2021_04_13_qualite_isolation.js');
 
 /**
  * Qualité de l'isolation
@@ -119,6 +118,39 @@ describe('calc_qualite_isolation - agrégation et classement', () => {
     expect(ret.qualite_isol_plancher_bas).toBe(2); // U = 0.4
     expect(ret.qualite_isol_menuiserie).toBe(2); // U = 50/25 = 2
     expect(ret.qualite_isol_plancher_haut_comble_amenage).toBe(2); // U = 0.2
+  });
+
+  /**
+   * Ubat est un coefficient de transmission surfacique moyen : il exclut les
+   * déperditions par renouvellement d'air (DR).
+   * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - annexe 8 / issue #45
+   */
+  test("les déperditions par renouvellement d'air (DR) ne sont pas prises en compte dans ubat", () => {
+    const env = enveloppe({
+      murs: [mur({ surface: 100, umur: 0.5 })],
+      pb: [plancherBas({ surface: 50, upb: 0.4 })],
+      ph: [plancherHaut({ surface: 30, uph: 0.2 })],
+      bv: [baie({ surface: 20, u: 2 })],
+      portes: [porte({ surface: 5, u: 2 })]
+    });
+    const dpSansDr = {
+      deperdition_mur: 50,
+      deperdition_plancher_bas: 20,
+      deperdition_plancher_haut: 6,
+      deperdition_baie_vitree: 40,
+      deperdition_porte: 10,
+      deperdition_pont_thermique: 10
+    };
+    const dpAvecDr = { ...dpSansDr, deperdition_renouvellement_air: 60 };
+
+    const sansDr = calc_qualite_isolation(env, dpSansDr);
+    const avecDr = calc_qualite_isolation(env, dpAvecDr);
+
+    // ubat = 136 / 205 dans les deux cas ; en incluant DR il vaudrait (136 + 60) / 205 ≈ 0.956
+    expect(avecDr.ubat).toBeCloseTo(136 / 205, 9);
+    expect(avecDr.ubat).toBe(sansDr.ubat);
+    // la classe d'isolation de l'enveloppe reste « moyenne » (3) et ne bascule pas en 4
+    expect(avecDr.qualite_isol_enveloppe).toBe(3);
   });
 
   test('les locaux non déperditifs (adjacence 22) sont exclus des murs et planchers bas', () => {

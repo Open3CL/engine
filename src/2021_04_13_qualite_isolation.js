@@ -115,6 +115,13 @@ export default function calc_qualite_isolation(enveloppe, dp) {
     0
   );
 
+  /**
+   * Ubat = coefficient de transmission surfacique moyen de l'enveloppe (W/m².K).
+   * Il ne prend en compte QUE les déperditions par les parois et les ponts thermiques :
+   * les déperditions par renouvellement d'air (DR) sont volontairement exclues
+   * (cf. issue #45).
+   * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - annexe 8 (indicateurs de qualité d'isolation)
+   */
   const deperdition =
     dp.deperdition_mur +
     dp.deperdition_plancher_bas +
