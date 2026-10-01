@@ -573,7 +573,8 @@ export function calcul_3cl(inputDpe, options) {
     prorataECS,
     prorataChauffage,
     dateDpe,
-    coef_ep
+    coef_ep,
+    th === 'immeuble' ? Nb_lgt : 1
   );
 
   const production_electricite = productionENR.calculateEnr(
@@ -595,7 +596,8 @@ export function calcul_3cl(inputDpe, options) {
     prorataECS,
     prorataChauffage,
     dateDpe,
-    coef_ep_1_7
+    coef_ep_1_7,
+    th === 'immeuble' ? Nb_lgt : 1
   );
 
   productionENR.calculateEnr(
@@ -618,7 +620,8 @@ export function calcul_3cl(inputDpe, options) {
     prorataECS,
     prorataChauffage,
     dateDpe,
-    coef_ep_2_3
+    coef_ep_2_3,
+    th === 'immeuble' ? Nb_lgt : 1
   );
 
   productionENR.calculateEnr(
