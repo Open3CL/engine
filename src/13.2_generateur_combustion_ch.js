@@ -180,7 +180,9 @@ export function calc_generateur_combustion_ch(dpe, di, de, du) {
 
   // Pveil and QP0 are in kW
   const Pveil = di.pveil / 1000;
-  const QP0 = di.qp0 / 1000;
+  // rg est d'abord calculé sur PCS (puis × k pour revenir en PCI) : QP0 doit donc être exprimé
+  // sur PCS, comme dans QPx() (qp0 × k). Cf. issue #205.
+  const QP0 = (di.qp0 * k) / 1000;
 
   const rg_pcs = Pmfou / (Pmcons + 0.45 * QP0 + Pveil);
   const rg_pcs_dep = Pmfou_dep / (Pmcons_dep + 0.45 * QP0 + Pveil);
