@@ -115,10 +115,13 @@ describe('calc_sse_j - surface sud équivalente journalière', () => {
       }
     };
 
+    // Une baie logement / véranda (adjacence 10) est nécessaire pour que Sse_ver soit calculée (issue #140).
+    const bvList = [baie({ adjacence: '10', surface: 3, sw: 0.5 })];
+
     // orientation 'sud' + inclinaison par défaut 'verticale' => clé 'sud verticale' (c1j = 0.5)
     // coeff = 0.8 * T + 0.024 = 0.664 ; Sstj = 4 * 0.5 * 0.664 = 1.328
-    // pas de baie véranda => Ssdj = 0 ; ssInd = 1.328 ; SseVeranda = 1.328 * bver = 0.664
-    expect(calc_sse_j([], ets, 'ca1', 'h1a', 'Janvier')).toBeCloseTo(0.664, 10);
+    // Ssdj = 0.8 * (3*0.5*0.5) = 0.6 ; ssInd = 0.728 ; SseVeranda = 0.6 + 0.728 * bver = 0.964
+    expect(calc_sse_j(bvList, ets, 'ca1', 'h1a', 'Janvier')).toBeCloseTo(0.964, 10);
   });
 
   test('les facteurs fe1/fe2 de la baie extérieure sont appliqués au calcul', () => {
@@ -127,6 +130,78 @@ describe('calc_sse_j - surface sud équivalente journalière', () => {
     bv.donnee_intermediaire.fe2 = 0.8;
     // getSsd = 2 * 0.5(c1) * 0.5(sw) * 0.5(fe1) * 0.8(fe2) = 0.2
     expect(calc_sse_j([bv], null, 'ca1', 'h1a', 'Janvier')).toBeCloseTo(0.2, 10);
+  });
+});
+
+/**
+ * Issue #140 : la surface sud équivalente véranda (Sse_ver = Ssd + Ssind * bver) n'est calculée que
+ * pour les baies vitrées séparant le logement de l'espace tampon solarisé (adjacence 10).
+ * Sans aucune de ces baies, les apports de l'ETS n'entrent pas dans le logement => Sse_ver = 0.
+ * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §6.3
+ */
+describe('calc_sse_j - espace tampon solarisé sans baie séparant le logement de l’ETS', () => {
+  /** Fabrique un espace tampon solarisé avec une baie donnant sur l'extérieur. */
+  function espaceTampon({ bver = 0.5, T = 0.8 } = {}) {
+    return {
+      donnee_intermediaire: { bver, coef_transparence_ets: T },
+      baie_ets_collection: { baie_ets: baie({ adjacence: '1', surface: 4, sw: 1 }) }
+    };
+  }
+
+  test('ETS avec seulement des baies extérieures : seule la somme des baies adjacence 1 est retenue', () => {
+    const bvList = [
+      baie({ adjacence: '1', surface: 2, sw: 0.4 }),
+      baie({ adjacence: '3', surface: 5, sw: 0.9 }) // adjacence autre => ignorée
+    ];
+    // sseBaiesExt = 2 * 0.5 * 0.4 = 0.4 ; Sse_ver non ajoutée (avant correctif : 0.4 + 0.664)
+    expect(calc_sse_j(bvList, espaceTampon(), 'ca1', 'h1a', 'Janvier')).toBeCloseTo(0.4, 10);
+  });
+
+  test('ETS sans baie adjacence 10 : bver et coefficient de transparence sont sans effet', () => {
+    const bvList = [baie({ adjacence: '1', surface: 2, sw: 0.4 })];
+    const ref = calc_sse_j(bvList, null, 'ca1', 'h1a', 'Janvier');
+
+    expect(calc_sse_j(bvList, espaceTampon({ bver: 0.9, T: 0.2 }), 'ca1', 'h1a', 'Janvier')).toBe(
+      ref
+    );
+    expect(calc_sse_j(bvList, espaceTampon({ bver: 0.1, T: 0.9 }), 'ca1', 'h1a', 'Janvier')).toBe(
+      ref
+    );
+  });
+
+  test('ETS sans aucune baie vitrée du logement : surface sud équivalente nulle', () => {
+    expect(calc_sse_j([], espaceTampon(), 'ca1', 'h1a', 'Janvier')).toBe(0);
+  });
+
+  test('ETS dupliqué (tableau) sans baie adjacence 10 : même règle, Sse_ver non ajoutée', () => {
+    const bvList = [baie({ adjacence: '1', surface: 2, sw: 0.4 })];
+    const ets = [espaceTampon(), espaceTampon()];
+    expect(calc_sse_j(bvList, ets, 'ca1', 'h1a', 'Janvier')).toBeCloseTo(0.4, 10);
+  });
+
+  test('ETS avec une baie adjacence 10 : Sse_ver toujours calculée (non-régression)', () => {
+    const bvList = [
+      baie({ adjacence: '10', surface: 3, sw: 0.5 }),
+      baie({ adjacence: '1', surface: 2, sw: 0.4 })
+    ];
+    // Ssdj = 0.8 * (3*0.5*0.5) = 0.6 ; Sstj = 4 * 0.5 * 0.664 = 1.328 ; ssInd = 0.728
+    // SseVeranda = 0.6 + 0.728 * 0.5 = 0.964 ; sseBaiesExt = 0.4
+    // Valeur de référence de régression (calculée avec le vrai module, tables mockées) : 1.364
+    expect(calc_sse_j(bvList, espaceTampon(), 'ca1', 'h1a', 'Janvier')).toBeCloseTo(1.364, 9);
+  });
+
+  test('sans ETS : seules les baies extérieures comptent, les baies adjacence 10 sont ignorées', () => {
+    const bvList = [
+      baie({ adjacence: '10', surface: 3, sw: 0.5 }),
+      baie({ adjacence: '1', surface: 2, sw: 0.4 })
+    ];
+    expect(calc_sse_j(bvList, undefined, 'ca1', 'h1a', 'Janvier')).toBeCloseTo(0.4, 10);
+    expect(calc_sse_j(bvList, [], 'ca1', 'h1a', 'Janvier')).toBeCloseTo(0.4, 10);
+  });
+
+  test('calc_sse annuel : ETS sans baie adjacence 10 => pas de Sse_ver', () => {
+    const bvList = [baie({ adjacence: '1', surface: 2, sw: 0.4 })];
+    expect(calc_sse('ca1', 'h1a', bvList, espaceTampon())).toBeCloseTo(0.4, 10);
   });
 });
 
