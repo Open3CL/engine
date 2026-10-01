@@ -281,6 +281,14 @@ export function requestInput(de, du, field, type) {
       console.error(`requestInput: type is not defined for ${field}`);
       return null;
     }
+    if (typeof type === 'number' && Number.isNaN(type)) {
+      console.error(`requestInput: type is NaN for ${field}`);
+      return null;
+    }
+    if (!['string', 'number', 'boolean'].includes(typeof type)) {
+      console.error(`requestInput: type has an unexpected type (${typeof type}) for ${field}`);
+      return null;
+    }
     du[field] = type;
     return de[field];
   }
