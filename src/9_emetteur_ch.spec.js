@@ -1,340 +1,427 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 /**
- * Dépendances mockées pour isoler `9_emetteur_ch.js` :
- * - `tv` : accès générique aux tables (rendements d'émission / de régulation /
- *   intermittence). On pilote la ligne retournée selon la table interrogée ;
- * - `bug_for_bug_compat` : désactivé pour rester sur le comportement nominal ;
- * - `TvsStore` : store des rendements de distribution, remplacé par une classe
- *   factice dont on contrôle les méthodes via `vi.hoisted`.
+ * Dépendances mockées :
+ * - `utils` : utilitaires (tv, bug_for_bug_compat)
+ * - `TvsStore` : service d'accès aux tables de valeurs forfaitaires pour les émetteurs de chaleur.
+ *
+ * `bug_for_bug_compat` est exposé via un getter afin de pouvoir basculer sa valeur par test.
  */
-const { getRendementDistributionCh, getRendementDistributionChById, utilState } = vi.hoisted(
-  () => ({
-    getRendementDistributionCh: vi.fn(),
-    getRendementDistributionChById: vi.fn(),
-    utilState: { bug: false }
-  })
-);
+const utilsState = vi.hoisted(() => ({ bugForBugCompat: false }));
+
+const mockTvsStore = vi.hoisted(() => ({
+  getRendementDistributionCh: vi.fn(),
+  getRendementDistributionChById: vi.fn()
+}));
 
 vi.mock('./utils.js', () => ({
   set_bug_for_bug_compat: vi.fn(),
   tv: vi.fn(),
   get bug_for_bug_compat() {
-    return utilState.bug;
+    return utilsState.bugForBugCompat;
   }
 }));
 
 vi.mock('./core/tv/infrastructure/tvs.store.js', () => ({
-  TvsStore: vi.fn(() => ({
-    getRendementDistributionCh,
-    getRendementDistributionChById
-  }))
+  TvsStore: vi.fn(() => mockTvsStore)
 }));
 
 const { rendement_emission, calc_emetteur_ch } = await import('./9_emetteur_ch.js');
 const { tv } = await import('./utils.js');
 
 beforeEach(() => {
+  mockTvsStore.getRendementDistributionCh.mockReset();
+  mockTvsStore.getRendementDistributionChById.mockReset();
   vi.mocked(tv).mockReset();
-  getRendementDistributionCh.mockReset();
-  getRendementDistributionChById.mockReset();
-  utilState.bug = false;
+  utilsState.bugForBugCompat = false;
+  vi.spyOn(console, 'error').mockImplementation(() => {});
 });
 
 /**
- * 9. Rendements des émetteurs de chauffage
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §9
+ * Configure le mock `tv` pour renvoyer une ligne par nom de table.
+ * Pour `intermittence`, `rows.intermittence` peut être une fonction (matcher) => row.
  */
-describe('rendement_emission - produit des rendements', () => {
-  const emetteur = {
-    donnee_intermediaire: {
-      rendement_emission: 0.95,
-      rendement_distribution: 0.9,
-      rendement_regulation: 0.9
-    }
+function mockTv(rows = {}) {
+  vi.mocked(tv).mockImplementation((table, matcher) => {
+    const row = rows[table];
+    return typeof row === 'function' ? row(matcher) : row;
+  });
+}
+
+/** Retourne les matchers passés à `tv` pour une table donnée. */
+function tvMatchers(table) {
+  return vi
+    .mocked(tv)
+    .mock.calls.filter(([name]) => name === table)
+    .map(([, matcher]) => matcher);
+}
+
+/**
+ * Fabrique un émetteur de chaleur avec les données d'entrée utiles au calcul.
+ */
+function emetteur({
+  typeEmissionDistributionId = '1',
+  networkIsolated = false,
+  tvRendementDistributionChId = null
+}) {
+  return {
+    donnee_entree: {
+      enum_type_emission_distribution_id: typeEmissionDistributionId,
+      reseau_distribution_isole: networkIsolated,
+      tv_rendement_distribution_ch_id: tvRendementDistributionChId
+    },
+    donnee_intermediaire: {}
   };
-
-  test('rendement global = rg * re * rd * rr (rg = 1 par défaut)', () => {
-    expect(rendement_emission(emetteur)).toBeCloseTo(0.7695, 12);
-  });
-
-  test('le rendement de génération (rg) est appliqué en facteur', () => {
-    expect(rendement_emission(emetteur, 0.8)).toBeCloseTo(0.6156, 12);
-  });
-});
-
-describe('calc_emetteur_ch - renseignement des données intermédiaires', () => {
-  /** Pilote la fonction `tv` selon la table interrogée. */
-  function stubTv() {
-    vi.mocked(tv).mockImplementation((table) => {
-      if (table === 'rendement_emission') {
-        return { re: '0.95', tv_rendement_emission_id: '11' };
-      }
-      if (table === 'rendement_regulation') {
-        return { rr: '0.99', tv_rendement_regulation_id: '22' };
-      }
-      if (table === 'intermittence') {
-        return { i0: '0.85', tv_intermittence_id: '33' };
-      }
-      return null;
-    });
-  }
-
-  test("agrège les rendements (distribution, émission, régulation) et l'intermittence", () => {
-    stubTv();
-    getRendementDistributionCh.mockReturnValue({
-      rd: '0.92',
-      tv_rendement_distribution_ch_id: '44'
-    });
-
-    const em_ch = {
-      donnee_entree: {
-        enum_type_emission_distribution_id: '10',
-        reseau_distribution_isole: 1
-      }
-    };
-    calc_emetteur_ch(em_ch, { enum_type_installation_id: '1' }, '2', '3');
-
-    expect(em_ch.donnee_intermediaire).toEqual({
-      rendement_distribution: 0.92,
-      rendement_emission: 0.95,
-      rendement_regulation: 0.99,
-      i0: 0.85
-    });
-    // les identifiants de table sont réécrits en nombres sur la donnée d'entrée
-    expect(em_ch.donnee_entree.tv_rendement_distribution_ch_id).toBe(44);
-    expect(em_ch.donnee_entree.tv_rendement_emission_id).toBe(11);
-    expect(em_ch.donnee_entree.tv_rendement_regulation_id).toBe(22);
-    expect(em_ch.donnee_entree.tv_intermittence_id).toBe(33);
-    expect(em_ch.donnee_utilisateur).toEqual({});
-  });
-
-  test('rendement de distribution : repli sur la recherche par identifiant si aucune ligne directe', () => {
-    stubTv();
-    getRendementDistributionCh.mockReturnValue(undefined);
-    getRendementDistributionChById.mockReturnValue({
-      rd: '0.88',
-      tv_rendement_distribution_ch_id: '55'
-    });
-
-    const em_ch = {
-      donnee_entree: {
-        enum_type_emission_distribution_id: '10',
-        tv_rendement_distribution_ch_id: 55
-      }
-    };
-    calc_emetteur_ch(em_ch, { enum_type_installation_id: '1' }, '2', '3');
-
-    expect(getRendementDistributionChById).toHaveBeenCalledWith(55);
-    expect(em_ch.donnee_intermediaire.rendement_distribution).toBe(0.88);
-  });
-
-  test("intermittence : la fiche technique de comptage force la présence d'un comptage individuel", () => {
-    stubTv();
-    getRendementDistributionCh.mockReturnValue({
-      rd: '0.92',
-      tv_rendement_distribution_ch_id: '44'
-    });
-
-    const em_ch = {
-      donnee_entree: {
-        enum_type_emission_distribution_id: '10',
-        enum_type_chauffage_id: '1',
-        enum_equipement_intermittence_id: '1',
-        enum_type_regulation_id: '1'
-      }
-    };
-    // map_id === '1' => la classe d'inertie entre dans le matcher
-    calc_emetteur_ch(
-      em_ch,
-      {
-        enum_type_installation_id: '1',
-        ficheTechniqueComptage: { valeur: '1' }
-      },
-      '1',
-      '7'
-    );
-
-    const matcher = vi.mocked(tv).mock.calls.find((c) => c[0] === 'intermittence')[1];
-    expect(matcher.comptage_individuel).toBe('Présence');
-    expect(matcher.enum_methode_application_dpe_log_id).toBe('1');
-    expect(matcher.enum_classe_inertie_id).toBe('7');
-  });
-
-  test('intermittence : absence de comptage individuel hors fiche technique', () => {
-    stubTv();
-    getRendementDistributionCh.mockReturnValue({
-      rd: '0.92',
-      tv_rendement_distribution_ch_id: '44'
-    });
-
-    const em_ch = {
-      donnee_entree: { enum_type_emission_distribution_id: '10' }
-    };
-    // map_id !== '1' => pas de classe d'inertie dans le matcher
-    calc_emetteur_ch(em_ch, { enum_type_installation_id: '1' }, '2', '3');
-
-    const matcher = vi.mocked(tv).mock.calls.find((c) => c[0] === 'intermittence')[1];
-    expect(matcher.comptage_individuel).toBe('Absence');
-    expect(matcher.enum_classe_inertie_id).toBeUndefined();
-  });
-
-  test('aucune ligne trouvée pour l’ensemble des rendements : messages d’erreur', () => {
-    const err = vi.spyOn(console, 'error').mockImplementation(() => {});
-    // toutes les tables renvoient null et le store ne fournit rien
-    vi.mocked(tv).mockReturnValue(null);
-    getRendementDistributionCh.mockReturnValue(undefined);
-    getRendementDistributionChById.mockReturnValue(undefined);
-
-    const em_ch = {
-      donnee_entree: { enum_type_emission_distribution_id: '10' }
-    };
-    calc_emetteur_ch(em_ch, { enum_type_installation_id: '1' }, '2', '3');
-
-    // distribution + émission + régulation + intermittence => 4 erreurs
-    expect(err).toHaveBeenCalledTimes(4);
-    expect(em_ch.donnee_intermediaire).toEqual({});
-    err.mockRestore();
-  });
-
-  test("fiche technique de comptage à 'oui' : présence détectée", () => {
-    stubTv();
-    getRendementDistributionCh.mockReturnValue({
-      rd: '0.92',
-      tv_rendement_distribution_ch_id: '44'
-    });
-
-    const em_ch = { donnee_entree: { enum_type_emission_distribution_id: '10' } };
-    calc_emetteur_ch(
-      em_ch,
-      { enum_type_installation_id: '1', ficheTechniqueComptage: { valeur: 'oui' } },
-      '2',
-      '3'
-    );
-
-    const matcher = vi.mocked(tv).mock.calls.find((c) => c[0] === 'intermittence')[1];
-    expect(matcher.comptage_individuel).toBe('Présence');
-  });
-
-  test('fiche technique de comptage vide : absence de comptage', () => {
-    stubTv();
-    getRendementDistributionCh.mockReturnValue({
-      rd: '0.92',
-      tv_rendement_distribution_ch_id: '44'
-    });
-
-    const em_ch = { donnee_entree: { enum_type_emission_distribution_id: '10' } };
-    calc_emetteur_ch(
-      em_ch,
-      { enum_type_installation_id: '1', ficheTechniqueComptage: { valeur: '' } },
-      '2',
-      '3'
-    );
-
-    const matcher = vi.mocked(tv).mock.calls.find((c) => c[0] === 'intermittence')[1];
-    expect(matcher.comptage_individuel).toBe('Absence');
-  });
-
-  test('intermittence introuvable : message d’erreur dédié', () => {
-    const err = vi.spyOn(console, 'error').mockImplementation(() => {});
-    vi.mocked(tv).mockImplementation((table) => {
-      if (table === 'rendement_emission') return { re: '0.95', tv_rendement_emission_id: '11' };
-      if (table === 'rendement_regulation') return { rr: '0.99', tv_rendement_regulation_id: '22' };
-      // intermittence => null
-      return null;
-    });
-    getRendementDistributionCh.mockReturnValue({
-      rd: '0.92',
-      tv_rendement_distribution_ch_id: '44'
-    });
-
-    const em_ch = { donnee_entree: { enum_type_emission_distribution_id: '10' } };
-    calc_emetteur_ch(em_ch, { enum_type_installation_id: '1' }, '2', '3');
-
-    expect(err).toHaveBeenCalled();
-    expect(em_ch.donnee_intermediaire.i0).toBeUndefined();
-    err.mockRestore();
-  });
-});
+}
 
 /**
- * Mode "bug for bug" : en l'absence de fiche technique, la présence d'un
- * comptage individuel est déduite de la ligne d'intermittence de référence.
+ * Tests pour le calcul du rendement de distribution pour chauffage (9_emetteur_ch.js)
+ * Focus sur la correction du bug #170 : conservation du tv_rendement_distribution_ch_id
+ * pour type_emission_distribution=41 ('Autres équipements').
+ * @see : https://github.com/Open3CL/engine/issues/170
  */
-describe('calc_emetteur_ch - déduction du comptage en mode "bug for bug"', () => {
-  /** Pilote `tv` avec une ligne d'intermittence paramétrable. */
-  function stubTvIntermittence(comptageRow) {
-    vi.mocked(tv).mockImplementation((table, matcher) => {
-      if (table === 'rendement_emission') return { re: '0.95', tv_rendement_emission_id: '11' };
-      if (table === 'rendement_regulation') return { rr: '0.99', tv_rendement_regulation_id: '22' };
-      if (table === 'intermittence') {
-        // 1er appel : matcher basé sur tv_intermittence_id (déduction du comptage)
-        if (matcher.tv_intermittence_id !== undefined && !matcher.enum_type_installation_id) {
-          return comptageRow;
-        }
-        return { i0: '0.85', tv_intermittence_id: '33' };
+describe('tv_rendement_distribution_ch - rendement de distribution CH', () => {
+  test("type_emission=41 AVEC tv_rendement_distribution_ch_id=6 : conserve l'ID original", () => {
+    // Arrange
+    const em = emetteur({
+      typeEmissionDistributionId: '41',
+      tvRendementDistributionChId: 6
+    });
+
+    // Mock : getRendementDistributionChById(6) retourne rd=0.91
+    mockTvsStore.getRendementDistributionChById.mockReturnValue({
+      rd: '0.91',
+      tv_rendement_distribution_ch_id: '6'
+    });
+
+    // Act
+    calc_emetteur_ch(em, {}, '1', '1');
+
+    // Assert
+    // Vérification que getRendementDistributionChById a été appelé en premier (court-circuit du bug)
+    expect(mockTvsStore.getRendementDistributionChById).toHaveBeenCalledWith(6);
+    expect(em.donnee_intermediaire.rendement_distribution).toBeCloseTo(0.91, 10);
+    expect(em.donnee_entree.tv_rendement_distribution_ch_id).toBe(6);
+  });
+
+  test('type_emission=41 SANS tv_rendement_distribution_ch_id : utilise getRendementDistributionCh', () => {
+    // Arrange
+    const em = emetteur({
+      typeEmissionDistributionId: '41',
+      tvRendementDistributionChId: null
+    });
+
+    // Mock : getRendementDistributionCh retourne rd=0.85
+    mockTvsStore.getRendementDistributionCh.mockReturnValue({
+      rd: '0.85',
+      tv_rendement_distribution_ch_id: '3'
+    });
+
+    // Act
+    calc_emetteur_ch(em, {}, '1', '1');
+
+    // Assert
+    // Vérification que getRendementDistributionCh est appelé (fallthrough)
+    expect(mockTvsStore.getRendementDistributionCh).toHaveBeenCalledWith('41', false);
+    expect(em.donnee_intermediaire.rendement_distribution).toBeCloseTo(0.85, 10);
+    expect(em.donnee_entree.tv_rendement_distribution_ch_id).toBe(3);
+  });
+
+  test('type_emission=12 (pas 41) : utilise getRendementDistributionCh normalement', () => {
+    // Arrange
+    const em = emetteur({
+      typeEmissionDistributionId: '12',
+      tvRendementDistributionChId: 5
+    });
+
+    // Mock : getRendementDistributionCh retourne rd=0.90
+    mockTvsStore.getRendementDistributionCh.mockReturnValue({
+      rd: '0.90',
+      tv_rendement_distribution_ch_id: '5'
+    });
+
+    // Act
+    calc_emetteur_ch(em, {}, '1', '1');
+
+    // Assert
+    // Vérification que getRendementDistributionCh est appelé directement (pas de court-circuit)
+    expect(mockTvsStore.getRendementDistributionCh).toHaveBeenCalledWith('12', false);
+    expect(em.donnee_intermediaire.rendement_distribution).toBeCloseTo(0.9, 10);
+    expect(em.donnee_entree.tv_rendement_distribution_ch_id).toBe(5);
+  });
+
+  test('rendement_emission - calcul du rendement total', () => {
+    // Arrange
+    const em = {
+      donnee_intermediaire: {
+        rendement_emission: 0.85,
+        rendement_distribution: 0.9,
+        rendement_regulation: 0.95
       }
-      return null;
+    };
+
+    // Act
+    const result = rendement_emission(em);
+
+    // Assert
+    // rg * re * rd * rr = 1 * 0.85 * 0.9 * 0.95
+    expect(result).toBeCloseTo(0.72675, 10);
+  });
+
+  test('rendement_emission - avec coefficient de régulation différent de 1', () => {
+    // Arrange
+    const em = {
+      donnee_intermediaire: {
+        rendement_emission: 0.8,
+        rendement_distribution: 0.85,
+        rendement_regulation: 0.9
+      }
+    };
+
+    // Act
+    const result = rendement_emission(em, 0.95);
+
+    // Assert
+    // rg * re * rd * rr = 0.95 * 0.8 * 0.85 * 0.9
+    expect(result).toBeCloseTo(0.5814, 10);
+  });
+});
+
+describe('tv_rendement_distribution_ch - cas de repli', () => {
+  test('type_emission=41 AVEC id inconnu par id : repli sur getRendementDistributionCh', () => {
+    const em = emetteur({ typeEmissionDistributionId: '41', tvRendementDistributionChId: 99 });
+    mockTvsStore.getRendementDistributionChById.mockReturnValue(undefined);
+    mockTvsStore.getRendementDistributionCh.mockReturnValue({
+      rd: '0.87',
+      tv_rendement_distribution_ch_id: '4'
     });
-    getRendementDistributionCh.mockReturnValue({
-      rd: '0.92',
-      tv_rendement_distribution_ch_id: '44'
+
+    calc_emetteur_ch(em, {}, '1', '1');
+
+    expect(mockTvsStore.getRendementDistributionChById).toHaveBeenCalledWith(99);
+    expect(mockTvsStore.getRendementDistributionCh).toHaveBeenCalledWith('41', false);
+    expect(em.donnee_intermediaire.rendement_distribution).toBeCloseTo(0.87, 10);
+    expect(em.donnee_entree.tv_rendement_distribution_ch_id).toBe(4);
+  });
+
+  test('aucune ligne par critères mais id présent : recherche par id', () => {
+    const em = emetteur({
+      typeEmissionDistributionId: '12',
+      networkIsolated: true,
+      tvRendementDistributionChId: 7
     });
+    mockTvsStore.getRendementDistributionCh.mockReturnValue(undefined);
+    mockTvsStore.getRendementDistributionChById.mockReturnValue({
+      rd: '0.93',
+      tv_rendement_distribution_ch_id: '7'
+    });
+
+    calc_emetteur_ch(em, {}, '1', '1');
+
+    expect(mockTvsStore.getRendementDistributionCh).toHaveBeenCalledWith('12', true);
+    expect(mockTvsStore.getRendementDistributionChById).toHaveBeenCalledWith(7);
+    expect(em.donnee_intermediaire.rendement_distribution).toBeCloseTo(0.93, 10);
+    expect(em.donnee_entree.tv_rendement_distribution_ch_id).toBe(7);
+  });
+
+  test('aucune ligne trouvée et pas d’id : erreur et rendement non renseigné', () => {
+    const em = emetteur({ typeEmissionDistributionId: '12' });
+    mockTvsStore.getRendementDistributionCh.mockReturnValue(undefined);
+
+    calc_emetteur_ch(em, {}, '1', '1');
+
+    expect(mockTvsStore.getRendementDistributionChById).not.toHaveBeenCalled();
+    expect(em.donnee_intermediaire.rendement_distribution).toBeUndefined();
+    expect(em.donnee_entree.tv_rendement_distribution_ch_id).toBeNull();
+    expect(console.error).toHaveBeenCalledWith(
+      '!! pas de valeur forfaitaire trouvée pour rendement_distribution_ch !!'
+    );
+  });
+});
+
+describe('tv_rendement_emission / tv_rendement_regulation', () => {
+  test('lignes trouvées : renseigne les rendements et les ids de table', () => {
+    const em = emetteur({ typeEmissionDistributionId: '12' });
+    mockTv({
+      rendement_emission: { re: '0.95', tv_rendement_emission_id: '2' },
+      rendement_regulation: { rr: '0.9', tv_rendement_regulation_id: '3' }
+    });
+
+    calc_emetteur_ch(em, {}, '1', '1');
+
+    expect(tvMatchers('rendement_emission')).toEqual([
+      { enum_type_emission_distribution_id: '12' }
+    ]);
+    expect(tvMatchers('rendement_regulation')).toEqual([
+      { enum_type_emission_distribution_id: '12' }
+    ]);
+    expect(em.donnee_intermediaire.rendement_emission).toBeCloseTo(0.95, 10);
+    expect(em.donnee_intermediaire.rendement_regulation).toBeCloseTo(0.9, 10);
+    expect(em.donnee_entree.tv_rendement_emission_id).toBe(2);
+    expect(em.donnee_entree.tv_rendement_regulation_id).toBe(3);
+  });
+
+  test('aucune ligne trouvée : erreurs et rendements non renseignés', () => {
+    const em = emetteur({ typeEmissionDistributionId: '12' });
+    mockTv({});
+
+    calc_emetteur_ch(em, {}, '1', '1');
+
+    expect(em.donnee_intermediaire.rendement_emission).toBeUndefined();
+    expect(em.donnee_intermediaire.rendement_regulation).toBeUndefined();
+    expect(console.error).toHaveBeenCalledWith(
+      '!! pas de valeur forfaitaire trouvée pour rendement_emission !!'
+    );
+    expect(console.error).toHaveBeenCalledWith(
+      '!! pas de valeur forfaitaire trouvée pour rendement_regulation !!'
+    );
+  });
+});
+
+describe('tv_intermittence - intermittence', () => {
+  /**
+   * Fabrique un émetteur avec les données d'entrée nécessaires au matcher d'intermittence.
+   */
+  function emetteurIntermittence(tvIntermittenceId = 10) {
+    const em = emetteur({ typeEmissionDistributionId: '12' });
+    Object.assign(em.donnee_entree, {
+      enum_type_chauffage_id: '1',
+      enum_equipement_intermittence_id: '2',
+      enum_type_regulation_id: '3',
+      tv_intermittence_id: tvIntermittenceId
+    });
+    return em;
   }
 
-  const emetteur = () => ({
-    donnee_entree: { enum_type_emission_distribution_id: '10', tv_intermittence_id: 5 }
+  /** Ligne de résultat d'intermittence renvoyée par le matcher final (sans tv_intermittence_id). */
+  const intermittenceRow = (row) => (matcher) =>
+    'tv_intermittence_id' in matcher ? row.lookup : row.result;
+
+  test('maison individuelle (map_id=1) : matcher complet avec classe d’inertie', () => {
+    const em = emetteurIntermittence();
+    mockTv({ intermittence: { i0: '0.86', tv_intermittence_id: '42' } });
+
+    calc_emetteur_ch(em, { enum_type_installation_id: '1' }, '1', '3');
+
+    expect(tvMatchers('intermittence')).toEqual([
+      {
+        enum_methode_application_dpe_log_id: '1',
+        enum_type_installation_id: '1',
+        enum_type_chauffage_id: '1',
+        enum_equipement_intermittence_id: '2',
+        enum_type_regulation_id: '3',
+        enum_type_emission_distribution_id: '12',
+        comptage_individuel: 'Absence',
+        enum_classe_inertie_id: '3'
+      }
+    ]);
+    expect(em.donnee_intermediaire.i0).toBeCloseTo(0.86, 10);
+    expect(em.donnee_entree.tv_intermittence_id).toBe(42);
   });
 
-  test('ligne de référence "Présence" => comptage individuel présent', () => {
-    utilState.bug = true;
-    stubTvIntermittence({ comptage_individuel: 'Présence d’un comptage' });
+  test('autre méthode (map_id≠1) : pas de classe d’inertie dans le matcher', () => {
+    const em = emetteurIntermittence();
+    mockTv({ intermittence: { i0: '0.9', tv_intermittence_id: '43' } });
 
-    const em_ch = emetteur();
-    calc_emetteur_ch(em_ch, { enum_type_installation_id: '1' }, '2', '3');
+    calc_emetteur_ch(em, { enum_type_installation_id: '2' }, '5', '3');
 
-    const matcher = vi
-      .mocked(tv)
-      .mock.calls.find((c) => c[0] === 'intermittence' && c[1].enum_type_installation_id)[1];
-    expect(matcher.comptage_individuel).toBe('Présence');
+    const [matcher] = tvMatchers('intermittence');
+    expect(matcher).not.toHaveProperty('enum_classe_inertie_id');
+    expect(matcher.enum_methode_application_dpe_log_id).toBe('5');
+    expect(em.donnee_entree.tv_intermittence_id).toBe(43);
   });
 
-  test('ligne de référence sans "Présence" => absence de comptage', () => {
-    utilState.bug = true;
-    stubTvIntermittence({ comptage_individuel: 'Absence de comptage' });
+  test.each([
+    ['1', 'Présence'],
+    ['oui', 'Présence'],
+    ['OUI', 'Présence'],
+    ['non', 'Absence'],
+    ['0', 'Absence'],
+    [null, 'Absence']
+  ])('fiche technique comptage valeur=%s → comptage %s', (valeur, attendu) => {
+    utilsState.bugForBugCompat = true;
+    const em = emetteurIntermittence();
+    mockTv({ intermittence: { i0: '0.9', tv_intermittence_id: '1' } });
 
-    const em_ch = emetteur();
-    calc_emetteur_ch(em_ch, { enum_type_installation_id: '1' }, '2', '3');
+    calc_emetteur_ch(
+      em,
+      { enum_type_installation_id: '1', ficheTechniqueComptage: { valeur } },
+      '1',
+      '1'
+    );
 
-    const matcher = vi
-      .mocked(tv)
-      .mock.calls.find((c) => c[0] === 'intermittence' && c[1].enum_type_installation_id)[1];
-    expect(matcher.comptage_individuel).toBe('Absence');
+    // La fiche technique prime : pas de recherche par tv_intermittence_id même en bug_for_bug_compat
+    const matchers = tvMatchers('intermittence');
+    expect(matchers).toHaveLength(1);
+    expect(matchers[0].comptage_individuel).toBe(attendu);
   });
 
-  test('ligne de référence sans colonne comptage => absence de comptage', () => {
-    utilState.bug = true;
-    stubTvIntermittence({ i0: '0.5' });
+  test('bug_for_bug_compat sans fiche : comptage déduit de tv_intermittence_id (Présence)', () => {
+    utilsState.bugForBugCompat = true;
+    const em = emetteurIntermittence(10);
+    mockTv({
+      intermittence: intermittenceRow({
+        lookup: { comptage_individuel: 'Présence de comptage' },
+        result: { i0: '0.95', tv_intermittence_id: '11' }
+      })
+    });
 
-    const em_ch = emetteur();
-    calc_emetteur_ch(em_ch, { enum_type_installation_id: '1' }, '2', '3');
+    calc_emetteur_ch(em, { enum_type_installation_id: '2' }, '1', '1');
 
-    const matcher = vi
-      .mocked(tv)
-      .mock.calls.find((c) => c[0] === 'intermittence' && c[1].enum_type_installation_id)[1];
-    expect(matcher.comptage_individuel).toBe('Absence');
+    const matchers = tvMatchers('intermittence');
+    expect(matchers[0]).toEqual({ tv_intermittence_id: 10 });
+    expect(matchers[1].comptage_individuel).toBe('Présence');
+    expect(em.donnee_intermediaire.i0).toBeCloseTo(0.95, 10);
+    expect(em.donnee_entree.tv_intermittence_id).toBe(11);
   });
 
-  test('aucune ligne de référence trouvée => absence de comptage', () => {
-    utilState.bug = true;
-    stubTvIntermittence(null);
+  test.each([
+    ['ligne sans comptage_individuel', {}],
+    ['aucune ligne', undefined]
+  ])('bug_for_bug_compat sans fiche, %s : comptage Absence', (_, lookup) => {
+    utilsState.bugForBugCompat = true;
+    const em = emetteurIntermittence(10);
+    mockTv({
+      intermittence: intermittenceRow({
+        lookup,
+        result: { i0: '0.9', tv_intermittence_id: '12' }
+      })
+    });
 
-    const em_ch = emetteur();
-    calc_emetteur_ch(em_ch, { enum_type_installation_id: '1' }, '2', '3');
+    calc_emetteur_ch(em, { enum_type_installation_id: '2' }, '1', '1');
 
-    const matcher = vi
-      .mocked(tv)
-      .mock.calls.find((c) => c[0] === 'intermittence' && c[1].enum_type_installation_id)[1];
-    expect(matcher.comptage_individuel).toBe('Absence');
+    const matchers = tvMatchers('intermittence');
+    expect(matchers).toHaveLength(2);
+    expect(matchers[1].comptage_individuel).toBe('Absence');
+  });
+
+  test('aucune ligne trouvée : erreur et i0 non renseigné', () => {
+    const em = emetteurIntermittence(10);
+    mockTv({});
+
+    calc_emetteur_ch(em, { enum_type_installation_id: '1' }, '1', '1');
+
+    expect(em.donnee_intermediaire.i0).toBeUndefined();
+    expect(em.donnee_entree.tv_intermittence_id).toBe(10);
+    expect(console.error).toHaveBeenCalledWith(
+      '!! pas de valeur forfaitaire trouvée pour intermittence !!'
+    );
+  });
+});
+
+describe('calc_emetteur_ch - résultat', () => {
+  test('initialise donnee_utilisateur et remplace donnee_intermediaire', () => {
+    const em = emetteur({ typeEmissionDistributionId: '12' });
+    em.donnee_intermediaire = { ancien: true };
+    mockTvsStore.getRendementDistributionCh.mockReturnValue({
+      rd: '0.9',
+      tv_rendement_distribution_ch_id: '1'
+    });
+    mockTv({});
+
+    calc_emetteur_ch(em, {}, '1', '1');
+
+    expect(em.donnee_intermediaire).not.toHaveProperty('ancien');
+    expect(em.donnee_utilisateur).toEqual({});
   });
 });

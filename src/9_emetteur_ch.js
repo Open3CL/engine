@@ -13,10 +13,18 @@ export function rendement_emission(em, rg = 1) {
 function tv_rendement_distribution_ch(di, de) {
   let row;
 
-  row = tvsStore.getRendementDistributionCh(
-    de.enum_type_emission_distribution_id,
-    de.reseau_distribution_isole
-  );
+  // Pour les 'Autres équipements' (id=41), si le DPE original a déjà un tv_rendement_distribution_ch_id,
+  // on conserve cette valeur plutôt que de prendre la première ligne de la table (bug).
+  if (de.enum_type_emission_distribution_id === '41' && de.tv_rendement_distribution_ch_id) {
+    row = tvsStore.getRendementDistributionChById(de.tv_rendement_distribution_ch_id);
+  }
+
+  if (!row) {
+    row = tvsStore.getRendementDistributionCh(
+      de.enum_type_emission_distribution_id,
+      de.reseau_distribution_isole
+    );
+  }
 
   if (!row && de.tv_rendement_distribution_ch_id) {
     // Find rendement distribution by id if it exists
