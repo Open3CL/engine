@@ -10,13 +10,32 @@ export function rendement_emission(em, rg = 1) {
   return rg * re * rd * rr;
 }
 
+/**
+ * Type d'émission « Autres équipements » : toutes les lignes de la table des rendements de
+ * distribution lui sont applicables (rd de 1 à 12), la table ne permet donc pas de déterminer la
+ * bonne ligne.
+ * @see https://github.com/Open3CL/engine/issues/170
+ */
+const TYPE_EMISSION_DISTRIBUTION_AUTRES_EQUIPEMENTS = '41';
+
 function tv_rendement_distribution_ch(di, de) {
   let row;
 
-  row = tvsStore.getRendementDistributionCh(
-    de.enum_type_emission_distribution_id,
-    de.reseau_distribution_isole
-  );
+  if (
+    String(de.enum_type_emission_distribution_id) ===
+      TYPE_EMISSION_DISTRIBUTION_AUTRES_EQUIPEMENTS &&
+    de.tv_rendement_distribution_ch_id
+  ) {
+    // « Autres équipements » : on conserve le rendement de distribution du DPE d'origine
+    row = tvsStore.getRendementDistributionChById(de.tv_rendement_distribution_ch_id);
+  }
+
+  if (!row) {
+    row = tvsStore.getRendementDistributionCh(
+      de.enum_type_emission_distribution_id,
+      de.reseau_distribution_isole
+    );
+  }
 
   if (!row && de.tv_rendement_distribution_ch_id) {
     // Find rendement distribution by id if it exists
