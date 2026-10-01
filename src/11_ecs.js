@@ -13,7 +13,11 @@ function tv_rendement_distribution_ecs(di, de, du, pvc) {
     let configuration_logement;
     if (type_installation.includes('individuelle')) {
       if (pvc === 1) {
-        configuration_logement = 'production volume habitable [+] pièces alimentées contiguës';
+        // Motif ancré « ^…+…$ » : compatible avec les deux matchers de tv().
+        // - tvMatchLegacy échappe le « + » d'un motif ancré avant le .match() regex ;
+        // - tvMatchOptimized retire les ancres puis compare la chaîne littérale.
+        // L'ancien « [+] » (échappement regex) ne matchait jamais en version optimisée (#206).
+        configuration_logement = '^production volume habitable + pièces alimentées contiguës$';
       } else configuration_logement = 'production hors volume habitable';
     } else if (type_installation.includes('collective')) {
       let type_reseau_collectif;

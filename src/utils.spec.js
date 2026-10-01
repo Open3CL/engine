@@ -23,7 +23,12 @@ vi.mock('./tv.js', () => ({
       { code: 'abc', val: 'r4' }
     ],
     // Table dédiée à tvMatchOptimized (version optimisée).
-    table_opt: [{ a: 'brique', b: '1|2', c: '≥50', d: 'isolation par exterieur', e: 'zone 3' }]
+    table_opt: [{ a: 'brique', b: '1|2', c: '≥50', d: 'isolation par exterieur', e: 'zone 3' }],
+    // Table dédiée à la compatibilité des deux matchers sur un libellé contenant « + » (#206).
+    table_plus: [
+      { conf: 'production volume habitable + pièces alimentées non contiguës', val: 'p0' },
+      { conf: 'production volume habitable + pièces alimentées contiguës', val: 'p1' }
+    ]
   }
 }));
 
@@ -428,6 +433,28 @@ describe('Utils unit tests', () => {
     // Absence de correspondance : sous-chaîne introuvable.
     test('ne matche pas une sous-chaîne introuvable', () => {
       expect(tv('table_opt', { a: 'zzz' })).toBeNull();
+    });
+  });
+
+  // -------------------------------------------------------------------------------------------
+  // Libellé contenant un « + » littéral (ex. rendement_distribution_ecs, cf. issue #206) : le
+  // motif ancré « ^…+…$ » doit sélectionner la même ligne dans les deux versions du matcher.
+  describe('tv / libellé avec « + » : compatibilité des deux matchers', () => {
+    const motifAncre = '^production volume habitable + pièces alimentées contiguës$';
+
+    test.each([
+      ['historique', unset_tv_match_optimized_version],
+      ['optimisée', set_tv_match_optimized_version]
+    ])('version %s : le motif ancré sélectionne la bonne ligne', (_, setVersion) => {
+      setVersion();
+      expect(tv('table_plus', { conf: motifAncre }).val).toBe('p1');
+    });
+
+    test('version optimisée : l’échappement regex « [+] » ne matche aucune ligne', () => {
+      set_tv_match_optimized_version();
+      expect(
+        tv('table_plus', { conf: 'production volume habitable [+] pièces alimentées contiguës' })
+      ).toBeNull();
     });
   });
 
