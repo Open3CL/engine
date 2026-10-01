@@ -169,7 +169,7 @@ describe('calc_ecs - rendement de distribution', () => {
     calc_ecs({}, ecs, 100, 200, 1, 'ca1', 'h1a', 'maison', false, null, null, false);
 
     expect(tv).toHaveBeenCalledWith('rendement_distribution_ecs', {
-      configuration_logement: 'production volume habitable [+] pièces alimentées contiguës'
+      configuration_logement: '^production volume habitable + pièces alimentées contiguës$'
     });
   });
 
