@@ -165,6 +165,10 @@ export WORKER_THREADS_CHUNKS=300
 Tout est écrit dans `dist/reports/corpus/<corpus>.csv/`, suffixé par la **branche git courante** — ce qui permet de
 comparer deux branches dans le rapport interactif.
 
+Le nom de branche est normalisé pour tenir dans un nom de fichier : tout ce qui n'est ni lettre, ni chiffre, ni `.`,
+`_` ou `-` devient un tiret. `fix/issue-205-rg-qp0-pcs` donne donc `corpus_global_report_fix-issue-205-rg-qp0-pcs.json`
+— sans quoi le `/` désignerait un dossier inexistant et l'écriture du rapport échouerait.
+
 | Fichier                                                    | Contenu                                                                     |
 | :--------------------------------------------------------- | :-------------------------------------------------------------------------- |
 | `corpus_global_report_<branche>.json`                      | Synthèse : nombre de DPE, ratio de réussite, détail par contrôle            |
@@ -226,7 +230,12 @@ Le rapport est également publié à chaque build : **<https://open3cl.github.io
 npm run reports:readme
 ```
 
-Ce script ([`scripts/generate_corpus_readme.js`](../scripts/generate_corpus_readme.js)) :
+Ce script ([`scripts/generate_corpus_readme.js`](../scripts/generate_corpus_readme.js)) n'écrit
+**que sur `main`** : sur une branche de travail, il affiche un rappel et s'arrête sans rien modifier.
+Les rapports de la branche, eux, sont bien produits par le corpus et restent comparables à `main`
+dans le rapport interactif. `--dry-run` affiche quand même le bloc, `--force` écrit quand même.
+
+Sur `main`, il :
 
 1. détermine la **version** à laquelle rattacher les résultats
    ([`scripts/corpus_version.js`](../scripts/corpus_version.js), `npm run reports:version` pour
@@ -235,7 +244,7 @@ Ce script ([`scripts/generate_corpus_readme.js`](../scripts/generate_corpus_read
    - aucun commit publiable (`docs`, `test`, `ci`...) : c'est la dernière release ;
    - sinon, c'est la **prochaine** : `fix`/`perf`/`refactor` → patch, `feat` → minor,
      `BREAKING CHANGE` ou `!` → major. Elle est marquée **« à publier »** ;
-2. lit les rapports globaux de la branche courante ;
+2. lit les rapports globaux de `main` ;
 3. regénère le bloc situé entre `<!-- CORPUS:START -->` et `<!-- CORPUS:END -->` dans le README ;
 4. reconstruit [`docs/CORPUS-HISTORY.md`](CORPUS-HISTORY.md) **à partir de git** : pour chaque
    tag `vX.Y.Z`, il relit `corpus_global_report_main.json` au **dernier commit de `main` dont le
@@ -274,6 +283,7 @@ modifié au squash...), rien n'est réécrit et un avertissement est affiché da
 | `--version=<x.y.z>`   | Version affichée dans le README. Défaut : version prévue   |
 | `--date=<aaaa-mm-jj>` | Date affichée dans le README. Défaut : aujourd'hui         |
 | `--dry-run`           | Affiche le bloc généré sans rien écrire                    |
+| `--force`             | Écrit même hors de `main`                                  |
 | `--no-history`        | N'alimente ni `CORPUS-HISTORY.md`, ni la courbe            |
 
 ---
