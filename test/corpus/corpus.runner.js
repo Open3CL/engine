@@ -5,7 +5,8 @@ import { resolve } from 'path';
 import {
   DIFF_VALUE_THRESHOLD,
   DPE_PROPERTIES_TO_VALIDATE,
-  OUTPUT_CSV_HEADERS
+  OUTPUT_CSV_HEADERS,
+  sanitizeBranchName
 } from './corpus_utils.js';
 import { createReadStream, createWriteStream, existsSync, writeFileSync } from 'node:fs';
 import { chunk } from 'lodash-es';
@@ -79,7 +80,10 @@ export class CorpusRunner {
         : undefined
     });
     this.#piscina.on('message', this.#onWorkerMessage.bind(this));
-    this.#curentGitBranch = execSync('git rev-parse --abbrev-ref HEAD').toString().trim();
+    // Le nom de branche sert à nommer les rapports : il doit rester un nom de fichier.
+    this.#curentGitBranch = sanitizeBranchName(
+      execSync('git rev-parse --abbrev-ref HEAD').toString()
+    );
   }
 
   static getInstance() {

@@ -1,5 +1,23 @@
 export const DIFF_VALUE_THRESHOLD = 5;
 
+/**
+ * Nom de branche utilisable dans un nom de fichier.
+ *
+ * Les branches de travail contiennent souvent un `/` (`fix/issue-205-rg-qp0-pcs`) : interpolé
+ * tel quel, il transforme `corpus_global_report_fix/issue-205.json` en un chemin vers un dossier
+ * `corpus_global_report_fix/` qui n'existe pas, et l'écriture du rapport échoue (ENOENT).
+ *
+ * @param branch {string}
+ * @return {string} nom sans séparateur de chemin ni caractère réservé
+ */
+export const sanitizeBranchName = (branch) =>
+  String(branch ?? '')
+    .trim()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-zA-Z0-9._-]+/g, '-')
+    .replace(/^[-.]+|[-.]+$/g, '') || 'branche';
+
 export const GLOBAL_REPORT = {
   nbDpe: 0,
   threshold: DIFF_VALUE_THRESHOLD,

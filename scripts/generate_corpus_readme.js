@@ -24,6 +24,7 @@
  *   --history=<path>   Historique markdown                (défaut: docs/CORPUS-HISTORY.md)
  *   --no-history       N'alimente pas l'historique
  *   --dry-run          Affiche le bloc généré sans rien écrire
+ *   --force            Écrit même hors de `main` (une exécution de branche n'écrit rien)
  */
 
 import { execSync } from 'node:child_process';
@@ -31,6 +32,7 @@ import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { collectHistoryFromTags, toPublishedHistory } from './collect_corpus_history.js';
+import { sanitizeBranchName } from '../test/corpus/corpus_utils.js';
 import { PENDING_LABEL, resolveCorpusVersion } from './corpus_version.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -42,6 +44,13 @@ const END_MARKER = '<!-- CORPUS:END -->';
 /** Bloc de la courbe, régénéré à chaque écriture de l'historique. */
 const CHART_START_MARKER = '<!-- CORPUS-CHART:START -->';
 const CHART_END_MARKER = '<!-- CORPUS-CHART:END -->';
+
+/**
+ * Seule branche dont les résultats sont publiés. Une exécution locale sur une branche de
+ * travail sert à se comparer à `main` dans le rapport interactif : ses chiffres n'ont rien à
+ * faire dans le README, l'historique ou la courbe.
+ */
+const REFERENCE_BRANCH = 'main';
 
 /** Nombre de releases détaillées dans l'historique ; au-delà, le tableau de la courbe suffit. */
 const HISTORY_DETAILED_SECTIONS = 5;
@@ -566,7 +575,21 @@ function formatWithPrettier(paths) {
 // Point d'entrée
 // ----------------------------------------------------------------------------
 
-const branch = arg('branch', git('git rev-parse --abbrev-ref HEAD') || 'main');
+// Les rapports sont nommés d'après la branche nettoyée : la lecture doit suivre la même règle.
+const branch = sanitizeBranchName(arg('branch', git('git rev-parse --abbrev-ref HEAD') || 'main'));
+
+// Hors de `main`, rien n'est écrit : ni README, ni historique, ni données de la courbe. Les
+// rapports de la branche restent produits par le corpus, et restent comparables à `main` dans
+// le rapport interactif. `--dry-run` affiche quand même le bloc, `--force` écrit quand même.
+if (branch !== REFERENCE_BRANCH && !flag('force') && !flag('dry-run')) {
+  console.log(
+    `↪️  Branche \`${branch}\` : README et historique inchangés (seule \`${REFERENCE_BRANCH}\` est publiée).`
+  );
+  console.log(
+    '   Comparez la branche à `main` dans le rapport interactif : `npm run reports:preview`.'
+  );
+  process.exit(0);
+}
 // Sans version imposée, les résultats sont rattachés à la release qui contiendra ce code :
 // la dernière publiée si rien de publiable ne l'a suivie, sinon la prochaine, prévue comme
 // semantic-release la calculera au merge sur `main`.
@@ -592,6 +615,16 @@ if (!existsSync(readmePath)) {
   process.exit(1);
 }
 
+// Sans rapport lisible, le bloc généré ne dirait que « aucun rapport trouvé » : écraser le
+// README avec ça ferait perdre les résultats de la dernière exécution valide.
+if (!rows.length) {
+  console.warn(
+    `⚠️  Aucun rapport de corpus pour la branche \`${branch}\` : README et historique inchangés.`
+  );
+  console.warn('   Lancez `npm run test:corpus:all` pour les générer.');
+  process.exit(0);
+}
+
 const content = readFileSync(readmePath, { encoding: 'utf8' });
 const updated = replaceBlock(content, block);
 
@@ -606,8 +639,6 @@ writeFileSync(readmePath, updated, { encoding: 'utf8' });
 console.log(
   `✅ Résultats corpus écrits dans ${readmePath} (${rows.length} corpus, branche ${branch}, version ${version}${pending ? ` ${PENDING_LABEL}` : ''})`
 );
-
-if (!rows.length) process.exit(0);
 
 if (flag('no-history')) {
   formatWithPrettier([readmePath]);
