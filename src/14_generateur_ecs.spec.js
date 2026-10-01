@@ -61,6 +61,10 @@ vi.mock('./ficheTechnique.js', () => ({
   default: vi.fn()
 }));
 
+vi.mock('./13.2_generateur_combustion_chaudiere.js', () => ({
+  getChaudiereFioulDefautId: vi.fn()
+}));
+
 const {
   default: calc_gen_ecs,
   rg_chauffe_eau_gaz,
@@ -73,6 +77,7 @@ const { tvColumnIDs, requestInput, requestInputID, tv, getVolumeStockageFromDesc
 const { tv_generateur_combustion } = await import('./13.2_generateur_combustion.js');
 const { scopOrCop } = await import('./12.4_pac.js');
 const { default: getFicheTechnique } = await import('./ficheTechnique.js');
+const { getChaudiereFioulDefautId } = await import('./13.2_generateur_combustion_chaudiere.js');
 
 /**
  * 14. Générateur d'ECS : rendements et consommations
@@ -630,6 +635,41 @@ describe('calc_gen_ecs - consommation par générateur', () => {
     // Reconnu comme PAC -> consommation pilotée par le SCOP
     expect(scopOrCop).toHaveBeenCalled();
     expect(g.donnee_intermediaire.conso_ecs).toBeCloseTo(37.03703703703703, 9);
+  });
+
+  /**
+   * Type 84 : chaudière fioul standard datant de la construction du bâtiment.
+   * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §17.2.1.1
+   */
+  test('type 84 combustion compatible 84 : chaudière de la période de construction retenue', () => {
+    vi.mocked(getChaudiereFioulDefautId).mockReturnValue('39');
+    vi.mocked(tv).mockReturnValue({ enum_type_generateur_ecs_id: '35|84' });
+    const dpe = { logement: {} };
+    const g = gen({
+      type_energie: 'fioul domestique',
+      enum_type_generateur_ecs_id: '84',
+      tv_generateur_combustion_id: '16',
+      enum_methode_saisie_carac_sys_id: '1'
+    });
+    calc_gen_ecs(dpe, g, ecs_di, ecs_de, 0, '1', '1', 'immeuble');
+
+    expect(getChaudiereFioulDefautId).toHaveBeenCalledWith(dpe, 'ecs');
+    // 39 au lieu du premier type de la ligne (35)
+    expect(g.donnee_entree.enum_type_generateur_ecs_id).toBe('39');
+  });
+
+  test('type 84 combustion non compatible 84 (générateur décrit) : premier type conservé', () => {
+    vi.mocked(getChaudiereFioulDefautId).mockReturnValue('39');
+    vi.mocked(tv).mockReturnValue({ enum_type_generateur_ecs_id: '57|104' });
+    const g = gen({
+      type_energie: 'gaz naturel',
+      enum_type_generateur_ecs_id: '84',
+      tv_generateur_combustion_id: '13',
+      enum_methode_saisie_carac_sys_id: '1'
+    });
+    calc_gen_ecs({}, g, ecs_di, ecs_de, 0, '1', '1', 'immeuble');
+
+    expect(g.donnee_entree.enum_type_generateur_ecs_id).toBe('57');
   });
 
   /**

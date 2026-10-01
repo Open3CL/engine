@@ -1,7 +1,10 @@
 import { bug_for_bug_compat, convertExpression, tv, tvColumnLines } from './utils.js';
 import enums from './enums.js';
 import { updateGenerateurBouilleurs } from './13.2_generateur_combustion_bouilleur.js';
-import { updateGenerateurChaudieres } from './13.2_generateur_combustion_chaudiere.js';
+import {
+  getChaudiereFioulDefautId,
+  updateGenerateurChaudieres
+} from './13.2_generateur_combustion_chaudiere.js';
 import { updateGenerateurPacs } from './13.2_generateur_pac.js';
 import getFicheTechnique from './ficheTechnique.js';
 import { evaluateFormula as evaluateTvFormula } from './formula.js';
@@ -72,6 +75,31 @@ export function tv_generateur_combustion(dpe, di, de, type, GV, tbase, methodeSa
    */
   if (bug_for_bug_compat && type === 'ecs' && de.enum_usage_generateur_id === '3') {
     enumTypeGenerateurId = checkEcsVsChauffageForMixteGeneration(dpe, de, typeGenerateurKey);
+  }
+
+  /**
+   * Système collectif par défaut : chaudière fioul standard datant de la construction du bâtiment.
+   * Si tv_generateur_combustion_id pointe vers une chaudière fioul compatible avec le système par défaut,
+   * la période de la chaudière est déterminée à partir de l'année de construction du bâtiment.
+   * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §17.2.1.1
+   */
+  if (
+    ((type === 'ecs' && enumTypeGenerateurId === '84') ||
+      (type === 'ch' && enumTypeGenerateurId === '119')) &&
+    de.tv_generateur_combustion_id
+  ) {
+    const chaudiereFioulDefautId = getChaudiereFioulDefautId(dpe, type);
+    const rowDpe = tv('generateur_combustion', {
+      tv_generateur_combustion_id: de.tv_generateur_combustion_id
+    });
+
+    if (
+      chaudiereFioulDefautId &&
+      rowDpe?.[typeGenerateurKey]?.split('|').includes(enumTypeGenerateurId)
+    ) {
+      enumTypeGenerateurId = chaudiereFioulDefautId;
+      de[typeGenerateurKey] = chaudiereFioulDefautId;
+    }
   }
 
   /**

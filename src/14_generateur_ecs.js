@@ -15,6 +15,7 @@ import {
 import { conso_aux_gen } from './15_conso_aux.js';
 import { scopOrCop } from './12.4_pac.js';
 import getFicheTechnique from './ficheTechnique.js';
+import { getChaudiereFioulDefautId } from './13.2_generateur_combustion_chaudiere.js';
 
 function tv_pertes_stockage(di, de, VsCollectif) {
   let vb;
@@ -257,10 +258,15 @@ export default function calc_gen_ecs(dpe, gen_ecs, ecs_di, ecs_de, GV, ca_id, zc
         });
 
         if (row) {
-          // On prend par défaut le premier type de générateur pour effectuer les calculs de rendement
           const typeGenerateurEcs = row.enum_type_generateur_ecs_id?.split('|');
+          // Chaudière fioul standard datant de la construction du bâtiment (§17.2.1.1)
+          const chaudiereFioulDefautId = getChaudiereFioulDefautId(dpe, 'ecs');
 
-          if (typeGenerateurEcs && typeGenerateurEcs.length) {
+          if (chaudiereFioulDefautId && typeGenerateurEcs?.includes('84')) {
+            // La chaudière fioul par défaut dépend de l'année de construction du bâtiment
+            de.enum_type_generateur_ecs_id = chaudiereFioulDefautId;
+          } else if (typeGenerateurEcs && typeGenerateurEcs.length) {
+            // On prend par défaut le premier type de générateur pour effectuer les calculs de rendement
             de.enum_type_generateur_ecs_id = typeGenerateurEcs[0];
           }
         }

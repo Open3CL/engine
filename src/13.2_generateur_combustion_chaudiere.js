@@ -1,6 +1,79 @@
 import getFicheTechnique from './ficheTechnique.js';
 
 /**
+ * Ids des chaudières fioul classiques / standard pour les différentes périodes d'installation
+ * (seuil = première année de la période)
+ */
+const CHAUDIERES_FIOUL_ECS = {
+  1948: '35',
+  1970: '36',
+  1976: '37',
+  1981: '38',
+  1991: '39',
+  2015: '40'
+};
+
+const CHAUDIERES_FIOUL_CH = {
+  1948: '75',
+  1970: '76',
+  1976: '77',
+  1981: '78',
+  1991: '79',
+  2015: '80'
+};
+
+/**
+ * Retourne l'identifiant associé au plus grand seuil inférieur ou égal à l'année donnée.
+ * Pour une année antérieure au premier seuil, l'identifiant du premier seuil est retenu.
+ * @param values {Record<string, string>}
+ * @param annee {number}
+ * @returns {string}
+ */
+export function findIdForAnnee(values, annee) {
+  const entries = Object.entries(values).sort((a, b) => b[0] - a[0]);
+
+  for (const [threshold, value] of entries) {
+    if (annee >= Number(threshold)) {
+      return value;
+    }
+  }
+
+  return entries[entries.length - 1][1];
+}
+
+/**
+ * Système collectif par défaut en absence d'information : chaudière fioul pénalisante
+ * (enum_type_generateur_ch_id = 119 / enum_type_generateur_ecs_id = 84)
+ *
+ * "En présence d'une installation de production collective de chauffage et d'ECS, si aucune information n'est
+ * communiquée sur les équipements collectifs, un calcul par défaut se fera avec une chaudière atmosphérique mixte
+ * standard datant de la construction du bâtiment. L'énergie utilisée par le système sera du fioul."
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §17.2.1.1
+ *
+ * Retourne l'identifiant de la chaudière fioul dont la période correspond à l'année de construction du bâtiment,
+ * ou undefined si l'année de construction n'est pas connue.
+ *
+ * @param dpe {FullDpe}
+ * @param type {'ch' | 'ecs'}
+ * @returns {string|undefined}
+ */
+export function getChaudiereFioulDefautId(dpe, type) {
+  const anneeConstruction = parseInt(
+    dpe?.logement?.caracteristique_generale?.annee_construction,
+    10
+  );
+
+  if (Number.isNaN(anneeConstruction)) {
+    return undefined;
+  }
+
+  return findIdForAnnee(
+    type === 'ecs' ? CHAUDIERES_FIOUL_ECS : CHAUDIERES_FIOUL_CH,
+    anneeConstruction
+  );
+}
+
+/**
  * Pour les générateurs "Autre système à combustion", les calculs sont faits comme pour les chaudières standard
  * @param dpe {FullDpe}
  * @param de {Donnee_entree}
@@ -27,14 +100,7 @@ export function updateGenerateurChaudieres(dpe, de, type) {
         2001: '49',
         2015: '50'
       },
-      79: {
-        1948: '35',
-        1970: '36',
-        1976: '37',
-        1981: '38',
-        1991: '39',
-        2015: '40'
-      },
+      79: CHAUDIERES_FIOUL_ECS,
       80: {
         1948: '15',
         1978: '16',
@@ -44,14 +110,7 @@ export function updateGenerateurChaudieres(dpe, de, type) {
         2018: '20',
         2019: '21'
       },
-      81: {
-        1948: '35',
-        1970: '36',
-        1976: '37',
-        1981: '38',
-        1991: '39',
-        2015: '40'
-      }
+      81: CHAUDIERES_FIOUL_ECS
     };
   } else {
     /**
@@ -71,14 +130,7 @@ export function updateGenerateurChaudieres(dpe, de, type) {
         2001: '89',
         2015: '90'
       },
-      114: {
-        1948: '75',
-        1970: '76',
-        1976: '77',
-        1981: '78',
-        1991: '79',
-        2015: '80'
-      },
+      114: CHAUDIERES_FIOUL_CH,
       115: {
         1948: '55',
         1978: '56',
@@ -88,14 +140,7 @@ export function updateGenerateurChaudieres(dpe, de, type) {
         2018: '60',
         2019: '61'
       },
-      116: {
-        1948: '75',
-        1970: '76',
-        1976: '77',
-        1981: '78',
-        1991: '79',
-        2015: '80'
-      }
+      116: CHAUDIERES_FIOUL_CH
     };
   }
 
