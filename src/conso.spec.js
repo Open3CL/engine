@@ -51,7 +51,11 @@ const {
   classe_bilan_dpe,
   classe_emission_ges,
   getCoefKey,
-  coef_ep
+  coef_ep,
+  getCoefCout,
+  coefCoutProrata,
+  masqueEnergie,
+  DATE_BAREME_COUT_2024
 } = await import('./conso.js');
 
 /**
@@ -497,5 +501,187 @@ describe('calc_conso - agrégation des consommations', () => {
     );
     expect(ids).toContain('2');
     expect(ids).toContain('1');
+  });
+});
+
+/**
+ * Barème des prix des énergies selon la date d'établissement du DPE.
+ * Barème 2021 : Annexe 7 de l'arrêté du 31/03/2021.
+ * Barème mis à jour (DPE à partir du 01/07/2024) : valeurs calées sur les sorties Tribu (CSTB)
+ * des autotests et sur les DPE publiés par l'ADEME (dataset dpe03existant), reproduites à ±1 €.
+ */
+describe('getCoefCout - sélection du barème par date de DPE', () => {
+  test('date de bascule : 01/07/2024', () => {
+    expect(DATE_BAREME_COUT_2024).toBe('2024-07-01');
+  });
+
+  test('DPE établi avant le 01/07/2024 : barème 2021 inchangé', () => {
+    const coef = getCoefCout('2024-06-30');
+    // Annexe 7 : électricité 1000 kWh => 149 + 0,14066 × 1000
+    expect(coef['électricité ch'](1000)).toBeCloseTo(149 + 0.14066 * 1000, 9);
+    expect(coef['gaz naturel'](3000)).toBeCloseTo(0.11121 * 3000, 9);
+    expect(coef['fioul domestique']).toBe(0.09142);
+    expect(coef.propane).toBe(0.14305);
+  });
+
+  test.each(['2024-07-01', '2025-12-31', '2026-01-15'])(
+    'DPE établi le %s : barème mis à jour',
+    (date) => {
+      const coef = getCoefCout(date);
+      // Tribu / ADEME : électricité 1000 kWh => 158 + 0,18954 × 1000
+      expect(coef['électricité ch'](1000)).toBeCloseTo(158 + 0.18954 * 1000, 9);
+    }
+  );
+
+  test('barème mis à jour : prix unitaires constants (fioul, propane, bois, réseau...)', () => {
+    const coef = getCoefCout('2026-01-15');
+    // Tribu : fioul 0,1482 €/kWh ; propane 0,1567 €/kWh (constants quelle que soit la conso)
+    expect(coef['fioul domestique']).toBe(0.14821);
+    expect(coef.propane).toBe(0.15672);
+    expect(coef.gpl).toBe(0.15672);
+    expect(coef.butane).toBe(0.23429);
+    expect(coef.charbon).toBe(0.02787);
+    expect(coef['réseau de chauffage urbain']).toBe(0.08921);
+    expect(coef['bois – granulés (pellets) ou briquettes']).toBe(0.09897);
+    expect(coef['bois – bûches']).toBe(0.042);
+    expect(coef['bois – plaquettes forestières']).toBe(0.042);
+    expect(coef['bois – plaquettes d’industrie']).toBe(0.042);
+  });
+
+  test.each([
+    // [conso, coût attendu] électricité, une valeur par tranche + limites
+    [500, 0.34721 * 500],
+    [999.99, 0.34721 * 999.99],
+    [1000, 158 + 0.18954 * 1000],
+    [2499.99, 158 + 0.18954 * 2499.99],
+    [2500, 158 + 0.18949 * 2500],
+    [4999.99, 158 + 0.18949 * 4999.99],
+    [5000, 119 + 0.19726 * 5000],
+    [14999.99, 119 + 0.19726 * 14999.99],
+    [15000, 78 + 0.20001 * 15000],
+    [20000, 78 + 0.20001 * 20000]
+  ])('barème mis à jour - électricité %s kWh => %s €', (conso, attendu) => {
+    const coef = getCoefCout('2026-01-15');
+    [
+      'électricité ch',
+      'électricité ecs',
+      'électricité fr',
+      'électricité éclairage',
+      'électricité auxiliaire',
+      "électricité d'origine renouvelable utilisée dans le bâtiment"
+    ].forEach((cle) => expect(coef[cle](conso)).toBeCloseTo(attendu, 9));
+  });
+
+  test.each([
+    // [conso, coût attendu] gaz naturel, une valeur par tranche + limites
+    [3000, 0.1312 * 3000],
+    [5008.99, 0.1312 * 5008.99],
+    [5009, 182 + 0.09488 * 5009],
+    [50054.99, 182 + 0.09488 * 50054.99],
+    [50055, 288 + 0.09274 * 50055],
+    [100000, 288 + 0.09274 * 100000]
+  ])('barème mis à jour - gaz naturel %s kWh => %s €', (conso, attendu) => {
+    expect(getCoefCout('2026-01-15')['gaz naturel'](conso)).toBeCloseTo(attendu, 9);
+  });
+});
+
+describe("masqueEnergie / coefCoutProrata - tranche sur la conso totale de l'énergie", () => {
+  test('masque électricité : clés électriques conservées, autres énergies annulées', () => {
+    const masque = masqueEnergie('électricité');
+    expect(masque['électricité ch'](10)).toBe(10);
+    expect(masque['électricité auxiliaire'](10)).toBe(10);
+    expect(masque['gaz naturel'](10)).toBe(0);
+    expect(masque['réseau de chauffage urbain'](10)).toBe(0);
+    expect(masque["électricité d'origine renouvelable utilisée dans le bâtiment"](10)).toBe(0);
+    expect(masque['électricité']).toBeUndefined();
+  });
+
+  test('aucune consommation : prix moyen nul', () => {
+    const coef = coefCoutProrata(
+      getCoefCout('2026-01-15'),
+      () => ({ total: 0, collectif: 0 }),
+      1,
+      new Set()
+    );
+    expect(coef['électricité ch'](100)).toBe(0);
+    expect(coef['gaz naturel'](100)).toBe(0);
+    // Prix constants conservés
+    expect(coef['fioul domestique']).toBe(0.14821);
+  });
+});
+
+describe('calc_conso - coût avec le barème mis à jour (DPE 2026)', () => {
+  const DATE_DPE_2026 = '2026-01-15';
+  let errorSpy;
+
+  beforeEach(() => {
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    errorSpy.mockRestore();
+  });
+
+  test('DPE antérieur au 01/07/2024 : coût par poste au barème 2021 (inchangé)', () => {
+    const ch = [installCh({}, [genCh('1', { conso_ch: 3000, conso_ch_depensier: 3000 })])];
+    const res = calc_conso(100, 1, 1, [], ch, [], [], 1, 1, '2024-06-30', coef_ep);
+    // Chauffage tarifé seul : 122 + 0,15176 × 3000 ; éclairage seul : 0,29007 × 100
+    expect(res.cout.cout_ch).toBeCloseTo(122 + 0.15176 * 3000, 9);
+    expect(res.cout.cout_eclairage).toBeCloseTo(0.29007 * 100, 9);
+  });
+
+  test('maison tout électrique : tranche sur la conso électrique totale, coût réparti au prorata', () => {
+    const ch = [installCh({}, [genCh('1', { conso_ch: 3000, conso_ch_depensier: 3000 })])];
+    const res = calc_conso(100, 1, 1, [], ch, [], [], 1, 1, DATE_DPE_2026, coef_ep);
+    // Conso élec totale = 3000 (ch) + 100 (éclairage = 1 × Sh) = 3100 kWh
+    const total = 158 + 0.18949 * 3100;
+    expect(res.cout.cout_5_usages).toBeCloseTo(total, 9);
+    expect(res.cout.cout_ch).toBeCloseTo((total * 3000) / 3100, 9);
+    expect(res.cout.cout_eclairage).toBeCloseTo((total * 100) / 3100, 9);
+  });
+
+  test('maison gaz + électricité : chaque énergie tarifée sur sa propre conso totale', () => {
+    const ch = [installCh({}, [genCh('2', { conso_ch: 8000, conso_ch_depensier: 8000 })])];
+    const ecs = [installEcs({}, [genEcs('2', { conso_ecs: 2000, conso_ecs_depensier: 2000 })])];
+    const res = calc_conso(100, 1, 1, [], ch, ecs, [], 1, 1, DATE_DPE_2026, coef_ep);
+    // Gaz total 10000 kWh => 182 + 0,09488 × 10000 ; élec (éclairage) 100 kWh => 0,34721 × 100
+    const gaz = 182 + 0.09488 * 10000;
+    expect(res.cout.cout_ch).toBeCloseTo((gaz * 8000) / 10000, 9);
+    expect(res.cout.cout_ecs).toBeCloseTo((gaz * 2000) / 10000, 9);
+    expect(res.cout.cout_eclairage).toBeCloseTo(0.34721 * 100, 9);
+  });
+
+  test('immeuble à chauffage individuel : barème appliqué par logement (N × f(C / N))', () => {
+    const ch = [installCh({}, [genCh('1', { conso_ch: 8000, conso_ch_depensier: 8000 })])];
+    const res = calc_conso(100, 1, 1, [], ch, [], [], 1, 1, DATE_DPE_2026, coef_ep, 4);
+    // Élec totale 8100 kWh pour 4 logements : 4 × f(2025) = 4 × (158 + 0,18954 × 2025)
+    expect(res.cout.cout_5_usages).toBeCloseTo(4 * (158 + 0.18954 * 2025), 9);
+  });
+
+  test('immeuble à installations collectives : chauffage / ECS collectifs tarifés sur leur total', () => {
+    const ch = [
+      installCh({ enum_type_installation_id: '2' }, [
+        genCh('2', { conso_ch: 60000, conso_ch_depensier: 60000 })
+      ])
+    ];
+    const ecs = [
+      installEcs({ enum_type_installation_id: '2' }, [
+        genEcs('1', { conso_ecs: 4000, conso_ecs_depensier: 4000 })
+      ])
+    ];
+    const res = calc_conso(100, 1, 1, [], ch, ecs, [], 1, 1, DATE_DPE_2026, coef_ep, 4);
+    // Gaz collectif 60000 kWh => 288 + 0,09274 × 60000 (pas de division par logement)
+    expect(res.cout.cout_ch).toBeCloseTo(288 + 0.09274 * 60000, 9);
+    // ECS élec collective 4000 kWh => 158 + 0,18949 × 4000
+    expect(res.cout.cout_ecs).toBeCloseTo(158 + 0.18949 * 4000, 9);
+    // Éclairage (usage individuel) 100 kWh / 4 logements => 4 × 0,34721 × 25
+    expect(res.cout.cout_eclairage).toBeCloseTo(4 * 0.34721 * 25, 9);
+  });
+
+  test("immeuble, ECS sans type d'installation : considérée individuelle", () => {
+    const ecs = [installEcs({}, [genEcs('1', { conso_ecs: 4000, conso_ecs_depensier: 4000 })])];
+    const res = calc_conso(100, 1, 1, [], [], ecs, [], 1, 1, DATE_DPE_2026, coef_ep, 4);
+    // Élec totale 4100 kWh / 4 logements => 4 × (158 + 0,18954 × 1025)
+    expect(res.cout.cout_5_usages).toBeCloseTo(4 * (158 + 0.18954 * 1025), 9);
   });
 });

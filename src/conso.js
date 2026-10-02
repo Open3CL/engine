@@ -122,6 +122,129 @@ function cout_electricite(cef) {
   else return 56 + 0.15989 * cef;
 }
 
+/**
+ * Date d'entrée en vigueur du barème des prix des énergies mis à jour.
+ * Constatée sur les DPE publiés par l'ADEME (dataset dpe03existant) : barème 2021 jusqu'au
+ * 30/06/2024, barème mis à jour pour les DPE établis à partir du 01/07/2024 (et toujours en 2026).
+ */
+export const DATE_BAREME_COUT_2024 = '2024-07-01';
+
+function cout_gaz_naturel_2024(cef) {
+  if (cef < 5009) return 0.1312 * cef;
+  else if (cef < 50055) return 182 + 0.09488 * cef;
+  else return 288 + 0.09274 * cef;
+}
+
+function cout_electricite_2024(cef) {
+  if (cef < 1000) return 0.34721 * cef;
+  else if (cef < 2500) return 158 + 0.18954 * cef;
+  else if (cef < 5000) return 158 + 0.18949 * cef;
+  else if (cef < 15000) return 119 + 0.19726 * cef;
+  else return 78 + 0.20001 * cef;
+}
+
+/**
+ * Barème des prix des énergies applicable aux DPE établis à partir du 01/07/2024.
+ * Mêmes tranches qu'en 2021 ; valeurs calées sur les sorties Tribu (moteur CSTB) et les DPE ADEME.
+ */
+const coef_cout_2024 = {
+  'fioul domestique': 0.14821,
+  'réseau de chauffage urbain': 0.08921,
+  propane: 0.15672,
+  gpl: 0.15672,
+  butane: 0.23429,
+  charbon: 0.02787,
+  'bois – granulés (pellets) ou briquettes': 0.09897,
+  'bois – bûches': 0.042,
+  'bois – plaquettes forestières': 0.042,
+  'bois – plaquettes d’industrie': 0.042,
+  'gaz naturel': cout_gaz_naturel_2024,
+  "électricité d'origine renouvelable utilisée dans le bâtiment": cout_electricite_2024,
+  'électricité ch': cout_electricite_2024,
+  'électricité ecs': cout_electricite_2024,
+  'électricité fr': cout_electricite_2024,
+  'électricité éclairage': cout_electricite_2024,
+  'électricité auxiliaire': cout_electricite_2024
+};
+
+/**
+ * Sélection du barème des prix des énergies selon la date d'établissement du DPE.
+ * @param dateDpe {string} date d'établissement du DPE (AAAA-MM-JJ)
+ * @returns {object} barème 2021 (Annexe 7) avant le 01/07/2024, barème mis à jour ensuite
+ */
+export function getCoefCout(dateDpe) {
+  return new Date(dateDpe) >= new Date(DATE_BAREME_COUT_2024) ? coef_cout_2024 : coef_cout;
+}
+
+/** Clé (symbole) portant le barème des générateurs d'installations collectives d'un immeuble. */
+const COUT_COLLECTIF = Symbol('cout_collectif');
+
+/** Énergies dont le coût suit un barème par tranches, regroupées par énergie facturée. */
+const ENERGIES_A_TRANCHES = {
+  'électricité ch': 'électricité',
+  'électricité ecs': 'électricité',
+  'électricité fr': 'électricité',
+  'électricité éclairage': 'électricité',
+  'électricité auxiliaire': 'électricité',
+  "électricité d'origine renouvelable utilisée dans le bâtiment": 'électricité renouvelable',
+  'gaz naturel': 'gaz naturel'
+};
+
+/**
+ * Table « masque » : consommation conservée pour les clés du groupe, annulée pour les autres.
+ * Permet de totaliser la consommation d'une énergie avec les fonctions d'agrégation existantes.
+ * @param groupe {string} énergie facturée (valeur de ENERGIES_A_TRANCHES)
+ * @returns {object}
+ */
+export function masqueEnergie(groupe) {
+  const cles = Object.values(enums.type_energie)
+    .filter((label) => label !== 'électricité')
+    .concat(Object.keys(ENERGIES_A_TRANCHES));
+  return Object.fromEntries(
+    cles.map((cle) => [cle, ENERGIES_A_TRANCHES[cle] === groupe ? (c) => c : () => 0])
+  );
+}
+
+/**
+ * Barème « prix moyen » pour les DPE établis à partir du 01/07/2024 (constaté sur Tribu et sur
+ * les DPE publiés par l'ADEME) : pour l'électricité et le gaz naturel, la tranche est déterminée
+ * sur la consommation annuelle TOTALE de l'énergie (tous usages) et le coût est réparti entre les
+ * postes au prorata de leur consommation.
+ * Immeuble : consommation des usages individuels rapportée au logement (N × f(C / N)) ;
+ * chauffage / ECS des installations collectives tarifés sur leur total (f(C)).
+ *
+ * @param base {object} barème (prix unitaires et fonctions par tranches)
+ * @param consoGroupe {function(masque): {total: number, collectif: number}} consommations EF
+ * @param nbLogements {number} nombre de logements (1 hors immeuble)
+ * @param genCollectifs {Set} générateurs de chauffage / ECS d'installations collectives
+ * @returns {object}
+ */
+export function coefCoutProrata(base, consoGroupe, nbLogements, genCollectifs) {
+  const coef = { ...base };
+  const coefCollectif = { ...base };
+  new Set(Object.values(ENERGIES_A_TRANCHES)).forEach((groupe) => {
+    const { total, collectif } = consoGroupe(masqueEnergie(groupe));
+    const individuel = total - collectif;
+    Object.keys(ENERGIES_A_TRANCHES)
+      .filter((cle) => ENERGIES_A_TRANCHES[cle] === groupe)
+      .forEach((cle) => {
+        const f = base[cle];
+        const prix = individuel > 0 ? (nbLogements * f(individuel / nbLogements)) / individuel : 0;
+        const prixCollectif = collectif > 0 ? f(collectif) / collectif : 0;
+        coef[cle] = (c) => prix * c;
+        coefCollectif[cle] = (c) => prixCollectif * c;
+      });
+  });
+  coef[COUT_COLLECTIF] = { generateurs: genCollectifs, coef: coefCollectif };
+  return coef;
+}
+
+/** Barème d'un générateur : barème collectif s'il appartient à une installation collective. */
+function coefPourGenerateur(coef, gen) {
+  const collectif = coef?.[COUT_COLLECTIF];
+  return collectif?.generateurs.has(gen) ? collectif.coef : coef;
+}
+
 function getConso(coef, type_energie, conso) {
   // is coef is a function, execute it
   if (!coef) return conso;
@@ -197,7 +320,8 @@ export default function calc_conso(
   prorataECS,
   prorataChauffage,
   dateDpe,
-  coeffEp
+  coeffEp,
+  nbLogements = 1
 ) {
   const gen_ch = ch.reduce((acc, ch) => {
     const generateur_chauffage = ch.generateur_chauffage_collection.generateur_chauffage;
@@ -236,6 +360,56 @@ export default function calc_conso(
     }
     return acc.concat(generateur_ecs);
   }, []);
+
+  /**
+   * Barème des coûts : barème 2021 (par poste) avant le 01/07/2024 ; ensuite barème mis à jour
+   * avec tranche déterminée sur la consommation totale de l'énergie (voir coefCoutProrata).
+   */
+  const coefCout = () => {
+    const base = getCoefCout(dateDpe);
+    if (base === coef_cout) return coef_cout;
+    const genCollectifs = new Set();
+    if (nbLogements > 1) {
+      gen_ch
+        .filter((g) => g.donnee_entree.enum_type_installation_id !== '1')
+        .forEach((g) => genCollectifs.add(g));
+      ecs
+        .filter((inst) => (inst.donnee_entree.enum_type_installation_id ?? '1') !== '1')
+        .forEach((inst) =>
+          inst.generateur_ecs_collection.generateur_ecs.forEach((g) => genCollectifs.add(g))
+        );
+    }
+    const consoGroupe = (masque) => {
+      const tot = calc_conso_pond(
+        Sh,
+        zc_id,
+        vt,
+        gen_ch,
+        gen_ecs,
+        fr,
+        'c',
+        masque,
+        prorataECS,
+        prorataChauffage,
+        ecs
+      );
+      const coll = calc_conso_pond(
+        0,
+        zc_id,
+        [],
+        gen_ch.filter((g) => genCollectifs.has(g)),
+        gen_ecs.filter((g) => genCollectifs.has(g)),
+        [],
+        'c',
+        masque,
+        prorataECS,
+        prorataChauffage,
+        []
+      );
+      return { total: tot.c_5_usages, collectif: coll.c_ch + coll.c_ecs };
+    };
+    return coefCoutProrata(base, consoGroupe, nbLogements, genCollectifs);
+  };
 
   const ret = {
     ef_conso: calc_conso_pond(
@@ -288,7 +462,7 @@ export default function calc_conso(
       gen_ecs,
       fr,
       'cout',
-      coef_cout,
+      coefCout(),
       prorataECS,
       prorataChauffage,
       ecs,
@@ -424,7 +598,7 @@ function getEcsConso(gen_ecs, field, coef, prorataECS, prefix) {
     const conso = gen_ecs.donnee_intermediaire[field];
     const typeEnergie = getTypeEnergie(gen_ecs.donnee_entree, 'ecs');
 
-    let coeffConsoEcs = { ...coef };
+    let coeffConsoEcs = { ...coefPourGenerateur(coef, gen_ecs) };
 
     if (prefix === 'emission_ges') {
       coeffConsoEcs[typeEnergie] = gen_ecs.donnee_utilisateur.coeffEmissionGes;
@@ -458,7 +632,7 @@ function getChauffageConso(gen_ch, field, coef, prorataChauffage, prefix) {
         ? gen_ch.donnee_entree.cle_repartition_ch || prorataChauffage
         : prorataChauffage;
 
-    let coeffConsoChauffage = { ...coef };
+    let coeffConsoChauffage = { ...coefPourGenerateur(coef, gen_ch) };
 
     if (prefix === 'emission_ges') {
       coeffConsoChauffage[typeEnergie] = gen_ch.donnee_utilisateur.coeffEmissionGes;
