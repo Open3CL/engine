@@ -260,7 +260,11 @@ export default function calc_gen_ecs(dpe, gen_ecs, ecs_di, ecs_de, GV, ca_id, zc
         if (row) {
           const typeGenerateurEcs = row.enum_type_generateur_ecs_id?.split('|');
           // Chaudière fioul standard datant de la construction du bâtiment (§17.2.1.1)
-          const chaudiereFioulDefautId = getChaudiereFioulDefautId(dpe, 'ecs');
+          const chaudiereFioulDefautId = getChaudiereFioulDefautId(
+            dpe,
+            'ecs',
+            typeGenerateurEcs?.[0]
+          );
 
           if (chaudiereFioulDefautId && typeGenerateurEcs?.includes('84')) {
             // La chaudière fioul par défaut dépend de l'année de construction du bâtiment

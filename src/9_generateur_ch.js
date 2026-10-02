@@ -110,9 +110,6 @@ export function checkForGeneratorType(dpe, de, di, du) {
     isPacGenerator = false;
     isCombustionGenerator = false;
 
-    // Chaudière fioul standard datant de la construction du bâtiment (§17.2.1.1)
-    const chaudiereFioulDefautId = getChaudiereFioulDefautId(dpe, 'ch');
-
     if (de.tv_generateur_combustion_id) {
       const row = tv('generateur_combustion', {
         tv_generateur_combustion_id: de.tv_generateur_combustion_id
@@ -120,6 +117,8 @@ export function checkForGeneratorType(dpe, de, di, du) {
 
       if (row) {
         const typeGenerateurCh = row.enum_type_generateur_ch_id?.split('|');
+        // Chaudière fioul standard datant de la construction du bâtiment (§17.2.1.1)
+        const chaudiereFioulDefautId = getChaudiereFioulDefautId(dpe, 'ch', typeGenerateurCh?.[0]);
 
         if (chaudiereFioulDefautId && typeGenerateurCh?.includes('119')) {
           // La chaudière fioul par défaut dépend de l'année de construction du bâtiment

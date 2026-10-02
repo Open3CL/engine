@@ -653,7 +653,7 @@ describe('calc_gen_ecs - consommation par générateur', () => {
     });
     calc_gen_ecs(dpe, g, ecs_di, ecs_de, 0, '1', '1', 'immeuble');
 
-    expect(getChaudiereFioulDefautId).toHaveBeenCalledWith(dpe, 'ecs');
+    expect(getChaudiereFioulDefautId).toHaveBeenCalledWith(dpe, 'ecs', '35');
     // 39 au lieu du premier type de la ligne (35)
     expect(g.donnee_entree.enum_type_generateur_ecs_id).toBe('39');
   });

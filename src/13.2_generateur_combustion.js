@@ -88,10 +88,14 @@ export function tv_generateur_combustion(dpe, di, de, type, GV, tbase, methodeSa
       (type === 'ch' && enumTypeGenerateurId === '119')) &&
     de.tv_generateur_combustion_id
   ) {
-    const chaudiereFioulDefautId = getChaudiereFioulDefautId(dpe, type);
     const rowDpe = tv('generateur_combustion', {
       tv_generateur_combustion_id: de.tv_generateur_combustion_id
     });
+    const chaudiereFioulDefautId = getChaudiereFioulDefautId(
+      dpe,
+      type,
+      rowDpe?.[typeGenerateurKey]?.split('|')[0]
+    );
 
     if (
       chaudiereFioulDefautId &&

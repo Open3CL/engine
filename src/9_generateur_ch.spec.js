@@ -292,7 +292,7 @@ describe('checkForGeneratorType - classification du générateur', () => {
       const du = {};
       checkForGeneratorType(dpe, de, {}, du);
 
-      expect(getChaudiereFioulDefautId).toHaveBeenCalledWith(dpe, 'ch');
+      expect(getChaudiereFioulDefautId).toHaveBeenCalledWith(dpe, 'ch', '75');
       // 79 au lieu du premier type de la ligne (75)
       expect(de.enum_type_generateur_ch_id).toBe('79');
       expect(du.isCombustionGenerator).toBe(true);

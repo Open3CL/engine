@@ -53,11 +53,18 @@ export function findIdForAnnee(values, annee) {
  * Retourne l'identifiant de la chaudière fioul dont la période correspond à l'année de construction du bâtiment,
  * ou undefined si l'année de construction n'est pas connue.
  *
+ * Si la ligne tv_generateur_combustion_id saisie correspond à une chaudière fioul dont la période est
+ * postérieure ou égale à celle de la construction (chaudière remplacée), l'information est connue et
+ * doit être utilisée : "Dans le cas où certaines de ces informations sont connues sur l'installation
+ * collective, elles pourront être utilisées" (§17.2.1.1). Seule une période saisie antérieure à la
+ * construction, non crédible, est redressée.
+ *
  * @param dpe {FullDpe}
  * @param type {'ch' | 'ecs'}
+ * @param typeSaisiId {string|undefined} type de chaudière correspondant à la ligne tv saisie
  * @returns {string|undefined}
  */
-export function getChaudiereFioulDefautId(dpe, type) {
+export function getChaudiereFioulDefautId(dpe, type, typeSaisiId) {
   const anneeConstruction = parseInt(
     dpe?.logement?.caracteristique_generale?.annee_construction,
     10
@@ -67,10 +74,18 @@ export function getChaudiereFioulDefautId(dpe, type) {
     return undefined;
   }
 
-  return findIdForAnnee(
-    type === 'ecs' ? CHAUDIERES_FIOUL_ECS : CHAUDIERES_FIOUL_CH,
-    anneeConstruction
-  );
+  const chaudieres = type === 'ecs' ? CHAUDIERES_FIOUL_ECS : CHAUDIERES_FIOUL_CH;
+  const chaudiereConstructionId = findIdForAnnee(chaudieres, anneeConstruction);
+  const ids = Object.values(chaudieres);
+
+  if (
+    ids.includes(typeSaisiId) &&
+    ids.indexOf(typeSaisiId) >= ids.indexOf(chaudiereConstructionId)
+  ) {
+    return typeSaisiId;
+  }
+
+  return chaudiereConstructionId;
 }
 
 /**

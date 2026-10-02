@@ -136,6 +136,29 @@ describe('getChaudiereFioulDefautId - chaudière fioul par défaut selon l’ann
     expect(getChaudiereFioulDefautId(dpe('1995'), 'ch')).toBe('79');
   });
 
+  /**
+   * "Dans le cas où certaines de ces informations sont connues sur l'installation collective, elles
+   * pourront être utilisées et complétées par les valeurs par défaut" (§17.2.1.1).
+   * Une chaudière saisie d'une période postérieure ou égale à la construction (chaudière remplacée)
+   * est conservée ; une période antérieure à la construction, non crédible, est redressée.
+   */
+  test.each([
+    // [annee, type saisi, attendu, type]
+    [1930, '77', '77', 'ch'], // 2162E1020576I : chaudière 1976-1980 dans un bâtiment de 1930
+    [1970, '78', '78', 'ch'], // 2262E0012158B : chaudière 1981-1990 dans un bâtiment de 1970
+    [1930, '39', '39', 'ecs'], // 2262E0038009I : chaudière 1991-2014 dans un bâtiment de 1930
+    [1995, '79', '79', 'ch'], // même période que la construction
+    [1996, '75', '79', 'ch'], // 2368E2119912U : chaudière < 1970 dans un bâtiment de 1996
+    [2000, '36', '39', 'ecs'], // chaudière 1970-1975 dans un bâtiment de 2000
+    [1996, '99', '79', 'ch'], // type saisi hors chaudières fioul standard
+    [1996, undefined, '79', 'ch']
+  ])(
+    'construction %s, type saisi %s : chaudière %s retenue (%s)',
+    (annee, typeSaisi, attendu, type) => {
+      expect(getChaudiereFioulDefautId(dpe(annee), type, typeSaisi)).toBe(attendu);
+    }
+  );
+
   test('année de construction absente : aucune chaudière par défaut', () => {
     expect(getChaudiereFioulDefautId(dpe(undefined), 'ch')).toBeUndefined();
     expect(getChaudiereFioulDefautId({}, 'ecs')).toBeUndefined();

@@ -326,7 +326,7 @@ describe('tv_generateur_combustion - compatibilité bug_for_bug_compat', () => {
       };
       tv_generateur_combustion(dpe, di, de, 'ch', 200, -9, 1);
 
-      expect(getChaudiereFioulDefautId).toHaveBeenCalledWith(dpe, 'ch');
+      expect(getChaudiereFioulDefautId).toHaveBeenCalledWith(dpe, 'ch', '75');
       expect(de.enum_type_generateur_ch_id).toBe('79');
       // La ligne est recherchée avec le type de la période de construction
       expect(tv).toHaveBeenCalledWith(
@@ -352,7 +352,7 @@ describe('tv_generateur_combustion - compatibilité bug_for_bug_compat', () => {
       };
       tv_generateur_combustion({}, { pn: 20000 }, de, 'ecs', 200, -9, 1);
 
-      expect(getChaudiereFioulDefautId).toHaveBeenCalledWith({}, 'ecs');
+      expect(getChaudiereFioulDefautId).toHaveBeenCalledWith({}, 'ecs', '35');
       expect(de.enum_type_generateur_ecs_id).toBe('39');
       expect(de.tv_generateur_combustion_id).toBe(20);
     });
