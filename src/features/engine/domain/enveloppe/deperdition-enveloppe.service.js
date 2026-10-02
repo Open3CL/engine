@@ -258,14 +258,15 @@ export class DeperditionEnveloppeService {
       }
     });
 
-    let ets = enveloppe.ets_collection?.ets;
+    /**
+     * Un DPE peut comporter plusieurs espaces tampons solarisés (issue #101) : bver et le coefficient
+     * de transparence sont propres à chacun d'eux.
+     */
+    const ets = enveloppe.ets_collection?.ets;
     if (ets) {
-      // Certaines vérandas sont dupliqués dans les DPE.
-      if (Array.isArray(ets)) {
-        ets = ets[0];
-      }
-
-      ets.donnee_intermediaire = this.#espaceTamponService.execute(ctx, ets);
+      (Array.isArray(ets) ? ets : [ets]).forEach((e) => {
+        e.donnee_intermediaire = this.#espaceTamponService.execute(ctx, e);
+      });
     }
 
     enveloppe.pont_thermique_collection.pont_thermique?.forEach((pt) => {

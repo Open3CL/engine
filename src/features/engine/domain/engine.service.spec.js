@@ -227,4 +227,18 @@ describe('EngineService (orchestration de la méthode 3CL)', () => {
     // Aucun tableau interne ni production_elec_enr : les `?.` court-circuitent
     expect(() => service.execute(dpeMinimal())).not.toThrow();
   });
+
+  test('nettoie les données intermédiaires de chaque espace tampon solarisé (issue #101)', () => {
+    const dpe = dpeComplet();
+    dpe.logement.enveloppe.ets_collection.ets = [
+      { donnee_intermediaire: { bver: 0.55 } },
+      { donnee_intermediaire: { bver: 0.85 } },
+      null
+    ];
+    const resultat = service.execute(dpe);
+    const [v1, v2, vide] = resultat.logement.enveloppe.ets_collection.ets;
+    expect(v1.donnee_intermediaire).toBeUndefined();
+    expect(v2.donnee_intermediaire).toBeUndefined();
+    expect(vide).toBeNull();
+  });
 });
