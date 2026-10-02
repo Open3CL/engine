@@ -43,7 +43,8 @@ vi.mock('./13.2_generateur_combustion_bouilleur.js', () => ({
   updateGenerateurBouilleurs: vi.fn()
 }));
 vi.mock('./13.2_generateur_combustion_chaudiere.js', () => ({
-  updateGenerateurChaudieres: vi.fn()
+  updateGenerateurChaudieres: vi.fn(),
+  getChaudiereFioulDefautId: vi.fn()
 }));
 vi.mock('./13.2_generateur_pac.js', () => ({
   updateGenerateurPacs: vi.fn()
@@ -67,7 +68,8 @@ const {
 const { tv, tvColumnLines } = await import('./utils.js');
 const { conventionPuissanceNominale } = await import('./13.2_generateur_combustion_pn.js');
 const { updateGenerateurBouilleurs } = await import('./13.2_generateur_combustion_bouilleur.js');
-const { updateGenerateurChaudieres } = await import('./13.2_generateur_combustion_chaudiere.js');
+const { updateGenerateurChaudieres, getChaudiereFioulDefautId } =
+  await import('./13.2_generateur_combustion_chaudiere.js');
 const { updateGenerateurPacs } = await import('./13.2_generateur_pac.js');
 const { default: getFicheTechnique } = await import('./ficheTechnique.js');
 
@@ -77,6 +79,7 @@ beforeEach(() => {
   vi.mocked(tvColumnLines).mockReturnValue([]);
   vi.mocked(updateGenerateurBouilleurs).mockReset();
   vi.mocked(updateGenerateurChaudieres).mockReset();
+  vi.mocked(getChaudiereFioulDefautId).mockReset();
   vi.mocked(updateGenerateurPacs).mockReset();
   vi.mocked(getFicheTechnique).mockReset();
   vi.mocked(conventionPuissanceNominale).mockReset();
@@ -315,6 +318,87 @@ describe('tv_generateur_combustion - compatibilité bug_for_bug_compat', () => {
       tv_generateur_combustion_id: '42'
     });
     vi.restoreAllMocks();
+  });
+
+  /**
+   * Système collectif par défaut : chaudière fioul standard datant de la construction du bâtiment.
+   * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §17.2.1.1
+   */
+  describe('système collectif par défaut : chaudière selon l’année de construction', () => {
+    test('CH 119 + ligne compatible : type et ligne de la période de construction retenus', () => {
+      vi.mocked(getChaudiereFioulDefautId).mockReturnValue('79');
+      tv.mockImplementation((table, matcher) => {
+        if (matcher.tv_generateur_combustion_id === '16') {
+          return { tv_generateur_combustion_id: '16', enum_type_generateur_ch_id: '75|119' };
+        }
+        return { ...ROW_DEFAUT, tv_generateur_combustion_id: '20' };
+      });
+      const dpe = { logement: {} };
+      const di = { pn: 20000 };
+      const de = {
+        enum_type_generateur_ch_id: '119',
+        tv_generateur_combustion_id: '16',
+        ratio_virtualisation: 1,
+        presence_ventouse: 0
+      };
+      tv_generateur_combustion(dpe, di, de, 'ch', 200, -9, 1);
+
+      expect(getChaudiereFioulDefautId).toHaveBeenCalledWith(dpe, 'ch', '75');
+      expect(de.enum_type_generateur_ch_id).toBe('79');
+      // La ligne est recherchée avec le type de la période de construction
+      expect(tv).toHaveBeenCalledWith(
+        'generateur_combustion',
+        expect.objectContaining({ enum_type_generateur_ch_id: '79' })
+      );
+      expect(de.tv_generateur_combustion_id).toBe(20);
+    });
+
+    test('ECS 84 + ligne compatible : type de la période de construction retenu', () => {
+      vi.mocked(getChaudiereFioulDefautId).mockReturnValue('39');
+      tv.mockImplementation((table, matcher) => {
+        if (matcher.tv_generateur_combustion_id === '16') {
+          return { tv_generateur_combustion_id: '16', enum_type_generateur_ecs_id: '35|84' };
+        }
+        return { ...ROW_DEFAUT, tv_generateur_combustion_id: '20' };
+      });
+      const de = {
+        enum_type_generateur_ecs_id: '84',
+        tv_generateur_combustion_id: '16',
+        ratio_virtualisation: 1,
+        presence_ventouse: 0
+      };
+      tv_generateur_combustion({}, { pn: 20000 }, de, 'ecs', 200, -9, 1);
+
+      expect(getChaudiereFioulDefautId).toHaveBeenCalledWith({}, 'ecs', '35');
+      expect(de.enum_type_generateur_ecs_id).toBe('39');
+      expect(de.tv_generateur_combustion_id).toBe(20);
+    });
+
+    test('ligne non compatible avec le système par défaut : type inchangé', () => {
+      vi.mocked(getChaudiereFioulDefautId).mockReturnValue('39');
+      tv.mockReturnValue({ ...ROW_DEFAUT, enum_type_generateur_ecs_id: '57|104' });
+      const de = {
+        enum_type_generateur_ecs_id: '84',
+        tv_generateur_combustion_id: '42',
+        ratio_virtualisation: 1,
+        presence_ventouse: 0
+      };
+      tv_generateur_combustion({}, { pn: 20000 }, de, 'ecs', 200, -9, 1);
+      expect(de.enum_type_generateur_ecs_id).toBe('84');
+    });
+
+    test('année de construction inconnue : type inchangé', () => {
+      vi.mocked(getChaudiereFioulDefautId).mockReturnValue(undefined);
+      tv.mockReturnValue({ ...ROW_DEFAUT, enum_type_generateur_ch_id: '75|119' });
+      const de = {
+        enum_type_generateur_ch_id: '119',
+        tv_generateur_combustion_id: '16',
+        ratio_virtualisation: 1,
+        presence_ventouse: 0
+      };
+      tv_generateur_combustion({}, { pn: 20000 }, de, 'ch', 200, -9, 1);
+      expect(de.enum_type_generateur_ch_id).toBe('119');
+    });
   });
 
   test('type 84 sans tv_generateur_combustion_id : retour au chemin forfaitaire nominal', () => {

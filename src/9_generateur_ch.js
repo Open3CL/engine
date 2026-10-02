@@ -5,6 +5,7 @@ import { conso_ch } from './9_conso_ch.js';
 import { calc_generateur_combustion_ch } from './13.2_generateur_combustion_ch.js';
 import { scopOrCop } from './12.4_pac.js';
 import { updateGenerateurCombustion } from './13.2_generateur_combustion.js';
+import { getChaudiereFioulDefautId } from './13.2_generateur_combustion_chaudiere.js';
 
 const ENUM_MATERIAUX_STRUCTURE_MUR_ANCIEN_IDS = ['2', '3', '4', '6', '8', '9', '14', '21'];
 const ENUM_CLASSES_INERTIE_LOURDES_IDS = ['1', '2'];
@@ -161,10 +162,15 @@ export function checkForGeneratorType(dpe, de, di, du) {
       });
 
       if (row) {
-        // On prend par défaut le premier type de générateur pour effectuer les calculs de rendement
         const typeGenerateurCh = row.enum_type_generateur_ch_id?.split('|');
+        // Chaudière fioul standard datant de la construction du bâtiment (§17.2.1.1)
+        const chaudiereFioulDefautId = getChaudiereFioulDefautId(dpe, 'ch', typeGenerateurCh?.[0]);
 
-        if (typeGenerateurCh && typeGenerateurCh.length) {
+        if (chaudiereFioulDefautId && typeGenerateurCh?.includes('119')) {
+          // La chaudière fioul par défaut dépend de l'année de construction du bâtiment
+          de.enum_type_generateur_ch_id = chaudiereFioulDefautId;
+        } else if (typeGenerateurCh && typeGenerateurCh.length) {
+          // On prend par défaut le premier type de générateur pour effectuer les calculs de rendement
           de.enum_type_generateur_ch_id = typeGenerateurCh[0];
         }
       }

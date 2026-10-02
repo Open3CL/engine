@@ -57,6 +57,10 @@ vi.mock('./13.2_generateur_combustion.js', () => ({
   updateGenerateurCombustion: vi.fn()
 }));
 
+vi.mock('./13.2_generateur_combustion_chaudiere.js', () => ({
+  getChaudiereFioulDefautId: vi.fn()
+}));
+
 const {
   calc_Qrec_gen_j,
   calc_Qrec_gen_ecs_j,
@@ -72,6 +76,7 @@ const { conso_ch } = await import('./9_conso_ch.js');
 const { calc_generateur_combustion_ch } = await import('./13.2_generateur_combustion_ch.js');
 const { scopOrCop } = await import('./12.4_pac.js');
 const { updateGenerateurCombustion } = await import('./13.2_generateur_combustion.js');
+const { getChaudiereFioulDefautId } = await import('./13.2_generateur_combustion_chaudiere.js');
 
 beforeEach(() => {
   vi.mocked(requestInput).mockReset();
@@ -334,6 +339,47 @@ describe('checkForGeneratorType - classification du générateur', () => {
     const du = {};
     checkForGeneratorType({}, de, {}, du);
     expect(de.enum_type_generateur_ch_id).toBe('119');
+  });
+
+  /**
+   * Chaudière fioul par défaut : chaudière standard datant de la construction du bâtiment.
+   * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §17.2.1.1
+   */
+  describe('cas 119 : chaudière fioul par défaut selon l’année de construction', () => {
+    beforeEach(() => {
+      vi.mocked(getChaudiereFioulDefautId).mockReset();
+      vi.mocked(requestInputID).mockReturnValue('119');
+    });
+
+    test('ligne combustion compatible 119 : chaudière de la période de construction retenue', () => {
+      vi.mocked(getChaudiereFioulDefautId).mockReturnValue('79');
+      vi.mocked(tv).mockReturnValue({ enum_type_generateur_ch_id: '75|119' });
+      const dpe = { logement: {} };
+      const de = { tv_generateur_combustion_id: 16 };
+      const du = {};
+      checkForGeneratorType(dpe, de, {}, du);
+
+      expect(getChaudiereFioulDefautId).toHaveBeenCalledWith(dpe, 'ch', '75');
+      // 79 au lieu du premier type de la ligne (75)
+      expect(de.enum_type_generateur_ch_id).toBe('79');
+      expect(du.isCombustionGenerator).toBe(true);
+    });
+
+    test('ligne combustion non compatible 119 (générateur décrit) : premier type conservé', () => {
+      vi.mocked(getChaudiereFioulDefautId).mockReturnValue('79');
+      vi.mocked(tv).mockReturnValue({ enum_type_generateur_ch_id: '97|139' });
+      const de = { tv_generateur_combustion_id: 13 };
+      checkForGeneratorType({}, de, {}, {});
+      expect(de.enum_type_generateur_ch_id).toBe('97');
+    });
+
+    test('année de construction inconnue : premier type de la ligne conservé', () => {
+      vi.mocked(getChaudiereFioulDefautId).mockReturnValue(undefined);
+      vi.mocked(tv).mockReturnValue({ enum_type_generateur_ch_id: '75|119' });
+      const de = { tv_generateur_combustion_id: 16 };
+      checkForGeneratorType({}, de, {}, {});
+      expect(de.enum_type_generateur_ch_id).toBe('75');
+    });
   });
 });
 
