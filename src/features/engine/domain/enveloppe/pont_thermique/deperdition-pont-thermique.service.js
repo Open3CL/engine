@@ -175,7 +175,10 @@ export class DeperditionPontThermiqueService extends DeperditionService {
       return this.defaultValue(pontThermiqueDE);
     }
 
-    if (!this.plancherBasHasPontThermique(plancherBasDE)) {
+    if (
+      !this.plancherHasPontThermiqueAdjacence(plancherBasDE) ||
+      !this.plancherBasHasPontThermique(plancherBasDE)
+    ) {
       return 0;
     }
 
@@ -206,7 +209,10 @@ export class DeperditionPontThermiqueService extends DeperditionService {
       return this.defaultValue(pontThermiqueDE);
     }
 
-    if (!this.plancherHautHasPontThermique(plancherHautDE)) {
+    if (
+      !this.plancherHasPontThermiqueAdjacence(plancherHautDE) ||
+      !this.plancherHautHasPontThermique(plancherHautDE)
+    ) {
       return 0;
     }
 
@@ -389,6 +395,26 @@ export class DeperditionPontThermiqueService extends DeperditionService {
     }
 
     return true;
+  }
+
+  /**
+   * Retourne true si l'adjacence du plancher (bas ou haut) permet un pont thermique avec le mur (issue #212)
+   *
+   * 3.4 Calcul des déperditions par les ponts thermiques
+   * Les ponts thermiques des parois au niveau des circulations communes ne sont pas pris en compte.
+   * La règle porte sur les parois en général : elle s'applique au plancher de la liaison comme au mur.
+   * 14 - Circulation sans ouverture directe sur l'extérieur
+   * 15 - Circulation avec ouverture directe sur l'extérieur
+   * 16 - Circulation avec bouche ou gaine de désenfumage ouverte en permanence
+   * 17 - Hall d'entrée avec dispositif de fermeture automatique
+   * 18 - Hall d'entrée sans dispositif de fermeture automatique
+   * 22 - Local non déperditif (local à usage d'habitation chauffé) : le plancher n'est pas déperditif
+   *
+   * @param plancherDE {PlancherBasDE|PlancherHautDE}
+   * @return {boolean}
+   */
+  plancherHasPontThermiqueAdjacence(plancherDE) {
+    return ![14, 15, 16, 17, 18, 22].includes(parseInt(plancherDE.enum_type_adjacence_id));
   }
 
   /**

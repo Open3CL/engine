@@ -214,6 +214,28 @@ function tv_k(pt_di, di, de, du, pc_id, logement) {
       }
 
       /**
+       * 3.4 Calcul des déperditions par les ponts thermiques (issue #212)
+       * « Les ponts thermiques des parois au niveau des circulations communes ne sont pas pris en compte. »
+       * La règle porte sur les parois : elle s'applique au plancher de la liaison comme au mur.
+       * 14 à 18 - Circulations communes / halls d'entrée
+       * 22 - Local non déperditif (local à usage d'habitation chauffé)
+       *
+       * Ambiguïté : la méthode ne tranche pas explicitement le cas du plancher en adjacence 22 et les moteurs
+       * certifiés divergent (3cl-2024.6.1.0 exporte k = 0, Tribu 1.4.25.1 et BBS 2024.6.1.0 conservent la
+       * valeur forfaitaire sur les « planchers mitoyens »). Comme pour le mur ci-dessus, on s'appuie sur la
+       * valeur du DPE : k = 0 si le DPE a retenu k = 0, sinon la valeur forfaitaire est recalculée.
+       */
+      if (
+        ['14', '15', '16', '17', '18', '22'].includes(
+          String(plancher.donnee_entree.enum_type_adjacence_id)
+        ) &&
+        pt_di.k === 0
+      ) {
+        di.k = 0;
+        return;
+      }
+
+      /**
        * 3.4.3 Plancher haut / mur
        * Les ponts thermiques des planchers haut en structure légère sont négligés.
        * type_plancher_haut

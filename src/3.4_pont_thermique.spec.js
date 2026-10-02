@@ -889,3 +889,131 @@ describe('calc_pont_thermique - cas limites', () => {
     expect(pt.donnee_intermediaire.k).toBeUndefined();
   });
 });
+
+/**
+ * Issue #212 : l'exclusion des parois non déperditives s'applique aussi au plancher des liaisons
+ * plancher bas / mur et plancher haut lourd / mur, pas seulement au mur.
+ * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.4
+ */
+describe('calc_pont_thermique - plancher sur paroi non déperditive (issue #212)', () => {
+  /** Mur extérieur lourd isolé ITI + plancher lourd isolé ITE avec l'adjacence donnée. */
+  function liaison(type_liaison, adjacencePlancher, k = 0.9) {
+    const mur = [
+      {
+        donnee_entree: { reference: 'M1', enum_type_adjacence_id: '1', type_isolation: 'iti' },
+        donnee_utilisateur: {}
+      }
+    ];
+    const plancher = {
+      donnee_entree: {
+        reference: 'P1',
+        enum_type_adjacence_id: adjacencePlancher,
+        enum_type_plancher_bas_id: '1',
+        enum_type_plancher_haut_id: '1',
+        type_isolation: 'ite'
+      },
+      donnee_utilisateur: {}
+    };
+    const pt = pontThermique(
+      {
+        type_liaison,
+        enum_type_liaison_id: type_liaison === 'plancher bas / mur' ? '1' : '3',
+        reference_1: 'P1',
+        reference_2: 'M1',
+        description: 'plancher / mur'
+      },
+      k
+    );
+    return { mur, plancher, pt };
+  }
+
+  test('cas 2557E3382433Y : plancher bas sur local habitation chauffé (22), mur extérieur, k DPE nul : k = 0', () => {
+    const { mur, plancher, pt } = liaison('plancher bas / mur', '22', 0);
+
+    calc_pont_thermique(pt, '1', logement({ mur, pb: [plancher] }));
+
+    expect(pt.donnee_intermediaire.k).toBe(0);
+    expect(tv).not.toHaveBeenCalled();
+  });
+
+  test('plancher mitoyen (22) avec k DPE non nul (Tribu / BBS) : valeur forfaitaire recalculée', () => {
+    tv.mockReturnValue({ k: '0.71', tv_pont_thermique_id: '12' });
+    const { mur, plancher, pt } = liaison('plancher bas / mur', '22', 0.71);
+
+    calc_pont_thermique(pt, '1', logement({ mur, pb: [plancher] }));
+
+    expect(tv).toHaveBeenCalledWith('pont_thermique', {
+      enum_type_liaison_id: '1',
+      isolation_mur: '^iti$',
+      isolation_plancher: '^ite$'
+    });
+    expect(pt.donnee_intermediaire.k).toBe(0.71);
+  });
+
+  test('cas 2534E3387900I : plancher haut lourd sous local habitation chauffé (22), mur extérieur : k = 0', () => {
+    const { mur, plancher, pt } = liaison('plancher haut lourd / mur', '22', 0);
+
+    calc_pont_thermique(pt, '1', logement({ mur, ph: [plancher] }));
+
+    expect(pt.donnee_intermediaire.k).toBe(0);
+    expect(tv).not.toHaveBeenCalled();
+  });
+
+  test.each(['14', '15', '16', '17', '18'])(
+    'plancher bas sur circulation commune / hall (%s) avec k DPE nul : k = 0 sans accès table',
+    (adjacence) => {
+      const { mur, plancher, pt } = liaison('plancher bas / mur', adjacence, 0);
+
+      calc_pont_thermique(pt, '1', logement({ mur, pb: [plancher] }));
+
+      expect(pt.donnee_intermediaire.k).toBe(0);
+      expect(tv).not.toHaveBeenCalled();
+    }
+  );
+
+  test('plancher haut lourd sous circulation (14) avec k DPE nul : k = 0', () => {
+    const { mur, plancher, pt } = liaison('plancher haut lourd / mur', '14', 0);
+
+    calc_pont_thermique(pt, '1', logement({ mur, ph: [plancher] }));
+
+    expect(pt.donnee_intermediaire.k).toBe(0);
+    expect(tv).not.toHaveBeenCalled();
+  });
+
+  test('plancher bas sur hall (17) avec k DPE non nul : valeur forfaitaire conservée (même règle que pour le mur)', () => {
+    tv.mockReturnValue({ k: '0.71', tv_pont_thermique_id: '12' });
+    const { mur, plancher, pt } = liaison('plancher bas / mur', '17', 0.71);
+
+    calc_pont_thermique(pt, '1', logement({ mur, pb: [plancher] }));
+
+    expect(tv).toHaveBeenCalledWith('pont_thermique', {
+      enum_type_liaison_id: '1',
+      isolation_mur: '^iti$',
+      isolation_plancher: '^ite$'
+    });
+    expect(pt.donnee_intermediaire.k).toBe(0.71);
+  });
+
+  test('contre-test : plancher bas sur sous-sol non chauffé (6) : pont thermique compté (pas de b sur les PT)', () => {
+    tv.mockReturnValue({ k: '0.71', tv_pont_thermique_id: '12' });
+    const { mur, plancher, pt } = liaison('plancher bas / mur', '6', 0);
+
+    calc_pont_thermique(pt, '1', logement({ mur, pb: [plancher] }));
+
+    expect(tv).toHaveBeenCalledWith('pont_thermique', {
+      enum_type_liaison_id: '1',
+      isolation_mur: '^iti$',
+      isolation_plancher: '^ite$'
+    });
+    expect(pt.donnee_intermediaire.k).toBe(0.71);
+  });
+
+  test('contre-test : plancher bas sur local tertiaire (20) : pont thermique compté', () => {
+    tv.mockReturnValue({ k: '0.71', tv_pont_thermique_id: '12' });
+    const { mur, plancher, pt } = liaison('plancher bas / mur', '20', 0.71);
+
+    calc_pont_thermique(pt, '1', logement({ mur, pb: [plancher] }));
+
+    expect(pt.donnee_intermediaire.k).toBe(0.71);
+  });
+});
