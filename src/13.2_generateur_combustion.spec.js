@@ -61,6 +61,7 @@ vi.mock('./13.2_generateur_combustion_pn.js', () => ({
 
 const {
   tv_generateur_combustion,
+  findGenerateurChMixteJumeau,
   updateGenerateurCombustion,
   caracteristiquesGenerateurCombustion
 } = await import('./13.2_generateur_combustion.js');
@@ -520,6 +521,172 @@ describe('tv_generateur_combustion - génération mixte (checkEcsVsChauffageForM
       'generateur_combustion',
       expect.objectContaining({ enum_type_generateur_ecs_id: 'A' })
     );
+  });
+});
+
+/**
+ * Issue #210 : l'ECS mixte doit être appariée avec SON générateur de chauffage mixte (même appareil),
+ * et non avec le premier générateur de chauffage mixte du DPE.
+ * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2 et §14
+ */
+describe('findGenerateurChMixteJumeau - appariement ECS / chauffage mixte (issue #210)', () => {
+  const ch = (donnees) => ({ donnee_entree: { enum_usage_generateur_id: '3', ...donnees } });
+
+  test('même reference_generateur_mixte : prioritaire sur le tv_generateur_combustion_id', () => {
+    const chTv = ch({ tv_generateur_combustion_id: '11' });
+    const chRef = ch({ reference_generateur_mixte: 'GEN#1', tv_generateur_combustion_id: '13' });
+    const de = { reference_generateur_mixte: 'GEN#1', tv_generateur_combustion_id: '11' };
+    expect(findGenerateurChMixteJumeau([chTv, chRef], de)).toBe(chRef);
+  });
+
+  test('reference_generateur_mixte sans correspondance : repli sur le tv_generateur_combustion_id', () => {
+    const chElec = ch({ reference_generateur_mixte: 'AUTRE', tv_generateur_combustion_id: null });
+    const chGaz = ch({ tv_generateur_combustion_id: 11 });
+    const de = { reference_generateur_mixte: 'GEN#1', tv_generateur_combustion_id: '11' };
+    // Comparaison insensible au type (nombre / chaîne)
+    expect(findGenerateurChMixteJumeau([chElec, chGaz], de)).toBe(chGaz);
+  });
+
+  test('cas 2448E4606320D : ECS gaz (tv 11) appariée au CH 95 (tv 11) et non au premier CH mixte (106, électrique)', () => {
+    const ch106 = ch({ enum_type_generateur_ch_id: '106', enum_type_energie_id: '1' });
+    const ch95 = ch({
+      enum_type_generateur_ch_id: '95',
+      tv_generateur_combustion_id: '11',
+      enum_type_energie_id: '2'
+    });
+    const de = {
+      enum_type_generateur_ecs_id: '55',
+      tv_generateur_combustion_id: '11',
+      enum_type_energie_id: '2'
+    };
+    expect(findGenerateurChMixteJumeau([ch106, ch95], de)).toBe(ch95);
+  });
+
+  test('cas 2193E1043519Y : ECS gaz (tv 13) appariée au CH 97 (tv 13) et non au CH 111 (réseau de chaleur)', () => {
+    const ch111 = ch({ enum_type_generateur_ch_id: '111', enum_type_energie_id: '2' });
+    const ch97 = ch({
+      enum_type_generateur_ch_id: '97',
+      tv_generateur_combustion_id: '13',
+      enum_type_energie_id: '2'
+    });
+    const de = {
+      enum_type_generateur_ecs_id: '57',
+      tv_generateur_combustion_id: '13',
+      enum_type_energie_id: '2'
+    };
+    expect(findGenerateurChMixteJumeau([ch111, ch97], de)).toBe(ch97);
+  });
+
+  test('pas de référence ni de tv commun : un seul générateur de même énergie → retenu', () => {
+    const chElec = ch({ enum_type_energie_id: '1' });
+    const chFioul = ch({ enum_type_energie_id: '3' });
+    const de = { tv_generateur_combustion_id: '99', enum_type_energie_id: '3' };
+    expect(findGenerateurChMixteJumeau([chElec, chFioul], de)).toBe(chFioul);
+  });
+
+  test('plusieurs générateurs de même énergie sans autre critère : ambiguïté → aucun appariement', () => {
+    const de = { enum_type_energie_id: '2' };
+    const generateurs = [ch({ enum_type_energie_id: '2' }), ch({ enum_type_energie_id: '2' })];
+    expect(findGenerateurChMixteJumeau(generateurs, de)).toBeNull();
+  });
+
+  test('générateur de chauffage mixte unique sans énergie renseignée : retenu (comportement historique)', () => {
+    const unique = ch({ enum_type_generateur_ch_id: 'X' });
+    expect(findGenerateurChMixteJumeau([unique], { enum_type_energie_id: '2' })).toBe(unique);
+    expect(findGenerateurChMixteJumeau([unique], {})).toBe(unique);
+  });
+
+  test('générateur de chauffage mixte unique d’une autre énergie : pas son jumeau → aucun appariement', () => {
+    const unique = ch({ enum_type_energie_id: '1' });
+    expect(findGenerateurChMixteJumeau([unique], { enum_type_energie_id: '2' })).toBeNull();
+  });
+
+  test('aucun générateur de chauffage mixte : aucun appariement', () => {
+    expect(findGenerateurChMixteJumeau([], { tv_generateur_combustion_id: '11' })).toBeNull();
+  });
+});
+
+describe('tv_generateur_combustion - génération mixte avec plusieurs générateurs de chauffage (issue #210)', () => {
+  function dpeAvecChMixtes(generateurs) {
+    return {
+      logement: {
+        installation_chauffage_collection: {
+          installation_chauffage: generateurs.map((donnees) => ({
+            generateur_chauffage_collection: {
+              generateur_chauffage: [
+                { donnee_entree: { enum_usage_generateur_id: '3', ...donnees } }
+              ]
+            }
+          }))
+        }
+      }
+    };
+  }
+
+  test('le type ECS est aligné sur le jumeau (même tv) et non sur le premier générateur mixte', () => {
+    state.bug = true;
+    tv.mockReturnValue({ ...ROW_DEFAUT });
+    // 1er CH mixte 'X' (fioul, autre tv), jumeau 'Y' (gaz, même tv 42) -> ECS 'A' (gaz) conservée
+    const dpe = dpeAvecChMixtes([
+      { enum_type_generateur_ch_id: 'X', tv_generateur_combustion_id: '7' },
+      { enum_type_generateur_ch_id: 'Y', tv_generateur_combustion_id: '42' }
+    ]);
+    const de = {
+      enum_type_generateur_ecs_id: 'A',
+      enum_usage_generateur_id: '3',
+      tv_generateur_combustion_id: '42',
+      ratio_virtualisation: 1,
+      presence_ventouse: 0
+    };
+    tv_generateur_combustion(dpe, { pn: 20000 }, de, 'ecs', 200, -9, 1);
+    expect(tv).toHaveBeenCalledWith(
+      'generateur_combustion',
+      expect.objectContaining({ enum_type_generateur_ecs_id: 'A' })
+    );
+    expect(tv).not.toHaveBeenCalledWith(
+      'generateur_combustion',
+      expect.objectContaining({ enum_type_generateur_ecs_id: 'B' })
+    );
+  });
+
+  test('jumeau non identifiable (ambiguïté) : type ECS conservé', () => {
+    state.bug = true;
+    tv.mockReturnValue({ ...ROW_DEFAUT });
+    const dpe = dpeAvecChMixtes([
+      { enum_type_generateur_ch_id: 'X', enum_type_energie_id: '2' },
+      { enum_type_generateur_ch_id: 'X', enum_type_energie_id: '2' }
+    ]);
+    const de = {
+      enum_type_generateur_ecs_id: 'A',
+      enum_usage_generateur_id: '3',
+      enum_type_energie_id: '2',
+      tv_generateur_combustion_id: '42',
+      ratio_virtualisation: 1,
+      presence_ventouse: 0
+    };
+    tv_generateur_combustion(dpe, { pn: 20000 }, de, 'ecs', 200, -9, 1);
+    expect(tv).toHaveBeenCalledWith(
+      'generateur_combustion',
+      expect.objectContaining({ enum_type_generateur_ecs_id: 'A' })
+    );
+  });
+
+  test('aucune ligne forfaitaire pour un générateur ECS mixte : erreur sans plantage', () => {
+    state.bug = true;
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    tv.mockReturnValue(null);
+    const de = {
+      enum_type_generateur_ecs_id: 'A',
+      enum_usage_generateur_id: '3',
+      tv_generateur_combustion_id: '42',
+      ratio_virtualisation: 1,
+      presence_ventouse: 0
+    };
+    expect(() =>
+      tv_generateur_combustion(dpeAvecChMixtes([]), { pn: 20000 }, de, 'ecs', 200, -9, 1)
+    ).not.toThrow();
+    expect(errSpy).toHaveBeenCalledWith(expect.stringContaining('Pas de valeur forfaitaire'));
+    errSpy.mockRestore();
   });
 });
 

@@ -168,6 +168,7 @@ export function tv_generateur_combustion(dpe, di, de, type, GV, tbase, methodeSa
     if (
       bug_for_bug_compat &&
       type === 'ecs' &&
+      row &&
       row.tv_generateur_combustion_id !== de.tv_generateur_combustion_id
     ) {
       const rowDpe = tv('generateur_combustion', {
@@ -191,7 +192,7 @@ export function tv_generateur_combustion(dpe, di, de, type, GV, tbase, methodeSa
 
   if (!row) {
     console.error(
-      'Pas de valeur forfaitaire trouvée pour le générateur à combustion ${de.description}'
+      `Pas de valeur forfaitaire trouvée pour le générateur à combustion ${de.description} (${typeGenerateurKey} = '${enumTypeGenerateurId}')`
     );
     return;
   }
@@ -345,21 +346,21 @@ function checkEcsVsChauffageForMixteGeneration(dpe, de, typeGenerateurKey) {
     );
   }, []);
 
-  if (generateursChMixtes.length) {
-    const firstChGenerateurMixte = generateursChMixtes[0];
-    const firstChGenerateurMixteId =
-      firstChGenerateurMixte.donnee_entree.enum_type_generateur_ch_id;
+  const chGenerateurMixte = findGenerateurChMixteJumeau(generateursChMixtes, de);
+
+  if (chGenerateurMixte) {
+    const chGenerateurMixteId = chGenerateurMixte.donnee_entree.enum_type_generateur_ch_id;
     const typeGenerateurEcs = enums.type_generateur_ecs;
     const typeGenerateurCh = enums.type_generateur_ch;
 
     const ecsGenerateurType = typeGenerateurEcs[ecsGenerateurId];
-    const chGenerateurType = typeGenerateurCh[firstChGenerateurMixteId];
+    const chGenerateurType = typeGenerateurCh[chGenerateurMixteId];
 
     // Si les 2 générateurs n'ont pas le même type
     if (ecsGenerateurType !== chGenerateurType) {
       // Recherche de l'identifiant du générateur ECS identique au générateur de chauffage
       const newEcsGenerateurId = Object.keys(typeGenerateurEcs).find(
-        (key) => typeGenerateurEcs[key] === typeGenerateurCh[firstChGenerateurMixteId]
+        (key) => typeGenerateurEcs[key] === typeGenerateurCh[chGenerateurMixteId]
       );
 
       if (newEcsGenerateurId) {
@@ -374,4 +375,56 @@ function checkEcsVsChauffageForMixteGeneration(dpe, de, typeGenerateurKey) {
   }
 
   return ecsGenerateurId;
+}
+
+/**
+ * Recherche du générateur de chauffage mixte « jumeau » du générateur ECS mixte.
+ * Méthode 3CL-DPE 2021 §13.2 et §14 : un générateur mixte chauffage + ECS est un seul et même
+ * appareil, avec les mêmes caractéristiques pour les deux usages. Il ne faut donc pas apparier le
+ * générateur ECS avec n'importe quel générateur de chauffage mixte du DPE (issue #210).
+ *
+ * Ordre de recherche :
+ * 1. même `reference_generateur_mixte` ;
+ * 2. même `tv_generateur_combustion_id` ;
+ * 3. même énergie (`enum_type_energie_id`), si un seul générateur de chauffage mixte correspond ;
+ * 4. générateur de chauffage mixte unique du DPE, si son énergie n'est pas incompatible.
+ *
+ * @param generateursChMixtes {GenerateurChauffageItem[]} générateurs de chauffage d'usage 'chauffage + ecs'
+ * @param de {Donnee_entree} données du générateur ECS
+ * @returns {GenerateurChauffageItem|null} null si aucun jumeau ne peut être identifié sans ambiguïté
+ */
+export function findGenerateurChMixteJumeau(generateursChMixtes, de) {
+  const sameValue = (a, b) =>
+    a !== undefined && a !== null && b !== undefined && b !== null && String(a) === String(b);
+
+  if (de.reference_generateur_mixte) {
+    const generateur = generateursChMixtes.find((ch) =>
+      sameValue(ch.donnee_entree.reference_generateur_mixte, de.reference_generateur_mixte)
+    );
+    if (generateur) return generateur;
+  }
+
+  if (de.tv_generateur_combustion_id) {
+    const generateur = generateursChMixtes.find((ch) =>
+      sameValue(ch.donnee_entree.tv_generateur_combustion_id, de.tv_generateur_combustion_id)
+    );
+    if (generateur) return generateur;
+  }
+
+  if (de.enum_type_energie_id) {
+    const generateurs = generateursChMixtes.filter((ch) =>
+      sameValue(ch.donnee_entree.enum_type_energie_id, de.enum_type_energie_id)
+    );
+    if (generateurs.length === 1) return generateurs[0];
+  }
+
+  if (generateursChMixtes.length === 1) {
+    const generateur = generateursChMixtes[0];
+    const energieCh = generateur.donnee_entree.enum_type_energie_id;
+    if (!de.enum_type_energie_id || !energieCh || sameValue(energieCh, de.enum_type_energie_id)) {
+      return generateur;
+    }
+  }
+
+  return null;
 }
