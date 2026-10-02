@@ -41,7 +41,13 @@ export function conso_aux_gen(di, de, type, besoin, besoin_dep, Sh) {
     pe = 70000;
   }
 
-  const Paux_g_ch = g + (h * (pe / 1000)) / (de.ratio_virtualisation || 1);
+  /**
+   * Installation collective virtualisée : Paux_g (W) est celle du générateur de l'immeuble
+   * (Pn = pe, puissance immeuble) et Caux_g = Paux_g × Bch_logement / Pn. Le terme G ne doit pas
+   * être proratisé par ratio_virtualisation (sinon G × ratio), comme le moteur CSTB (Tribu).
+   * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §15.1
+   */
+  const Paux_g_ch = g + h * (pe / 1000);
 
   // Pour les installations collectives, la conso des auxiliaires est calculée à partir du besoin de l'appartement
   let besoinAppart = besoin * (de[`cle_repartition_${type}`] || 1);
@@ -55,10 +61,9 @@ export function conso_aux_gen(di, de, type, besoin, besoin_dep, Sh) {
     ratio = Sc / Sh;
   }
 
-  di[`conso_auxiliaire_generation_${type}`] =
-    ((de.ratio_virtualisation || 1) * (Paux_g_ch * besoinAppart * ratio)) / pe || 0;
+  di[`conso_auxiliaire_generation_${type}`] = (Paux_g_ch * besoinAppart * ratio) / pe || 0;
   di[`conso_auxiliaire_generation_${type}_depensier`] =
-    (Paux_g_ch * besoinAppartDep * ratio) / di.pn || 0;
+    (Paux_g_ch * besoinAppartDep * ratio) / (di.pn / (de.ratio_virtualisation || 1)) || 0;
 }
 
 /**
