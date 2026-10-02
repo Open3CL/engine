@@ -323,17 +323,37 @@ export function calcul_3cl(inputDpe, options) {
   let becs = apport_et_besoin.besoin_ecs;
   let becs_dep = apport_et_besoin.besoin_ecs_depensier;
   let isImmeubleSystemEcsIndividuels = false;
+  let isImmeubleMultiEcs = false;
 
   /**
    * 11.4 Plusieurs systèmes d’ECS (limité à 2 systèmes différents par logement)
    * Les besoins en ECS pour chaque générateur sont / 2
+   *
+   * Immeuble avec plusieurs installations ECS (collectives ou mixtes) : le besoin est réparti
+   * au prorata de la surface habitable desservie par chaque installation (Sh_ecs / Sh immeuble),
+   * sans normalisation ni plafonnement (cf. calc_ecs).
+   * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §11.4
+   * @see Guide Tribu TE-211208 p. 24 ; Moteur_DPE.dll Calcul_batiment.Calcul_Cecs()
    */
   if (ecs.length > 1) {
     // Immeuble avec différents systèmes individuels
     isImmeubleSystemEcsIndividuels =
       th === 'immeuble' && ecs.every((e) => e.donnee_entree.enum_type_installation_id === '1');
 
-    if (!isImmeubleSystemEcsIndividuels) {
+    if (th === 'immeuble' && !isImmeubleSystemEcsIndividuels) {
+      isImmeubleMultiEcs =
+        Number(cg.surface_habitable_immeuble) > 0 &&
+        ecs.every((e) => Number(e.donnee_entree.surface_habitable) > 0);
+
+      if (!isImmeubleMultiEcs) {
+        console.warn(
+          `Immeuble avec plusieurs installations ECS : surface habitable de l'immeuble ou d'une installation ECS absente ou nulle.
+          Repli sur la division du besoin ECS par 2 (§11.4).`
+        );
+      }
+    }
+
+    if (!isImmeubleSystemEcsIndividuels && !isImmeubleMultiEcs) {
       becs /= 2;
       becs_dep /= 2;
     }
@@ -438,7 +458,8 @@ export function calcul_3cl(inputDpe, options) {
       dpe.logement.caracteristique_generale.surface_habitable_immeuble,
       dpe.logement.caracteristique_generale.nombre_appartement,
       isImmeubleSystemEcsIndividuels,
-      apport_et_besoin.besoin_ecs_par_mois || {}
+      apport_et_besoin.besoin_ecs_par_mois || {},
+      isImmeubleMultiEcs
     );
 
     if (!dpeGenereImmeuble) {

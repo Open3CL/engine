@@ -148,6 +148,104 @@ describe('calc_ecs - ratio de besoin ECS', () => {
   });
 });
 
+/**
+ * Immeuble à plusieurs installations ECS collectives ou mixtes (#232) :
+ * ratio = Sh_ecs / Sh immeuble / (rdim || 1), prorata brut sans normalisation ni plafond.
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §11.4
+ * @see Moteur_DPE.dll Calcul_batiment.Calcul_Cecs() (l.579-593)
+ */
+describe('calc_ecs - immeuble à plusieurs installations ECS (prorata des surfaces)', () => {
+  /** Calcule le ratio d'une installation dans le cas immeuble multi-ECS. */
+  function calcImmeuble(de, surfaceImmeuble, options = {}) {
+    const ecs = makeEcs({ tv_rendement_distribution_ecs_id: '5', ...de });
+    calc_ecs(
+      {},
+      ecs,
+      1000,
+      1500,
+      1,
+      'ca1',
+      'h1a',
+      'immeuble',
+      options.virtualisation ?? false,
+      surfaceImmeuble,
+      options.nombreAppartements ?? null,
+      options.individuels ?? false,
+      {},
+      options.multiEcs ?? true
+    );
+    return ecs.donnee_intermediaire;
+  }
+
+  test('autotest IC1-0-2 : 2 installations collectives 20 et 155 m² sur 175 m²', () => {
+    const di1 = calcImmeuble({ enum_type_installation_id: '2', surface_habitable: 20 }, 175);
+    const di2 = calcImmeuble({ enum_type_installation_id: '2', surface_habitable: 155 }, 175);
+
+    expect(di1.ratio_besoin_ecs).toBeCloseTo(20 / 175, 9); // 0,1143
+    expect(di2.ratio_besoin_ecs).toBeCloseTo(155 / 175, 9); // 0,8857
+    expect(di1.ratio_besoin_ecs + di2.ratio_besoin_ecs).toBeCloseTo(1, 9);
+    expect(di1.besoin_ecs).toBeCloseTo((1000 * 20) / 175, 9);
+  });
+
+  test('somme des surfaces < Sh immeuble (461 sur 922) : prorata brut 0,5 sans normalisation', () => {
+    const di = calcImmeuble({ enum_type_installation_id: '2', surface_habitable: 461 }, 922);
+
+    expect(di.ratio_besoin_ecs).toBe(0.5);
+    expect(di.besoin_ecs).toBe(500);
+  });
+
+  test('somme des surfaces > Sh immeuble : prorata brut sans plafonnement', () => {
+    const di = calcImmeuble({ enum_type_installation_id: '2', surface_habitable: 7706 }, 8726);
+
+    expect(di.ratio_besoin_ecs).toBeCloseTo(7706 / 8726, 9);
+  });
+
+  test('immeuble mixte : installation individuelle 800 m², rdim 13, sur 2400 m² => besoin par unité', () => {
+    const di = calcImmeuble(
+      { enum_type_installation_id: '1', surface_habitable: 800, rdim: 13 },
+      2400
+    );
+
+    expect(di.ratio_besoin_ecs).toBeCloseTo(800 / 2400 / 13, 9); // 0,02564
+    expect(di.ratio_besoin_ecs).toBeCloseTo(0.02564, 5);
+  });
+
+  test('rdim nul ou absent : diviseur 1', () => {
+    expect(
+      calcImmeuble({ surface_habitable: 50, rdim: 0, enum_type_installation_id: '2' }, 200)
+        .ratio_besoin_ecs
+    ).toBe(0.25);
+    expect(
+      calcImmeuble({ surface_habitable: '50', enum_type_installation_id: '2' }, '200')
+        .ratio_besoin_ecs
+    ).toBe(0.25);
+  });
+
+  test('besoin_ecs_depensier suit le même ratio que besoin_ecs', () => {
+    const di = calcImmeuble({ enum_type_installation_id: '2', surface_habitable: 20 }, 175);
+
+    expect(di.besoin_ecs_depensier).toBeCloseTo((1500 * 20) / 175, 9);
+    expect(di.besoin_ecs_depensier / di.besoin_ecs).toBeCloseTo(1.5, 9);
+  });
+
+  test('prioritaire sur la clé de répartition et la branche « tout individuel »', () => {
+    const di = calcImmeuble(
+      { enum_type_installation_id: '2', surface_habitable: 100, cle_repartition_ecs: 0.9 },
+      200,
+      { virtualisation: true, individuels: true, nombreAppartements: 4 }
+    );
+
+    expect(di.ratio_besoin_ecs).toBe(0.5);
+  });
+
+  test('sans indicateur multi-ECS (valeur par défaut) : comportement historique conservé (1 / rdim)', () => {
+    const ecs = makeEcs({ tv_rendement_distribution_ecs_id: '5', surface_habitable: 100, rdim: 4 });
+    calc_ecs({}, ecs, 1000, 1500, 1, 'ca1', 'h1a', 'immeuble', false, 200, null, false, {});
+
+    expect(ecs.donnee_intermediaire.ratio_besoin_ecs).toBe(0.25);
+  });
+});
+
 describe('calc_ecs - rendement de distribution', () => {
   test('la ligne forfaitaire alimente rendement_distribution et l’identifiant de table', () => {
     const de = { tv_rendement_distribution_ecs_id: '5' };

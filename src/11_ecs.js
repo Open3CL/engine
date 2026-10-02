@@ -149,7 +149,8 @@ export default function calc_ecs(
   surfaceImmeuble,
   nombreAppartements,
   isImmeubleSystemEcsIndividuels,
-  becsParMois
+  becsParMois,
+  isImmeubleMultiEcs = false
 ) {
   const de = ecs.donnee_entree;
   const di = {};
@@ -157,7 +158,18 @@ export default function calc_ecs(
 
   // La conso de chaque générateur ECS doit être ramenée au prorata de la surface du logement
   di.ratio_besoin_ecs = 1;
-  if (virtualisationECS) {
+  if (isImmeubleMultiEcs) {
+    /**
+     * Immeuble avec plusieurs installations ECS (collectives ou mixtes) : ratio de besoin =
+     * surface habitable desservie par l'installation / surface habitable de l'immeuble,
+     * sans normalisation ni plafonnement. Le besoin est exprimé par unité dimensionnée (/ rdim),
+     * la consommation étant remultipliée par rdim lors de l'agrégation (conso.js, cle_repartition_ecs).
+     * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §11.4
+     * @see Moteur_DPE.dll Calcul_batiment.Calcul_Cecs() et Calcul_Cecs_installation_2()
+     */
+    di.ratio_besoin_ecs =
+      Number(de.surface_habitable) / Number(surfaceImmeuble) / (Number(de.rdim) || 1);
+  } else if (virtualisationECS) {
     di.ratio_besoin_ecs = de.cle_repartition_ecs || 1;
   } else if (isImmeubleSystemEcsIndividuels) {
     if (nombreAppartements) {
