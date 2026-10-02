@@ -1844,15 +1844,15 @@
       "pending": true,
       "results": {
         "corpus_dpe.csv": {
-          "below": 4623,
+          "below": 4628,
           "total": 10000
         },
         "dpe_appartement_individuel_chauffage_collectif_2025.csv": {
-          "below": 6977,
+          "below": 7061,
           "total": 10000
         },
         "dpe_appartement_individuel_chauffage_individuel_2025.csv": {
-          "below": 9176,
+          "below": 9180,
           "total": 10000
         },
         "dpe_immeuble_chauffage_collectif.csv": {
@@ -1872,7 +1872,7 @@
           "total": 10000
         },
         "dpe_logement_individuel_2025.csv": {
-          "below": 8834,
+          "below": 8863,
           "total": 9992
         },
         "dpe_maison_individuelle_2025.csv": {
