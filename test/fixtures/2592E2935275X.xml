@@ -1,0 +1,1378 @@
+<dpe version="9.1.1">
+  
+  <numero_dpe>2592E2935275X</numero_dpe>
+  <statut>ACTIF</statut>
+<administratif>
+    <date_visite_diagnostiqueur>2025-09-15</date_visite_diagnostiqueur>
+    <date_etablissement_dpe>2025-09-15</date_etablissement_dpe>
+    <enum_modele_dpe_id>1</enum_modele_dpe_id>
+    <enum_version_id>2.4</enum_version_id>
+    
+    
+    <enum_commanditaire_id>2</enum_commanditaire_id>
+    <diagnostiqueur>
+      <usr_logiciel_id>22570</usr_logiciel_id>
+      <version_logiciel>WinDpeV3 v.3.0.0.18</version_logiciel>
+      <version_moteur_calcul>V 2024.6.1.0</version_moteur_calcul>
+      
+      
+      
+      
+      
+      
+      
+      
+    </diagnostiqueur>
+    <geolocalisation>
+      <adresses>
+        <adresse_bien>
+          <adresse_brut>10 Rue Emile Morel</adresse_brut>
+          <code_postal_brut>92330</code_postal_brut>
+          <nom_commune_brut>SCEAUX</nom_commune_brut>
+          <label_brut>10 Rue Emile Morel 92330 SCEAUX</label_brut>
+          <label_brut_avec_complement>10 Rue Emile Morel 92330 SCEAUX</label_brut_avec_complement>
+          <enum_statut_geocodage_ban_id>2</enum_statut_geocodage_ban_id>
+          <ban_date_appel>2025-09-16</ban_date_appel>
+          <compl_ref_batiment>A2</compl_ref_batiment>
+          <compl_etage_appartement>0</compl_etage_appartement>
+          <compl_ref_cage_escalier>A2</compl_ref_cage_escalier>
+          <compl_ref_logement>4</compl_ref_logement>
+        </adresse_bien>
+        
+      </adresses>
+    </geolocalisation>
+  </administratif>
+  <logement>
+    <caracteristique_generale>
+      <annee_construction>1972</annee_construction>
+      <enum_periode_construction_id>2</enum_periode_construction_id>
+      <enum_methode_application_dpe_log_id>5</enum_methode_application_dpe_log_id>
+      <enum_calcul_echantillonnage_id>1</enum_calcul_echantillonnage_id>
+      <surface_habitable_logement>12.02</surface_habitable_logement>
+      <nombre_niveau_logement>1</nombre_niveau_logement>
+      <surface_habitable_immeuble>4145</surface_habitable_immeuble>
+      <nombre_appartement>1</nombre_appartement>
+      <hsp>2.50</hsp>
+    </caracteristique_generale>
+    <meteo>
+      <enum_zone_climatique_id>1</enum_zone_climatique_id>
+      <altitude>102</altitude>
+      <enum_classe_altitude_id>1</enum_classe_altitude_id>
+      <batiment_materiaux_anciens>0</batiment_materiaux_anciens>
+    </meteo>
+    <enveloppe>
+      <inertie>
+        <inertie_plancher_bas_lourd>1</inertie_plancher_bas_lourd>
+        <inertie_plancher_haut_lourd>1</inertie_plancher_haut_lourd>
+        <inertie_paroi_verticale_lourd>1</inertie_paroi_verticale_lourd>
+        <enum_classe_inertie_id>1</enum_classe_inertie_id>
+      </inertie>
+      <mur_collection>
+        <mur>
+          <donnee_entree>
+            <description>Mur 1</description>
+            <reference>Mur 1</reference>
+            <tv_coef_reduction_deperdition_id>1</tv_coef_reduction_deperdition_id>
+            <enum_type_adjacence_id>1</enum_type_adjacence_id>
+            <enum_orientation_id>4</enum_orientation_id>
+            <surface_paroi_totale>7.29</surface_paroi_totale>
+            <surface_paroi_opaque>2.49</surface_paroi_opaque>
+            <enum_materiaux_structure_mur_id>13</enum_materiaux_structure_mur_id>
+            <paroi_lourde>1</paroi_lourde>
+            <enum_methode_saisie_u0_id>2</enum_methode_saisie_u0_id>
+            <epaisseur_structure>22.5</epaisseur_structure>
+            <tv_umur0_id>82</tv_umur0_id>
+            <enduit_isolant_paroi_ancienne>0</enduit_isolant_paroi_ancienne>
+            <enum_type_isolation_id>9</enum_type_isolation_id>
+            <enum_type_doublage_id>2</enum_type_doublage_id>
+            <enum_periode_isolation_id>3</enum_periode_isolation_id>
+            <tv_umur_id>8</tv_umur_id>
+            <enum_methode_saisie_u_id>8</enum_methode_saisie_u_id>
+          </donnee_entree>
+          <donnee_intermediaire>
+            <b>1</b>
+            <umur>2.50000</umur>
+            <umur0>2.5</umur0>
+          </donnee_intermediaire>
+        </mur>
+        <mur>
+          <donnee_entree>
+            <description>Mur 2</description>
+            <reference>Mur 2</reference>
+            <tv_coef_reduction_deperdition_id>27</tv_coef_reduction_deperdition_id>
+            <enum_type_adjacence_id>15</enum_type_adjacence_id>
+            <surface_aiu>14</surface_aiu>
+            <surface_aue> 26</surface_aue>
+            <enum_cfg_isolation_lnc_id>4</enum_cfg_isolation_lnc_id>
+            <reference_lnc>Local 1</reference_lnc>
+            <enum_orientation_id>2</enum_orientation_id>
+            <surface_paroi_totale>13.50</surface_paroi_totale>
+            <surface_paroi_opaque>11.7</surface_paroi_opaque>
+            <enum_materiaux_structure_mur_id>13</enum_materiaux_structure_mur_id>
+            <paroi_lourde>1</paroi_lourde>
+            <enum_methode_saisie_u0_id>2</enum_methode_saisie_u0_id>
+            <epaisseur_structure>20</epaisseur_structure>
+            <tv_umur0_id>81</tv_umur0_id>
+            <enduit_isolant_paroi_ancienne>0</enduit_isolant_paroi_ancienne>
+            <enum_type_isolation_id>2</enum_type_isolation_id>
+            <enum_type_doublage_id>2</enum_type_doublage_id>
+            <enum_methode_saisie_u_id>1</enum_methode_saisie_u_id>
+          </donnee_entree>
+          <donnee_intermediaire>
+            <b>0.95</b>
+            <umur>2.50000</umur>
+            <umur0>2.5</umur0>
+          </donnee_intermediaire>
+        </mur>
+      </mur_collection>
+      <plancher_bas_collection>
+        <plancher_bas>
+          <donnee_entree>
+            <description>Plancher bas 1</description>
+            <reference>Plancher bas 1</reference>
+            <tv_coef_reduction_deperdition_id>6</tv_coef_reduction_deperdition_id>
+            <enum_type_adjacence_id>6</enum_type_adjacence_id>
+            <surface_paroi_opaque>12.02</surface_paroi_opaque>
+            <enum_type_plancher_bas_id>9</enum_type_plancher_bas_id>
+            <enum_methode_saisie_u0_id>2</enum_methode_saisie_u0_id>
+            <tv_upb0_id>9</tv_upb0_id>
+            <paroi_lourde>1</paroi_lourde>
+            <enum_type_isolation_id>4</enum_type_isolation_id>
+            <enum_periode_isolation_id>3</enum_periode_isolation_id>
+            <tv_upb_id>8</tv_upb_id>
+            <enum_methode_saisie_u_id>8</enum_methode_saisie_u_id>
+            <calcul_ue>1</calcul_ue>
+            <perimetre_ue>85</perimetre_ue>
+            <surface_ue>12.02</surface_ue>
+            <ue>0.429</ue>
+          </donnee_entree>
+          <donnee_intermediaire>
+            <b>1</b>
+            <upb>2</upb>
+            <upb_final>0.42900</upb_final>
+            <upb0>2</upb0>
+          </donnee_intermediaire>
+        </plancher_bas>
+      </plancher_bas_collection>
+      <plancher_haut_collection></plancher_haut_collection>
+      <baie_vitree_collection>
+        <baie_vitree>
+          <donnee_entree>
+            <description>Fenêtre 1</description>
+            <reference>Fenêtre 1</reference>
+            <reference_paroi>Mur  1</reference_paroi>
+            <tv_coef_reduction_deperdition_id>1</tv_coef_reduction_deperdition_id>
+            <enum_type_adjacence_id>1</enum_type_adjacence_id>
+            <surface_totale_baie>4.8</surface_totale_baie>
+            <nb_baie>1</nb_baie>
+            <enum_type_vitrage_id>1</enum_type_vitrage_id>
+            <enum_inclinaison_vitrage_id>3</enum_inclinaison_vitrage_id>
+            <enum_methode_saisie_perf_vitrage_id>1</enum_methode_saisie_perf_vitrage_id>
+            <tv_ug_id>1</tv_ug_id>
+            <tv_uw_id>321</tv_uw_id>
+            <tv_sw_id>164</tv_sw_id>
+            <enum_type_materiaux_menuiserie_id>7</enum_type_materiaux_menuiserie_id>
+            <enum_type_baie_id>6</enum_type_baie_id>
+            <double_fenetre>0</double_fenetre>
+            <enum_type_fermeture_id>4</enum_type_fermeture_id>
+            <tv_deltar_id>3</tv_deltar_id>
+            <tv_ujn_id>174</tv_ujn_id>
+            <presence_retour_isolation>0</presence_retour_isolation>
+            <presence_joint>0</presence_joint>
+            <presence_protection_solaire_hors_fermeture>0</presence_protection_solaire_hors_fermeture>
+            <largeur_dormant>5</largeur_dormant>
+            <enum_type_pose_id>2</enum_type_pose_id>
+            <enum_orientation_id>4</enum_orientation_id>
+            <tv_coef_masque_proche_id>14</tv_coef_masque_proche_id>
+            <tv_coef_masque_lointain_homogene_id>11</tv_coef_masque_lointain_homogene_id>
+          </donnee_entree>
+          <donnee_intermediaire>
+            <b>1</b>
+            <ug>5.8</ug>
+            <uw>6.3</uw>
+            <u_menuiserie>4.6</u_menuiserie>
+            <ujn>4.6</ujn>
+            <sw>0.64</sw>
+            <fe1>0.6</fe1>
+            <fe2>0.4</fe2>
+          </donnee_intermediaire>
+        </baie_vitree>
+      </baie_vitree_collection>
+      <porte_collection>
+        <porte>
+          <donnee_entree>
+            <description>Porte 1</description>
+            <reference>Porte 1</reference>
+            <reference_paroi>Mur  2</reference_paroi>
+            <tv_coef_reduction_deperdition_id>27</tv_coef_reduction_deperdition_id>
+            <enum_type_adjacence_id>15</enum_type_adjacence_id>
+            <surface_aiu>14</surface_aiu>
+            <surface_aue> 26</surface_aue>
+            <enum_cfg_isolation_lnc_id>4</enum_cfg_isolation_lnc_id>
+            <reference_lnc>Local 1</reference_lnc>
+            <enum_type_porte_id>1</enum_type_porte_id>
+            <enum_type_pose_id>2</enum_type_pose_id>
+            <surface_porte>1.8</surface_porte>
+            <nb_porte>1</nb_porte>
+            <presence_retour_isolation>0</presence_retour_isolation>
+            <presence_joint>0</presence_joint>
+            <largeur_dormant>5</largeur_dormant>
+            <enum_methode_saisie_uporte_id>1</enum_methode_saisie_uporte_id>
+            <tv_uporte_id>1</tv_uporte_id>
+          </donnee_entree>
+          <donnee_intermediaire>
+            <b>0.95</b>
+            <uporte>3.50000</uporte>
+          </donnee_intermediaire>
+        </porte>
+      </porte_collection>
+      <ets_collection></ets_collection>
+      <pont_thermique_collection>
+        <pont_thermique>
+          <donnee_entree>
+            <description>Pont thermique 1</description>
+            <reference>Pont thermique 1</reference>
+            <reference_1>Mur 1</reference_1>
+            <reference_2>Plancher bas 1</reference_2>
+            <tv_pont_thermique_id>7</tv_pont_thermique_id>
+            <l>2.7</l>
+            <enum_methode_saisie_pont_thermique_id>1</enum_methode_saisie_pont_thermique_id>
+            <enum_type_liaison_id>1</enum_type_liaison_id>
+            <pourcentage_valeur_pont_thermique>1</pourcentage_valeur_pont_thermique>
+          </donnee_entree>
+          <donnee_intermediaire>
+            <k>1.917</k>
+          </donnee_intermediaire>
+        </pont_thermique>
+        <pont_thermique>
+          <donnee_entree>
+            <description>Pont thermique 2</description>
+            <reference>Pont thermique 2</reference>
+            <reference_1>Mur 1</reference_1>
+            <reference_2>Fenêtre 1</reference_2>
+            <tv_pont_thermique_id>81</tv_pont_thermique_id>
+            <l>6.4</l>
+            <enum_methode_saisie_pont_thermique_id>1</enum_methode_saisie_pont_thermique_id>
+            <enum_type_liaison_id>5</enum_type_liaison_id>
+            <pourcentage_valeur_pont_thermique>1</pourcentage_valeur_pont_thermique>
+          </donnee_entree>
+          <donnee_intermediaire>
+            <k>0</k>
+          </donnee_intermediaire>
+        </pont_thermique>
+        <pont_thermique>
+          <donnee_entree>
+            <description>Pont thermique 3</description>
+            <reference>Pont thermique 3</reference>
+            <reference_1>Mur 1</reference_1>
+            <reference_2>Mur de refend mitoyen</reference_2>
+            <tv_pont_thermique_id>65</tv_pont_thermique_id>
+            <l>2.5</l>
+            <enum_methode_saisie_pont_thermique_id>1</enum_methode_saisie_pont_thermique_id>
+            <enum_type_liaison_id>4</enum_type_liaison_id>
+            <pourcentage_valeur_pont_thermique>0.5</pourcentage_valeur_pont_thermique>
+          </donnee_entree>
+          <donnee_intermediaire>
+            <k>1.025</k>
+          </donnee_intermediaire>
+        </pont_thermique>
+      </pont_thermique_collection>
+    </enveloppe>
+    <ventilation_collection>
+      <ventilation>
+        <donnee_entree>
+          <description>Ventilation 1</description>
+          <reference>Ventilation 1</reference>
+          <surface_ventile>12.02</surface_ventile>
+          <plusieurs_facade_exposee>0</plusieurs_facade_exposee>
+          <tv_q4pa_conv_id>2</tv_q4pa_conv_id>
+          <enum_methode_saisie_q4pa_conv_id>1</enum_methode_saisie_q4pa_conv_id>
+          <enum_type_ventilation_id>3</enum_type_ventilation_id>
+          <tv_debits_ventilation_id>3</tv_debits_ventilation_id>
+          <ventilation_post_2012>0</ventilation_post_2012>
+        </donnee_entree>
+        <donnee_intermediaire>
+          <pvent_moy>10.892524</pvent_moy>
+          <q4pa_conv>2</q4pa_conv>
+          <conso_auxiliaire_ventilation>95.41851024</conso_auxiliaire_ventilation>
+          <hperm>0.23869722801984</hperm>
+          <hvent>8.050996</hvent>
+        </donnee_intermediaire>
+      </ventilation>
+    </ventilation_collection>
+    <climatisation_collection></climatisation_collection>
+    <installation_ecs_collection>
+      <installation_ecs>
+        <donnee_entree>
+          <description>Installation ECS 1</description>
+          <reference>Installation ECS 1</reference>
+          <enum_cfg_installation_ecs_id>1</enum_cfg_installation_ecs_id>
+          <enum_type_installation_id>2</enum_type_installation_id>
+          <enum_methode_calcul_conso_id>2</enum_methode_calcul_conso_id>
+          <ratio_virtualisation> .00289987937273824</ratio_virtualisation>
+          <rdim>1</rdim>
+          <surface_habitable>12.02</surface_habitable>
+          <nombre_logement>1</nombre_logement>
+          <nombre_niveau_installation_ecs>1</nombre_niveau_installation_ecs>
+          <tv_rendement_distribution_ecs_id>7</tv_rendement_distribution_ecs_id>
+          <enum_bouclage_reseau_ecs_id>1</enum_bouclage_reseau_ecs_id>
+          <reseau_distribution_isole>1</reseau_distribution_isole>
+        </donnee_entree>
+        <donnee_intermediaire>
+          <rendement_distribution>0.52</rendement_distribution>
+          <besoin_ecs>679428.3582345</besoin_ecs>
+          <besoin_ecs_depensier>958479.291080813</besoin_ecs_depensier>
+          <conso_ecs>1461.80058649833</conso_ecs>
+          <conso_ecs_depensier>2033.64786227168</conso_ecs_depensier>
+        </donnee_intermediaire>
+        <generateur_ecs_collection>
+          <generateur_ecs>
+            <donnee_entree>
+              <description>Générateur Ecs 1</description>
+              <reference>Générateur Ecs 1</reference>
+              <reference_generateur_mixte>Générateur 1</reference_generateur_mixte>
+              <enum_type_generateur_ecs_id>56</enum_type_generateur_ecs_id>
+              <enum_usage_generateur_id>3</enum_usage_generateur_id>
+              <enum_type_energie_id>2</enum_type_energie_id>
+              <tv_generateur_combustion_id>12</tv_generateur_combustion_id>
+              <enum_methode_saisie_carac_sys_id>2</enum_methode_saisie_carac_sys_id>
+              <presence_ventouse>0</presence_ventouse>
+              <enum_type_stockage_ecs_id>1</enum_type_stockage_ecs_id>
+              <position_volume_chauffe>1</position_volume_chauffe>
+              <volume_stockage>0</volume_stockage>
+            </donnee_entree>
+            <donnee_intermediaire>
+              <pn>69600</pn>
+              <qp0>2.01832</qp0>
+              <rpn>0.938426100909721</rpn>
+              <ratio_besoin_ecs>1</ratio_besoin_ecs>
+              <conso_ecs>1461.80058649833</conso_ecs>
+              <conso_ecs_depensier>2033.64786227168</conso_ecs_depensier>
+            </donnee_intermediaire>
+          </generateur_ecs>
+        </generateur_ecs_collection>
+      </installation_ecs>
+    </installation_ecs_collection>
+    <installation_chauffage_collection>
+      <installation_chauffage>
+        <donnee_entree>
+          <description>Installation de chauffage seul classique</description>
+          <reference>Installation Chauffage 1</reference>
+          <nombre_niveau_installation_ch>1</nombre_niveau_installation_ch>
+          <surface_chauffee>12.02</surface_chauffee>
+          <rdim>1</rdim>
+          <enum_cfg_installation_ch_id>1</enum_cfg_installation_ch_id>
+          <ratio_virtualisation>0.00289987937273824</ratio_virtualisation>
+          <enum_type_installation_id>2</enum_type_installation_id>
+          <enum_methode_calcul_conso_id>2</enum_methode_calcul_conso_id>
+        </donnee_entree>
+        <donnee_intermediaire>
+          <besoin_ch>3830.46820355593</besoin_ch>
+          <besoin_ch_depensier>4706.95394764134</besoin_ch_depensier>
+          <conso_ch>4664.40780076206</conso_ch>
+          <conso_ch_depensier>5739.65653751532</conso_ch_depensier>
+        </donnee_intermediaire>
+        <emetteur_chauffage_collection>
+          <emetteur_chauffage>
+            <donnee_entree>
+              <description>Emetteur 1</description>
+              <reference>Installation 1 Emetteur 1</reference>
+              <surface_chauffee>12.02</surface_chauffee>
+              <tv_rendement_emission_id>7</tv_rendement_emission_id>
+              <tv_rendement_distribution_ch_id>9</tv_rendement_distribution_ch_id>
+              <tv_rendement_regulation_id>11</tv_rendement_regulation_id>
+              <enum_type_emission_distribution_id>33</enum_type_emission_distribution_id>
+              <tv_intermittence_id>164</tv_intermittence_id>
+              <reseau_distribution_isole>1</reseau_distribution_isole>
+              <enum_equipement_intermittence_id>6</enum_equipement_intermittence_id>
+              <enum_type_regulation_id>1</enum_type_regulation_id>
+              <enum_type_chauffage_id>2</enum_type_chauffage_id>
+              <enum_temp_distribution_ch_id>3</enum_temp_distribution_ch_id>
+              <enum_periode_installation_emetteur_id>1</enum_periode_installation_emetteur_id>
+              <enum_lien_generateur_emetteur_id>1</enum_lien_generateur_emetteur_id>
+            </donnee_entree>
+            <donnee_intermediaire>
+              <i0>1.03</i0>
+              <rendement_emission>0.95</rendement_emission>
+              <rendement_distribution>0.9</rendement_distribution>
+              <rendement_regulation>0.9</rendement_regulation>
+            </donnee_intermediaire>
+          </emetteur_chauffage>
+        </emetteur_chauffage_collection>
+        <generateur_chauffage_collection>
+          <generateur_chauffage>
+            <donnee_entree>
+              <description>Générateur 1</description>
+              <reference>Installation 1 - 1Générateur 1</reference>
+              <enum_type_generateur_ch_id>96</enum_type_generateur_ch_id>
+              <enum_lien_generateur_emetteur_id>1</enum_lien_generateur_emetteur_id>
+              <enum_usage_generateur_id>3</enum_usage_generateur_id>
+              <enum_type_energie_id>2</enum_type_energie_id>
+              <position_volume_chauffe>0</position_volume_chauffe>
+              <tv_generateur_combustion_id>12</tv_generateur_combustion_id>
+              <enum_methode_saisie_carac_sys_id>2</enum_methode_saisie_carac_sys_id>
+              <presence_ventouse>0</presence_ventouse>
+              <presence_regulation_combustion>1</presence_regulation_combustion>
+            </donnee_entree>
+            <donnee_intermediaire>
+              <pn>69600</pn>
+              <qp0>2.01832</qp0>
+              <temp_fonc_30>38</temp_fonc_30>
+              <temp_fonc_100>80</temp_fonc_100>
+              <rpn>0.938426100909721</rpn>
+              <rpint>0.998426100909721</rpint>
+              <rendement_generation>0.946687575992562</rendement_generation>
+              <conso_ch>4664.40780076206</conso_ch>
+              <conso_ch_depensier>5739.65653751532</conso_ch_depensier>
+            </donnee_intermediaire>
+          </generateur_chauffage>
+        </generateur_chauffage_collection>
+      </installation_chauffage>
+    </installation_chauffage_collection>
+    <sortie>
+      <deperdition>
+        <hvent>8.050996</hvent>
+        <hperm>0.23869722801984</hperm>
+        <deperdition_renouvellement_air>8.290</deperdition_renouvellement_air>
+        <deperdition_mur>34.013</deperdition_mur>
+        <deperdition_plancher_bas>5.157</deperdition_plancher_bas>
+        <deperdition_plancher_haut>0.000</deperdition_plancher_haut>
+        <deperdition_baie_vitree>22.080</deperdition_baie_vitree>
+        <deperdition_porte>5.985</deperdition_porte>
+        <deperdition_pont_thermique>2.942</deperdition_pont_thermique>
+        <deperdition_enveloppe>78.466</deperdition_enveloppe>
+      </deperdition>
+      <apport_et_besoin>
+        <surface_sud_equivalente>6.414336</surface_sud_equivalente>
+        <apport_solaire_fr>0</apport_solaire_fr>
+        <apport_interne_fr>0</apport_interne_fr>
+        <apport_solaire_ch>229963.2461</apport_solaire_ch>
+        <apport_interne_ch>670151.713942857</apport_interne_ch>
+        <fraction_apport_gratuit_ch>0.184633327277581</fraction_apport_gratuit_ch>
+        <fraction_apport_gratuit_depensier_ch>0.159020169573895</fraction_apport_gratuit_depensier_ch>
+        <pertes_distribution_ecs_recup>45713.5780158671</pertes_distribution_ecs_recup>
+        <pertes_distribution_ecs_recup_depensier>66069.8419733694</pertes_distribution_ecs_recup_depensier>
+        <pertes_stockage_ecs_recup>0</pertes_stockage_ecs_recup>
+        <pertes_generateur_ch_recup>0</pertes_generateur_ch_recup>
+        <pertes_generateur_ch_recup_depensier>0</pertes_generateur_ch_recup_depensier>
+        <nadeq>1.037875</nadeq>
+        <v40_ecs_journalier>58.121</v40_ecs_journalier>
+        <v40_ecs_journalier_depensier>81.992125</v40_ecs_journalier_depensier>
+        <besoin_ch>3830.46820355593</besoin_ch>
+        <besoin_ch_depensier>4706.95394764134</besoin_ch_depensier>
+        <besoin_ecs>679.4283582345</besoin_ecs>
+        <besoin_ecs_depensier>958.479291080813</besoin_ecs_depensier>
+        <besoin_fr>0</besoin_fr>
+        <besoin_fr_depensier>0</besoin_fr_depensier>
+      </apport_et_besoin>
+      <ef_conso>
+        <conso_ch>4664.40780076206</conso_ch>
+        <conso_ch_depensier>5739.65653751532</conso_ch_depensier>
+        <conso_ecs>1461.80058649833</conso_ecs>
+        <conso_ecs_depensier>2033.64786227168</conso_ecs_depensier>
+        <conso_eclairage>22.7178</conso_eclairage>
+        <conso_auxiliaire_generation_ch>3.63233341726695</conso_auxiliaire_generation_ch>
+        <conso_auxiliaire_generation_ch_depensier>8.09581547976844</conso_auxiliaire_generation_ch_depensier>
+        <conso_auxiliaire_distribution_ch>173.76</conso_auxiliaire_distribution_ch>
+        <conso_auxiliaire_generation_ecs>0.644284249106404</conso_auxiliaire_generation_ecs>
+        <conso_auxiliaire_generation_ecs_depensier>0.908900994275106</conso_auxiliaire_generation_ecs_depensier>
+        <conso_auxiliaire_distribution_ecs>2.09393527446529</conso_auxiliaire_distribution_ecs>
+        <conso_auxiliaire_distribution_fr>0</conso_auxiliaire_distribution_fr>
+        <conso_auxiliaire_ventilation>95.41851024</conso_auxiliaire_ventilation>
+        <conso_totale_auxiliaire>275.549063180839</conso_totale_auxiliaire>
+        <conso_fr>0</conso_fr>
+        <conso_fr_depensier>0</conso_fr_depensier>
+        <conso_5_usages>6424.47525044122</conso_5_usages>
+        <conso_5_usages_m2>534.482133980135</conso_5_usages_m2>
+      </ef_conso>
+      <ep_conso>
+        <ep_conso_ch>4664.40780076206</ep_conso_ch>
+        <ep_conso_ch_depensier>5739.65653751532</ep_conso_ch_depensier>
+        <ep_conso_ecs>1461.80058649833</ep_conso_ecs>
+        <ep_conso_ecs_depensier>2033.64786227168</ep_conso_ecs_depensier>
+        <ep_conso_eclairage>52.25094</ep_conso_eclairage>
+        <ep_conso_auxiliaire_generation_ch>8.35436685971398</ep_conso_auxiliaire_generation_ch>
+        <ep_conso_auxiliaire_generation_ch_depensier>18.6203756034674</ep_conso_auxiliaire_generation_ch_depensier>
+        <ep_conso_auxiliaire_distribution_ch>399.648</ep_conso_auxiliaire_distribution_ch>
+        <ep_conso_auxiliaire_generation_ecs>1.48185377294473</ep_conso_auxiliaire_generation_ecs>
+        <ep_conso_auxiliaire_generation_ecs_depensier>2.09047228683274</ep_conso_auxiliaire_generation_ecs_depensier>
+        <ep_conso_auxiliaire_distribution_ecs>4.81605113127017</ep_conso_auxiliaire_distribution_ecs>
+        <ep_conso_auxiliaire_distribution_fr>0</ep_conso_auxiliaire_distribution_fr>
+        <ep_conso_auxiliaire_ventilation>219.462573552</ep_conso_auxiliaire_ventilation>
+        <ep_conso_totale_auxiliaire>633.762845315929</ep_conso_totale_auxiliaire>
+        <ep_conso_fr>0</ep_conso_fr>
+        <ep_conso_fr_depensier>0</ep_conso_fr_depensier>
+        <ep_conso_5_usages>6812.22217257631</ep_conso_5_usages>
+        <ep_conso_5_usages_m2>566.740613359094</ep_conso_5_usages_m2>
+        <classe_bilan_dpe>G</classe_bilan_dpe>
+      </ep_conso>
+      <emission_ges>
+        <emission_ges_ch>30.6562575923629</emission_ges_ch>
+        <emission_ges_ch_depensier>37.7232002049676</emission_ges_ch_depensier>
+        <emission_ges_ecs>9.60750801442328</emission_ges_ecs>
+        <emission_ges_ecs_depensier>13.3659052512032</emission_ges_ecs_depensier>
+        <emission_ges_eclairage>0.14931</emission_ges_eclairage>
+        <emission_ges_auxiliaire_generation_ch>0.0238730732083269</emission_ges_auxiliaire_generation_ch>
+        <emission_ges_auxiliaire_generation_ch_depensier>0.053208770624102</emission_ges_auxiliaire_generation_ch_depensier>
+        <emission_ges_auxiliaire_distribution_ch>1.14201663893511</emission_ges_auxiliaire_distribution_ch>
+        <emission_ges_auxiliaire_generation_ecs>0.0042344805057742</emission_ges_auxiliaire_generation_ecs>
+        <emission_ges_auxiliaire_generation_ecs_depensier>0.00597364214207432</emission_ges_auxiliaire_generation_ecs_depensier>
+        <emission_ges_auxiliaire_distribution_ecs>0.0137621369952378</emission_ges_auxiliaire_distribution_ecs>
+        <emission_ges_auxiliaire_distribution_fr>0</emission_ges_auxiliaire_distribution_fr>
+        <emission_ges_auxiliaire_ventilation>0</emission_ges_auxiliaire_ventilation>
+        <emission_ges_totale_auxiliaire>1.18388632964445</emission_ges_totale_auxiliaire>
+        <emission_ges_fr>0</emission_ges_fr>
+        <emission_ges_fr_depensier>0</emission_ges_fr_depensier>
+        <emission_ges_5_usages>1409.8258</emission_ges_5_usages>
+        <emission_ges_5_usages_m2>117.29</emission_ges_5_usages_m2>
+        <classe_emission_ges>G</classe_emission_ges>
+      </emission_ges>
+      <cout>
+        <cout_ch>433</cout_ch>
+        <cout_ch_depensier>533</cout_ch_depensier>
+        <cout_ecs>136</cout_ecs>
+        <cout_ecs_depensier>189</cout_ecs_depensier>
+        <cout_eclairage>8</cout_eclairage>
+        <cout_auxiliaire_generation_ch>1</cout_auxiliaire_generation_ch>
+        <cout_auxiliaire_generation_ch_depensier>3</cout_auxiliaire_generation_ch_depensier>
+        <cout_auxiliaire_distribution_ch>60</cout_auxiliaire_distribution_ch>
+        <cout_auxiliaire_generation_ecs>0</cout_auxiliaire_generation_ecs>
+        <cout_auxiliaire_generation_ecs_depensier>0</cout_auxiliaire_generation_ecs_depensier>
+        <cout_auxiliaire_distribution_ecs>1</cout_auxiliaire_distribution_ecs>
+        <cout_auxiliaire_distribution_fr>0</cout_auxiliaire_distribution_fr>
+        <cout_auxiliaire_ventilation>0</cout_auxiliaire_ventilation>
+        <cout_total_auxiliaire>673</cout_total_auxiliaire>
+        <cout_fr>0</cout_fr>
+        <cout_fr_depensier>0</cout_fr_depensier>
+        <cout_5_usages>673</cout_5_usages>
+      </cout>
+      <production_electricite>
+        <production_pv>0</production_pv>
+        <conso_elec_ac>0</conso_elec_ac>
+        <conso_elec_ac_ch>0</conso_elec_ac_ch>
+        <conso_elec_ac_fr>0</conso_elec_ac_fr>
+        <conso_elec_ac_ecs>0</conso_elec_ac_ecs>
+        <conso_elec_ac_auxiliaire>0</conso_elec_ac_auxiliaire>
+        <conso_elec_ac_eclairage>0</conso_elec_ac_eclairage>
+        <conso_elec_ac_autre_usage>0</conso_elec_ac_autre_usage>
+      </production_electricite>
+      <sortie_par_energie_collection>
+        <sortie_par_energie>
+          <enum_type_energie_id>2</enum_type_energie_id>
+          <conso_ch>4664.40780076206</conso_ch>
+          <conso_ecs>1461.80058649833</conso_ecs>
+          <conso_5_usages>6126.20838726038</conso_5_usages>
+          <emission_ges_ch>30.6562575923629</emission_ges_ch>
+          <emission_ges_ecs>9.60750801442328</emission_ges_ecs>
+          <emission_ges_5_usages>40.2637656067862</emission_ges_5_usages>
+          <cout_ch>433</cout_ch>
+          <cout_ecs>136</cout_ecs>
+          <cout_5_usages>569</cout_5_usages>
+        </sortie_par_energie>
+        <sortie_par_energie>
+          <enum_type_energie_id>1</enum_type_energie_id>
+          <conso_ch>0</conso_ch>
+          <conso_ecs>0</conso_ecs>
+          <conso_5_usages>22.7178</conso_5_usages>
+          <emission_ges_ch>0</emission_ges_ch>
+          <emission_ges_ecs>0</emission_ges_ecs>
+          <emission_ges_5_usages>0.14931</emission_ges_5_usages>
+          <cout_ch>0</cout_ch>
+          <cout_ecs>0</cout_ecs>
+          <cout_5_usages>8</cout_5_usages>
+        </sortie_par_energie>
+      </sortie_par_energie_collection>
+      <confort_ete>
+        <isolation_toiture>1</isolation_toiture>
+        <protection_solaire_exterieure>1</protection_solaire_exterieure>
+        <aspect_traversant>1</aspect_traversant>
+        <brasseur_air>1</brasseur_air>
+        <inertie_lourde>1</inertie_lourde>
+        <enum_indicateur_confort_ete_id>2</enum_indicateur_confort_ete_id>
+      </confort_ete>
+      <qualite_isolation>
+        <ubat>2.13889058213959</ubat>
+        <qualite_isol_enveloppe>4</qualite_isol_enveloppe>
+        <qualite_isol_mur>4</qualite_isol_mur>
+        <qualite_isol_plancher_bas>2</qualite_isol_plancher_bas>
+        <qualite_isol_plancher_haut_toit_terrasse>1</qualite_isol_plancher_haut_toit_terrasse>
+        <qualite_isol_menuiserie>4</qualite_isol_menuiserie>
+      </qualite_isolation>
+    </sortie>
+  </logement>
+  <descriptif_enr_collection>
+    <descriptif_enr>
+      <description>non équipé</description>
+      <enum_categorie_enr_descriptif_id>1</enum_categorie_enr_descriptif_id>
+    </descriptif_enr>
+    <descriptif_enr>
+      <description>non équipé</description>
+      <enum_categorie_enr_descriptif_id>2</enum_categorie_enr_descriptif_id>
+    </descriptif_enr>
+    <descriptif_enr>
+      <description>non équipé</description>
+      <enum_categorie_enr_descriptif_id>3</enum_categorie_enr_descriptif_id>
+    </descriptif_enr>
+    <descriptif_enr>
+      <description>non équipé</description>
+      <enum_categorie_enr_descriptif_id>4</enum_categorie_enr_descriptif_id>
+    </descriptif_enr>
+    <descriptif_enr>
+      <description>non équipé</description>
+      <enum_categorie_enr_descriptif_id>7</enum_categorie_enr_descriptif_id>
+    </descriptif_enr>
+    <descriptif_enr>
+      <description>non équipé</description>
+      <enum_categorie_enr_descriptif_id>6</enum_categorie_enr_descriptif_id>
+    </descriptif_enr>
+    <descriptif_enr>
+      <description>non équipé</description>
+      <enum_categorie_enr_descriptif_id>5</enum_categorie_enr_descriptif_id>
+    </descriptif_enr>
+    <descriptif_enr>
+      <description>non équipé</description>
+      <enum_categorie_enr_descriptif_id>8</enum_categorie_enr_descriptif_id>
+    </descriptif_enr>
+    <descriptif_enr>
+      <description>non équipé</description>
+      <enum_categorie_enr_descriptif_id>9</enum_categorie_enr_descriptif_id>
+    </descriptif_enr>
+  </descriptif_enr_collection>
+  <descriptif_simplifie_collection>
+    <descriptif_simplifie>
+      <description>Murs Ouest en béton banché donnant sur l&apos;extérieur, isolé
+Murs  en béton banché donnant sur circulations communes avec ouverture directe sur l&apos;extérieur, non isolé
+</description>
+      <enum_categorie_descriptif_simplifie_id>1</enum_categorie_descriptif_simplifie_id>
+    </descriptif_simplifie>
+    <descriptif_simplifie>
+      <description>Planchers en dalle béton donnant sur sous-sol non chauffé, avec isolation extérieure
+</description>
+      <enum_categorie_descriptif_simplifie_id>2</enum_categorie_descriptif_simplifie_id>
+    </descriptif_simplifie>
+    <descriptif_simplifie>
+      <description>Pas de plafond déperditif</description>
+      <enum_categorie_descriptif_simplifie_id>3</enum_categorie_descriptif_simplifie_id>
+    </descriptif_simplifie>
+    <descriptif_simplifie>
+      <description>Portes en bois opaque pleine
+Portes-fenêtres coulissantes métallique sans rupture de pont thermique, simple vitrage et volets roulants pvc (épaisseur tablier =&lt; 12mm)
+</description>
+      <enum_categorie_descriptif_simplifie_id>4</enum_categorie_descriptif_simplifie_id>
+    </descriptif_simplifie>
+    <descriptif_simplifie>
+      <description>Installation de chauffage seul classique (système collectif)
+Chaudière gaz condensation (Année: 2011, Energie: Gaz)
+Emetteur(s): Radiateur
+
+</description>
+      <enum_categorie_descriptif_simplifie_id>5</enum_categorie_descriptif_simplifie_id>
+    </descriptif_simplifie>
+    <descriptif_simplifie>
+      <description>Générateur sans régulation par pièce, Equipement : central collectif, Système : radiateur / convecteur
+</description>
+      <enum_categorie_descriptif_simplifie_id>9</enum_categorie_descriptif_simplifie_id>
+    </descriptif_simplifie>
+    <descriptif_simplifie>
+      <description>Production liée à la chaudière Gaz installé en 2011, non bouclé, de type instantané (système collectif isolé sans tracage)
+</description>
+      <enum_categorie_descriptif_simplifie_id>6</enum_categorie_descriptif_simplifie_id>
+    </descriptif_simplifie>
+    <descriptif_simplifie>
+      <description></description>
+      <enum_categorie_descriptif_simplifie_id>7</enum_categorie_descriptif_simplifie_id>
+    </descriptif_simplifie>
+    <descriptif_simplifie>
+      <description>VMC SF Auto réglable avant 1982</description>
+      <enum_categorie_descriptif_simplifie_id>8</enum_categorie_descriptif_simplifie_id>
+    </descriptif_simplifie>
+  </descriptif_simplifie_collection>
+  <fiche_technique_collection>
+    <fiche_technique>
+      <enum_categorie_fiche_technique_id>11</enum_categorie_fiche_technique_id>
+      <sous_fiche_technique_collection>
+        <sous_fiche_technique>
+          <description>département</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>92330</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>altitude</description>
+          <enum_origine_donnee_id>4</enum_origine_donnee_id>
+          <valeur>102</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>type de bâtiment</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>Appartement en immeuble collectif</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>année de construction</description>
+          <enum_origine_donnee_id>5</enum_origine_donnee_id>
+          <valeur>1972</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>période de construction</description>
+          <enum_origine_donnee_id>5</enum_origine_donnee_id>
+          <valeur>De 1948 à 1974</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>surface de référence</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>12.02</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>nombre de niveaux</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>1</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>hauteur moyenne sous plafond</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>2.50m</valeur>
+        </sous_fiche_technique>
+      </sous_fiche_technique_collection>
+    </fiche_technique>
+    <fiche_technique>
+      <enum_categorie_fiche_technique_id>2</enum_categorie_fiche_technique_id>
+      <sous_fiche_technique_collection>
+        <sous_fiche_technique>
+          <description>surface</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>12.02</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>type</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>Dalle béton</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>isolation</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>Oui</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>type isolation</description>
+          <enum_origine_donnee_id>1</enum_origine_donnee_id>
+          <valeur>ITE</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>épaisseur isolant</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>Inconnue</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>année d&apos;isolation</description>
+          <enum_origine_donnee_id>1</enum_origine_donnee_id>
+          <valeur>De 1948 à 1974</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>périmètre sur terre-plein, vide sanitaire ou sous-sol</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>85</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>inertie</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>Lourde</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>mitoyenneté</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>Sous-sol non chauffé</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>coefficent de déperdition (b)</description>
+          <enum_origine_donnee_id>1</enum_origine_donnee_id>
+          <valeur>1</valeur>
+        </sous_fiche_technique>
+      </sous_fiche_technique_collection>
+    </fiche_technique>
+    <fiche_technique>
+      <enum_categorie_fiche_technique_id>1</enum_categorie_fiche_technique_id>
+      <sous_fiche_technique_collection>
+        <sous_fiche_technique>
+          <description>surface (m²)</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>7.29</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>surface (m²)</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>2.49</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>type</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>Murs en béton banché</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>épaisseur moyenne (cm)</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>22.5</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>isolation</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>Oui</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>épaisseur isolant</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>Inconnue</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>année d&apos;isolation</description>
+          <enum_origine_donnee_id>1</enum_origine_donnee_id>
+          <valeur>De 1948 à 1974</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>inertie</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>Lourde</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>orientation</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>Ouest</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>plancher bas associé</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>Plancher bas  1 - Dalle béton</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>plancher haut associé</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>Plancher haut  1 - Dalle béton</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>mitoyenneté</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>Paroi extérieure</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>coefficent de déperdition (b)</description>
+          <enum_origine_donnee_id>1</enum_origine_donnee_id>
+          <valeur>1</valeur>
+        </sous_fiche_technique>
+      </sous_fiche_technique_collection>
+    </fiche_technique>
+    <fiche_technique>
+      <enum_categorie_fiche_technique_id>1</enum_categorie_fiche_technique_id>
+      <sous_fiche_technique_collection>
+        <sous_fiche_technique>
+          <description>surface (m²)</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>13.50</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>surface (m²)</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>11.7</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>type</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>Murs en béton banché</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>épaisseur moyenne (cm)</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>20 et -</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>isolation</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>Non</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>inertie</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>Lourde</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>plancher bas associé</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>Plancher bas  1 - Dalle béton</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>plancher haut associé</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>Plancher haut  1 - Dalle béton</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>type de local non chauffé</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>Circulations communes avec ouverture directe sur l&apos;extérieur</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>surface Aiu</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>14</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>isolation Aiu</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>Oui</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>surface Aue</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur> 26</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>isolation Aue</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>Non</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>coefficent de déperdition (b)</description>
+          <enum_origine_donnee_id>1</enum_origine_donnee_id>
+          <valeur>0.95</valeur>
+        </sous_fiche_technique>
+      </sous_fiche_technique_collection>
+    </fiche_technique>
+    <fiche_technique>
+      <enum_categorie_fiche_technique_id>5</enum_categorie_fiche_technique_id>
+      <sous_fiche_technique_collection>
+        <sous_fiche_technique>
+          <description>nombre</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>1</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>surface</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>1.80</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>type</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>Porte en bois opaque pleine</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>largeur du dormant</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>5</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>localisation</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>Au nu intérieur</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>retour isolant</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>Sans retour</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>mur affilié</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>Mur  2 - Murs en béton banché</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>type de local non chauffé</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>Circulations communes avec ouverture directe sur l&apos;extérieur</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>surface Aiu</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>14</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>isolation Aiu</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>Oui</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>surface Aue</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur> 26</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>isolation Aue</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>Non</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>coefficent de déperdition (b)</description>
+          <enum_origine_donnee_id>1</enum_origine_donnee_id>
+          <valeur>0.95</valeur>
+        </sous_fiche_technique>
+      </sous_fiche_technique_collection>
+    </fiche_technique>
+    <fiche_technique>
+      <enum_categorie_fiche_technique_id>4</enum_categorie_fiche_technique_id>
+      <sous_fiche_technique_collection>
+        <sous_fiche_technique>
+          <description>nombre</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>1</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>surface</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>4.80</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>type</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>Menuiserie métallique sans rupture de pont thermique</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>largeur du dormant</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>5</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>localisation</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>Au nu intérieur</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>retour isolant</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>Sans retour</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>type de paroi</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>Portes-fenêtres coulissantes</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>type de vitrage</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>Simple vitrage</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>inclinaison</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>Vertical</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>type de volets</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>Volets roulants PVC (épaisseur tablier =&lt; 12mm)</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>orientation</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>Ouest</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>type de masques proches</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>Baie sous un balcon ou auvent</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>avancée</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>1&lt;= &lt;2</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>type de masques lointains</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>Homogène</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>hauteur de l&apos;angle</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>30°&lt;= &lt;60°</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>mur/plancher haut affilié</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>Mur  1 - Murs en béton banché</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>donnant sur</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>Paroi extérieure</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>coefficent de déperdition (b)</description>
+          <enum_origine_donnee_id>1</enum_origine_donnee_id>
+          <valeur>1</valeur>
+        </sous_fiche_technique>
+      </sous_fiche_technique_collection>
+    </fiche_technique>
+    <fiche_technique>
+      <enum_categorie_fiche_technique_id>6</enum_categorie_fiche_technique_id>
+      <sous_fiche_technique_collection>
+        <sous_fiche_technique>
+          <description>type de liaison</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>Mur  1  / Plancher bas  1 </valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>Longueur</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>2.7</valeur>
+        </sous_fiche_technique>
+      </sous_fiche_technique_collection>
+    </fiche_technique>
+    <fiche_technique>
+      <enum_categorie_fiche_technique_id>6</enum_categorie_fiche_technique_id>
+      <sous_fiche_technique_collection>
+        <sous_fiche_technique>
+          <description>type de liaison</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>Mur  1  / Fenêtre  1 </valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>Longueur</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>6.4</valeur>
+        </sous_fiche_technique>
+      </sous_fiche_technique_collection>
+    </fiche_technique>
+    <fiche_technique>
+      <enum_categorie_fiche_technique_id>6</enum_categorie_fiche_technique_id>
+      <sous_fiche_technique_collection>
+        <sous_fiche_technique>
+          <description>type de liaison</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>Mur  1  / Mur de refend mitoyen</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>Longueur</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>2.5</valeur>
+        </sous_fiche_technique>
+      </sous_fiche_technique_collection>
+    </fiche_technique>
+    <fiche_technique>
+      <enum_categorie_fiche_technique_id>10</enum_categorie_fiche_technique_id>
+      <sous_fiche_technique_collection>
+        <sous_fiche_technique>
+          <description>Type</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>VMC SF Auto réglable avant 1982</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>façade exposées</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>une</valeur>
+        </sous_fiche_technique>
+      </sous_fiche_technique_collection>
+    </fiche_technique>
+    <fiche_technique>
+      <enum_categorie_fiche_technique_id>7</enum_categorie_fiche_technique_id>
+      <sous_fiche_technique_collection>
+        <sous_fiche_technique>
+          <description>type d&apos;installation</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>Installation de chauffage seul classique</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>surface chaufée</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>12.02</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>générateur type</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>Chaudière gaz condensation</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>energie utilisée</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>Gaz</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>température distribution</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>Moyenne/Radiateur à chaleur douce avant 1981</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>générateur année installation</description>
+          <enum_origine_donnee_id>1</enum_origine_donnee_id>
+          <valeur>2011</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>Pn saisi</description>
+          <enum_origine_donnee_id>1</enum_origine_donnee_id>
+          <valeur>696</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>régulation</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>Oui</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>régulation installation type</description>
+          <enum_origine_donnee_id>1</enum_origine_donnee_id>
+          <valeur>Radiateur eau chaude bitube sans robinet thermostatique</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>émetteur type</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>Radiateur</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>émetteur année installation</description>
+          <enum_origine_donnee_id>1</enum_origine_donnee_id>
+          <valeur>1972</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>distribution type</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>Collectif eau chaude Moyenne ou basse température (&lt;65°) isolé</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>numéro d&apos;intermittence</description>
+          <enum_origine_donnee_id>1</enum_origine_donnee_id>
+          <valeur>1</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>émetteur</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>Principal</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>fonctionnement ecs</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>Mixte</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>nombre de niveau chauffé</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>1</valeur>
+        </sous_fiche_technique>
+      </sous_fiche_technique_collection>
+    </fiche_technique>
+    <fiche_technique>
+      <enum_categorie_fiche_technique_id>8</enum_categorie_fiche_technique_id>
+      <sous_fiche_technique_collection>
+        <sous_fiche_technique>
+          <description>production type</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>Production par chaudière gaz mixte</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>installation type</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>Collectif isolé sans tracage</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>localisation</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>En volume habitable et pièces non contiguës</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>energie</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>Gaz</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>chaudière type</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>Condensation</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>ancienneté</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>2011</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>regulation</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>Oui</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>bouclage réseau</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>Non bouclé</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>type de production d&apos;ecs</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>instantanée</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>générateur de chauffage associé</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>Générateur 1</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>nombre de niveau</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>1</valeur>
+        </sous_fiche_technique>
+        <sous_fiche_technique>
+          <description>Pn saisi</description>
+          <enum_origine_donnee_id>2</enum_origine_donnee_id>
+          <valeur>696</valeur>
+        </sous_fiche_technique>
+      </sous_fiche_technique_collection>
+    </fiche_technique>
+  </fiche_technique_collection>
+  <justificatif_collection></justificatif_collection>
+  <descriptif_geste_entretien_collection>
+    <descriptif_geste_entretien>
+      <description>Aérer les pièces 5 minutes par jour, fenêtres grandes ouvertes.
+
+Ne pas obstruer les entrées d&apos;air. Les nettoyer à l&apos;aide d&apos;un chiffon sec → 1 fois par an
+Nettoyer les bouches d&apos;extraction → tous les 2 ans
+Entretien des conduits par un professionnel → tous les 3 à 5 ans</description>
+      <enum_picto_geste_entretien_id>1</enum_picto_geste_entretien_id>
+      <categorie_geste_entretien>ventilation</categorie_geste_entretien>
+    </descriptif_geste_entretien>
+    <descriptif_geste_entretien>
+      <description>Entretien obligatoire par un professionnel → 1 fois par an
+Programmer la température de chauffage en fonction de votre présence.
+Abaisser la température de 2 à 3°C la nuit.</description>
+      <enum_picto_geste_entretien_id>2</enum_picto_geste_entretien_id>
+      <categorie_geste_entretien>chaudière</categorie_geste_entretien>
+    </descriptif_geste_entretien>
+    <descriptif_geste_entretien>
+      <description>Dépoussiérer les radiateurs régulièrement.</description>
+      <enum_picto_geste_entretien_id>3</enum_picto_geste_entretien_id>
+      <categorie_geste_entretien>radiateurs</categorie_geste_entretien>
+    </descriptif_geste_entretien>
+    <descriptif_geste_entretien>
+      <description>Faire désembouer le circuit de chauffage par un professionnel → tous les 10 ans
+Veiller au bon équilibrage de l&apos;installation de chauffage.</description>
+      <enum_picto_geste_entretien_id>6</enum_picto_geste_entretien_id>
+      <categorie_geste_entretien>circuit de chauffage</categorie_geste_entretien>
+    </descriptif_geste_entretien>
+    <descriptif_geste_entretien>
+      <description>Nettoyer les ampoules et luminaires.</description>
+      <enum_picto_geste_entretien_id>4</enum_picto_geste_entretien_id>
+      <categorie_geste_entretien>éclairages</categorie_geste_entretien>
+    </descriptif_geste_entretien>
+    <descriptif_geste_entretien>
+      <description>Faire vérifier les isolants par un professionnel → tous les 20 ans</description>
+      <enum_picto_geste_entretien_id>13</enum_picto_geste_entretien_id>
+      <categorie_geste_entretien>isolation</categorie_geste_entretien>
+    </descriptif_geste_entretien>
+  </descriptif_geste_entretien_collection>
+  <descriptif_travaux>
+    <pack_travaux_collection>
+      <pack_travaux>
+        <enum_num_pack_travaux_id>1</enum_num_pack_travaux_id>
+        <conso_5_usages_apres_travaux>318</conso_5_usages_apres_travaux>
+        <emission_ges_5_usages_apres_travaux>61</emission_ges_5_usages_apres_travaux>
+        <cout_pack_travaux_min>1240 </cout_pack_travaux_min>
+        <cout_pack_travaux_max>1680</cout_pack_travaux_max>
+        <travaux_collection>
+          <travaux>
+            <description_travaux>Installation de fenêtres double vitrage VPE 4/20/4 avec remplissage Argon et retour d&apos;isolant</description_travaux>
+            <enum_lot_travaux_id>4</enum_lot_travaux_id>
+            <avertissement_travaux></avertissement_travaux>
+            <performance_recommande></performance_recommande>
+          </travaux>
+          <travaux>
+            <description_travaux>label Effinergie : ITI R &gt;= 4.5 pour tout type d’isolation</description_travaux>
+            <enum_lot_travaux_id>1</enum_lot_travaux_id>
+            <avertissement_travaux></avertissement_travaux>
+            <performance_recommande></performance_recommande>
+          </travaux>
+        </travaux_collection>
+      </pack_travaux>
+    </pack_travaux_collection>
+    <commentaire_travaux></commentaire_travaux>
+  </descriptif_travaux>
+</dpe>

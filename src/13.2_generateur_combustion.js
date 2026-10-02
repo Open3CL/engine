@@ -5,6 +5,7 @@ import { updateGenerateurChaudieres } from './13.2_generateur_combustion_chaudie
 import { updateGenerateurPacs } from './13.2_generateur_pac.js';
 import getFicheTechnique from './ficheTechnique.js';
 import { evaluateFormula as evaluateTvFormula } from './formula.js';
+import { conventionPuissanceNominale } from './13.2_generateur_combustion_pn.js';
 
 function criterePn(Pn, matcher) {
   let critere_list = tvColumnLines('generateur_combustion', 'critere_pn', matcher);
@@ -42,6 +43,58 @@ function evaluateFormula(formulaOrValue, pn, E, F) {
 }
 
 /**
+ * Caractéristiques forfaitaires (rpn, rpint, qp0) d'un générateur à combustion.
+ *
+ * Si la consommation est obtenue par virtualisation du générateur collectif pour les besoins
+ * individuels, les formules sont évaluées sur la puissance du générateur collectif
+ * Pn(collectif) = pn / ratio, et qp0 est ramené au logement (× ratio).
+ * 17.2.1 - Génération d’un DPE à l’appartement / Traitement des usages collectifs
+ *
+ * Seules les caractéristiques non saisies (selon la méthode de saisie) sont renvoyées.
+ *
+ * @param row {object} ligne de la table generateur_combustion
+ * @param pn {number} puissance nominale du générateur (W)
+ * @param ratio {number} ratio de virtualisation
+ * @param E {number}
+ * @param F {number}
+ * @param type {'ecs'|'ch'}
+ * @param methodeSaisie {number}
+ * @returns {{rpn?: number, rpint?: number, qp0?: number}}
+ */
+export function caracteristiquesGenerateurCombustion(row, pn, ratio, E, F, type, methodeSaisie) {
+  const caracteristiques = {};
+
+  if (![3, 4, 5].includes(methodeSaisie)) {
+    if (row.rpn) {
+      caracteristiques.rpn = evaluateFormula(row.rpn, pn / ratio, E, F) / 100;
+    }
+    if (type === 'ch' && row.rpint) {
+      caracteristiques.rpint = evaluateFormula(row.rpint, pn / ratio, E, F) / 100;
+    }
+  }
+
+  if (![4, 5].includes(methodeSaisie)) {
+    if (row.qp0_perc) {
+      const qp0_calc = evaluateFormula(row.qp0_perc, pn / ratio, E, F);
+      // Certaines chaudières ont un qp0 en % de pn, d'autres ont des valeurs constantes
+      if (row.qp0_perc.includes('Pn')) {
+        caracteristiques.qp0 = qp0_calc * 1000 * ratio;
+      } else {
+        if (row.qp0_perc.includes('%')) {
+          caracteristiques.qp0 = qp0_calc * pn;
+        } else {
+          caracteristiques.qp0 = qp0_calc * 1000 * ratio;
+        }
+      }
+    } else {
+      caracteristiques.qp0 = 0;
+    }
+  }
+
+  return caracteristiques;
+}
+
+/**
  * Si la méthode de saisie n'est pas "Valeur forfaitaire" mais "caractéristiques saisies"
  * Documentation 3CL : "Pour les installations récentes ou recommandées, les caractéristiques réelles des chaudières présentées sur les bases
  * de données professionnelles peuvent être utilisées."
@@ -63,6 +116,7 @@ export function tv_generateur_combustion(dpe, di, de, type, GV, tbase, methodeSa
   const typeGenerateurKey = `enum_type_generateur_${type}_id`;
   let enumTypeGenerateurId = de[typeGenerateurKey];
   let row;
+  let selectionLigne;
 
   /**
    * Certains DPE configurent mal les données du générateur ECS lorsque c'est un générateur mixte Chauffage + ECS
@@ -99,11 +153,14 @@ export function tv_generateur_combustion(dpe, di, de, type, GV, tbase, methodeSa
       di.pn = (1.2 * GV * (19 - tbase)) / 0.95 ** 3;
     }
 
-    let matcher = {};
-    matcher[typeGenerateurKey] = enumTypeGenerateurId;
-    matcher.critere_pn = criterePn(di.pn / (de.ratio_virtualisation * 1000), matcher);
+    selectionLigne = (pn, ratio) => {
+      let matcher = {};
+      matcher[typeGenerateurKey] = enumTypeGenerateurId;
+      matcher.critere_pn = criterePn(pn / (ratio * 1000), matcher);
+      return tv('generateur_combustion', matcher);
+    };
 
-    row = tv('generateur_combustion', matcher);
+    row = selectionLigne(di.pn, de.ratio_virtualisation);
 
     /**
      * Si l'identifiant du générateur à combustion utilisé n'est pas le bon, avertissement
@@ -144,40 +201,68 @@ export function tv_generateur_combustion(dpe, di, de, type, GV, tbase, methodeSa
   const E = E_tab[de.presence_ventouse];
   const F = F_tab[de.presence_ventouse];
 
-  const ratioVirtualisation = de.ratio_virtualisation || 1;
+  let ratioVirtualisation = de.ratio_virtualisation || 1;
 
   /**
-   * Si la consommation ECS est obtenue par virtualisation du générateur collectif pour les besoins individuels
-   * la puissance nominale est obtenu à partir de la puissance nominale du générateur collectif multiplié par le
-   * ratio de virtualisation
-   * 17.2.1 - Génération d’un DPE à l’appartement / Traitement des usages collectifs
+   * Générateur collectif virtualisé : la puissance saisie dans le DPE peut être la puissance
+   * virtualisée Pe = a × Pn (convention 3CL) ou la puissance du générateur collectif Pn selon les
+   * logiciels (issue #124). La convention réellement utilisée est déduite des valeurs
+   * intermédiaires (rpn, qp0) présentes dans le DPE.
    */
-  if (![3, 4, 5].includes(methodeSaisie)) {
-    if (row.rpn) {
-      di.rpn = evaluateFormula(row.rpn, di.pn / ratioVirtualisation, E, F) / 100;
+  if (selectionLigne) {
+    const ligneOuDefaut = (pn, ratio) => selectionLigne(pn, ratio) || row;
+    const caracteristiques = (pn, ratio) =>
+      caracteristiquesGenerateurCombustion(
+        ligneOuDefaut(pn, ratio),
+        pn,
+        ratio,
+        E,
+        F,
+        type,
+        methodeSaisie
+      );
+    /**
+     * Formule rpn de la ligne sélectionnée pour un Pn(collectif) donné (W) : permet de retrouver
+     * Pn(collectif) à partir du rpn stocké (4e hypothèse).
+     */
+    const formuleRpn = (pnCollectif) => {
+      const ligne = selectionLigne(pnCollectif, 1);
+      return ligne?.rpn ? (p) => evaluateFormula(ligne.rpn, p, E, F) / 100 : undefined;
+    };
+    const puissance = conventionPuissanceNominale(
+      di.pn,
+      ratioVirtualisation,
+      { rpn: di.rpn, rpint: di.rpint, qp0: di.qp0 },
+      caracteristiques,
+      bug_for_bug_compat,
+      formuleRpn
+    );
+
+    if (puissance.convention === 'puissance_depuis_rpn') {
+      console.warn(
+        `La puissance nominale du générateur ${de.description} (${di.pn} W) n'est cohérente ni avec la puissance
+        virtualisée ni avec celle du générateur collectif. Puissance du générateur collectif recalculée à partir
+        du rpn du DPE (${di.rpn}) : Pn = ${puissance.pnCollectif / 1000} kW, utilisation de Pe = a × Pn = ${puissance.pn} W.`
+      );
+    } else if (puissance.convention !== 'individualisee') {
+      console.warn(
+        `La puissance nominale du générateur ${de.description} (${di.pn} W) est celle du générateur collectif : 
+        utilisation de la puissance ${puissance.pn} W et du ratio de virtualisation ${puissance.ratio} (${puissance.convention}).`
+      );
     }
-    if (type === 'ch' && row.rpint) {
-      di.rpint = evaluateFormula(row.rpint, di.pn / ratioVirtualisation, E, F) / 100;
+
+    if (puissance.convention !== 'individualisee') {
+      di.pn = puissance.pn;
+      ratioVirtualisation = puissance.ratio;
+      row = ligneOuDefaut(di.pn, ratioVirtualisation);
+      de.tv_generateur_combustion_id = Number(row.tv_generateur_combustion_id);
     }
   }
 
-  if (![4, 5].includes(methodeSaisie)) {
-    if (row.qp0_perc) {
-      const qp0_calc = evaluateFormula(row.qp0_perc, di.pn / ratioVirtualisation, E, F);
-      // Certaines chaudières ont un qp0 en % de pn, d'autres ont des valeurs constantes
-      if (row.qp0_perc.includes('Pn')) {
-        di.qp0 = qp0_calc * 1000 * ratioVirtualisation;
-      } else {
-        if (row.qp0_perc.includes('%')) {
-          di.qp0 = qp0_calc * di.pn;
-        } else {
-          di.qp0 = qp0_calc * 1000 * ratioVirtualisation;
-        }
-      }
-    } else {
-      di.qp0 = 0;
-    }
-  }
+  Object.assign(
+    di,
+    caracteristiquesGenerateurCombustion(row, di.pn, ratioVirtualisation, E, F, type, methodeSaisie)
+  );
 
   if (methodeSaisie === 1 || !di.pveilleuse) {
     di.pveil = Number(row.pveil) || 0;
