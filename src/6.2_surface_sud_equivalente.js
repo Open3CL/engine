@@ -70,6 +70,10 @@ export function dedoublonnerEts(etsList) {
  */
 export function rattacherBaiesAuxEts(baiesAdjVeranda, etsList) {
   const baiesParEts = etsList.map(() => []);
+  // Aucune véranda exploitable : les baies adjacence 10 ne peuvent être rattachées à aucun ETS
+  if (etsList.length === 0) {
+    return baiesParEts;
+  }
   baiesAdjVeranda.forEach((bv) => {
     const referenceLnc = bv.donnee_entree.reference_lnc;
     const idx = referenceLnc

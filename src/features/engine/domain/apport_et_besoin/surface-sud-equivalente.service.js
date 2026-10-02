@@ -42,88 +42,154 @@ export class SurfaceSudEquivalenteService {
    */
   ssdMois(ctx, enveloppe, mois) {
     const baiesVitrees = enveloppe.baie_vitree_collection?.baie_vitree || [];
-    let ets = enveloppe.ets_collection?.ets || [];
-
-    let SseVerandaj = 0;
+    const zc = ctx.zoneClimatique.id;
 
     /**
-     * Si une véranda est présente, on calcul l'mpact de l’espace tampon solarisé sur les apports solaires à travers
-     * les baies vitrées qui séparent le logement de l'espace tampon
-     *
+     * Baies vitrées donnant directement sur l'extérieur
+     */
+    const sseBaiesExt = baiesVitrees
+      .filter((bv) => parseInt(bv.donnee_entree.enum_type_adjacence_id) === 1)
+      .reduce((acc, bv) => acc + this.ssdBaieMois(bv, zc, mois), 0);
+
+    /**
      * 6.3 Traitement des espaces tampons solarisés
      * 10 - 'espace tampon solarisé (véranda,loggia fermée)'
+     *
+     * Plusieurs espaces tampons solarisés (issue #101) : T, bver, Sst et Ssd sont propres à chaque
+     * véranda. Sse = Sse_ext + Σ(v) Sse_veranda_v, chaque baie adjacence 10 n'étant comptée que dans
+     * la véranda sur laquelle elle donne (baie.reference_lnc = ets.reference).
+     * Sse_ver n'est calculée que pour les baies vitrées qui séparent le logement de l'espace tampon :
+     * sans aucune de ces baies, les apports de l'espace tampon n'entrent pas dans le logement.
      */
-    if (ets) {
-      // Certaines vérandas sont dupliqués dans les DPE.
-      if (Array.isArray(ets)) {
-        ets = ets[0];
-      }
+    const etsList = this.dedoublonnerEts(this.getEtsList(enveloppe));
+    const baiesParEts = this.rattacherBaiesAuxEts(
+      this.getBaiesSurEspaceTampon(baiesVitrees),
+      etsList
+    );
 
-      if (ets) {
-        const bver = ets.donnee_intermediaire.bver;
-        const T = ets.donnee_intermediaire.coef_transparence_ets;
+    return etsList.reduce(
+      (acc, ets, idx) => acc + this.sseVerandaMois(ets, baiesParEts[idx], zc, mois),
+      sseBaiesExt
+    );
+  }
 
-        /**
-         * Surface sud équivalente représentant l’impact des apports solaires associés au rayonnement solaire
-         * traversant directement l’espace tampon pour arriver dans la partie habitable du logement
-         * Calculés pour les baies vitrées qui séparent le logement de l'espace tampon
-         * @type {number}
-         */
-        const Ssdj = this.getBaiesSurEspaceTampon(baiesVitrees).reduce((acc, bv) => {
-          return acc + T * this.ssdBaieMois(bv, ctx.zoneClimatique.id, mois);
-        }, 0);
-
-        /**
-         * Surface sud équivalente représentant les apports solaires indirects dans le logement
-         */
-        let baies = ets.baie_ets_collection.baie_ets;
-
-        if (!Array.isArray(baies)) {
-          baies = [baies];
-        }
-
-        /**
-         * Apports totaux à travers l'espace tampon
-         * @type {number}
-         */
-        const Sstj = baies.reduce((acc, bv) => {
-          return acc + this.ssdBaieMois(bv, ctx.zoneClimatique.id, mois, 0.8 * T + 0.024);
-        }, 0);
-
-        /**
-         * Surface sud équivalente représentant l’impact des apports solaires indirects associés au rayonnement
-         * solaire entrant dans la partie habitable du logement après de multiples réflexions dans l’espace tampon solarisé
-         * @type {number}
-         */
-        const Ssindj = Sstj - Ssdj;
-
-        /**
-         * Impact de l’espace tampon solarisé sur les apports solaires à travers les baies vitrées qui séparent le logement
-         * de l'espace tampon
-         * @type {number}
-         */
-        SseVerandaj = Ssdj + Ssindj * bver;
-      }
+  /**
+   * Surface sud équivalente apportée par une véranda sur un mois donné (§6.3)
+   *
+   * @param ets {Ets}
+   * @param baiesAdjVeranda {BaieVitree[]} baies vitrées séparant le logement de cette véranda
+   * @param zc {string} zone climatique du logement
+   * @param mois {string}
+   * @returns {number}
+   */
+  sseVerandaMois(ets, baiesAdjVeranda, zc, mois) {
+    // Véranda sans baie vitrée vers le logement : aucun apport solaire
+    if (baiesAdjVeranda.length === 0) {
+      return 0;
     }
 
-    return baiesVitrees.reduce((acc, baieVitree) => {
-      const typeAdjacence = parseInt(baieVitree.donnee_entree.enum_type_adjacence_id);
+    const bver = ets.donnee_intermediaire.bver;
+    const T = ets.donnee_intermediaire.coef_transparence_ets;
 
-      /**
-       * 6.3 Traitement des espaces tampons solarisés
-       * 10 - 'espace tampon solarisé (véranda,loggia fermée)'
-       */
-      if (typeAdjacence === 10 && ets) {
-        return acc + SseVerandaj;
-      }
+    /**
+     * Surface sud équivalente représentant l’impact des apports solaires associés au rayonnement solaire
+     * traversant directement l’espace tampon pour arriver dans la partie habitable du logement
+     * Calculés pour les baies vitrées qui séparent le logement de cet espace tampon
+     * @type {number}
+     */
+    const Ssdj = baiesAdjVeranda.reduce((acc, bv) => acc + T * this.ssdBaieMois(bv, zc, mois), 0);
 
-      // Pour les fenêtres qui ne donnent pas sur l'extérieur, pas de surface sud équivalente
-      if (typeAdjacence !== 1) {
-        return acc;
-      }
+    /**
+     * Baies de l'espace tampon donnant sur l'extérieur (propres à chaque véranda)
+     */
+    let baies = ets.baie_ets_collection?.baie_ets || [];
 
-      return acc + this.ssdBaieMois(baieVitree, ctx.zoneClimatique.id, mois);
+    if (!Array.isArray(baies)) {
+      baies = [baies];
+    }
+
+    /**
+     * Apports totaux à travers l'espace tampon
+     * @type {number}
+     */
+    const Sstj = baies.reduce((acc, bv) => {
+      return acc + this.ssdBaieMois(bv, zc, mois, 0.8 * T + 0.024);
     }, 0);
+
+    /**
+     * Surface sud équivalente représentant l’impact des apports solaires indirects associés au rayonnement
+     * solaire entrant dans la partie habitable du logement après de multiples réflexions dans l’espace tampon solarisé
+     * @type {number}
+     */
+    const Ssindj = Sstj - Ssdj;
+
+    /**
+     * Impact de l’espace tampon solarisé sur les apports solaires à travers les baies vitrées qui séparent le logement
+     * de l'espace tampon
+     */
+    return Ssdj + Ssindj * bver;
+  }
+
+  /**
+   * Liste des espaces tampons solarisés du logement (la collection peut contenir un objet unique,
+   * un tableau, ou être absente selon les DPE)
+   *
+   * @param enveloppe {Enveloppe}
+   * @returns {Ets[]}
+   */
+  getEtsList(enveloppe) {
+    const ets = enveloppe.ets_collection?.ets;
+    if (!ets) {
+      return [];
+    }
+    return Array.isArray(ets) ? ets : [ets];
+  }
+
+  /**
+   * Certaines vérandas sont dupliquées dans les DPE : une même véranda (même référence, ou à défaut
+   * même contenu) ne doit être comptée qu'une seule fois.
+   *
+   * @param etsList {Ets[]}
+   * @returns {Ets[]}
+   */
+  dedoublonnerEts(etsList) {
+    const vues = new Set();
+    return etsList.filter((ets) => {
+      if (!ets) return false;
+      const reference = ets.donnee_entree?.reference;
+      const cle = reference ? `ref:${reference}` : `json:${JSON.stringify(ets)}`;
+      if (vues.has(cle)) return false;
+      vues.add(cle);
+      return true;
+    });
+  }
+
+  /**
+   * Rattache chaque baie vitrée adjacence 10 à l'espace tampon sur lequel elle donne
+   * (baie.donnee_entree.reference_lnc = ets.donnee_entree.reference).
+   *
+   * Une baie sans lien exploitable (reference_lnc absente ou ne correspondant à aucune véranda) est
+   * rattachée à la première véranda : c'est le comportement historique, et le seul possible quand le
+   * DPE ne comporte qu'une véranda.
+   *
+   * @param baiesAdjVeranda {BaieVitree[]}
+   * @param etsList {Ets[]}
+   * @returns {BaieVitree[][]} baies par véranda, dans l'ordre de etsList
+   */
+  rattacherBaiesAuxEts(baiesAdjVeranda, etsList) {
+    const baiesParEts = etsList.map(() => []);
+    // Aucune véranda exploitable : les baies adjacence 10 ne peuvent être rattachées à aucun ETS
+    if (etsList.length === 0) {
+      return baiesParEts;
+    }
+    baiesAdjVeranda.forEach((bv) => {
+      const referenceLnc = bv.donnee_entree.reference_lnc;
+      const idx = referenceLnc
+        ? etsList.findIndex((ets) => ets.donnee_entree?.reference === referenceLnc)
+        : -1;
+      baiesParEts[idx === -1 ? 0 : idx].push(bv);
+    });
+    return baiesParEts;
   }
 
   /**

@@ -138,7 +138,10 @@ export class EngineService {
       delete m.baie_vitree_double_fenetre?.donnee_intermediaire;
       delete m.donnee_intermediaire;
     });
-    delete dpe.logement.enveloppe.ets_collection.ets?.donnee_intermediaire;
+    // Un DPE peut comporter un ou plusieurs espaces tampons solarisés (objet ou tableau)
+    [dpe.logement.enveloppe.ets_collection.ets]
+      .flat()
+      .forEach((ets) => delete ets?.donnee_intermediaire);
     dpe.logement.enveloppe.plancher_bas_collection.plancher_bas?.map(
       (m) => delete m.donnee_intermediaire
     );

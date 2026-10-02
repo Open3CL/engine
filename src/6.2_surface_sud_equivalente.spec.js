@@ -330,6 +330,17 @@ describe('dedoublonnerEts / rattacherBaiesAuxEts', () => {
     ]);
   });
 
+  test('aucune véranda exploitable (ets = [null]) : baies non rattachées, seules les baies extérieures comptent', () => {
+    const bA = { donnee_entree: { reference_lnc: 'A' } };
+    expect(rattacherBaiesAuxEts([bA], [])).toEqual([]);
+    const bvList = [
+      baie({ adjacence: '1', surface: 10, sw: 0.5 }),
+      baie({ adjacence: '10', surface: 4 })
+    ];
+    // c1 h1a janvier sud = 0,5 => 10 × 0,5 × 0,5
+    expect(calc_sse_j(bvList, [null], 'ca1', 'h1a', 'Janvier')).toBeCloseTo(2.5, 9);
+  });
+
   test('véranda sans donnee_entree : seules les baies sans lien lui sont rattachées', () => {
     const ets = [{}, { donnee_entree: { reference: 'B' } }];
     const bB = { donnee_entree: { reference_lnc: 'B' } };
