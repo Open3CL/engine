@@ -236,16 +236,23 @@ function getPuissanceCirculateur(em_ch, de, di, du, surfaceHabitable, GV, Tbase)
 
   const nbNiveauChauffage = de.nombre_niveau_installation_ch || 1;
 
+  /**
+   * Surface desservie par l'installation : le réseau (Lem) et le nombre de circulateurs
+   * (Sh / 400) sont ceux de l'installation, pas ceux du bâtiment entier (ex. immeuble à
+   * installations individuelles par logement), comme le moteur de référence CSTB (Tribu).
+   */
+  const surfaceInstallation = de.surface_chauffee || surfaceHabitable;
+  const nbCirculateurs = Math.max(1, surfaceInstallation / 400);
+
   // Calcul de la longueur du réseau le plus défavorisé
-  const Lem = 5 * Fcot * (nbNiveauChauffage + (surfaceHabitable / nbNiveauChauffage) ** 0.5);
+  const Lem = 5 * Fcot * (nbNiveauChauffage + (surfaceInstallation / nbNiveauChauffage) ** 0.5);
 
   // Pertes de charge du réseau (kPa)
   const deltaPemnom = 0.15 * Lem + deltaPem;
 
   // Ratio du besoin couvert par l’équipement
   const nbGenerateurCascade = du.nbGenerateurCascade || 1;
-  const ratioSurfaceChauffage =
-    (de.surface_chauffee || surfaceHabitable) / (surfaceHabitable * nbGenerateurCascade);
+  const ratioSurfaceChauffage = surfaceInstallation / (surfaceHabitable * nbGenerateurCascade);
 
   // Chute nominale de température de dimensionnement
   const deltaDim = getDeltaDim(em_ch);
@@ -255,12 +262,7 @@ function getPuissanceCirculateur(em_ch, de, di, du, surfaceHabitable, GV, Tbase)
 
   const Qvemnom = (Pnc * ratioSurfaceChauffage) / (1.163 * deltaDim);
 
-  return Math.max(
-    30,
-    6.44 *
-      ((deltaPemnom * Qvemnom) / Math.max(1, surfaceHabitable / 400)) ** 0.676 *
-      Math.max(1, surfaceHabitable / 400)
-  );
+  return Math.max(30, 6.44 * ((deltaPemnom * Qvemnom) / nbCirculateurs) ** 0.676 * nbCirculateurs);
 }
 
 /**

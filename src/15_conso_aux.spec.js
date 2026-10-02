@@ -299,6 +299,39 @@ describe('conso_aux_distribution_ch - auxiliaires de distribution', () => {
     // Pcirc ∝ Qvemnom^0,676 et Qvemnom ∝ 1/ΔθDim : diviser ΔθDim par 2 multiplie Pcirc par 2^0,676
     expect(toutBasse / bassepuisHaute).toBeCloseTo(2 ** 0.676, 9);
   });
+
+  /**
+   * Cas des autotests CSTB IC1-0-1/11/12 : immeuble de 175 m² à installations individuelles,
+   * l'installation étudiée dessert un logement de 80 m². Lem et le nombre de circulateurs sont
+   * ceux de l'installation (80 m²), pas ceux de l'immeuble (Tribu : Pcirc = 46,594 W).
+   */
+  test("installation partielle : Lem calculée sur la surface desservie par l'installation", () => {
+    const calcul = (de, sh) => {
+      const di = {};
+      conso_aux_distribution_ch(emCh, de, di, {}, sh, 1, 1, '0', 100000);
+      return di.conso_auxiliaire_distribution_ch;
+    };
+    const partielle = calcul({ surface_chauffee: 80 }, 175);
+    // valeur de référence de régression
+    expect(partielle).toBeCloseTo(125.15085008075532, 9);
+    // Lem dépend de la seule surface de l'installation : même réseau que pour un logement seul
+    // de 80 m² recevant la même puissance (GV × 80 / 175)
+    const di = {};
+    conso_aux_distribution_ch(emCh, {}, di, {}, 80, 1, 1, '0', (100000 * 80) / 175);
+    expect(partielle).toBeCloseTo(di.conso_auxiliaire_distribution_ch, 9);
+  });
+
+  test("installation de plus de 400 m² : nombre de circulateurs selon la surface de l'installation", () => {
+    const calcul = (de, sh) => {
+      const di = {};
+      conso_aux_distribution_ch(emCh, de, di, {}, sh, 1, 1, '0', 1000000);
+      return di.conso_auxiliaire_distribution_ch;
+    };
+    const partielle = calcul({ surface_chauffee: 800 }, 1600);
+    const di = {};
+    conso_aux_distribution_ch(emCh, {}, di, {}, 800, 1, 1, '0', 500000);
+    expect(partielle).toBeCloseTo(di.conso_auxiliaire_distribution_ch, 9);
+  });
 });
 
 /**
