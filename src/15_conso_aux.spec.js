@@ -31,7 +31,7 @@ vi.mock('./utils.js', () => ({
   Tbase: { ca1: { h1: -9 } }
 }));
 
-const { conso_aux_gen, conso_aux_distribution_ch, conso_aux_distribution_ecs } =
+const { conso_aux_gen, conso_aux_distribution_ch, conso_aux_distribution_ecs, getDeltaDim } =
   await import('./15_conso_aux.js');
 
 /**
@@ -228,6 +228,67 @@ describe('conso_aux_distribution_ch - auxiliaires de distribution', () => {
     conso_aux_distribution_ch(em, {}, di, {}, 100, 1, 1, '0', 100000);
     // valeur de référence de régression
     expect(di.conso_auxiliaire_distribution_ch).toBeCloseTo(136.51553416032854, 9);
+  });
+
+  /**
+   * Cas des autotests CSTB APP5-0-1/11/12/13 : plancher chauffant (basse température) saisi en
+   * premier, radiateurs haute température en second. L'installation est dimensionnée en haute
+   * température : ΔθDim = 15 °C (Tribu : Pcirc = 30 W), et non 7,5 °C (premier émetteur seul).
+   */
+  test('plusieurs émetteurs dont un haute température en second : deltaDim = 15', () => {
+    const em = (type, temp) => ({
+      donnee_entree: {
+        enum_type_emission_distribution_id: type,
+        enum_temp_distribution_ch_id: temp
+      }
+    });
+    const calcul = (emetteurs) => {
+      const di = {};
+      conso_aux_distribution_ch(emetteurs, {}, di, {}, 100, 1, 1, '0', 100000);
+      return di.conso_auxiliaire_distribution_ch;
+    };
+
+    const bassepuisHaute = calcul([em('11', '2'), em('36', '4')]);
+    const toutBasse = calcul([em('11', '2'), em('36', '3')]);
+
+    // valeur de référence de régression
+    expect(bassepuisHaute).toBeCloseTo(163.08433635519586, 9);
+    // Pcirc ∝ Qvemnom^0,676 et Qvemnom ∝ 1/ΔθDim : diviser ΔθDim par 2 multiplie Pcirc par 2^0,676
+    expect(toutBasse / bassepuisHaute).toBeCloseTo(2 ** 0.676, 9);
+  });
+});
+
+/**
+ * 15.2.1 Chute nominale de température de dimensionnement ΔθDim
+ * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §15.2.1
+ */
+describe('getDeltaDim - chute nominale de température de dimensionnement', () => {
+  const em = (temp, type = '10') => ({
+    donnee_entree: { enum_type_emission_distribution_id: type, enum_temp_distribution_ch_id: temp }
+  });
+
+  test('distribution basse (2) ou moyenne (3) température : 7,5 °C', () => {
+    expect(getDeltaDim([em('2')])).toBe(7.5);
+    expect(getDeltaDim([em('3')])).toBe(7.5);
+    expect(getDeltaDim([em('2'), em('3')])).toBe(7.5);
+  });
+
+  test('distribution haute température (4) : 15 °C', () => {
+    expect(getDeltaDim([em('4')])).toBe(15);
+  });
+
+  test("un émetteur haute température impose 15 °C, quel que soit l'ordre de saisie", () => {
+    expect(getDeltaDim([em('4'), em('2')])).toBe(15);
+    expect(getDeltaDim([em('2'), em('4')])).toBe(15);
+    expect(getDeltaDim([em(3), em(4)])).toBe(15);
+  });
+
+  test("soufflage d'air chaud sur réseau aéraulique (5) : 15 °C", () => {
+    expect(getDeltaDim([em('1', '5')])).toBe(15);
+  });
+
+  test('absence de réseau de distribution (1) hors air soufflé : 7,5 °C', () => {
+    expect(getDeltaDim([em('1', '12')])).toBe(7.5);
   });
 });
 
