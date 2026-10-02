@@ -4,8 +4,8 @@
   "nbValidDpe": 10000,
   "nbInvalidDpeVersion": 0,
   "nbExcludedDpe": 0,
-  "nbAllChecksBelowThreshold": 7110,
-  "successRatio": "71.10 %",
+  "nbAllChecksBelowThreshold": 7118,
+  "successRatio": "71.18 %",
   "dpeRunFailed": [],
   "checks": {
     "deperdition_mur": { "nbBelowThreshold": 9912, "mandatory": false, "successRatio": "99.12 %" },
@@ -47,7 +47,7 @@
     },
     "besoin_ecs": { "nbBelowThreshold": 10000, "mandatory": false, "successRatio": "100.00 %" },
     "besoin_ch": { "nbBelowThreshold": 9712, "mandatory": false, "successRatio": "97.12 %" },
-    "conso_ecs": { "nbBelowThreshold": 9520, "mandatory": true, "successRatio": "95.20 %" },
+    "conso_ecs": { "nbBelowThreshold": 9531, "mandatory": true, "successRatio": "95.31 %" },
     "conso_ch": { "nbBelowThreshold": 9573, "mandatory": true, "successRatio": "95.73 %" },
     "conso_auxiliaire_distribution_ch": {
       "nbBelowThreshold": 9579,
@@ -69,16 +69,16 @@
       "mandatory": false,
       "successRatio": "82.59 %"
     },
-    "ep_conso_5_usages": { "nbBelowThreshold": 9421, "mandatory": true, "successRatio": "94.21 %" },
+    "ep_conso_5_usages": { "nbBelowThreshold": 9422, "mandatory": true, "successRatio": "94.22 %" },
     "ep_conso_5_usages_m2": {
-      "nbBelowThreshold": 9421,
+      "nbBelowThreshold": 9423,
       "mandatory": true,
-      "successRatio": "94.21 %"
+      "successRatio": "94.23 %"
     },
     "emission_ges_5_usages": {
-      "nbBelowThreshold": 7289,
+      "nbBelowThreshold": 7290,
       "mandatory": true,
-      "successRatio": "72.89 %"
+      "successRatio": "72.90 %"
     },
     "emission_ges_5_usages_m2": {
       "nbBelowThreshold": 7349,
@@ -93,12 +93,12 @@
   },
   "performance": {
     "count": 10000,
-    "mean": 4.609,
-    "median": 4.322,
-    "min": 1.56,
-    "max": 34.88,
-    "p95": 7.471,
-    "p99": 10.943,
-    "totalMs": 46087.829
+    "mean": 4.408,
+    "median": 4.003,
+    "min": 1.476,
+    "max": 33.829,
+    "p95": 7.369,
+    "p99": 9.636,
+    "totalMs": 44082.798
   }
 }

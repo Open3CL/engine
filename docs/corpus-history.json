@@ -2009,7 +2009,48 @@
     {
       "version": "1.8.12",
       "date": "2026-10-02",
-      "pending": true,
+      "results": {
+        "corpus_dpe.csv": {
+          "below": 4631,
+          "total": 10000
+        },
+        "dpe_appartement_individuel_chauffage_collectif_2025.csv": {
+          "below": 7063,
+          "total": 10000
+        },
+        "dpe_appartement_individuel_chauffage_individuel_2025.csv": {
+          "below": 9180,
+          "total": 10000
+        },
+        "dpe_immeuble_chauffage_collectif.csv": {
+          "below": 6251,
+          "total": 9999
+        },
+        "dpe_immeuble_chauffage_individuel.csv": {
+          "below": 7413,
+          "total": 9999
+        },
+        "dpe_immeuble_chauffage_mixte.csv": {
+          "below": 4906,
+          "total": 10000
+        },
+        "dpe_individuel_a_partir_dpe_immeuble_2026.csv": {
+          "below": 2739,
+          "total": 10000
+        },
+        "dpe_logement_individuel_2025.csv": {
+          "below": 8863,
+          "total": 9992
+        },
+        "dpe_maison_individuelle_2025.csv": {
+          "below": 8840,
+          "total": 10000
+        }
+      }
+    },
+    {
+      "version": "1.8.13",
+      "date": "2026-10-02",
       "results": {
         "corpus_dpe.csv": {
           "below": 4631,
@@ -2045,6 +2086,49 @@
         },
         "dpe_maison_individuelle_2025.csv": {
           "below": 8841,
+          "total": 10000
+        }
+      }
+    },
+    {
+      "version": "1.8.14",
+      "date": "2026-10-02",
+      "pending": true,
+      "results": {
+        "corpus_dpe.csv": {
+          "below": 4636,
+          "total": 10000
+        },
+        "dpe_appartement_individuel_chauffage_collectif_2025.csv": {
+          "below": 7118,
+          "total": 10000
+        },
+        "dpe_appartement_individuel_chauffage_individuel_2025.csv": {
+          "below": 9242,
+          "total": 10000
+        },
+        "dpe_immeuble_chauffage_collectif.csv": {
+          "below": 6266,
+          "total": 9999
+        },
+        "dpe_immeuble_chauffage_individuel.csv": {
+          "below": 7584,
+          "total": 9999
+        },
+        "dpe_immeuble_chauffage_mixte.csv": {
+          "below": 4944,
+          "total": 10000
+        },
+        "dpe_individuel_a_partir_dpe_immeuble_2026.csv": {
+          "below": 2739,
+          "total": 10000
+        },
+        "dpe_logement_individuel_2025.csv": {
+          "below": 8935,
+          "total": 9992
+        },
+        "dpe_maison_individuelle_2025.csv": {
+          "below": 8850,
           "total": 10000
         }
       }
