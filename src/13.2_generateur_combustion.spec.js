@@ -580,10 +580,92 @@ describe('tv_generateur_combustion - convention de puissance d’un générateur
     expect(conventionPuissanceNominale).toHaveBeenCalledWith(
       23000,
       0.1,
-      { rpn: 0.87, qp0: 0.276 },
+      { rpn: 0.87, rpint: undefined, qp0: 0.276 },
       expect.any(Function),
-      true
+      true,
+      expect.any(Function)
     );
+  });
+
+  test('formule rpn fournie (4e hypothèse) : ligne sélectionnée sur Pn collectif, rpn en fraction', () => {
+    tvColumnLines.mockReturnValue(['Pn ≤ 70', 'Pn > 70']);
+    tv.mockReturnValue({ ...ROW_PN });
+    let formuleRpn;
+    conventionPuissanceNominale.mockImplementation((pn, ratio, _, __, ___, fn) => {
+      formuleRpn = fn;
+      return { pn, ratio, convention: 'individualisee' };
+    });
+    const di = { pn: 23000, rpint: 0.85 };
+    const de = {
+      enum_type_generateur_ch_id: '89',
+      ratio_virtualisation: 0.1,
+      presence_ventouse: 0
+    };
+    tv_generateur_combustion({}, di, de, 'ch', 200, -9, 1);
+    expect(conventionPuissanceNominale.mock.calls[0][2]).toEqual({
+      rpn: undefined,
+      rpint: 0.85,
+      qp0: undefined
+    });
+
+    tv.mockClear();
+    const formule = formuleRpn(696000);
+    // Pn collectif = 696 kW (ratio 1) -> critère « Pn > 70 »
+    expect(tv).toHaveBeenCalledWith(
+      'generateur_combustion',
+      expect.objectContaining({ critere_pn: 'Pn > 70' })
+    );
+    // Référence de régression : rpn = (84 + 2 log10(696)) / 100
+    expect(formule(696000)).toBeCloseTo((84 + 2 * Math.log10(696)) / 100, 9);
+  });
+
+  test('formule rpn : ligne absente ou sans rpn -> aucune formule', () => {
+    tv.mockReturnValueOnce({ ...ROW_PN });
+    let formuleRpn;
+    conventionPuissanceNominale.mockImplementation((pn, ratio, _, __, ___, fn) => {
+      formuleRpn = fn;
+      return { pn, ratio, convention: 'individualisee' };
+    });
+    const de = {
+      enum_type_generateur_ch_id: '89',
+      ratio_virtualisation: 0.1,
+      presence_ventouse: 0
+    };
+    tv_generateur_combustion({}, { pn: 23000 }, de, 'ch', 200, -9, 1);
+    tv.mockReturnValueOnce(null).mockReturnValueOnce({ ...ROW_PN, rpn: undefined });
+    expect(formuleRpn(696000)).toBeUndefined();
+    expect(formuleRpn(696000)).toBeUndefined();
+  });
+
+  test('pn recalculé depuis rpn : Pe retenu, ligne re-sélectionnée et avertissement explicite', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    tv.mockReturnValueOnce({ ...ROW_PN }).mockReturnValue({
+      ...ROW_PN,
+      tv_generateur_combustion_id: '43'
+    });
+    conventionPuissanceNominale.mockReturnValue({
+      pn: 2300,
+      ratio: 0.1,
+      convention: 'puissance_depuis_rpn',
+      pnCollectif: 23000
+    });
+    const di = { pn: 230, rpn: 0.8672, rpint: 0.8408 };
+    const de = {
+      description: 'Chaudière collective',
+      enum_type_generateur_ch_id: '89',
+      ratio_virtualisation: 0.1,
+      presence_ventouse: 0
+    };
+    tv_generateur_combustion({}, di, de, 'ch', 200, -9, 1);
+    expect(di.pn).toBe(2300);
+    expect(de.tv_generateur_combustion_id).toBe(43);
+    // Formules évaluées sur Pn collectif = 2300 / 0.1 = 23 kW
+    expect(di.rpn).toBeCloseTo((84 + 2 * Math.log10(23)) / 100, 9);
+    const message = warnSpy.mock.calls[0][0];
+    expect(message).toContain('(230 W)');
+    expect(message).toContain('Pn = 23 kW');
+    expect(message).toContain('Pe = a × Pn = 2300 W');
+    warnSpy.mockRestore();
   });
 
   test('fonction de caractéristiques fournie : ligne et formules évaluées sur pn / ratio', () => {

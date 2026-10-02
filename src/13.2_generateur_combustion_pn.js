@@ -67,24 +67,135 @@ function estNombre(valeur) {
 }
 
 /**
+ * Inverse une formule de rendement de la table generateur_combustion, de la forme
+ * « A + B × log10(Pn) » (en %, Pn en kW) : renvoie Pn (W) tel que formule(Pn) = rendement.
+ * La forme est vérifiée numériquement (affine en log10(Pn)) : toute autre forme, ou un rendement
+ * indépendant de Pn (B = 0), n'est pas inversible.
+ *
+ * @param rendement {number} rendement stocké dans le DPE (fraction)
+ * @param formule {(pnW: number) => number} rendement (fraction) en fonction de Pn (W)
+ * @returns {number|undefined} Pn (W)
+ */
+export function inverserRendement(rendement, formule) {
+  const a = formule(1000);
+  const b = formule(10000) - a;
+  const affine = Math.abs(formule(100000) - (a + 2 * b)) <= 1e-9;
+  if (!estNombre(a) || !estNombre(b) || !affine || Math.abs(b) < 1e-9) {
+    return undefined;
+  }
+  return 1000 * 10 ** ((rendement - a) / b);
+}
+
+/**
+ * Puissance du générateur collectif Pn (W) retrouvée à partir du rpn stocké dans le DPE, en
+ * inversant la formule rpn de la ligne de table. La ligne dépendant elle-même de Pn (critère de
+ * puissance), la ligne est re-sélectionnée sur le Pn obtenu jusqu'à stabilité (3 itérations au
+ * plus) : le rpn de la ligne finale évalué sur Pn doit redonner exactement le rpn du DPE.
+ *
+ * @param pnCollectif {number} Pn (W) servant à sélectionner la première ligne
+ * @param rpnDpe {number}
+ * @param formuleRpn {(pnCollectifW: number) => ((pnW: number) => number)|undefined} formule rpn
+ *   (fraction, fonction de Pn en W) de la ligne de table sélectionnée pour un Pn donné
+ * @returns {number|undefined} Pn (W)
+ */
+export function puissanceDepuisRpn(pnCollectif, rpnDpe, formuleRpn) {
+  let reference = pnCollectif;
+  for (let iteration = 0; iteration < 3; iteration++) {
+    const formule = formuleRpn(reference);
+    const pn = formule && inverserRendement(rpnDpe, formule);
+    if (!estNombre(pn)) {
+      return undefined;
+    }
+    const formuleFinale = formuleRpn(pn);
+    if (formuleFinale && Math.abs(formuleFinale(pn) - rpnDpe) <= 1e-9) {
+      return pn;
+    }
+    reference = pn;
+  }
+  return undefined;
+}
+
+/**
+ * Vrai si la puissance saisie est une puissance de référence décalée d'une puissance de dix
+ * (virgule mal placée ou zéro perdu lors de la saisie : 69600 W pour 696 kW).
+ *
+ * @param pnSaisi {number} puissance saisie dans le DPE (W)
+ * @param puissance {number} puissance de référence (W)
+ * @returns {boolean}
+ */
+export function decalageDecimal(pnSaisi, puissance) {
+  return [-3, -2, -1, 1, 2, 3].some((k) => valeurCoherente(pnSaisi, puissance * 10 ** k));
+}
+
+/**
+ * 4e hypothèse : pn saisi incohérent avec le rpn stocké, que l'on interprète pn comme Pe ou comme
+ * Pn(collectif) (ex. puissance tronquée d'un facteur 10). Le rpn stocké, calculé par le logiciel
+ * à partir de la table, permet de retrouver Pn(collectif) en inversant la formule rpn de la table ;
+ * on retient alors Pe = a × Pn (convention 3CL).
+ *
+ * Le Pn retrouvé doit être confirmé par une autre valeur du DPE :
+ *  - rpint stocké et recalculé : doit être cohérent (sinon abandon) et confirme l'hypothèse ;
+ *  - qp0 stocké cohérent (W ou kW, virtualisé ou non) avec le qp0 recalculé ;
+ *  - ou pn saisi égal à Pn ou Pe à une puissance de dix près (erreur de saisie de la puissance).
+ *
+ * @param pn {number} puissance nominale saisie dans le DPE (W)
+ * @param ratio {number} ratio de virtualisation (0 < ratio < 1)
+ * @param valeursDpe {{rpn: number, rpint?: number, qp0?: number}}
+ * @param caracteristiques {(pn: number, ratio: number) => {rpn?: number, rpint?: number, qp0?: number}}
+ * @param formuleRpn {(pnCollectif: number) => ((pnCollectif: number) => number)|undefined}
+ * @returns {{pn: number, ratio: number, convention: 'puissance_depuis_rpn', pnCollectif: number}|undefined}
+ */
+export function puissanceRecalculeeDepuisRpn(pn, ratio, valeursDpe, caracteristiques, formuleRpn) {
+  const pnCollectif = puissanceDepuisRpn(pn / ratio, valeursDpe.rpn, formuleRpn);
+  if (!estNombre(pnCollectif)) {
+    return undefined;
+  }
+
+  const pe = pnCollectif * ratio;
+  const recalcule = caracteristiques(pe, ratio);
+  const { rpint: rpintDpe, qp0: qp0Dpe } = valeursDpe;
+
+  const rpintControle = estNombre(rpintDpe) && estNombre(recalcule.rpint);
+  if (rpintControle && !valeurCoherente(rpintDpe, recalcule.rpint)) {
+    return undefined;
+  }
+
+  const qp0Confirme =
+    estNombre(qp0Dpe) &&
+    [recalcule.qp0, caracteristiques(pnCollectif, 1).qp0].some(
+      (qp0) => estNombre(qp0) && qp0Coherent(qp0Dpe, qp0)
+    );
+
+  if (rpintControle || qp0Confirme || decalageDecimal(pn, pnCollectif) || decalageDecimal(pn, pe)) {
+    return { pn: pe, ratio, convention: 'puissance_depuis_rpn', pnCollectif };
+  }
+  return undefined;
+}
+
+/**
  * Détermine la puissance nominale (pn) et le ratio de virtualisation à utiliser pour calculer les
  * caractéristiques (rpn, rpint, qp0) d'un générateur à combustion collectif virtualisé.
  *
  * @param pn {number} puissance nominale saisie dans le DPE (W)
  * @param ratio {number} ratio de virtualisation de l'installation
- * @param valeursDpe {{rpn?: number, qp0?: number}} valeurs intermédiaires stockées dans le DPE
- * @param caracteristiques {(pn: number, ratio: number) => {rpn?: number, qp0?: number}}
- *   calcul des caractéristiques (rpn, qp0 en W) pour un couple (pn, ratio) ; une caractéristique
- *   non recalculée (saisie) est renvoyée `undefined`
+ * @param valeursDpe {{rpn?: number, rpint?: number, qp0?: number}} valeurs intermédiaires
+ *   stockées dans le DPE
+ * @param caracteristiques {(pn: number, ratio: number) => {rpn?: number, rpint?: number, qp0?: number}}
+ *   calcul des caractéristiques (rpn, rpint, qp0 en W) pour un couple (pn, ratio) ; une
+ *   caractéristique non recalculée (saisie) est renvoyée `undefined`
  * @param bugForBugCompat {boolean} reproduire un calcul non virtualisé du logiciel
- * @returns {{pn: number, ratio: number, convention: 'individualisee'|'collective_virtualisee'|'collective_non_virtualisee'}}
+ * @param [formuleRpn] {(pnCollectif: number) => ((pnCollectif: number) => number)|undefined}
+ *   formule rpn (fraction, fonction de Pn collectif en W) de la ligne de table sélectionnée pour
+ *   un Pn collectif donné ; absente, la 4e hypothèse (pn recalculé depuis rpn) n'est pas testée
+ * @returns {{pn: number, ratio: number, convention: 'individualisee'|'collective_virtualisee'|'collective_non_virtualisee'|'puissance_depuis_rpn', pnCollectif?: number}}
  */
 export function conventionPuissanceNominale(
   pn,
   ratio,
   valeursDpe,
   caracteristiques,
-  bugForBugCompat
+  bugForBugCompat,
+  formuleRpn
 ) {
   const individualisee = { pn, ratio, convention: 'individualisee' };
   const rpnDpe = valeursDpe?.rpn;
@@ -108,7 +219,14 @@ export function conventionPuissanceNominale(
    */
   const virtualisee = caracteristiques(pn * ratio, ratio);
   if (!valeurCoherente(rpnDpe, virtualisee.rpn)) {
-    return individualisee;
+    /**
+     * pn n'est ni Pe ni Pn(collectif) : Pn(collectif) est retrouvé à partir de rpn (4e hypothèse).
+     */
+    return (
+      (formuleRpn &&
+        puissanceRecalculeeDepuisRpn(pn, ratio, valeursDpe, caracteristiques, formuleRpn)) ||
+      individualisee
+    );
   }
 
   /**

@@ -1,7 +1,11 @@
 import { describe, expect, test, vi } from 'vitest';
 import {
   conventionPuissanceNominale,
+  decalageDecimal,
+  inverserRendement,
   nombreDecimales,
+  puissanceDepuisRpn,
+  puissanceRecalculeeDepuisRpn,
   qp0Coherent,
   valeurCoherente
 } from './13.2_generateur_combustion_pn.js';
@@ -215,5 +219,258 @@ describe('conventionPuissanceNominale - détection de la convention du logiciel'
       true
     );
     expect(resultat).toEqual({ pn: 23000, ratio: 1, convention: 'collective_non_virtualisee' });
+  });
+});
+
+/**
+ * 4e hypothèse : pn recalculé à partir du rpn stocké dans le DPE (issue #124, DPE 2592E2935275X).
+ * Double de test d'une chaudière gaz à condensation 2001-2015 : rpn = 91 + log10(Pn),
+ * rpint = 97 + log10(Pn) (Pn collectif en kW), qp0 = 1 % de la puissance saisie.
+ */
+const condensation = {
+  rpn: (pnCollectif) => (91 + Math.log10(pnCollectif / 1000)) / 100,
+  caracteristiques: (pn, ratio) => ({
+    rpn: (91 + Math.log10(pn / ratio / 1000)) / 100,
+    rpint: (97 + Math.log10(pn / ratio / 1000)) / 100,
+    qp0: 0.01 * pn
+  })
+};
+const formuleRpnCondensation = () => condensation.rpn;
+
+describe('inverserRendement', () => {
+  test('formule « A + B × log10(Pn) » : Pn retrouvé (W)', () => {
+    // rpn = 91 + log10(696) % -> Pn = 696 kW
+    expect(inverserRendement((91 + Math.log10(696)) / 100, condensation.rpn)).toBeCloseTo(
+      696000,
+      6
+    );
+    const formule = (p) => (84 + 2 * Math.log10(p / 1000)) / 100;
+    expect(inverserRendement(formule(23000), formule)).toBeCloseTo(23000, 6);
+  });
+
+  test('rendement indépendant de Pn (B = 0) : non inversible', () => {
+    expect(inverserRendement(0.9, () => 0.9)).toBeUndefined();
+  });
+
+  test('formule non affine en log10(Pn) : non inversible', () => {
+    expect(inverserRendement(0.9, (p) => (80 + Math.log10(p / 1000) ** 2) / 100)).toBeUndefined();
+  });
+
+  test('formule non évaluable : non inversible', () => {
+    expect(inverserRendement(0.9, () => NaN)).toBeUndefined();
+  });
+});
+
+describe('puissanceDepuisRpn', () => {
+  /**
+   * Table à deux lignes selon le critère de puissance : Pn ≤ 70 kW -> 84 + 2 log10(Pn),
+   * Pn > 70 kW -> 91 + log10(Pn).
+   */
+  const petite = (p) => (84 + 2 * Math.log10(p / 1000)) / 100;
+  const formuleSelonPn = (pnCollectif) => (pnCollectif <= 70000 ? petite : condensation.rpn);
+
+  test('ligne de table stable : Pn obtenu en une inversion', () => {
+    const formuleRpn = vi.fn(formuleSelonPn);
+    expect(puissanceDepuisRpn(500000, condensation.rpn(696000), formuleRpn)).toBeCloseTo(696000, 6);
+    expect(formuleRpn).toHaveBeenCalledTimes(2);
+  });
+
+  test('première ligne inadaptée : ligne re-sélectionnée sur le Pn obtenu', () => {
+    // Départ sur la ligne « Pn ≤ 70 kW », Pn réel 696 kW
+    const formuleRpn = vi.fn(formuleSelonPn);
+    expect(puissanceDepuisRpn(24000, condensation.rpn(696000), formuleRpn)).toBeCloseTo(696000, 6);
+    expect(formuleRpn).toHaveBeenCalledTimes(4);
+  });
+
+  test('aucune ligne de table : abandon', () => {
+    expect(puissanceDepuisRpn(24000, 0.93, () => undefined)).toBeUndefined();
+  });
+
+  test('ligne sans formule rpn après re-sélection : abandon après 3 itérations', () => {
+    const formuleRpn = vi.fn((p) => (p === 24000 ? condensation.rpn : undefined));
+    expect(puissanceDepuisRpn(24000, 0.93, formuleRpn)).toBeUndefined();
+  });
+
+  test('rpn indépendant de Pn : abandon', () => {
+    expect(puissanceDepuisRpn(24000, 0.9, () => () => 0.9)).toBeUndefined();
+  });
+
+  test('lignes incompatibles (Pn hors de la plage de chaque ligne) : abandon', () => {
+    // 0,93 -> 100 kW sur la ligne « Pn ≤ 70 kW » et 14 kW sur la ligne « Pn > 70 kW »
+    const grande = (p) => (70 + 20 * Math.log10(p / 1000)) / 100;
+    const formuleRpn = (p) => (p <= 70000 ? condensation.rpn : grande);
+    expect(puissanceDepuisRpn(24000, 0.93, formuleRpn)).toBeUndefined();
+  });
+});
+
+describe('decalageDecimal', () => {
+  test('puissance saisie décalée d’une puissance de dix (69600 W pour 696 kW)', () => {
+    expect(decalageDecimal(69600, 696000)).toBe(true);
+    expect(decalageDecimal(696, 696000)).toBe(true);
+    expect(decalageDecimal(2018.32, 201.832)).toBe(true);
+  });
+
+  test('puissance identique ou sans rapport : pas de décalage', () => {
+    expect(decalageDecimal(696000, 696000)).toBe(false);
+    expect(decalageDecimal(23000, 696000)).toBe(false);
+  });
+});
+
+describe('puissanceRecalculeeDepuisRpn', () => {
+  // Valeurs du DPE 2592E2935275X (WinDpe) : pn = 69600 W, Pn réel = 696 kW
+  const ratio = 0.00289987937273824;
+  const rpn = 0.938426100909721;
+  const rpint = 0.998426100909721;
+
+  test('rpint du DPE cohérent avec le Pn retrouvé : Pe = a × Pn retenu', () => {
+    const resultat = puissanceRecalculeeDepuisRpn(
+      69600,
+      ratio,
+      { rpn, rpint, qp0: 2.01832 },
+      condensation.caracteristiques,
+      formuleRpnCondensation
+    );
+    expect(resultat.convention).toBe('puissance_depuis_rpn');
+    expect(resultat.ratio).toBe(ratio);
+    /**
+     * Référence de régression : le logiciel a calculé rpn sur Pn = Pe / a avec Pe = 2018,32 W
+     * (arrondi au centième), soit Pn = 696,0014 kW ; on retrouve exactement Pe = 2018,32 W.
+     */
+    expect(resultat.pnCollectif).toBeCloseTo(2018.32 / ratio, 3);
+    expect(resultat.pn).toBeCloseTo(2018.32, 6);
+  });
+
+  test('rpint du DPE incohérent avec le Pn retrouvé : abandon', () => {
+    expect(
+      puissanceRecalculeeDepuisRpn(
+        69600,
+        ratio,
+        { rpn, rpint: 0.95, qp0: 20.1832 },
+        condensation.caracteristiques,
+        formuleRpnCondensation
+      )
+    ).toBeUndefined();
+  });
+
+  test('sans rpint : qp0 virtualisé du DPE (W) confirme le Pn retrouvé', () => {
+    expect(
+      puissanceRecalculeeDepuisRpn(
+        12345,
+        ratio,
+        { rpn, qp0: 20.1832 },
+        condensation.caracteristiques,
+        formuleRpnCondensation
+      )
+    ).toMatchObject({ convention: 'puissance_depuis_rpn' });
+  });
+
+  test('sans rpint : qp0 non virtualisé du DPE (kW) confirme le Pn retrouvé', () => {
+    // qp0 = 1 % × 696 kW = 6,96 kW
+    expect(
+      puissanceRecalculeeDepuisRpn(
+        12345,
+        ratio,
+        { rpn, qp0: 6.96 },
+        condensation.caracteristiques,
+        formuleRpnCondensation
+      )
+    ).toMatchObject({ convention: 'puissance_depuis_rpn' });
+  });
+
+  test('sans rpint ni qp0 cohérent : pn saisi décalé d’une puissance de dix de Pn', () => {
+    expect(
+      puissanceRecalculeeDepuisRpn(
+        69600,
+        ratio,
+        { rpn, qp0: 2.01832 },
+        condensation.caracteristiques,
+        formuleRpnCondensation
+      )
+    ).toMatchObject({ convention: 'puissance_depuis_rpn' });
+  });
+
+  test('sans rpint ni qp0 : pn saisi décalé d’une puissance de dix de Pe', () => {
+    expect(
+      puissanceRecalculeeDepuisRpn(
+        201.832,
+        ratio,
+        { rpn },
+        condensation.caracteristiques,
+        formuleRpnCondensation
+      )
+    ).toMatchObject({ convention: 'puissance_depuis_rpn' });
+  });
+
+  test('aucune confirmation (rpint et qp0 non recalculés, pn sans rapport) : abandon', () => {
+    const caracteristiques = (pn, r) => ({ rpn: condensation.caracteristiques(pn, r).rpn });
+    expect(
+      puissanceRecalculeeDepuisRpn(
+        12345,
+        ratio,
+        { rpn, rpint, qp0: 2.01832 },
+        caracteristiques,
+        formuleRpnCondensation
+      )
+    ).toBeUndefined();
+  });
+
+  test('rpn non inversible : abandon sans calcul des caractéristiques', () => {
+    const caracteristiques = vi.fn();
+    expect(
+      puissanceRecalculeeDepuisRpn(69600, ratio, { rpn }, caracteristiques, () => () => 0.9)
+    ).toBeUndefined();
+    expect(caracteristiques).not.toHaveBeenCalled();
+  });
+});
+
+describe('conventionPuissanceNominale - 4e hypothèse (pn recalculé depuis rpn)', () => {
+  const ratio = 0.00289987937273824;
+  const valeursDpe = { rpn: 0.938426100909721, rpint: 0.998426100909721, qp0: 2.01832 };
+
+  test('cas réel WinDpe 2592E2935275X : pn ni Pe ni Pn -> Pe = a × Pn(rpn) = 2018,32 W', () => {
+    const resultat = conventionPuissanceNominale(
+      69600,
+      ratio,
+      valeursDpe,
+      condensation.caracteristiques,
+      true,
+      formuleRpnCondensation
+    );
+    expect(resultat).toMatchObject({ convention: 'puissance_depuis_rpn', ratio });
+    expect(resultat.pn).toBeCloseTo(2018.32, 6);
+  });
+
+  test('formule rpn non fournie : convention individualisée conservée', () => {
+    expect(
+      conventionPuissanceNominale(69600, ratio, valeursDpe, condensation.caracteristiques, true)
+    ).toEqual({ pn: 69600, ratio, convention: 'individualisee' });
+  });
+
+  test('confirmation impossible : convention individualisée conservée', () => {
+    expect(
+      conventionPuissanceNominale(
+        69600,
+        ratio,
+        { ...valeursDpe, rpint: 0.95 },
+        condensation.caracteristiques,
+        true,
+        formuleRpnCondensation
+      )
+    ).toEqual({ pn: 69600, ratio, convention: 'individualisee' });
+  });
+
+  test('pn cohérent avec Pe : la 4e hypothèse n’est pas évaluée', () => {
+    const formuleRpn = vi.fn(formuleRpnCondensation);
+    expect(
+      conventionPuissanceNominale(
+        2018.32,
+        ratio,
+        valeursDpe,
+        condensation.caracteristiques,
+        true,
+        formuleRpn
+      )
+    ).toMatchObject({ convention: 'individualisee' });
+    expect(formuleRpn).not.toHaveBeenCalled();
   });
 });

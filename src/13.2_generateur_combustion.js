@@ -211,28 +211,47 @@ export function tv_generateur_combustion(dpe, di, de, type, GV, tbase, methodeSa
    */
   if (selectionLigne) {
     const ligneOuDefaut = (pn, ratio) => selectionLigne(pn, ratio) || row;
+    const caracteristiques = (pn, ratio) =>
+      caracteristiquesGenerateurCombustion(
+        ligneOuDefaut(pn, ratio),
+        pn,
+        ratio,
+        E,
+        F,
+        type,
+        methodeSaisie
+      );
+    /**
+     * Formule rpn de la ligne sélectionnée pour un Pn(collectif) donné (W) : permet de retrouver
+     * Pn(collectif) à partir du rpn stocké (4e hypothèse).
+     */
+    const formuleRpn = (pnCollectif) => {
+      const ligne = selectionLigne(pnCollectif, 1);
+      return ligne?.rpn ? (p) => evaluateFormula(ligne.rpn, p, E, F) / 100 : undefined;
+    };
     const puissance = conventionPuissanceNominale(
       di.pn,
       ratioVirtualisation,
-      { rpn: di.rpn, qp0: di.qp0 },
-      (pn, ratio) =>
-        caracteristiquesGenerateurCombustion(
-          ligneOuDefaut(pn, ratio),
-          pn,
-          ratio,
-          E,
-          F,
-          type,
-          methodeSaisie
-        ),
-      bug_for_bug_compat
+      { rpn: di.rpn, rpint: di.rpint, qp0: di.qp0 },
+      caracteristiques,
+      bug_for_bug_compat,
+      formuleRpn
     );
 
-    if (puissance.convention !== 'individualisee') {
+    if (puissance.convention === 'puissance_depuis_rpn') {
+      console.warn(
+        `La puissance nominale du générateur ${de.description} (${di.pn} W) n'est cohérente ni avec la puissance
+        virtualisée ni avec celle du générateur collectif. Puissance du générateur collectif recalculée à partir
+        du rpn du DPE (${di.rpn}) : Pn = ${puissance.pnCollectif / 1000} kW, utilisation de Pe = a × Pn = ${puissance.pn} W.`
+      );
+    } else if (puissance.convention !== 'individualisee') {
       console.warn(
         `La puissance nominale du générateur ${de.description} (${di.pn} W) est celle du générateur collectif : 
         utilisation de la puissance ${puissance.pn} W et du ratio de virtualisation ${puissance.ratio} (${puissance.convention}).`
       );
+    }
+
+    if (puissance.convention !== 'individualisee') {
       di.pn = puissance.pn;
       ratioVirtualisation = puissance.ratio;
       row = ligneOuDefaut(di.pn, ratioVirtualisation);

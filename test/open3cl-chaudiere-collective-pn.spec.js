@@ -65,24 +65,48 @@ describe('Chaudière collective : puissance nominale saisie selon les logiciels 
     );
   });
 
-  test("2592E2935275X (WinDpe) : pn saisi ni en Pe ni en Pn, aucune correction n'est appliquée", () => {
+  test('2592E2935275X (WinDpe) : pn saisi ni en Pe ni en Pn, puissance recalculée depuis rpn', () => {
     const input = getAdemeFileJson('2592E2935275X');
     const output = calcul_3cl(structuredClone(input));
-
-    const diDpe = generateursChauffage(input)[0].donnee_intermediaire;
-    const di = generateursChauffage(output)[0].donnee_intermediaire;
 
     /**
      * rpn du DPE = 0,938426 = (91 + log10(Pn)) / 100 -> Pn(collectif) = 696 kW, soit
      * Pe = a × Pn = 2018,32 W. Le pn saisi (69600 W) n'est cohérent ni avec Pe (pn / a = 24 MW)
-     * ni avec Pn (69,6 kW) : la détection conserve la convention 3CL (pn / a).
+     * ni avec Pn (69,6 kW) : Pn est retrouvé en inversant la formule rpn de la table, confirmé
+     * par rpint, et Pe = a × Pn est retenu (4e hypothèse).
      */
-    expect(10 ** (diDpe.rpn * 100 - 91)).toBeCloseTo(696, 2);
-    expect(di.pn).toBe(69600);
-    expect(di.rpn).not.toBeCloseTo(diDpe.rpn, 3);
-    expect(output.logement.sortie.ef_conso.conso_ch).toBeGreaterThan(
-      input.logement.sortie.ef_conso.conso_ch * 1.4
+    const generateursDpe = [...generateursChauffage(input), ...generateursEcs(input)];
+    const generateursCalcules = [...generateursChauffage(output), ...generateursEcs(output)];
+    expect(generateursCalcules).toHaveLength(2);
+    generateursCalcules.forEach((generateur, index) => {
+      const diDpe = generateursDpe[index].donnee_intermediaire;
+      const di = generateur.donnee_intermediaire;
+      expect(diDpe.pn).toBe(69600);
+      expect(di.pn).toBeCloseTo(2018.32, 6);
+      expect(di.rpn).toBeCloseTo(diDpe.rpn, 8);
+      expect(generateur.donnee_entree.tv_generateur_combustion_id).toBe(12);
+    });
+
+    const diDpe = generateursChauffage(input)[0].donnee_intermediaire;
+    const di = generateursChauffage(output)[0].donnee_intermediaire;
+    expect(di.rpint).toBeCloseTo(diDpe.rpint, 8);
+    expect(di.rendement_generation).toBeCloseTo(diDpe.rendement_generation, 2);
+
+    // Conso ECS identique au DPE (1461,80 kWh)
+    expect(output.logement.sortie.ef_conso.conso_ecs).toBeCloseTo(
+      input.logement.sortie.ef_conso.conso_ecs,
+      2
     );
+
+    /**
+     * Référence de régression : conso_ch = 4437,9 kWh (DPE : 4664,4 ; avant correction : 6747,7).
+     * L'écart résiduel (≈ -4,9 %) vient du besoin de chauffage (déperditions de l'enveloppe
+     * 74,8 W/K contre 78,5 W/K), signalé dans l'issue (« problème de mur »).
+     */
+    expect(output.logement.sortie.ef_conso.conso_ch).toBeCloseTo(4437.889, 2);
+    const ecartConsoCh =
+      output.logement.sortie.ef_conso.conso_ch / input.logement.sortie.ef_conso.conso_ch - 1;
+    expect(Math.abs(ecartConsoCh)).toBeLessThan(0.06);
   });
 
   test('2592E2935275X (WinDpe) : avec pn = Pe non tronqué, rendements et conso ECS du DPE retrouvés', () => {
