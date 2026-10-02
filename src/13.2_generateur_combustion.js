@@ -416,6 +416,15 @@ export function findGenerateurChMixteJumeau(generateursChMixtes, de) {
       sameValue(ch.donnee_entree.enum_type_energie_id, de.enum_type_energie_id)
     );
     if (generateurs.length === 1) return generateurs[0];
+    // Plusieurs générateurs de même énergie et de même type : jumeaux identiques,
+    // aucune ambiguïté sur le type à retenir pour l'ECS (cas 2275E1945671L)
+    const type = generateurs[0]?.donnee_entree.enum_type_generateur_ch_id;
+    if (
+      generateurs.length > 1 &&
+      generateurs.every((ch) => sameValue(ch.donnee_entree.enum_type_generateur_ch_id, type))
+    ) {
+      return generateurs[0];
+    }
   }
 
   if (generateursChMixtes.length === 1) {

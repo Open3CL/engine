@@ -590,6 +590,34 @@ describe('findGenerateurChMixteJumeau - appariement ECS / chauffage mixte (issue
     expect(findGenerateurChMixteJumeau(generateurs, de)).toBeNull();
   });
 
+  test('plusieurs générateurs de même énergie et de types différents : ambiguïté → aucun appariement', () => {
+    const de = { enum_type_energie_id: '13' };
+    const generateurs = [
+      ch({ enum_type_generateur_ch_id: '134', enum_type_energie_id: '13' }),
+      ch({ enum_type_generateur_ch_id: '92', enum_type_energie_id: '13' })
+    ];
+    expect(findGenerateurChMixteJumeau(generateurs, de)).toBeNull();
+  });
+
+  test('cas 2275E1945671L : plusieurs générateurs de même énergie et de même type → le premier est retenu', () => {
+    const ch1 = ch({
+      enum_type_generateur_ch_id: '134',
+      enum_type_energie_id: '13',
+      tv_generateur_combustion_id: '8'
+    });
+    const ch2 = ch({
+      enum_type_generateur_ch_id: 134,
+      enum_type_energie_id: 13,
+      tv_generateur_combustion_id: '8'
+    });
+    const de = {
+      enum_type_generateur_ecs_id: '92',
+      tv_generateur_combustion_id: '1',
+      enum_type_energie_id: '13'
+    };
+    expect(findGenerateurChMixteJumeau([ch1, ch2], de)).toBe(ch1);
+  });
+
   test('générateur de chauffage mixte unique sans énergie renseignée : retenu (comportement historique)', () => {
     const unique = ch({ enum_type_generateur_ch_id: 'X' });
     expect(findGenerateurChMixteJumeau([unique], { enum_type_energie_id: '2' })).toBe(unique);
@@ -652,9 +680,10 @@ describe('tv_generateur_combustion - génération mixte avec plusieurs générat
   test('jumeau non identifiable (ambiguïté) : type ECS conservé', () => {
     state.bug = true;
     tv.mockReturnValue({ ...ROW_DEFAUT });
+    // Deux CH mixtes de même énergie mais de types différents : aucun jumeau certain
     const dpe = dpeAvecChMixtes([
       { enum_type_generateur_ch_id: 'X', enum_type_energie_id: '2' },
-      { enum_type_generateur_ch_id: 'X', enum_type_energie_id: '2' }
+      { enum_type_generateur_ch_id: 'Z', enum_type_energie_id: '2' }
     ]);
     const de = {
       enum_type_generateur_ecs_id: 'A',
