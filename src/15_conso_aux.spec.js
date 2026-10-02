@@ -131,6 +131,49 @@ describe('conso_aux_gen - auxiliaires de génération', () => {
     expect(diInconnu.conso_auxiliaire_generation_autre).toBe(0);
     expect(diInconnu.conso_auxiliaire_generation_autre_depensier).toBe(0);
   });
+
+  /**
+   * Installation collective virtualisée (appartement) : di.pn est la puissance ramenée au logement,
+   * pe = di.pn / ratio_virtualisation la puissance du générateur de l'immeuble.
+   * Caux_g = (G + H × Pn_immeuble) × Bch_logement / Pn_immeuble : G n'est pas proratisé.
+   * Cas des autotests CSTB APP5-0-1 (chaudière fioul collective, Tribu Qaux_ch = 15,9928 kWh).
+   */
+  test('installation virtualisée : Paux_g calculée sur le générateur immeuble, G non proratisé', () => {
+    const diVirt = { pn: 35000 };
+    conso_aux_gen(
+      diVirt,
+      { enum_type_generateur_ch_id: '78', ratio_virtualisation: 0.1 },
+      'ch',
+      1000,
+      1200,
+      100
+    );
+    // pe = 350 kW => Paux = 20 + 1,6 × 350 = 580 W ; conso = 580 × 1000 / 350000
+    expect(diVirt.conso_auxiliaire_generation_ch).toBeCloseTo(580 / 350, 10);
+    expect(diVirt.conso_auxiliaire_generation_ch_depensier).toBeCloseTo((580 * 1.2) / 350, 10);
+  });
+
+  test('installation virtualisée : identique au calcul non virtualisé du générateur immeuble', () => {
+    const diVirt = { pn: 2000 };
+    const diImmeuble = { pn: 20000 };
+    conso_aux_gen(
+      diVirt,
+      { enum_type_generateur_ecs_id: '50', ratio_virtualisation: 0.1 },
+      'ecs',
+      800,
+      1000,
+      100
+    );
+    conso_aux_gen(diImmeuble, { enum_type_generateur_ecs_id: '50' }, 'ecs', 800, 1000, 100);
+    expect(diVirt.conso_auxiliaire_generation_ecs).toBeCloseTo(
+      diImmeuble.conso_auxiliaire_generation_ecs,
+      10
+    );
+    expect(diVirt.conso_auxiliaire_generation_ecs_depensier).toBeCloseTo(
+      diImmeuble.conso_auxiliaire_generation_ecs_depensier,
+      10
+    );
+  });
 });
 
 /**
