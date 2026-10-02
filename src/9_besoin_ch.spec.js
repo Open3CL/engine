@@ -42,7 +42,9 @@ vi.mock('./11_besoin_ecs.js', () => ({
 }));
 
 vi.mock('./9_generateur_ch.js', () => ({
-  calc_Qrec_gen_j: vi.fn()
+  calc_Qrec_gen_j: vi.fn(),
+  calc_Qrec_gen_ecs_j: vi.fn(),
+  isGenerateurEcsSeulRecuperable: vi.fn()
 }));
 
 const utilState = vi.hoisted(() => ({ bug: false }));
@@ -59,7 +61,8 @@ const { default: tvsBch } = await import('./tv.js');
 const { calc_ai_j, calc_as_j } = await import('./6.1_apport_gratuit.js');
 const { calc_sse_j } = await import('./6.2_surface_sud_equivalente.js');
 const { calc_besoin_ecs_j } = await import('./11_besoin_ecs.js');
-const { calc_Qrec_gen_j } = await import('./9_generateur_ch.js');
+const { calc_Qrec_gen_j, calc_Qrec_gen_ecs_j, isGenerateurEcsSeulRecuperable } =
+  await import('./9_generateur_ch.js');
 
 /**
  * 9. Besoins de chauffage (Bch)
@@ -399,5 +402,151 @@ describe('calc_besoin_ch - branches complémentaires', () => {
     const ret = calc_besoin_ch(0, 0, 0, 0, 100, 100, 3, [], instal_ch, [], null, 'maison', 1);
     // 1000 / 1000 = 1 Wh récupéré sur le seul mois
     expect(ret.pertes_generateur_ch_recup).toBeCloseTo(1, 9);
+  });
+});
+
+/**
+ * 9.1.1 - Pertes récupérées de génération : générateurs de la collection ECS assurant l'ECS
+ * uniquement, avec Qp0 > 0 et en volume chauffé (issue #153).
+ * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §9.1.1
+ */
+describe('calc_besoin_ch - récupération des pertes des générateurs ECS seuls (#153)', () => {
+  const genEcsSeul = {
+    donnee_entree: { enum_usage_generateur_id: '2', position_volume_chauffe: 1 },
+    donnee_intermediaire: { qp0: 100 }
+  };
+  const genEcsMixte = {
+    donnee_entree: { enum_usage_generateur_id: '3', position_volume_chauffe: 1 },
+    donnee_intermediaire: { qp0: 100 }
+  };
+  const instal_ecs = [
+    {
+      donnee_entree: { enum_type_installation_id: '2', rdim: 1 },
+      generateur_ecs_collection: { generateur_ecs: [genEcsSeul, genEcsMixte] }
+    }
+  ];
+
+  beforeEach(() => {
+    utilState.bug = false;
+    vi.mocked(calc_ai_j).mockReset().mockReturnValue(5000);
+    vi.mocked(calc_as_j).mockReset().mockReturnValue(2000);
+    vi.mocked(calc_sse_j).mockReset().mockReturnValue(10);
+    vi.mocked(calc_besoin_ecs_j).mockReset().mockReturnValue(10);
+    vi.mocked(calc_Qrec_gen_j).mockReset().mockReturnValue(0);
+    vi.mocked(calc_Qrec_gen_ecs_j).mockReset();
+    vi.mocked(isGenerateurEcsSeulRecuperable)
+      .mockReset()
+      .mockImplementation((gen) => gen === genEcsSeul);
+  });
+
+  test('seuls les générateurs retenus par isGenerateurEcsSeulRecuperable sont calculés', () => {
+    vi.mocked(calc_Qrec_gen_ecs_j).mockReturnValue(500);
+    calc_besoin_ch(0, 0, 0, 0, 100, 100, 3, instal_ecs, [], [], null, 'maison', 1);
+
+    // un appel conventionnel (nref19 = 100) et un appel dépensier (nref21 = 120) pour le seul mois
+    expect(calc_Qrec_gen_ecs_j).toHaveBeenCalledTimes(2);
+    expect(calc_Qrec_gen_ecs_j).toHaveBeenCalledWith(genEcsSeul, 100);
+    expect(calc_Qrec_gen_ecs_j).toHaveBeenCalledWith(genEcsSeul, 120);
+    expect(calc_Qrec_gen_ecs_j).not.toHaveBeenCalledWith(genEcsMixte, expect.anything());
+  });
+
+  test('la récupération du générateur ECS seul s’ajoute aux pertes récupérées et réduit le besoin', () => {
+    vi.mocked(isGenerateurEcsSeulRecuperable).mockReturnValue(false);
+    const sansRecup = calc_besoin_ch(
+      0,
+      0,
+      0,
+      0,
+      100,
+      100,
+      3,
+      instal_ecs,
+      [],
+      [],
+      null,
+      'maison',
+      1
+    );
+
+    vi.mocked(isGenerateurEcsSeulRecuperable).mockImplementation((gen) => gen === genEcsSeul);
+    vi.mocked(calc_Qrec_gen_ecs_j).mockImplementation((gen, nref) => (nref === 100 ? 500 : 600));
+    const avecRecup = calc_besoin_ch(
+      0,
+      0,
+      0,
+      0,
+      100,
+      100,
+      3,
+      instal_ecs,
+      [],
+      [],
+      null,
+      'maison',
+      1
+    );
+
+    expect(avecRecup.pertes_generateur_ch_recup).toBeCloseTo(500, 9);
+    expect(avecRecup.pertes_generateur_ch_recup_depensier).toBeCloseTo(600, 9);
+    // 500 Wh récupérés => besoin réduit de 0,5 kWh
+    expect(sansRecup.besoin_ch - avecRecup.besoin_ch).toBeCloseTo(0.5, 9);
+    expect(sansRecup.besoin_ch_depensier - avecRecup.besoin_ch_depensier).toBeCloseTo(0.6, 9);
+  });
+
+  test('cumul avec la récupération des générateurs de chauffage', () => {
+    vi.mocked(calc_Qrec_gen_j).mockReturnValue(1000);
+    vi.mocked(calc_Qrec_gen_ecs_j).mockReturnValue(500);
+    const instal_ch = [
+      {
+        generateur_chauffage_collection: {
+          generateur_chauffage: [
+            { donnee_intermediaire: { qp0: 1 }, donnee_entree: { position_volume_chauffe: 1 } }
+          ]
+        }
+      }
+    ];
+    const ret = calc_besoin_ch(
+      0,
+      0,
+      0,
+      0,
+      100,
+      100,
+      3,
+      instal_ecs,
+      instal_ch,
+      [],
+      null,
+      'maison',
+      1
+    );
+    expect(ret.pertes_generateur_ch_recup).toBeCloseTo(1500, 9);
+  });
+
+  test('compatibilité "bug for bug" : même facteur 1000 que pour les générateurs de chauffage', () => {
+    utilState.bug = true;
+    vi.mocked(calc_Qrec_gen_ecs_j).mockReturnValue(500);
+    const ret = calc_besoin_ch(0, 0, 0, 0, 100, 100, 3, instal_ecs, [], [], null, 'maison', 1);
+    expect(ret.pertes_generateur_ch_recup).toBeCloseTo(0.5, 9);
+  });
+
+  test('installation ECS sans générateur : pas de récupération', () => {
+    const ret = calc_besoin_ch(
+      0,
+      0,
+      0,
+      0,
+      100,
+      100,
+      3,
+      [{ donnee_entree: { enum_type_installation_id: '2' }, generateur_ecs_collection: {} }],
+      [],
+      [],
+      null,
+      'maison',
+      1
+    );
+    expect(calc_Qrec_gen_ecs_j).not.toHaveBeenCalled();
+    expect(ret.pertes_generateur_ch_recup).toBe(0);
   });
 });
