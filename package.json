@@ -17,7 +17,7 @@
     "test:unit": "vitest run src",
     "test:unit:ci": "vitest run src --coverage",
     "test:corpus": "node test/corpus/run_all_corpus_checks.js",
-    "test:corpus:all": "node test/corpus/run_all_corpus_checks.js && npm run reports:readme",
+    "test:corpus:all": "npm run reports:clean && node test/corpus/run_all_corpus_checks.js && npm run reports:readme",
     "test:corpus:all+database": "npm run test:corpus:all && node test/corpus/corpus_database.js",
     "qa:lint": "eslint .",
     "qa:lint:fix": "npm run qa:lint -- --fix",
@@ -29,6 +29,7 @@
     "assets:sync": "node scripts/synchronize_assets.js",
     "version:update": "node scripts/update_version.js",
     "reports:preview": "npm run http-server dist/reports/corpus -o",
+    "reports:clean": "node scripts/clean_corpus_reports.js",
     "reports:readme": "node scripts/generate_corpus_readme.js",
     "reports:stamp": "node scripts/stamp_corpus_release.js",
     "reports:version": "node scripts/corpus_version.js"
