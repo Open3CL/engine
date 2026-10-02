@@ -62,7 +62,170 @@ export function tempDistributionChPourTempFonc(emChDe, emChDu) {
   return tempDistribution;
 }
 
+/**
+ * Périodes d'installation des émetteurs (table temp_fonc_30 / temp_fonc_100), de la plus ancienne
+ * à la plus récente.
+ */
+export const PERIODES_INSTALLATION_EMETTEUR = ['avant 1981', 'entre 1981 et 2000', 'après 2000'];
+
+/**
+ * Tolérance (°C) pour considérer qu'une température de fonctionnement issue des tables reproduit
+ * celle stockée dans le DPE.
+ */
+export const TOLERANCE_TEMP_FONC = 0.01;
+
+/**
+ * 13.2.1.5 Chaudières basse température et condensation
+ * « Si l'année d'installation des émetteurs est inconnue, prendre l'année de construction du
+ * bâtiment. »
+ * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.1.5
+ *
+ * @param ac {number} année de construction du bâtiment
+ * @return {string} période d'installation des émetteurs
+ */
+export function periodeEmetteurAnneeConstruction(ac) {
+  if (ac < 1981) return PERIODES_INSTALLATION_EMETTEUR[0];
+  if (ac < 2000) return PERIODES_INSTALLATION_EMETTEUR[1];
+  return PERIODES_INSTALLATION_EMETTEUR[2];
+}
+
+function estNumerique(valeur) {
+  return (
+    valeur !== null && valeur !== undefined && valeur !== '' && Number.isFinite(Number(valeur))
+  );
+}
+
+/**
+ * Lignes des tables temp_fonc_30 / temp_fonc_100 retenues pour un générateur (maximum sur les
+ * émetteurs), en affectant `periodeParDefaut` aux émetteurs dont la période d'installation n'est
+ * pas saisie. Les émetteurs sans réseau de distribution (enum_temp_distribution_ch_id = 1) sont
+ * exclus. Utilisé uniquement pour la déduction de période en mode bug_for_bug_compat.
+ *
+ * @param de {object} donnee_entree du générateur
+ * @param em_ch {object[]} émetteurs de l'installation
+ * @param periodeParDefaut {string} période affectée aux émetteurs sans période saisie
+ * @return {{row_30: object|null, row_100: object|null}}
+ */
+export function temp_fonc_pour_periode(de, em_ch, periodeParDefaut) {
+  let row_30 = null;
+  let row_100 = null;
+  for (const em of em_ch) {
+    const em_ch_de = em.donnee_entree;
+    const em_ch_du = em.donnee_utilisateur;
+    if (String(requestInputID(em_ch_de, em_ch_du, 'temp_distribution_ch')) === '1') continue;
+    const matcher = {
+      enum_type_generateur_ch_id: de.enum_type_generateur_ch_id,
+      enum_temp_distribution_ch_id: tempDistributionChPourTempFonc(em_ch_de, em_ch_du),
+      periode_emetteurs:
+        requestInput(em_ch_de, em_ch_du, 'periode_installation_emetteur') || periodeParDefaut
+    };
+    const r30 = tv('temp_fonc_30', matcher);
+    const r100 = tv('temp_fonc_100', matcher);
+    if (r30 && (!row_30 || Number(r30.temp_fonc_30) > Number(row_30.temp_fonc_30))) row_30 = r30;
+    if (r100 && (!row_100 || Number(r100.temp_fonc_100) > Number(row_100.temp_fonc_100))) {
+      row_100 = r100;
+    }
+  }
+  return { row_30, row_100 };
+}
+
+/**
+ * Mode bug_for_bug_compat uniquement (issue #220).
+ *
+ * Certains logiciels (ex. 4.1.1 / moteur 3cl-2024.6.1.0, LICIEL) calculent les températures de
+ * fonctionnement avec une période d'installation des émetteurs qu'ils n'exportent pas, mais
+ * stockent temp_fonc_30 / temp_fonc_100 dans les données intermédiaires du générateur. La période
+ * est alors retrouvée en testant chaque période candidate (appliquée à tous les émetteurs sans
+ * période saisie) et en ne retenant que celles qui reproduisent les DEUX valeurs du DPE.
+ *
+ * - une seule candidate : retenue ;
+ * - plusieurs : celle de l'année de construction si elle en fait partie, sinon la plus récente ;
+ * - aucune : null (repli sur l'année de construction, valeurs hors tables).
+ *
+ * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.1.5
+ *
+ * @param tempFonc30Dpe {number} temp_fonc_30 d'origine du DPE
+ * @param tempFonc100Dpe {number} temp_fonc_100 d'origine du DPE
+ * @param de {object} donnee_entree du générateur
+ * @param em_ch {object[]} émetteurs de l'installation
+ * @param ac {number} année de construction
+ * @return {string|null} période déduite, ou null si aucune période ne reproduit le DPE
+ */
+export function periodeEmetteursDeduiteDuDpe(tempFonc30Dpe, tempFonc100Dpe, de, em_ch, ac) {
+  const candidates = PERIODES_INSTALLATION_EMETTEUR.filter((periode) => {
+    const { row_30, row_100 } = temp_fonc_pour_periode(de, em_ch, periode);
+    return (
+      row_30 &&
+      row_100 &&
+      Math.abs(Number(row_30.temp_fonc_30) - tempFonc30Dpe) <= TOLERANCE_TEMP_FONC &&
+      Math.abs(Number(row_100.temp_fonc_100) - tempFonc100Dpe) <= TOLERANCE_TEMP_FONC
+    );
+  });
+  if (candidates.length === 0) return null;
+  const periodeConstruction = periodeEmetteurAnneeConstruction(ac);
+  if (candidates.includes(periodeConstruction)) return periodeConstruction;
+  return candidates[candidates.length - 1];
+}
+
+/**
+ * Indique si la déduction de la période des émetteurs à partir des données intermédiaires du DPE
+ * doit être tentée : mode bug_for_bug_compat, au moins un émetteur (avec réseau de distribution)
+ * sans période saisie, et temp_fonc_30 ET temp_fonc_100 d'origine présentes et numériques.
+ *
+ * @param tempFonc30Dpe {*} temp_fonc_30 d'origine du DPE
+ * @param tempFonc100Dpe {*} temp_fonc_100 d'origine du DPE
+ * @param em_ch {object[]} émetteurs de l'installation
+ * @return {boolean}
+ */
+export function deductionPeriodeEmetteursActive(tempFonc30Dpe, tempFonc100Dpe, em_ch) {
+  if (!bug_for_bug_compat) return false;
+  if (!estNumerique(tempFonc30Dpe) || !estNumerique(tempFonc100Dpe)) return false;
+  return em_ch.some(
+    (em) =>
+      String(requestInputID(em.donnee_entree, em.donnee_utilisateur, 'temp_distribution_ch')) !==
+        '1' &&
+      !requestInput(em.donnee_entree, em.donnee_utilisateur, 'periode_installation_emetteur')
+  );
+}
+
+/**
+ * Températures de fonctionnement à 30 % et 100 % de charge.
+ *
+ * `di` est la donnee_intermediaire du générateur issue du DPE d'entrée : à l'appel, temp_fonc_30 /
+ * temp_fonc_100 contiennent les valeurs d'origine du DPE (jamais une valeur recalculée par
+ * Open3CL). En mode bug_for_bug_compat, elles servent uniquement à retrouver la période
+ * d'installation des émetteurs non exportée (issue #220) ; les valeurs retenues proviennent
+ * toujours des tables (tv_temp_fonc_30_id / tv_temp_fonc_100_id renseignés).
+ *
+ * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.1.5
+ */
 export function tv_temp_fonc_30_100(di, de, du, em_ch, ac) {
+  const tempFonc30Dpe = di.temp_fonc_30;
+  const tempFonc100Dpe = di.temp_fonc_100;
+  if (deductionPeriodeEmetteursActive(tempFonc30Dpe, tempFonc100Dpe, em_ch)) {
+    const periode = periodeEmetteursDeduiteDuDpe(
+      Number(tempFonc30Dpe),
+      Number(tempFonc100Dpe),
+      de,
+      em_ch,
+      ac
+    );
+    if (periode) {
+      const { row_30, row_100 } = temp_fonc_pour_periode(de, em_ch, periode);
+      console.warn(
+        `période d'installation des émetteurs déduite des données intermédiaires du DPE : ${periode} (générateur ${de.description}, temp_fonc_30 = ${row_30.temp_fonc_30}, temp_fonc_100 = ${row_100.temp_fonc_100})`
+      );
+      de.tv_temp_fonc_30_id = row_30.tv_temp_fonc_30_id;
+      di.temp_fonc_30 = Number(row_30.temp_fonc_30);
+      de.tv_temp_fonc_100_id = row_100.tv_temp_fonc_100_id;
+      di.temp_fonc_100 = Number(row_100.temp_fonc_100);
+      return;
+    }
+    console.warn(
+      `période d'installation des émetteurs non déductible pour le générateur ${de.description} : valeurs hors tables / donnée d'entrée incohérente (temp_fonc_30 = ${tempFonc30Dpe}, temp_fonc_100 = ${tempFonc100Dpe}). Repli sur l'année de construction.`
+    );
+  }
+
   for (const em of em_ch) {
     const em_ch_de = em.donnee_entree;
     const em_ch_du = em.donnee_utilisateur;
@@ -73,9 +236,7 @@ export function tv_temp_fonc_30_100(di, de, du, em_ch, ac) {
     };
 
     if (!matcher.periode_emetteurs) {
-      if (ac < 1981) matcher.periode_emetteurs = 'avant 1981';
-      else if (ac < 2000) matcher.periode_emetteurs = 'entre 1981 et 2000';
-      else matcher.periode_emetteurs = 'après 2000';
+      matcher.periode_emetteurs = periodeEmetteurAnneeConstruction(ac);
     }
 
     const row_30 = tv('temp_fonc_30', matcher);

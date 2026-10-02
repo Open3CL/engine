@@ -38,8 +38,14 @@ vi.mock('./utils.js', () => ({
   requestInputID: vi.fn((de, du, field) => de[`enum_${field}_id`])
 }));
 
-const { tv_temp_fonc_30_100, tempDistributionChPourTempFonc, calc_generateur_combustion_ch } =
-  await import('./13.2_generateur_combustion_ch.js');
+const {
+  tv_temp_fonc_30_100,
+  tempDistributionChPourTempFonc,
+  calc_generateur_combustion_ch,
+  periodeEmetteursDeduiteDuDpe,
+  periodeEmetteurAnneeConstruction,
+  PERIODES_INSTALLATION_EMETTEUR
+} = await import('./13.2_generateur_combustion_ch.js');
 const { tv } = await import('./utils.js');
 
 beforeEach(() => {
@@ -192,6 +198,284 @@ describe('tv_temp_fonc_30_100 - températures de fonctionnement', () => {
       );
     }
   );
+});
+
+/**
+ * Issue #220 - période d'installation des émetteurs absente du DPE.
+ *
+ * Mode strict : « Si l'année d'installation des émetteurs est inconnue, prendre l'année de
+ * construction du bâtiment. » En mode bug_for_bug_compat uniquement, la période est retrouvée à
+ * partir des temp_fonc_30 / temp_fonc_100 d'origine stockées dans le DPE (règle de l'expert).
+ * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.1.5
+ */
+describe('tv_temp_fonc_30_100 - période des émetteurs absente (issue #220)', () => {
+  /**
+   * Table de test (contrôlée, indépendante des tables réelles) pour une chaudière à condensation :
+   * [température de distribution][période] -> [id, temp_fonc_30, temp_fonc_100].
+   */
+  const TABLE = {
+    2: {
+      'avant 1981': ['1', '32', '60'],
+      'entre 1981 et 2000': ['4', '24.5', '35'],
+      'après 2000': ['7', '24.5', '35']
+    },
+    3: {
+      'avant 1981': ['2', '38', '80'],
+      'entre 1981 et 2000': ['5', '35', '70'],
+      'après 2000': ['8', '32', '60']
+    },
+    4: {
+      'avant 1981': ['3', '38', '80'],
+      'entre 1981 et 2000': ['6', '35', '70'],
+      'après 2000': ['9', '35', '70']
+    }
+  };
+
+  function tvTable(table, matcher) {
+    const ligne = TABLE[matcher.enum_temp_distribution_ch_id]?.[matcher.periode_emetteurs];
+    if (!ligne) return null;
+    return table === 'temp_fonc_30'
+      ? { tv_temp_fonc_30_id: `30-${ligne[0]}`, temp_fonc_30: ligne[1] }
+      : { tv_temp_fonc_100_id: `100-${ligne[0]}`, temp_fonc_100: ligne[2] };
+  }
+
+  function emetteur(tempDistribution, periode) {
+    const de = { enum_temp_distribution_ch_id: tempDistribution };
+    if (periode) de.periode_installation_emetteur = periode;
+    return { donnee_entree: de, donnee_utilisateur: {} };
+  }
+
+  const genCondensation = () => ({ enum_type_generateur_ch_id: '97', description: 'chaudière' });
+
+  let warnSpy;
+  beforeEach(() => {
+    tv.mockImplementation(tvTable);
+    warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    return () => warnSpy.mockRestore();
+  });
+
+  test('T1 strict : période absente, construction 1900 -> « avant 1981 » (38/80), valeurs du DPE ignorées', () => {
+    const di = { temp_fonc_30: 32, temp_fonc_100: 60 };
+    const de = genCondensation();
+    tv_temp_fonc_30_100(di, de, {}, [emetteur('3')], 1900);
+    // Valeurs DPE (32) < table (38) : la table l'emporte, aucune déduction en mode strict
+    expect(di.temp_fonc_30).toBe(38);
+    expect(di.temp_fonc_100).toBe(80);
+    expect(de.tv_temp_fonc_30_id).toBe('30-2');
+    expect(de.tv_temp_fonc_100_id).toBe('100-2');
+    expect(tv).not.toHaveBeenCalledWith(
+      'temp_fonc_30',
+      expect.objectContaining({ periode_emetteurs: 'après 2000' })
+    );
+    expect(warnSpy).not.toHaveBeenCalled();
+  });
+
+  test('T2 bug_for_bug_compat : DPE à 32/60 -> période « après 2000 » déduite, valeurs et ids issus des tables', () => {
+    state.bug = true;
+    const di = { temp_fonc_30: 32, temp_fonc_100: 60 };
+    const de = genCondensation();
+    tv_temp_fonc_30_100(di, de, {}, [emetteur('3')], 1900);
+    expect(di.temp_fonc_30).toBe(32);
+    expect(di.temp_fonc_100).toBe(60);
+    expect(de.tv_temp_fonc_30_id).toBe('30-8');
+    expect(de.tv_temp_fonc_100_id).toBe('100-8');
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining(
+        "période d'installation des émetteurs déduite des données intermédiaires du DPE : après 2000"
+      )
+    );
+  });
+
+  test('T2 bis bug_for_bug_compat : valeurs du DPE sous forme de chaînes acceptées', () => {
+    state.bug = true;
+    const di = { temp_fonc_30: '32', temp_fonc_100: '60' };
+    tv_temp_fonc_30_100(di, genCondensation(), {}, [emetteur('3')], 1900);
+    expect(di.temp_fonc_30).toBe(32);
+    expect(di.temp_fonc_100).toBe(60);
+  });
+
+  test('T3 bug_for_bug_compat : période saisie « avant 1981 » jamais écrasée (38/80 conservé)', () => {
+    state.bug = true;
+    const di = { temp_fonc_30: 32, temp_fonc_100: 60 };
+    const de = genCondensation();
+    tv_temp_fonc_30_100(di, de, {}, [emetteur('3', 'avant 1981')], 1900);
+    expect(di.temp_fonc_30).toBe(38);
+    expect(di.temp_fonc_100).toBe(80);
+    expect(de.tv_temp_fonc_30_id).toBe('30-2');
+    expect(warnSpy).not.toHaveBeenCalled();
+  });
+
+  test('T4 bug_for_bug_compat : distribution haute, construction 1990, DPE 35/70 -> 2 candidates, période de construction retenue', () => {
+    state.bug = true;
+    const di = { temp_fonc_30: 35, temp_fonc_100: 70 };
+    const de = genCondensation();
+    tv_temp_fonc_30_100(di, de, {}, [emetteur('4')], 1990);
+    expect(di.temp_fonc_30).toBe(35);
+    expect(di.temp_fonc_100).toBe(70);
+    // « entre 1981 et 2000 » (ids 6) et non « après 2000 » (ids 9)
+    expect(de.tv_temp_fonc_30_id).toBe('30-6');
+    expect(de.tv_temp_fonc_100_id).toBe('100-6');
+  });
+
+  test('T5 bug_for_bug_compat : DPE 33/62 hors tables -> repli sur l’année de construction et avertissement', () => {
+    state.bug = true;
+    const di = { temp_fonc_30: 33, temp_fonc_100: 62 };
+    const de = genCondensation();
+    tv_temp_fonc_30_100(di, de, {}, [emetteur('3')], 1990);
+    // Repli strict : « entre 1981 et 2000 » -> 35/70 (> 33/62 donc retenu)
+    expect(di.temp_fonc_30).toBe(35);
+    expect(di.temp_fonc_100).toBe(70);
+    expect(de.tv_temp_fonc_30_id).toBe('30-5');
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining("valeurs hors tables / donnée d'entrée incohérente")
+    );
+  });
+
+  test.each([
+    ['temp_fonc_100 absente', { temp_fonc_30: 32 }],
+    ['temp_fonc_30 absente', { temp_fonc_100: 60 }],
+    ['temp_fonc_30 non numérique', { temp_fonc_30: 'abc', temp_fonc_100: 60 }],
+    ['temp_fonc_100 vide', { temp_fonc_30: 32, temp_fonc_100: '' }],
+    ['temp_fonc_30 nulle', { temp_fonc_30: null, temp_fonc_100: 60 }]
+  ])(
+    'T6 bug_for_bug_compat : %s -> aucune déduction (règle de l’année de construction)',
+    (_, di) => {
+      state.bug = true;
+      tv_temp_fonc_30_100(di, genCondensation(), {}, [emetteur('3')], 1900);
+      expect(tv).not.toHaveBeenCalledWith(
+        'temp_fonc_30',
+        expect.objectContaining({ periode_emetteurs: 'après 2000' })
+      );
+      expect(tv).not.toHaveBeenCalledWith(
+        'temp_fonc_30',
+        expect.objectContaining({ periode_emetteurs: 'entre 1981 et 2000' })
+      );
+      expect(warnSpy).not.toHaveBeenCalled();
+    }
+  );
+
+  test('T7 bug_for_bug_compat : deux émetteurs sans période (moyenne + haute), DPE 35/70 -> même période pour tous, règle du maximum', () => {
+    state.bug = true;
+    const di = { temp_fonc_30: 35, temp_fonc_100: 70 };
+    const de = genCondensation();
+    /**
+     * avant 1981 : max(38, 38) / max(80, 80) = 38/80 -> rejetée
+     * entre 1981 et 2000 : max(35, 35) / max(70, 70) = 35/70 -> candidate
+     * après 2000 : max(32, 35) / max(60, 70) = 35/70 -> candidate
+     * Construction 1900 (« avant 1981 ») hors candidates -> la plus récente : « après 2000 ».
+     */
+    tv_temp_fonc_30_100(di, de, {}, [emetteur('3'), emetteur('4')], 1900);
+    expect(di.temp_fonc_30).toBe(35);
+    expect(di.temp_fonc_100).toBe(70);
+    // Maximum atteint par l'émetteur « haute » en « après 2000 » (ids 9)
+    expect(de.tv_temp_fonc_30_id).toBe('30-9');
+    expect(de.tv_temp_fonc_100_id).toBe('100-9');
+  });
+
+  test('bug_for_bug_compat : un émetteur saisi et un émetteur sans période -> seule la période absente est déduite', () => {
+    state.bug = true;
+    const di = { temp_fonc_30: 35, temp_fonc_100: 70 };
+    const de = genCondensation();
+    // Émetteur saisi « entre 1981 et 2000 » (moyenne : 35/70) + émetteur basse sans période
+    tv_temp_fonc_30_100(di, de, {}, [emetteur('3', 'entre 1981 et 2000'), emetteur('2')], 1900);
+    expect(di.temp_fonc_30).toBe(35);
+    expect(di.temp_fonc_100).toBe(70);
+    expect(tv).toHaveBeenCalledWith(
+      'temp_fonc_30',
+      expect.objectContaining({
+        enum_temp_distribution_ch_id: '3',
+        periode_emetteurs: 'entre 1981 et 2000'
+      })
+    );
+    expect(tv).not.toHaveBeenCalledWith(
+      'temp_fonc_30',
+      expect.objectContaining({
+        enum_temp_distribution_ch_id: '3',
+        periode_emetteurs: 'après 2000'
+      })
+    );
+  });
+
+  test('bug_for_bug_compat : émetteur sans réseau de distribution (id 1) exclu', () => {
+    state.bug = true;
+    const di = { temp_fonc_30: 32, temp_fonc_100: 60 };
+    tv_temp_fonc_30_100(di, genCondensation(), {}, [emetteur('1'), emetteur('3')], 1900);
+    expect(di.temp_fonc_30).toBe(32);
+    expect(di.temp_fonc_100).toBe(60);
+  });
+
+  test('bug_for_bug_compat : seul un émetteur sans réseau de distribution est sans période -> aucune déduction', () => {
+    state.bug = true;
+    const di = { temp_fonc_30: 32, temp_fonc_100: 60 };
+    tv_temp_fonc_30_100(
+      di,
+      genCondensation(),
+      {},
+      [emetteur('1'), emetteur('3', 'avant 1981')],
+      1900
+    );
+    expect(di.temp_fonc_30).toBe(38);
+    expect(di.temp_fonc_100).toBe(80);
+    expect(warnSpy).not.toHaveBeenCalled();
+  });
+
+  test('bug_for_bug_compat : une seule des deux valeurs reproduite -> période rejetée (tolérance 0,01 °C)', () => {
+    state.bug = true;
+    // 32/60.02 : « après 2000 » ne reproduit que temp_fonc_30 -> aucune candidate
+    const di = { temp_fonc_30: 32, temp_fonc_100: 60.02 };
+    tv_temp_fonc_30_100(di, genCondensation(), {}, [emetteur('3')], 1900);
+    expect(di.temp_fonc_30).toBe(38);
+    expect(di.temp_fonc_100).toBe(80);
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('valeurs hors tables'));
+  });
+
+  test('bug_for_bug_compat : écart inférieur à la tolérance accepté', () => {
+    state.bug = true;
+    const di = { temp_fonc_30: 32.005, temp_fonc_100: 59.995 };
+    tv_temp_fonc_30_100(di, genCondensation(), {}, [emetteur('3')], 1900);
+    expect(di.temp_fonc_30).toBe(32);
+    expect(di.temp_fonc_100).toBe(60);
+  });
+});
+
+describe('periodeEmetteursDeduiteDuDpe', () => {
+  const de = { enum_type_generateur_ch_id: '97' };
+  const em = [{ donnee_entree: { enum_temp_distribution_ch_id: '3' }, donnee_utilisateur: {} }];
+
+  test('aucune ligne de table trouvée pour une période : période non candidate', () => {
+    tv.mockReturnValue(null);
+    expect(periodeEmetteursDeduiteDuDpe(32, 60, de, em, 1900)).toBeNull();
+  });
+
+  test('ligne temp_fonc_100 absente : période non candidate', () => {
+    tv.mockImplementation((table) =>
+      table === 'temp_fonc_30' ? { tv_temp_fonc_30_id: '1', temp_fonc_30: '32' } : null
+    );
+    expect(periodeEmetteursDeduiteDuDpe(32, 60, de, em, 1900)).toBeNull();
+  });
+
+  test('toutes les périodes candidates : période de construction retenue', () => {
+    tv.mockImplementation((table) =>
+      table === 'temp_fonc_30'
+        ? { tv_temp_fonc_30_id: '1', temp_fonc_30: '32' }
+        : { tv_temp_fonc_100_id: '1', temp_fonc_100: '60' }
+    );
+    expect(periodeEmetteursDeduiteDuDpe(32, 60, de, em, 1900)).toBe(
+      PERIODES_INSTALLATION_EMETTEUR[0]
+    );
+    expect(periodeEmetteursDeduiteDuDpe(32, 60, de, em, 2010)).toBe('après 2000');
+  });
+});
+
+describe('periodeEmetteurAnneeConstruction', () => {
+  test.each([
+    [1980, 'avant 1981'],
+    [1981, 'entre 1981 et 2000'],
+    [1999, 'entre 1981 et 2000'],
+    [2000, 'après 2000']
+  ])('année de construction %s : %s', (ac, periode) => {
+    expect(periodeEmetteurAnneeConstruction(ac)).toBe(periode);
+  });
 });
 
 describe('tempDistributionChPourTempFonc', () => {
