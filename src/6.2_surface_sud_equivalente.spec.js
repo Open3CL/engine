@@ -8,7 +8,7 @@ import { describe, expect, test, vi } from 'vitest';
  */
 vi.mock('./enums.js', () => ({
   default: {
-    orientation: { 1: 'sud', 2: 'horizontal' },
+    orientation: { 1: 'sud', 2: 'horizontal', 3: 'est', 4: 'nord' },
     inclinaison_vitrage: { 3: 'verticale', 4: 'horizontal' }
   }
 }));
@@ -18,6 +18,11 @@ vi.mock('./tv.js', () => ({
     c1: {
       h1a: {
         Janvier: { 'sud verticale': 0.5, horizontal: 0.3 }
+      },
+      // Coefficients C1 de janvier en h1a (sud = 1, est = 0,40, nord = 0,31) pour les cas
+      // de test d'Olivier (issue #101)
+      h1b: {
+        Janvier: { 'sud verticale': 1, 'est verticale': 0.4, 'nord verticale': 0.31 }
       }
     }
   }
@@ -28,7 +33,8 @@ vi.mock('./utils.js', () => ({
   mois_liste: ['Janvier']
 }));
 
-const { calc_sse_j, calc_sse } = await import('./6.2_surface_sud_equivalente.js');
+const { calc_sse_j, calc_sse, dedoublonnerEts, rattacherBaiesAuxEts } =
+  await import('./6.2_surface_sud_equivalente.js');
 
 /** Fabrique une baie vitrée avec les données d'entrée/intermédiaires utiles au calcul. */
 function baie({ adjacence, surface, orientationId = '1', inclinaisonId = '3', sw = 1 }) {
@@ -210,5 +216,124 @@ describe('calc_sse - surface sud équivalente annuelle', () => {
     const bvList = [baie({ adjacence: '1', surface: 2, sw: 0.4 })];
     // un seul mois mocké => identique au calcul journalier
     expect(calc_sse('ca1', 'h1a', bvList, null)).toBeCloseTo(0.4, 10);
+  });
+});
+
+/**
+ * 6.3 Plusieurs espaces tampons solarisés (issue #101) : T, bver, Sst et Ssd sont propres à chaque
+ * véranda ; Sse = Sse_ext + Σ(v) Sse_veranda_v. Une baie adjacence 10 n'entre que dans la véranda
+ * sur laquelle elle donne (reference_lnc = ets.reference).
+ * Cas de test fournis par Olivier (thermicien), zone h1b mockée avec C1 sud = 1, est = 0,40,
+ * nord = 0,31 ; Fe = 1.
+ * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §6.3
+ */
+describe('calc_sse_j - plusieurs espaces tampons solarisés (issue #101)', () => {
+  const SUD = '1';
+  const EST = '3';
+  const NORD = '4';
+
+  function baieInt(surface, orientationId, referenceLnc) {
+    const bv = baie({ adjacence: '10', surface, orientationId, sw: 0.47 });
+    if (referenceLnc !== undefined) bv.donnee_entree.reference_lnc = referenceLnc;
+    return bv;
+  }
+
+  function veranda(reference, T, bver, baiesExt) {
+    return {
+      donnee_entree: { reference },
+      donnee_intermediaire: { bver, coef_transparence_ets: T },
+      baie_ets_collection: {
+        baie_ets: baiesExt.map(([surface, orientationId]) =>
+          baie({ adjacence: '1', surface, orientationId })
+        )
+      }
+    };
+  }
+
+  // Baie extérieure 10 m² sud, Sw = 0,5 => Sse_ext = 5
+  const baieExt = baie({ adjacence: '1', surface: 10, orientationId: SUD, sw: 0.5 });
+  // V1 : T = 0,62, bver = 0,55, baies vers l'extérieur 8 m² sud + 4 m² est
+  const V1 = veranda('V1', 0.62, 0.55, [
+    [8, SUD],
+    [4, EST]
+  ]);
+  // V2 : T = 0,45, bver = 0,85, baie vers l'extérieur 6 m² nord
+  const V2 = veranda('V2', 0.45, 0.85, [[6, NORD]]);
+  const baiesV1 = [baieInt(4, SUD, 'V1'), baieInt(2, SUD, 'V1')];
+  const baiesV2 = [baieInt(2, NORD, 'V2'), baieInt(1, NORD, 'V2')];
+
+  // SseV1 = 1,7484 + (4,992 - 1,7484) * 0,55 = 3,53238
+  const SSE_V1 = 3.53238;
+  // SseV2 = 0,196695 + (0,71424 - 0,196695) * 0,85 = 0,63660825
+  const SSE_V2 = 0.63660825;
+
+  test('CT1 - cas de l’issue : Sse = Sse_ext + SseV1 + SseV2 avec T et bver propres', () => {
+    const bvList = [baieExt, ...baiesV1, ...baiesV2];
+    expect(calc_sse_j(bvList, [V1, V2], 'ca1', 'h1b', 'Janvier')).toBeCloseTo(
+      5 + SSE_V1 + SSE_V2,
+      9
+    );
+  });
+
+  test('CT2 - seules les baies de V2 : le Sst de V1 n’est pas appliqué', () => {
+    const bvList = [baieExt, ...baiesV2];
+    expect(calc_sse_j(bvList, [V1, V2], 'ca1', 'h1b', 'Janvier')).toBeCloseTo(5 + SSE_V2, 9);
+  });
+
+  test('CT3 - seules les baies de V1 : V2 sans baie vers le logement apporte 0', () => {
+    const bvList = [baieExt, ...baiesV1];
+    expect(calc_sse_j(bvList, [V1, V2], 'ca1', 'h1b', 'Janvier')).toBeCloseTo(5 + SSE_V1, 9);
+  });
+
+  test('CT4 - véranda dupliquée : pas de double comptage', () => {
+    const bvList = [baieExt, ...baiesV1];
+    expect(calc_sse_j(bvList, [V1, structuredClone(V1)], 'ca1', 'h1b', 'Janvier')).toBeCloseTo(
+      5 + SSE_V1,
+      9
+    );
+  });
+
+  test('baies sans reference_lnc : rattachées à la première véranda (comportement historique)', () => {
+    const bvList = [baieExt, baieInt(4, SUD), baieInt(2, SUD)];
+    expect(calc_sse_j(bvList, [V1, V2], 'ca1', 'h1b', 'Janvier')).toBeCloseTo(5 + SSE_V1, 9);
+  });
+
+  test('l’ordre des vérandas dans la collection est sans effet', () => {
+    const bvList = [baieExt, ...baiesV1, ...baiesV2];
+    expect(calc_sse_j(bvList, [V2, V1], 'ca1', 'h1b', 'Janvier')).toBeCloseTo(
+      5 + SSE_V1 + SSE_V2,
+      9
+    );
+  });
+});
+
+describe('dedoublonnerEts / rattacherBaiesAuxEts', () => {
+  test('dédoublonnage par référence, à défaut par contenu identique ; éléments vides ignorés', () => {
+    const a = { donnee_entree: { reference: 'A' }, x: 1 };
+    const aBis = { donnee_entree: { reference: 'A' }, x: 2 };
+    const sansRef = { donnee_intermediaire: { bver: 1 } };
+    const autreSansRef = { donnee_intermediaire: { bver: 2 } };
+    expect(
+      dedoublonnerEts([a, aBis, sansRef, structuredClone(sansRef), autreSansRef, null])
+    ).toEqual([a, sansRef, autreSansRef]);
+  });
+
+  test('rattachement par reference_lnc ; référence inconnue => première véranda', () => {
+    const ets = [{ donnee_entree: { reference: 'A' } }, { donnee_entree: { reference: 'B' } }];
+    const bA = { donnee_entree: { reference_lnc: 'A' } };
+    const bB = { donnee_entree: { reference_lnc: 'B' } };
+    const bInconnue = { donnee_entree: { reference_lnc: 'Z' } };
+    const bSans = { donnee_entree: {} };
+    expect(rattacherBaiesAuxEts([bA, bB, bInconnue, bSans], ets)).toEqual([
+      [bA, bInconnue, bSans],
+      [bB]
+    ]);
+  });
+
+  test('véranda sans donnee_entree : seules les baies sans lien lui sont rattachées', () => {
+    const ets = [{}, { donnee_entree: { reference: 'B' } }];
+    const bB = { donnee_entree: { reference_lnc: 'B' } };
+    const bSans = { donnee_entree: {} };
+    expect(rattacherBaiesAuxEts([bB, bSans], ets)).toEqual([[bSans], [bB]]);
   });
 });

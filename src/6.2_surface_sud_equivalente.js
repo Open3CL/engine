@@ -14,11 +14,6 @@ export function calc_sse_j(bv_list, ets, ca, zc, mois) {
     return sseBaiesExt;
   }
 
-  // Certaines vérandas sont dupliqués dans les DPE.
-  if (Array.isArray(ets)) {
-    ets = ets[0];
-  }
-
   /**
    * 6.3 Traitement des espaces tampons solarisés
    * Sse_ver n'est calculée que pour les baies vitrées qui séparent le logement de l'espace tampon
@@ -26,6 +21,78 @@ export function calc_sse_j(bv_list, ets, ca, zc, mois) {
    */
   if (baiesAdjVeranda.length === 0) {
     return sseBaiesExt;
+  }
+
+  /**
+   * Plusieurs espaces tampons solarisés (issue #101) : T, bver, Sst et Ssd sont propres à chaque
+   * véranda. Sse = Sse_ext + Σ(v) Sse_veranda_v, chaque baie adjacence 10 n'étant comptée que dans
+   * la véranda sur laquelle elle donne (baie.reference_lnc = ets.reference).
+   */
+  const etsList = dedoublonnerEts(Array.isArray(ets) ? ets : [ets]);
+  const baiesParEts = rattacherBaiesAuxEts(baiesAdjVeranda, etsList);
+
+  return etsList.reduce(
+    (acc, etsItem, idx) => acc + calc_sse_veranda_j(etsItem, baiesParEts[idx], zc, mois),
+    sseBaiesExt
+  );
+}
+
+/**
+ * Certaines vérandas sont dupliquées dans les DPE : une même véranda (même référence, ou à défaut
+ * même contenu) ne doit être comptée qu'une seule fois.
+ *
+ * @param etsList {EtsItem[]}
+ * @returns {EtsItem[]}
+ */
+export function dedoublonnerEts(etsList) {
+  const vues = new Set();
+  return etsList.filter((etsItem) => {
+    if (!etsItem) return false;
+    const reference = etsItem.donnee_entree?.reference;
+    const cle = reference ? `ref:${reference}` : `json:${JSON.stringify(etsItem)}`;
+    if (vues.has(cle)) return false;
+    vues.add(cle);
+    return true;
+  });
+}
+
+/**
+ * Rattache chaque baie vitrée adjacence 10 à l'espace tampon sur lequel elle donne
+ * (baie.donnee_entree.reference_lnc = ets.donnee_entree.reference).
+ *
+ * Une baie sans lien exploitable (reference_lnc absente ou ne correspondant à aucune véranda) est
+ * rattachée à la première véranda : c'est le comportement historique, et le seul possible quand le
+ * DPE ne comporte qu'une véranda. La méthode ne permet pas de faire mieux pour une donnée manquante.
+ *
+ * @param baiesAdjVeranda {BaieVitreeItem[]}
+ * @param etsList {EtsItem[]}
+ * @returns {BaieVitreeItem[][]} baies par véranda, dans l'ordre de etsList
+ */
+export function rattacherBaiesAuxEts(baiesAdjVeranda, etsList) {
+  const baiesParEts = etsList.map(() => []);
+  baiesAdjVeranda.forEach((bv) => {
+    const referenceLnc = bv.donnee_entree.reference_lnc;
+    const idx = referenceLnc
+      ? etsList.findIndex((etsItem) => etsItem.donnee_entree?.reference === referenceLnc)
+      : -1;
+    baiesParEts[idx === -1 ? 0 : idx].push(bv);
+  });
+  return baiesParEts;
+}
+
+/**
+ * Surface sud équivalente apportée par une véranda sur le mois j (§6.3).
+ *
+ * @param ets {EtsItem}
+ * @param baiesAdjVeranda {BaieVitreeItem[]} baies séparant le logement de cette véranda
+ * @param zc {string}
+ * @param mois {string}
+ * @returns {number}
+ */
+function calc_sse_veranda_j(ets, baiesAdjVeranda, zc, mois) {
+  // Véranda sans baie vitrée vers le logement : aucun apport solaire
+  if (baiesAdjVeranda.length === 0) {
+    return 0;
   }
 
   const bver = ets.donnee_intermediaire.bver;
@@ -80,7 +147,7 @@ export function calc_sse_j(bv_list, ets, ca, zc, mois) {
    */
   const SseVerandaj = Ssdj + ssIndj * bver;
 
-  return sseBaiesExt + SseVerandaj;
+  return SseVerandaj;
 }
 
 /**
