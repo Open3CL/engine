@@ -287,6 +287,59 @@ describe('Utils unit tests', () => {
       spy.mockRestore();
     });
 
+    test.each([
+      ['NaN', Number.NaN],
+      ['0', 0],
+      ['une chaîne vide', '']
+    ])(
+      'requestInput : champ non enum avec %s comme type est traité comme un type absent',
+      (_libelle, type) => {
+        const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+        const de = { epaisseur: 5 };
+        const du = {};
+        expect(requestInput(de, du, 'epaisseur', type)).toBeNull();
+        expect(spy).toHaveBeenCalledWith('requestInput: type is not defined for epaisseur');
+        // Le type invalide n'est pas publié dans donnee_utilisateur
+        expect(du).toStrictEqual({});
+        spy.mockRestore();
+      }
+    );
+
+    test.each([
+      ['un objet', { a: 1 }, 'object'],
+      ['un tableau', ['number'], 'object'],
+      ['une fonction', () => 'number', 'function'],
+      ['un symbole', Symbol('number'), 'symbol'],
+      ['un bigint', 10n, 'bigint']
+    ])(
+      'requestInput : champ non enum avec %s comme type journalise une erreur et retourne null',
+      (_libelle, type, typeAttendu) => {
+        const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+        const de = { epaisseur: 5 };
+        const du = {};
+        expect(requestInput(de, du, 'epaisseur', type)).toBeNull();
+        expect(spy).toHaveBeenCalledWith(
+          `requestInput: type has an unexpected type (${typeAttendu}) for epaisseur`
+        );
+        expect(du).toStrictEqual({});
+        spy.mockRestore();
+      }
+    );
+
+    test.each([
+      ['une chaîne', 'string'],
+      ['un nombre', 1],
+      ['un booléen', true]
+    ])('requestInput : champ non enum avec %s comme type est accepté', (_libelle, type) => {
+      const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const de = { epaisseur: 5 };
+      const du = {};
+      expect(requestInput(de, du, 'epaisseur', type)).toBe(5);
+      expect(du.epaisseur).toBe(type);
+      expect(spy).not.toHaveBeenCalled();
+      spy.mockRestore();
+    });
+
     test('requestInputID : sans type publie les clés et retourne l identifiant', () => {
       const de = { enum_materiaux_id: '1' };
       const du = {};

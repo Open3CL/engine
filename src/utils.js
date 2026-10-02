@@ -277,12 +277,9 @@ export function requestInput(de, du, field, type) {
     return enums[field][de[enum_name]];
   } else {
     // not enums
+    // `!type` couvre aussi NaN, 0 et '' (valeurs falsy)
     if (!type) {
       console.error(`requestInput: type is not defined for ${field}`);
-      return null;
-    }
-    if (typeof type === 'number' && Number.isNaN(type)) {
-      console.error(`requestInput: type is NaN for ${field}`);
       return null;
     }
     if (!['string', 'number', 'boolean'].includes(typeof type)) {
