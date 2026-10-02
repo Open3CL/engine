@@ -39,6 +39,7 @@ describe('FileStore', () => {
     vi.mocked(XLSX.utils.sheet_to_json).mockReset();
     vi.mocked(XLSX.utils.encode_col).mockClear();
     vi.mocked(XLSX.utils.encode_row).mockClear();
+    vi.mocked(global.fetch).mockClear();
 
     // Comportements par défaut « nominaux ».
     vi.mocked(readFile).mockImplementation((path, cb) => cb(null, Buffer.from(new ArrayBuffer(1))));
@@ -57,11 +58,42 @@ describe('FileStore', () => {
       const output = await fileStore.downloadXlsxFileAndConvertToJson('http://localhost:8080');
 
       expect(output).toEqual({ Sheet1: [] });
-      // Le buffer téléchargé est lu par XLSX avec les bonnes options.
-      expect(fetch).toHaveBeenCalledWith('http://localhost:8080');
+      // La protection CWE-918 construit une véritable instance `URL` (validée) avant l'appel à
+      // `fetch` : on vérifie le type et le `href` réel plutôt qu'une égalité de chaîne, car
+      // `new URL()` normalise l'URL (ajout du `/` final).
+      expect(fetch).toHaveBeenCalledTimes(1);
+      const [urlArgument] = vi.mocked(fetch).mock.calls[0];
+      expect(urlArgument).toBeInstanceOf(URL);
+      expect(urlArgument.href).toBe('http://localhost:8080/');
       expect(XLSX.read).toHaveBeenCalledWith(expect.anything(), {
         type: 'string',
         raw: false
+      });
+    });
+
+    describe('validation du protocole (CWE-918)', () => {
+      test.each(['http://localhost:8080', 'https://localhost:8080'])(
+        'accepte les URLs avec le protocole %s',
+        async (url) => {
+          const fileStore = new FileStore();
+
+          await expect(fileStore.downloadXlsxFileAndConvertToJson(url)).resolves.toEqual({
+            Sheet1: []
+          });
+
+          expect(fetch).toHaveBeenCalledTimes(1);
+        }
+      );
+
+      test("rejette une URL avec un protocole non http/https (ex. file://) et n'appelle pas fetch", async () => {
+        const fileStore = new FileStore();
+        const url = 'file:///etc/passwd';
+
+        await expect(fileStore.downloadXlsxFileAndConvertToJson(url)).rejects.toThrow(
+          `Unsupported protocol for url: ${url}`
+        );
+
+        expect(fetch).not.toHaveBeenCalled();
       });
     });
   });
