@@ -201,7 +201,6 @@ export function conso_aux_distribution_ch(
  */
 function getPuissanceCirculateur(em_ch, de, di, du, surfaceHabitable, GV, Tbase) {
   const typeEmetteur = parseInt(em_ch[0].donnee_entree.enum_type_emission_distribution_id);
-  const temperatureEmetteur = parseInt(em_ch[0].donnee_entree.enum_temp_distribution_ch_id);
 
   // Perte de charge de l’émetteur
   let deltaPem = 35;
@@ -244,8 +243,7 @@ function getPuissanceCirculateur(em_ch, de, di, du, surfaceHabitable, GV, Tbase)
     (de.surface_chauffee || surfaceHabitable) / (surfaceHabitable * nbGenerateurCascade);
 
   // Chute nominale de température de dimensionnement
-  // 4 - température de distribution de chauffage haute
-  const deltaDim = temperatureEmetteur === 4 ? 15 : 7.5;
+  const deltaDim = getDeltaDim(em_ch);
 
   // Puissance nominale en chaud (kW)
   const Pnc = 10 ** -3 * GV * (20 - Tbase);
@@ -258,6 +256,29 @@ function getPuissanceCirculateur(em_ch, de, di, du, surfaceHabitable, GV, Tbase)
       ((deltaPemnom * Qvemnom) / Math.max(1, surfaceHabitable / 400)) ** 0.676 *
       Math.max(1, surfaceHabitable / 400)
   );
+}
+
+/**
+ * 15.2.1 Chute nominale de température de dimensionnement ΔθDim (°C)
+ * - 15 °C pour une distribution haute température (enum_temp_distribution_ch_id 4) ou un
+ *   soufflage d'air chaud sur réseau aéraulique (enum_type_emission_distribution_id 5) ;
+ * - 7,5 °C sinon (basse ou moyenne température).
+ *
+ * L'installation est dimensionnée pour l'ensemble de ses émetteurs : un seul émetteur haute
+ * température impose 15 °C, quel que soit l'ordre de saisie des émetteurs (comme le moteur de
+ * référence CSTB Tribu). Auparavant, seul le premier émetteur était considéré.
+ *
+ * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §15.2.1
+ * @param em_ch {EmetteurChauffageItem[]}
+ * @return {number}
+ */
+export function getDeltaDim(em_ch) {
+  const hauteTemperature = em_ch.some(
+    (em) =>
+      parseInt(em.donnee_entree.enum_temp_distribution_ch_id) === 4 ||
+      parseInt(em.donnee_entree.enum_type_emission_distribution_id) === 5
+  );
+  return hauteTemperature ? 15 : 7.5;
 }
 
 /**
