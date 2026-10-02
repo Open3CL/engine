@@ -8,8 +8,77 @@ import {
   getThicknessFromDescription
 } from './utils.js';
 import b from './3.1_b.js';
+import tvs from './tv.js';
 
 const scriptName = new URL(import.meta.url).pathname.split('/').pop();
+
+/**
+ * Ramène une épaisseur de structure sur une colonne de la table Umur0 du matériau déclaré.
+ *
+ * 3.2.1.2 Calcul des Umur0 : la valeur est lue dans le tableau du matériau de structure déclaré.
+ * Lorsque l'épaisseur saisie n'est pas une colonne de ce tableau (ex : 16 cm alors que la table
+ * propose 15 et 20), la recherche ne doit jamais basculer vers la ligne d'un autre matériau
+ * (cf. issue #138).
+ *
+ * La méthode ne précise pas la règle d'arrondi pour Umur0. Convention retenue (pratique des
+ * logiciels) : colonne la plus proche, et en cas d'égalité la colonne inférieure (la plus
+ * défavorable thermiquement). Les bornes ouvertes « ≤ x » / « ≥ x » sont ramenées à x.
+ *
+ * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.2.1.2
+ *
+ * @param enumMateriauxStructureMurId {string|number}
+ * @param epaisseur {number|string}
+ * @returns {number|string} épaisseur d'une colonne de la table, ou la valeur initiale si la table
+ * ne propose pas d'épaisseur pour ce matériau ou si l'épaisseur n'est pas numérique
+ */
+export function epaisseurStructureTable(enumMateriauxStructureMurId, epaisseur) {
+  const ep = typeof epaisseur === 'number' ? epaisseur : Number(epaisseur);
+  if (!Number.isFinite(ep) || ep <= 0) return epaisseur;
+
+  const colonnes = tvs.umur0
+    .filter(
+      (row) =>
+        String(row.enum_materiaux_structure_mur_id) === String(enumMateriauxStructureMurId) &&
+        row.epaisseur_structure
+    )
+    .map((row) => {
+      const valeur = String(row.epaisseur_structure);
+      return {
+        valeur: parseFloat(valeur.replace(/[≤≥\s]/g, '')),
+        inf: valeur.includes('≤'),
+        sup: valeur.includes('≥')
+      };
+    })
+    .filter((colonne) => Number.isFinite(colonne.valeur));
+
+  if (colonnes.length === 0) return epaisseur;
+
+  const colonneOuverte = colonnes.find(
+    (c) => c.valeur === ep || (c.inf && ep <= c.valeur) || (c.sup && ep >= c.valeur)
+  );
+  if (colonneOuverte) return colonneOuverte.valeur;
+
+  return colonnes.reduce((best, c) => {
+    const d = Math.abs(c.valeur - ep);
+    const dBest = Math.abs(best.valeur - ep);
+    return d < dBest || (d === dBest && c.valeur < best.valeur) ? c : best;
+  }).valeur;
+}
+
+/**
+ * Copie du matcher umur0 dont l'épaisseur est ramenée sur une colonne de la table du matériau.
+ * @param matcher {{enum_materiaux_structure_mur_id: string, epaisseur_structure?: number}}
+ */
+function matcherEpaisseurTable(matcher) {
+  if (matcher.epaisseur_structure === undefined) return matcher;
+  return {
+    ...matcher,
+    epaisseur_structure: epaisseurStructureTable(
+      matcher.enum_materiaux_structure_mur_id,
+      matcher.epaisseur_structure
+    )
+  };
+}
 
 function tv_umur0(di, de, du) {
   const matcher = {
@@ -52,7 +121,7 @@ function tv_umur0(di, de, du) {
       }
     }
   }
-  let row = tv('umur0', matcher);
+  let row = tv('umur0', matcherEpaisseurTable(matcher));
 
   if (bug_for_bug_compat) {
     if (
@@ -63,7 +132,7 @@ function tv_umur0(di, de, du) {
         'Mauvais valeur de umur0 trouvé pour une epaisseur > 80, la valeur va être recalculée avec une epaisseur / 10. Il arrive que la valeur soit en millimètres dans le dpe'
       );
       matcher.epaisseur_structure /= 10;
-      row = tv('umur0', matcher);
+      row = tv('umur0', matcherEpaisseurTable(matcher));
       if (Number(du.tv_umur0_id_avant) !== Number(row.tv_umur0_id)) {
         row = undefined;
       }

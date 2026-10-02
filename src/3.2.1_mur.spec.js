@@ -23,6 +23,25 @@ vi.mock('./3.1_b.js', () => ({
   default: vi.fn()
 }));
 
+/**
+ * Table `umur0` réduite (mockée) pour `epaisseurStructureTable` : matériau 26 (ossature bois avec
+ * isolant en remplissage < 2001) et matériau 2 (bornes ouvertes « ≤ » / « ≥ »).
+ */
+vi.mock('./tv.js', () => ({
+  default: {
+    umur0: [
+      { tv_umur0_id: '1', enum_materiaux_structure_mur_id: '1', umur0: '2.5' },
+      { tv_umur0_id: '2', enum_materiaux_structure_mur_id: '2', epaisseur_structure: '≤ 20' },
+      { tv_umur0_id: '3', enum_materiaux_structure_mur_id: '2', epaisseur_structure: '25' },
+      { tv_umur0_id: '4', enum_materiaux_structure_mur_id: '2', epaisseur_structure: '≥ 30' },
+      { tv_umur0_id: '144', enum_materiaux_structure_mur_id: '26', epaisseur_structure: '10' },
+      { tv_umur0_id: '145', enum_materiaux_structure_mur_id: '26', epaisseur_structure: '15' },
+      { tv_umur0_id: '146', enum_materiaux_structure_mur_id: '26', epaisseur_structure: '20' },
+      { tv_umur0_id: '151', enum_materiaux_structure_mur_id: '26', epaisseur_structure: '≥ 45' }
+    ]
+  }
+}));
+
 vi.mock('./utils.js', () => ({
   set_bug_for_bug_compat: vi.fn(),
   tv: vi.fn(),
@@ -35,7 +54,7 @@ vi.mock('./utils.js', () => ({
   }
 }));
 
-const { default: calc_mur } = await import('./3.2.1_mur.js');
+const { default: calc_mur, epaisseurStructureTable } = await import('./3.2.1_mur.js');
 const { tv, getThicknessFromDescription } = await import('./utils.js');
 
 /** Table `umur0` figée : U0 forfaitaire de la paroi nue. */
@@ -922,5 +941,68 @@ describe('calc_mur - doublage et isolation ITE/ITI (#146)', () => {
     calc_mur(mur, 'h1a', '1', '0', 2.4);
 
     expect(mur.donnee_intermediaire.umur0).toBeCloseTo(UMUR0_TABLE, 9);
+  });
+});
+
+/**
+ * 3.2.1.2 Calcul des Umur0 : l'épaisseur saisie est ramenée sur une colonne de la table du
+ * matériau déclaré, sans jamais basculer vers un autre matériau (issue #138).
+ * Convention (la méthode ne précise pas l'arrondi) : colonne la plus proche, égalité => inférieure.
+ * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.2.1.2
+ */
+describe('epaisseurStructureTable - épaisseur hors table (issue #138)', () => {
+  test.each([
+    { epaisseur: 16, attendu: 15, cas: '16 cm => colonne 15 (DPE 2673E0055842U)' },
+    { epaisseur: 18, attendu: 20, cas: '18 cm => colonne 20 (la plus proche)' },
+    { epaisseur: 12, attendu: 10, cas: '12 cm => colonne 10' },
+    { epaisseur: 17.5, attendu: 15, cas: '17,5 cm (égalité) => colonne inférieure 15' },
+    { epaisseur: 8, attendu: 10, cas: 'sous la borne basse => première colonne' },
+    { epaisseur: 15, attendu: 15, cas: 'colonne exacte inchangée' },
+    { epaisseur: 50, attendu: 45, cas: 'au-delà de « ≥ 45 » => 45' },
+    { epaisseur: 40, attendu: 45, cas: '40 cm => « ≥ 45 » plus proche que 20' },
+    { epaisseur: '16', attendu: 15, cas: 'épaisseur fournie en chaîne' }
+  ])('matériau 26 : $cas', ({ epaisseur, attendu }) => {
+    expect(epaisseurStructureTable('26', epaisseur)).toBe(attendu);
+  });
+
+  test.each([
+    { epaisseur: 12, attendu: 20, cas: '« ≤ 20 » couvre toutes les épaisseurs inférieures' },
+    { epaisseur: 17.5, attendu: 20, cas: 'épaisseur décimale sous « ≤ 20 »' },
+    { epaisseur: 22, attendu: 20, cas: '22 cm => 20 (plus proche que 25)' },
+    { epaisseur: 24, attendu: 25, cas: '24 cm => 25' },
+    { epaisseur: 98, attendu: 30, cas: '« ≥ 30 » couvre toutes les épaisseurs supérieures' }
+  ])('matériau 2 (bornes ouvertes) : $cas', ({ epaisseur, attendu }) => {
+    expect(epaisseurStructureTable('2', epaisseur)).toBe(attendu);
+  });
+
+  test.each([
+    { materiau: '1', epaisseur: 30, cas: 'matériau sans épaisseur dans la table' },
+    { materiau: '99', epaisseur: 30, cas: 'matériau absent de la table' },
+    { materiau: '26', epaisseur: 0, cas: 'épaisseur nulle' },
+    { materiau: '26', epaisseur: 'abc', cas: 'épaisseur non numérique' }
+  ])('valeur inchangée : $cas', ({ materiau, epaisseur }) => {
+    expect(epaisseurStructureTable(materiau, epaisseur)).toBe(epaisseur);
+  });
+
+  test('calc_mur : le matcher umur0 reçoit la colonne de la table du matériau déclaré', () => {
+    const mur = {
+      donnee_entree: {
+        methode_saisie_u: 'non isolé',
+        methode_saisie_u0:
+          'déterminé selon le matériau et épaisseur à partir de la table de valeur forfaitaire',
+        enum_materiaux_structure_mur_id: '26',
+        epaisseur_structure: 16,
+        enum_type_doublage_id: '2'
+      }
+    };
+
+    calc_mur(mur, 'h1a', '1', '0');
+
+    expect(tv).toHaveBeenCalledWith('umur0', {
+      enum_materiaux_structure_mur_id: '26',
+      epaisseur_structure: 15
+    });
+    // L'épaisseur saisie n'est pas modifiée dans les données d'entrée
+    expect(mur.donnee_entree.epaisseur_structure).toBe(16);
   });
 });
