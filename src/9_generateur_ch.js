@@ -44,6 +44,52 @@ export function calc_Qrec_gen_j(gen_ch, nrefj, Bch_hp_j) {
   return 0.48 * Cper * di.qp0 * Dperj || 0;
 }
 
+/**
+ * 9.1.1 - Pertes récupérées de génération pour le chauffage sur le mois j (Wh)
+ * pour un générateur de la collection ECS assurant l'ECS uniquement.
+ *
+ * Pour les générateurs assurant l'ECS uniquement :
+ *   Dperj = Nrefj * 1790 / 8760
+ *   Qgen_rec_j = 0,48 * Cper * Qp0 * Dperj
+ *
+ * Seuls les générateurs avec des pertes à l'arrêt (Qp0 > 0), situés en volume chauffé et dont
+ * l'usage est 'ecs' sont concernés. Les générateurs 'chauffage + ecs' sont déjà pris en compte via
+ * la collection des générateurs de chauffage (cf. issue #153).
+ *
+ * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §9.1.1
+ *
+ * @param gen_ecs {GenerateurEcsItem}
+ * @param nrefj {number}
+ * @returns {number}
+ */
+export function calc_Qrec_gen_ecs_j(gen_ecs, nrefj) {
+  const de = gen_ecs.donnee_entree;
+  const di = gen_ecs.donnee_intermediaire || {};
+
+  if (!isGenerateurEcsSeulRecuperable(gen_ecs)) return 0;
+
+  const Cper = Number(de.presence_ventouse) === 1 ? 0.75 : 0.5;
+  return 0.48 * Cper * di.qp0 * pertes_gen_ecs(nrefj);
+}
+
+/**
+ * Un générateur ECS est concerné par la récupération des pertes de génération pour le chauffage
+ * s'il a des pertes à l'arrêt (Qp0 > 0), s'il est en volume chauffé et si son usage est 'ecs' seul
+ * (enum_usage_generateur_id = 2).
+ *
+ * @param gen_ecs {GenerateurEcsItem}
+ * @returns {boolean}
+ */
+export function isGenerateurEcsSeulRecuperable(gen_ecs) {
+  const de = gen_ecs.donnee_entree || {};
+  const di = gen_ecs.donnee_intermediaire || {};
+  return (
+    Number(di.qp0 || 0) > 0 &&
+    Number(de.position_volume_chauffe ?? 0) === 1 &&
+    Number(de.enum_usage_generateur_id) === 2
+  );
+}
+
 function tv_rendement_generation(di, de, du) {
   const matcher = {
     enum_type_generateur_ch_id: requestInputID(de, du, 'type_generateur_ch')

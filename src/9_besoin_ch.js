@@ -1,7 +1,11 @@
 import enums from './enums.js';
 import tvs from './tv.js';
 import { calc_besoin_ecs_j } from './11_besoin_ecs.js';
-import { calc_Qrec_gen_j } from './9_generateur_ch.js';
+import {
+  calc_Qrec_gen_ecs_j,
+  calc_Qrec_gen_j,
+  isGenerateurEcsSeulRecuperable
+} from './9_generateur_ch.js';
 import { calc_ai_j, calc_as_j } from './6.1_apport_gratuit.js';
 import { calc_sse_j } from './6.2_surface_sud_equivalente.js';
 import { bug_for_bug_compat, mois_liste } from './utils.js';
@@ -105,6 +109,20 @@ export default function calc_besoin_ch(
     )
   );
 
+  /**
+   * 9.1.1 - Générateurs de la collection ECS assurant l'ECS uniquement, avec Qp0 > 0 et situés en
+   * volume chauffé : leurs pertes de génération sont aussi récupérées pour le chauffage.
+   * Les générateurs 'chauffage + ecs' sont exclus car déjà présents dans la collection chauffage.
+   * @see issue #153
+   *
+   * @type {GenerateurEcsItem[]}
+   */
+  const gen_ecs_recup = instal_ecs.flatMap((inst_ecs) =>
+    (inst_ecs.generateur_ecs_collection?.generateur_ecs || []).filter(
+      isGenerateurEcsSeulRecuperable
+    )
+  );
+
   const besoin_ch_mois = {};
   const besoin_ch_mois_dep = {};
   for (const mois of mois_liste) {
@@ -143,6 +161,13 @@ export default function calc_besoin_ch(
       }
       gen_recup += calc_Qrec_gen_j(gen_ch, nref19, Bch_hp_j) / ratio;
       gen_recup_dep += calc_Qrec_gen_j(gen_ch, nref21, Bch_hp_j_dep) / ratio;
+    });
+
+    gen_ecs_recup.forEach((gen_ecs) => {
+      // Même facteur 1000 que pour les générateurs de chauffage (compatibilité « bug for bug »)
+      const ratio = bug_for_bug_compat ? 1000 : 1;
+      gen_recup += calc_Qrec_gen_ecs_j(gen_ecs, nref19) / ratio;
+      gen_recup_dep += calc_Qrec_gen_ecs_j(gen_ecs, nref21) / ratio;
     });
 
     pertes_generateur_ch_recup += gen_recup;

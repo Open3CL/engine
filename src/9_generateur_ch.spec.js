@@ -59,6 +59,8 @@ vi.mock('./13.2_generateur_combustion.js', () => ({
 
 const {
   calc_Qrec_gen_j,
+  calc_Qrec_gen_ecs_j,
+  isGenerateurEcsSeulRecuperable,
   type_generateur_ch,
   checkForGeneratorType,
   calc_generateur_ch,
@@ -144,6 +146,71 @@ describe('calc_Qrec_gen_j - pertes de génération récupérées', () => {
     vi.mocked(requestInput).mockReturnValue('autre');
     const gen = generateur();
     expect(calc_Qrec_gen_j(gen, 50, 1000)).toBe(0);
+  });
+});
+
+/**
+ * 9.1.1 Pertes récupérées de génération pour le chauffage : générateur de la collection ECS
+ * assurant l'ECS uniquement (issue #153).
+ * Dperj = Nrefj * 1790 / 8760 ; Qgen_rec_j = 0,48 * Cper * Qp0 * Dperj
+ * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §9.1.1
+ */
+describe('calc_Qrec_gen_ecs_j / isGenerateurEcsSeulRecuperable - générateur ECS seul', () => {
+  /** Générateur ECS seul (usage 2), en volume chauffé, avec Qp0 = 100 W. */
+  function generateurEcs(overridesDe = {}, di = { qp0: 100 }) {
+    return {
+      donnee_entree: {
+        position_volume_chauffe: 1,
+        enum_usage_generateur_id: '2',
+        presence_ventouse: 0,
+        ...overridesDe
+      },
+      donnee_intermediaire: di
+    };
+  }
+
+  test('ECS seul, sans ventouse (Cper = 0.5) : 0.48 * 0.5 * Qp0 * Nref * 1790 / 8760', () => {
+    // 0.48 * 0.5 * 100 * (50 * 1790 / 8760) = 245.205479452...
+    expect(calc_Qrec_gen_ecs_j(generateurEcs(), 50)).toBeCloseTo(245.20547945205482, 9);
+  });
+
+  test('ECS seul, avec ventouse (Cper = 0.75)', () => {
+    // 0.48 * 0.75 * 100 * (50 * 1790 / 8760) = 367.808219178...
+    const gen = generateurEcs({ presence_ventouse: 1 });
+    expect(calc_Qrec_gen_ecs_j(gen, 50)).toBeCloseTo(367.8082191780822, 9);
+  });
+
+  test('la récupération est indépendante du besoin de chauffage et proportionnelle à Nref', () => {
+    const gen = generateurEcs();
+    expect(calc_Qrec_gen_ecs_j(gen, 100)).toBeCloseTo(2 * calc_Qrec_gen_ecs_j(gen, 50), 9);
+  });
+
+  test('générateur hors volume chauffé : aucune récupération', () => {
+    const gen = generateurEcs({ position_volume_chauffe: 0 });
+    expect(isGenerateurEcsSeulRecuperable(gen)).toBe(false);
+    expect(calc_Qrec_gen_ecs_j(gen, 50)).toBe(0);
+  });
+
+  test('position en volume chauffé non renseignée : aucune récupération', () => {
+    const gen = generateurEcs({ position_volume_chauffe: undefined });
+    expect(calc_Qrec_gen_ecs_j(gen, 50)).toBe(0);
+  });
+
+  test("usage 'chauffage + ecs' : exclu (déjà compté dans la collection chauffage)", () => {
+    const gen = generateurEcs({ enum_usage_generateur_id: '3' });
+    expect(isGenerateurEcsSeulRecuperable(gen)).toBe(false);
+    expect(calc_Qrec_gen_ecs_j(gen, 50)).toBe(0);
+  });
+
+  test('Qp0 nul ou absent : aucune récupération', () => {
+    expect(calc_Qrec_gen_ecs_j(generateurEcs({}, { qp0: 0 }), 50)).toBe(0);
+    expect(calc_Qrec_gen_ecs_j(generateurEcs({}, null), 50)).toBe(0);
+    expect(isGenerateurEcsSeulRecuperable({})).toBe(false);
+  });
+
+  test('identifiants numériques acceptés (usage 2, position 1)', () => {
+    const gen = generateurEcs({ enum_usage_generateur_id: 2, position_volume_chauffe: '1' });
+    expect(isGenerateurEcsSeulRecuperable(gen)).toBe(true);
   });
 });
 

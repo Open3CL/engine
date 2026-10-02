@@ -52,24 +52,70 @@ export class PerteChRecupService {
    */
   pertesGenerateurChRecup(ctx, logement, depensier) {
     const generateursWithPertesGeneration = this.generateursWithPertesGeneration(logement);
+    const generateursEcsSeulsWithPertesGeneration =
+      this.generateursEcsSeulsWithPertesGeneration(logement);
 
     return mois_liste.reduce((acc, mois) => {
+      const nref = this.#tvStore.getData(
+        depensier ? 'nref21' : 'nref19',
+        ctx.altitude.value,
+        ctx.zoneClimatique.value,
+        mois,
+        ctx.inertie.ilpa
+      );
       return (
         acc +
         this.Qrec(
           generateursWithPertesGeneration,
-          this.#tvStore.getData(
-            depensier ? 'nref21' : 'nref19',
-            ctx.altitude.value,
-            ctx.zoneClimatique.value,
-            mois,
-            ctx.inertie.ilpa
-          ),
+          nref,
           depensier
             ? logement.donnees_de_calcul.besoinChauffageDepensierHP[mois]
             : logement.donnees_de_calcul.besoinChauffageHP[mois]
-        )
+        ) +
+        this.QrecEcsSeul(generateursEcsSeulsWithPertesGeneration, nref)
       );
+    }, 0);
+  }
+
+  /**
+   * Générateurs de la collection ECS assurant l'ECS uniquement dont les pertes de génération sont
+   * récupérées pour le chauffage (issue #153) :
+   * — pertes à l'arrêt Qp0 > 0
+   * — situés en volume chauffé
+   * — usage ECS uniquement (enum_usage_generateur_id = 2). Les générateurs 'chauffage + ecs' sont
+   *   déjà pris en compte dans la collection des générateurs de chauffage.
+   *
+   * @param logement {Logement}
+   * @return {GenerateurEcs[]}
+   */
+  generateursEcsSeulsWithPertesGeneration(logement) {
+    const installationsEcs = logement.installation_ecs_collection?.installation_ecs || [];
+
+    return installationsEcs.flatMap((installation) =>
+      (installation.generateur_ecs_collection?.generateur_ecs || []).filter((generateurEcs) => {
+        const generateurEcsDE = generateurEcs.donnee_entree || {};
+        const generateurEcsDI = generateurEcs.donnee_intermediaire || {};
+        return (
+          Number(generateurEcsDI.qp0 || 0) > 0 &&
+          Number(generateurEcsDE.position_volume_chauffe ?? 0) === 1 &&
+          parseInt(generateurEcsDE.enum_usage_generateur_id) === 2
+        );
+      })
+    );
+  }
+
+  /**
+   * Pertes récupérées de génération pour le chauffage sur le mois j (Wh) pour les générateurs
+   * assurant l'ECS uniquement : Dperj = Nrefj * 1790 / 8760
+   *
+   * @param generateurs {GenerateurEcs[]}
+   * @param nref {number}
+   * @return {number}
+   */
+  QrecEcsSeul(generateurs, nref) {
+    return generateurs.reduce((acc, generateur) => {
+      const Cper = Number(generateur.donnee_entree.presence_ventouse || 0) === 1 ? 0.75 : 0.5;
+      return acc + 0.48 * Cper * generateur.donnee_intermediaire.qp0 * this.#pertes_gen_ecs(nref);
     }, 0);
   }
 
