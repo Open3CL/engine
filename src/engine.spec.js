@@ -565,7 +565,7 @@ describe('calcul_3cl - surfaces immeuble / appartement et prorata', () => {
     expect(conso_aux_distribution_ecs.mock.calls[0][3]).toBe(200);
   });
 
-  test('immeuble : systèmes ECS non tous individuels => besoin divisé par deux', () => {
+  test('immeuble : systèmes ECS non tous individuels sans surfaces => repli sur la division par deux', () => {
     enums.methode_application_dpe_log = { 1: 'dpe immeuble collectif' };
     const dpe = makeDpe();
     dpe.logement.installation_ecs_collection.installation_ecs = [
@@ -578,11 +578,86 @@ describe('calcul_3cl - surfaces immeuble / appartement et prorata', () => {
         generateur_ecs_collection: { generateur_ecs: [] }
       }
     ];
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
     calcul_3cl(dpe, { sanitize: false });
 
     expect(calc_ecs.mock.calls[0][11]).toBe(false);
     expect(calc_ecs.mock.calls[0][2]).toBe(50); // 100 / 2
+    expect(calc_ecs.mock.calls[0][13]).toBe(false); // pas de prorata des surfaces
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('Repli sur la division'));
+    warn.mockRestore();
+  });
+
+  /**
+   * Immeuble à plusieurs installations ECS collectives ou mixtes : répartition au prorata des
+   * surfaces (cf. calc_ecs), sans division par 2.
+   * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §11.4
+   */
+  describe('immeuble à plusieurs installations ECS collectives ou mixtes (#232)', () => {
+    function makeImmeubleMultiEcs(surfaces, surfaceImmeuble = 200) {
+      enums.methode_application_dpe_log = { 1: 'dpe immeuble collectif' };
+      const dpe = makeDpe();
+      dpe.logement.caracteristique_generale.surface_habitable_immeuble = surfaceImmeuble;
+      dpe.logement.installation_ecs_collection.installation_ecs = surfaces.map((s, i) => ({
+        donnee_entree: { enum_type_installation_id: i === 0 ? '1' : '2', surface_habitable: s },
+        generateur_ecs_collection: { generateur_ecs: [] }
+      }));
+      return dpe;
+    }
+
+    test('surfaces renseignées : besoin non divisé et prorata des surfaces signalé à calc_ecs', () => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      calcul_3cl(makeImmeubleMultiEcs([20, 155]), { sanitize: false });
+
+      expect(calc_ecs).toHaveBeenCalledTimes(2);
+      calc_ecs.mock.calls.forEach((call) => {
+        expect(call[2]).toBe(100); // besoin_ecs non divisé
+        expect(call[3]).toBe(120); // besoin_ecs_depensier non divisé
+        expect(call[11]).toBe(false);
+        expect(call[13]).toBe(true);
+      });
+      expect(warn).not.toHaveBeenCalled();
+      warn.mockRestore();
+    });
+
+    test.each([
+      ['une surface d’installation nulle', [0, 155], 200],
+      ['une surface d’installation absente', [undefined, 155], 200],
+      ['la surface de l’immeuble nulle', [20, 155], 0]
+    ])('%s : repli sur la division par deux avec avertissement', (_, surfaces, sh) => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      calcul_3cl(makeImmeubleMultiEcs(surfaces, sh), { sanitize: false });
+
+      expect(calc_ecs.mock.calls[0][2]).toBe(50);
+      expect(calc_ecs.mock.calls[0][3]).toBe(60);
+      expect(calc_ecs.mock.calls[0][13]).toBe(false);
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining('Repli sur la division'));
+      warn.mockRestore();
+    });
+
+    test('appartement avec deux installations renseignées : division par deux inchangée', () => {
+      const dpe = makeImmeubleMultiEcs([40, 40]);
+      enums.methode_application_dpe_log = { 1: 'dpe appartement individuel' };
+
+      calcul_3cl(dpe, { sanitize: false });
+
+      expect(calc_ecs.mock.calls[0][2]).toBe(50);
+      expect(calc_ecs.mock.calls[0][13]).toBe(false);
+    });
+
+    test('immeuble dont toutes les installations sont individuelles : branche existante inchangée', () => {
+      const dpe = makeImmeubleMultiEcs([100, 100]);
+      dpe.logement.installation_ecs_collection.installation_ecs.forEach(
+        (e) => (e.donnee_entree.enum_type_installation_id = '1')
+      );
+
+      calcul_3cl(dpe, { sanitize: false });
+
+      expect(calc_ecs.mock.calls[0][2]).toBe(100);
+      expect(calc_ecs.mock.calls[0][11]).toBe(true);
+      expect(calc_ecs.mock.calls[0][13]).toBe(false);
+    });
   });
 
   test('maison avec deux systèmes ECS => besoin divisé par deux', () => {
