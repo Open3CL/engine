@@ -296,11 +296,14 @@ export function calc_generateur_ch(
  *
  */
 export function hasConsoForAuxDistribution(enum_type_generateur_ch_id) {
+  // L'identifiant est une chaîne dans le DPE : conversion explicite (sinon includes() échoue
+  // pour les générateurs à air chaud 48 à 52, alors que les comparaisons >= / <= convertissent)
+  const id = Number(enum_type_generateur_ch_id);
   return (
-    enum_type_generateur_ch_id >= 106 ||
-    (enum_type_generateur_ch_id >= 55 && enum_type_generateur_ch_id <= 97) ||
-    [48, 49, 50, 51, 52].includes(enum_type_generateur_ch_id) ||
-    (enum_type_generateur_ch_id >= 4 && enum_type_generateur_ch_id <= 19)
+    id >= 106 ||
+    (id >= 55 && id <= 97) ||
+    [48, 49, 50, 51, 52].includes(id) ||
+    (id >= 4 && id <= 19)
   );
 }
 
