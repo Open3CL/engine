@@ -4,8 +4,8 @@
   "nbValidDpe": 10000,
   "nbInvalidDpeVersion": 0,
   "nbExcludedDpe": 0,
-  "nbAllChecksBelowThreshold": 8838,
-  "successRatio": "88.38 %",
+  "nbAllChecksBelowThreshold": 8840,
+  "successRatio": "88.40 %",
   "dpeRunFailed": [],
   "checks": {
     "deperdition_mur": { "nbBelowThreshold": 9937, "mandatory": false, "successRatio": "99.37 %" },
@@ -41,14 +41,14 @@
       "successRatio": "95.17 %"
     },
     "surface_sud_equivalente": {
-      "nbBelowThreshold": 9756,
+      "nbBelowThreshold": 9760,
       "mandatory": false,
-      "successRatio": "97.56 %"
+      "successRatio": "97.60 %"
     },
     "besoin_ecs": { "nbBelowThreshold": 10000, "mandatory": false, "successRatio": "100.00 %" },
-    "besoin_ch": { "nbBelowThreshold": 9492, "mandatory": false, "successRatio": "94.92 %" },
+    "besoin_ch": { "nbBelowThreshold": 9493, "mandatory": false, "successRatio": "94.93 %" },
     "conso_ecs": { "nbBelowThreshold": 9470, "mandatory": true, "successRatio": "94.70 %" },
-    "conso_ch": { "nbBelowThreshold": 9373, "mandatory": true, "successRatio": "93.73 %" },
+    "conso_ch": { "nbBelowThreshold": 9375, "mandatory": true, "successRatio": "93.75 %" },
     "conso_auxiliaire_distribution_ecs": {
       "nbBelowThreshold": 10000,
       "mandatory": false,
@@ -69,21 +69,21 @@
       "mandatory": false,
       "successRatio": "96.60 %"
     },
-    "ep_conso_5_usages": { "nbBelowThreshold": 9357, "mandatory": true, "successRatio": "93.57 %" },
+    "ep_conso_5_usages": { "nbBelowThreshold": 9359, "mandatory": true, "successRatio": "93.59 %" },
     "ep_conso_5_usages_m2": {
-      "nbBelowThreshold": 9338,
+      "nbBelowThreshold": 9340,
       "mandatory": true,
-      "successRatio": "93.38 %"
+      "successRatio": "93.40 %"
     },
     "emission_ges_5_usages": {
-      "nbBelowThreshold": 9249,
+      "nbBelowThreshold": 9252,
       "mandatory": true,
-      "successRatio": "92.49 %"
+      "successRatio": "92.52 %"
     },
     "emission_ges_5_usages_m2": {
-      "nbBelowThreshold": 9318,
+      "nbBelowThreshold": 9322,
       "mandatory": true,
-      "successRatio": "93.18 %"
+      "successRatio": "93.22 %"
     },
     "conso_auxiliaire_distribution_ch": {
       "nbBelowThreshold": 8507,
@@ -93,12 +93,12 @@
   },
   "performance": {
     "count": 10000,
-    "mean": 5.479,
-    "median": 4.958,
-    "min": 1.651,
-    "max": 35.758,
-    "p95": 9.867,
-    "p99": 12.81,
-    "totalMs": 54790.952
+    "mean": 5.744,
+    "median": 5.207,
+    "min": 1.735,
+    "max": 49.558,
+    "p95": 10.445,
+    "p99": 13.689,
+    "totalMs": 57443.877
   }
 }
