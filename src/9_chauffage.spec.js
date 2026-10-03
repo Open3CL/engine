@@ -347,6 +347,34 @@ describe('calc_chauffage - générateurs à combustion', () => {
   });
 });
 
+/**
+ * 15.2.1 Ratio du besoin couvert par l'équipement pour le circulateur : en installation simple
+ * (cfg 1), les générateurs en cascade alimentent le même réseau, dont le circulateur est
+ * dimensionné pour tout le besoin (pas de division par le nombre de générateurs). La consommation
+ * est ensuite répartie entre générateurs (division par nbGenWithAuxConsoDistribution).
+ * Autotests CSTB IC4-0-2 / IC4-0-21 (cascade de 2 chaudières gaz, Tribu Pcirc = 1321,76 W).
+ * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §15.2.1
+ */
+describe('calc_chauffage - nombre de générateurs pris en compte pour le circulateur', () => {
+  test('installation simple (cfg 1) avec 2 générateurs en cascade : circulateur unique', () => {
+    const gen1 = generateur();
+    const gen2 = generateur();
+    const ch = installation([gen1, gen2], [emetteur('1')], { enum_cfg_installation_ch_id: '1' });
+    appel(ch);
+    expect(gen1.donnee_utilisateur.nbGenerateurCascade).toBe(1);
+    expect(gen2.donnee_utilisateur.nbGenerateurCascade).toBe(1);
+  });
+
+  test('installation avec appoint (cfg ≠ 1) et 2 générateurs : besoin réparti (division par 2)', () => {
+    const gen1 = generateur();
+    const gen2 = generateur();
+    const ch = installation([gen1, gen2], [emetteur('1')], { enum_cfg_installation_ch_id: '3' });
+    appel(ch);
+    expect(gen1.donnee_utilisateur.nbGenerateurCascade).toBe(2);
+    expect(gen2.donnee_utilisateur.nbGenerateurCascade).toBe(2);
+  });
+});
+
 describe('calc_chauffage - prorata entre générateurs', () => {
   test('configuration ≠ 1 : prorata neutre (1 / (0 || 1))', () => {
     const ch = installation([generateur()], [emetteur('1')], {

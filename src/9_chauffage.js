@@ -141,7 +141,8 @@ export default function calc_chauffage(
     );
     /* c8 ignore next 2 -- repli défensif inatteignable : donnee_utilisateur est toujours renseignée
        par la première boucle sur gen_ch ci-dessus */
-    (gen.donnee_utilisateur = gen.donnee_utilisateur || {}).nbGenerateurCascade = gen_ch.length;
+    (gen.donnee_utilisateur = gen.donnee_utilisateur || {}).nbGenerateurCascade =
+      Number.parseInt(de.enum_cfg_installation_ch_id) === 1 ? 1 : gen_ch.length;
 
     calc_generateur_ch(
       dpe,
