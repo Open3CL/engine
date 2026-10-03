@@ -46,11 +46,20 @@ vi.mock('./13.2_generateur_combustion_ch.js', () => ({
 vi.mock('./enums.js', () => ({
   default: {
     classe_altitude: { 1: 'ca1', 2: 'ca2' },
+    methode_application_dpe_log: {
+      2: 'dpe appartement individuel chauffage individuel ecs individuel',
+      6: 'dpe immeuble collectif chauffage individuel ecs individuel',
+      10: 'dpe appartement généré à partir des données dpe immeuble chauffage individuel ecs individuel'
+    },
     zone_climatique: { 1: 'h1a', 2: 'h2b', 3: 'h3c' }
   }
 }));
 
-const { default: calc_chauffage, tauxChargeForGenerator } = await import('./9_chauffage.js');
+const {
+  default: calc_chauffage,
+  tauxChargeForGenerator,
+  isImmeuble
+} = await import('./9_chauffage.js');
 const { requestInput, tv, tvColumnIDs } = await import('./utils.js');
 const { calc_emetteur_ch } = await import('./9_emetteur_ch.js');
 const { calc_generateur_ch, checkForGeneratorType, hasConsoForAuxDistribution } =
@@ -231,6 +240,41 @@ describe('calc_chauffage - mise à l’échelle du besoin selon la surface', () 
     expect(
       ch.generateur_chauffage_collection.generateur_chauffage[0].donnee_entree.surface_chauffee
     ).toBe(120);
+  });
+});
+
+describe('calc_chauffage - rdim de l’installation transmis au générateur', () => {
+  const rdimGen = (ch) =>
+    ch.generateur_chauffage_collection.generateur_chauffage[0].donnee_entree.rdim_installation_ch;
+
+  test('DPE immeuble : rdim de l’installation repris', () => {
+    const ch = installation([generateur()], [emetteur('1')], { rdim: '4' });
+    appel(ch, { map_id: 6 });
+    expect(rdimGen(ch)).toBe(4);
+  });
+
+  test('DPE immeuble sans rdim : 1', () => {
+    const ch = installation([generateur()], [emetteur('1')]);
+    appel(ch, { map_id: 6 });
+    expect(rdimGen(ch)).toBe(1);
+  });
+
+  test('DPE appartement (y compris issu d’un DPE immeuble) : rdim ignoré', () => {
+    const ch = installation([generateur()], [emetteur('1')], { rdim: '4' });
+    appel(ch, { map_id: 10 });
+    expect(rdimGen(ch)).toBe(1);
+    appel(ch, { map_id: 2 });
+    expect(rdimGen(ch)).toBe(1);
+  });
+});
+
+describe('isImmeuble', () => {
+  test('immeuble uniquement, pas appartement issu d’un immeuble ni méthode inconnue', () => {
+    expect(isImmeuble(6)).toBe(true);
+    expect(isImmeuble('6')).toBe(true);
+    expect(isImmeuble(10)).toBe(false);
+    expect(isImmeuble(2)).toBe(false);
+    expect(isImmeuble(999)).toBe(false);
   });
 });
 

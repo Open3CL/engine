@@ -299,6 +299,73 @@ describe('conso_aux_distribution_ch - auxiliaires de distribution', () => {
     // Pcirc ∝ Qvemnom^0,676 et Qvemnom ∝ 1/ΔθDim : diviser ΔθDim par 2 multiplie Pcirc par 2^0,676
     expect(toutBasse / bassepuisHaute).toBeCloseTo(2 ** 0.676, 9);
   });
+
+  /**
+   * Cas des autotests CSTB IC1-0-1/11/12 : immeuble de 175 m² à installations individuelles,
+   * l'installation étudiée dessert un logement de 80 m². Lem et le nombre de circulateurs sont
+   * ceux de l'installation (80 m²), pas ceux de l'immeuble (Tribu : Pcirc = 46,594 W).
+   */
+  test("installation partielle : Lem calculée sur la surface desservie par l'installation", () => {
+    const calcul = (de, sh) => {
+      const di = {};
+      conso_aux_distribution_ch(emCh, de, di, {}, sh, 1, 1, '0', 100000);
+      return di.conso_auxiliaire_distribution_ch;
+    };
+    const partielle = calcul({ surface_chauffee: 80 }, 175);
+    // valeur de référence de régression
+    expect(partielle).toBeCloseTo(125.15085008075532, 9);
+    // Lem dépend de la seule surface de l'installation : même réseau que pour un logement seul
+    // de 80 m² recevant la même puissance (GV × 80 / 175)
+    const di = {};
+    conso_aux_distribution_ch(emCh, {}, di, {}, 80, 1, 1, '0', (100000 * 80) / 175);
+    expect(partielle).toBeCloseTo(di.conso_auxiliaire_distribution_ch, 9);
+  });
+
+  test("installation de plus de 400 m² : nombre de circulateurs selon la surface de l'installation", () => {
+    const calcul = (de, sh) => {
+      const di = {};
+      conso_aux_distribution_ch(emCh, de, di, {}, sh, 1, 1, '0', 1000000);
+      return di.conso_auxiliaire_distribution_ch;
+    };
+    const partielle = calcul({ surface_chauffee: 800 }, 1600);
+    const di = {};
+    conso_aux_distribution_ch(emCh, {}, di, {}, 800, 1, 1, '0', 500000);
+    expect(partielle).toBeCloseTo(di.conso_auxiliaire_distribution_ch, 9);
+  });
+
+  /**
+   * DPE immeuble : une installation décrite représente rdim logements identiques. Tribu
+   * dimensionne le circulateur d'un logement (surface / rdim) puis multiplie la consommation
+   * par rdim (Calcul_batiment.cs : Caux_dist_ch += Caux_dist_ch_installation × Rdim).
+   * Cas réel 2437E4022989X (LICIEL) : 4 installations de 281,5 m², rdim 4 → 2 699,04 kWh.
+   */
+  test('immeuble, installation représentant rdim logements : circulateur par logement × rdim', () => {
+    const calcul = (de, sh, gv) => {
+      const di = {};
+      conso_aux_distribution_ch(emCh, de, di, {}, sh, 1, 1, '0', gv);
+      return di.conso_auxiliaire_distribution_ch;
+    };
+    const avecRdim = calcul({ surface_chauffee: 800, rdim_installation_ch: 4 }, 1600, 1000000);
+    // un logement de 200 m² recevant la puissance de 200 m² sur 1 600 m², multiplié par 4
+    const logement = calcul({}, 200, (1000000 * 200) / 1600);
+    expect(avecRdim).toBeCloseTo(4 * logement, 9);
+    // valeur de référence de régression
+    expect(avecRdim).toBeCloseTo(1114.9777138082252, 9);
+    // sans rdim, l'installation de 800 m² aurait un seul réseau de 800 m²
+    expect(calcul({ surface_chauffee: 800 }, 1600, 1000000)).not.toBeCloseTo(avecRdim, 3);
+  });
+
+  test('rdim égal à 1 : aucun effet', () => {
+    const calcul = (de) => {
+      const di = {};
+      conso_aux_distribution_ch(emCh, de, di, {}, 175, 1, 1, '0', 100000);
+      return di.conso_auxiliaire_distribution_ch;
+    };
+    expect(calcul({ surface_chauffee: 80, rdim_installation_ch: 1 })).toBeCloseTo(
+      calcul({ surface_chauffee: 80 }),
+      12
+    );
+  });
 });
 
 /**
