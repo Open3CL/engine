@@ -395,6 +395,16 @@ describe('hasConsoForAuxDistribution - éligibilité aux auxiliaires de distribu
     expect(hasConsoForAuxDistribution(10)).toBe(true); // 4..19
   });
 
+  test('identifiant transmis en chaîne (format DPE) : mêmes règles, air chaud 48 à 52 inclus', () => {
+    // Autotest CSTB APP1-0-2 : générateur à air chaud (50) => Tribu Caux_dist_ch = 173,76 kWh
+    expect(hasConsoForAuxDistribution('50')).toBe(true);
+    expect(hasConsoForAuxDistribution('48')).toBe(true);
+    expect(hasConsoForAuxDistribution('52')).toBe(true);
+    expect(hasConsoForAuxDistribution('110')).toBe(true);
+    expect(hasConsoForAuxDistribution('53')).toBe(false);
+    expect(hasConsoForAuxDistribution('3')).toBe(false);
+  });
+
   test('générateurs exclus (PAC air/air, poêles, radiateurs, effet joule)', () => {
     expect(hasConsoForAuxDistribution(3)).toBe(false);
     expect(hasConsoForAuxDistribution(20)).toBe(false);
