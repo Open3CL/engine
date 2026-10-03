@@ -12,6 +12,16 @@ import enums from './enums.js';
 /**
  * @param dpe {FullDpe}
  */
+/**
+ * DPE immeuble (même règle que calc_th du moteur : « appartement » ou « maison » priment).
+ * @param map_id {string|number} enum_methode_application_dpe_log_id
+ * @return {boolean}
+ */
+export function isImmeuble(map_id) {
+  const map = enums.methode_application_dpe_log?.[map_id] || '';
+  return map.includes('immeuble') && !map.includes('appartement') && !map.includes('maison');
+}
+
 export default function calc_chauffage(
   dpe,
   ch,
@@ -60,6 +70,7 @@ export default function calc_chauffage(
     genChDe.ratio_virtualisation = de.ratio_virtualisation || 1;
     genChDe.cle_repartition_ch = de.cle_repartition_ch || 1;
     genChDe.surface_chauffee = de.surface_chauffee || Sh;
+    genChDe.rdim_installation_ch = isImmeuble(map_id) ? Number(de.rdim) || 1 : 1;
     genChDe.nombre_niveau_installation_ch = de.nombre_niveau_installation_ch || 1;
     genChDe.fch = Fch || 0.5;
 

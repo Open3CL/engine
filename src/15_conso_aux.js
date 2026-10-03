@@ -240,8 +240,13 @@ function getPuissanceCirculateur(em_ch, de, di, du, surfaceHabitable, GV, Tbase)
    * Surface desservie par l'installation : le réseau (Lem) et le nombre de circulateurs
    * (Sh / 400) sont ceux de l'installation, pas ceux du bâtiment entier (ex. immeuble à
    * installations individuelles par logement), comme le moteur de référence CSTB (Tribu).
+   *
+   * En DPE immeuble, une installation décrite représente rdim logements identiques : le
+   * circulateur est dimensionné pour un logement (surface / rdim) puis multiplié par rdim
+   * (Tribu, Calcul_batiment.cs : Caux_dist_ch += Caux_dist_ch_installation × Rdim).
    */
-  const surfaceInstallation = de.surface_chauffee || surfaceHabitable;
+  const rdim = de.rdim_installation_ch || 1;
+  const surfaceInstallation = (de.surface_chauffee || surfaceHabitable) / rdim;
   const nbCirculateurs = Math.max(1, surfaceInstallation / 400);
 
   // Calcul de la longueur du réseau le plus défavorisé
@@ -262,7 +267,9 @@ function getPuissanceCirculateur(em_ch, de, di, du, surfaceHabitable, GV, Tbase)
 
   const Qvemnom = (Pnc * ratioSurfaceChauffage) / (1.163 * deltaDim);
 
-  return Math.max(30, 6.44 * ((deltaPemnom * Qvemnom) / nbCirculateurs) ** 0.676 * nbCirculateurs);
+  return (
+    rdim * Math.max(30, 6.44 * ((deltaPemnom * Qvemnom) / nbCirculateurs) ** 0.676 * nbCirculateurs)
+  );
 }
 
 /**
