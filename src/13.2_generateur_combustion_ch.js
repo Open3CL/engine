@@ -14,7 +14,13 @@ const coef_pond = {
   0.95: 0
 };
 
-const K = {
+/**
+ * Coefficients de conversion PCS / PCI.
+ * Le propane et le butane sont des GPL : k = 1.09 (et non 1.11, valeur du gaz naturel), comme
+ * dans le moteur de référence CSTB (Tribu).
+ * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.1.2
+ */
+export const K = {
   électricité: 1,
   'gaz naturel': 1.11,
   gpl: 1.09,
@@ -25,8 +31,8 @@ const K = {
   'bois – plaquettes d’industrie': 1.08,
   'réseau de chauffage urbain': 1,
   charbon: 1.04,
-  propane: 1.11,
-  butane: 1.11,
+  propane: 1.09,
+  butane: 1.09,
   "électricité d'origine renouvelable utilisée dans le bâtiment": undefined,
   'autre combustible fossile': undefined,
   'réseau de froid urbain': undefined
