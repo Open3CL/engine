@@ -272,6 +272,27 @@ function Tch_xfinal(x, Cdimref) {
   return Math.min(1, x / Cdimref);
 }
 
+/**
+ * Pertes à l'arrêt QP0 (kW, sur PCS) d'un générateur à combustion.
+ *
+ * Pour les générateurs d'air chaud, la valeur forfaitaire de la table 13.2
+ * (Pn × (1,75 − 0,55 × log Pn)) est exprimée en % de Pn : elle est ramenée en W (÷ 100).
+ * Cette conversion ne doit pas modifier di.qp0 : QPx() étant appelée pour chaque taux de charge,
+ * une division en place ramenait QP0 à ~0 (÷ 100 à chaque appel), et le terme 0,45 × QP0 du
+ * rendement de génération en était absent.
+ *
+ * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.1
+ * @param de {Donnee_entree}
+ * @param di {Donnee_intermediaire}
+ * @param k {number} rapport PCI/PCS de l'énergie
+ * @returns {number}
+ */
+export function qp0PcsKw(de, di, k) {
+  const type_gen_ch = enums.type_generateur_ch[de.enum_type_generateur_ch_id] || '';
+  const qp0 = type_gen_ch.includes('générateur à air chaud') ? di.qp0 / 100 : di.qp0;
+  return (qp0 * k) / 1000;
+}
+
 function QPx(x, de, di) {
   const type_gen_ch = enums.type_generateur_ch[de.enum_type_generateur_ch_id];
   const type_energie = enums.type_energie[de.enum_type_energie_id];
@@ -318,9 +339,7 @@ function QPx(x, de, di) {
       else QPx = QP30 + ((QP100 - QP30) * (x - 0.3)) / 0.7;
     }
   } else if (type_gen_ch.includes('générateur à air chaud')) {
-    // Change QP0 to be in decimal
-    di.qp0 = di.qp0 / 100;
-    qp0 = (di.qp0 * k) / 1000;
+    qp0 = qp0PcsKw(de, di, k);
 
     const QP50 = (0.5 * pn * (100 - rpint)) / rpint;
     const QP100 = (pn * (100 - rpn)) / rpn;
@@ -379,7 +398,7 @@ export function calc_generateur_combustion_ch(dpe, di, de, du) {
   const Pveil = di.pveil / 1000;
   // rg est d'abord calculé sur PCS (puis × k pour revenir en PCI) : QP0 doit donc être exprimé
   // sur PCS, comme dans QPx() (qp0 × k). Cf. issue #205.
-  const QP0 = (di.qp0 * k) / 1000;
+  const QP0 = qp0PcsKw(de, di, k);
 
   const rg_pcs = Pmfou / (Pmcons + 0.45 * QP0 + Pveil);
   const rg_pcs_dep = Pmfou_dep / (Pmcons_dep + 0.45 * QP0 + Pveil);

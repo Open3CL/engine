@@ -50,13 +50,45 @@ const {
   periodeEmetteursDeduiteDuDpe,
   periodeEmetteurAnneeConstruction,
   PERIODES_INSTALLATION_EMETTEUR,
-  K
+  K,
+  qp0PcsKw
 } = await import('./13.2_generateur_combustion_ch.js');
 const { tv } = await import('./utils.js');
 
 beforeEach(() => {
   vi.mocked(tv).mockReset();
   state.bug = false;
+});
+
+// valeurs de référence de régression (générateur à air chaud, pn 20 kW, qp0 200 % de Pn)
+const RG_AIR_CHAUD = 0.8654909941701177;
+const RG_DEP_AIR_CHAUD = 0.874622228362935;
+
+/**
+ * Pertes à l'arrêt QP0 (kW sur PCS) : pour les générateurs d'air chaud, la valeur de la table 13.2
+ * est en % de Pn et doit être ramenée en W.
+ * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.1
+ */
+describe('qp0PcsKw - pertes à l’arrêt sur PCS', () => {
+  test('générateur à air chaud : qp0 ramené en W (÷ 100) puis en kW PCS', () => {
+    const di = { qp0: 1824.5 };
+    expect(qp0PcsKw({ enum_type_generateur_ch_id: '33' }, di, 1.11)).toBeCloseTo(
+      (18.245 * 1.11) / 1000,
+      12
+    );
+    expect(di.qp0).toBe(1824.5);
+  });
+
+  test('autre générateur (chaudière) : qp0 déjà en W', () => {
+    expect(qp0PcsKw({ enum_type_generateur_ch_id: '89' }, { qp0: 120 }, 1.11)).toBeCloseTo(
+      (120 * 1.11) / 1000,
+      12
+    );
+  });
+
+  test('type de générateur inconnu des enums : qp0 pris tel quel', () => {
+    expect(qp0PcsKw({ enum_type_generateur_ch_id: '0' }, { qp0: 50 }, 1)).toBeCloseTo(0.05, 12);
+  });
 });
 
 /**
@@ -575,8 +607,40 @@ describe('calc_generateur_combustion_ch - rendement de génération', () => {
     };
     calc_generateur_combustion_ch({}, di, de, { cdimref: 0.8, cdimrefDep: 0.6 });
     // valeurs de référence de régression
-    expect(di.rg).toBeCloseTo(0.8655833354015402, 9);
-    expect(di.rg_dep).toBeCloseTo(0.8746954076850985, 9);
+    expect(di.rg).toBeCloseTo(RG_AIR_CHAUD, 9);
+    expect(di.rg_dep).toBeCloseTo(RG_DEP_AIR_CHAUD, 9);
+    // qp0 (% de Pn) n'est pas modifié par le calcul (il était divisé par 100 à chaque QPx)
+    expect(di.qp0).toBe(200);
+  });
+
+  test('générateur à air chaud : rendement indépendant du nombre de calculs (pas d’effet de bord)', () => {
+    const di = { pn: 20000, rpn: 0.9, rpint: 0.85, qp0: 200, temp_fonc_30: 40, temp_fonc_100: 70 };
+    const de = {
+      enum_type_generateur_ch_id: '33',
+      enum_type_energie_id: '2',
+      type_energie: 'gaz naturel',
+      presence_regulation_combustion: false,
+      description: 't'
+    };
+    calc_generateur_combustion_ch({}, di, de, { cdimref: 0.8, cdimrefDep: 0.6 });
+    calc_generateur_combustion_ch({}, di, de, { cdimref: 0.8, cdimrefDep: 0.6 });
+    expect(di.rg).toBeCloseTo(RG_AIR_CHAUD, 9);
+    expect(di.qp0).toBe(200);
+  });
+
+  test('générateur à air chaud : les pertes à l’arrêt réduisent le rendement', () => {
+    const base = { pn: 20000, rpn: 0.9, rpint: 0.85, temp_fonc_30: 40, temp_fonc_100: 70 };
+    const de = {
+      enum_type_generateur_ch_id: '33',
+      enum_type_energie_id: '2',
+      type_energie: 'gaz naturel',
+      description: 't'
+    };
+    const sansPertes = { ...base, qp0: 0 };
+    const avecPertes = { ...base, qp0: 200 };
+    calc_generateur_combustion_ch({}, sansPertes, de, { cdimref: 0.8, cdimrefDep: 0.6 });
+    calc_generateur_combustion_ch({}, avecPertes, de, { cdimref: 0.8, cdimrefDep: 0.6 });
+    expect(avecPertes.rg).toBeLessThan(sansPertes.rg);
   });
 
   test('chaudière basse température : coefficients dédiés (a = 0.1, b = 40)', () => {
