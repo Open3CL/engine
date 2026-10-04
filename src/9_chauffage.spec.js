@@ -58,7 +58,8 @@ vi.mock('./enums.js', () => ({
 const {
   default: calc_chauffage,
   tauxChargeForGenerator,
-  isImmeuble
+  isImmeuble,
+  generateursPrincipauxCascade
 } = await import('./9_chauffage.js');
 const { requestInput, tv, tvColumnIDs } = await import('./utils.js');
 const { calc_emetteur_ch } = await import('./9_emetteur_ch.js');
@@ -454,6 +455,100 @@ describe('calc_chauffage - prorata entre générateurs', () => {
     appel(ch, { bch: 1000, zc_id: 1 });
     // hybrideProrata h1 chaudiere = 0.2
     expect(vi.mocked(calc_generateur_ch).mock.calls[0][5]).toBeCloseTo(200, 9);
+  });
+});
+
+/**
+ * 13.2.1.3 Cascade de deux générateurs à combustion avec priorité
+ * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.1.3
+ */
+describe('calc_chauffage - cascade de générateurs à combustion avec priorité', () => {
+  /** Deux chaudières (combustion) en cascade sur un seul émetteur. */
+  function cascade(prio1, prio2) {
+    vi.mocked(checkForGeneratorType).mockImplementation((_dpe, _de, _di, du) => {
+      du.isCombustionGenerator = true;
+    });
+    vi.mocked(tvColumnIDs).mockReturnValue([]);
+    return installation(
+      [
+        generateur({ priorite_generateur_cascade: prio1 }, { pn: 17000 }),
+        generateur({ priorite_generateur_cascade: prio2 }, { pn: 13000 })
+      ],
+      [emetteur('1')]
+    );
+  }
+
+  test('sans priorité : prorata des puissances nominales (Pnominal = somme des Pn)', () => {
+    const ch = cascade(undefined, undefined);
+    appel(ch, { bch: 3000 });
+    expect(vi.mocked(calc_generateur_ch).mock.calls[0][5]).toBeCloseTo(1700, 9);
+    expect(vi.mocked(calc_generateur_ch).mock.calls[1][5]).toBeCloseTo(1300, 9);
+    expect(ch.donnee_utilisateur.Pnominal).toBe(30000);
+  });
+
+  test('deux générateurs déclarés principaux (même priorité) : prorata des puissances', () => {
+    const ch = cascade(1, 1);
+    appel(ch, { bch: 3000 });
+    expect(vi.mocked(calc_generateur_ch).mock.calls[0][5]).toBeCloseTo(1700, 9);
+    expect(vi.mocked(calc_generateur_ch).mock.calls[1][5]).toBeCloseTo(1300, 9);
+  });
+
+  test('priorité 1 / 2 : le principal assure tout le besoin, le secondaire aucun', () => {
+    const ch = cascade(1, 2);
+    appel(ch, { bch: 3000, bch_dep: 3600 });
+    const [appelPrincipal, appelSecondaire] = vi.mocked(calc_generateur_ch).mock.calls;
+    expect(appelPrincipal[5]).toBe(3000);
+    expect(appelPrincipal[6]).toBe(3600);
+    expect(appelSecondaire[5]).toBe(0);
+    expect(appelSecondaire[6]).toBe(0);
+    // le taux de charge (cdimref) est dimensionné sur la seule Pn du principal
+    expect(ch.donnee_utilisateur.Pnominal).toBe(17000);
+  });
+
+  test('priorité inversée (2 / 1) : le second générateur est le principal', () => {
+    const ch = cascade(2, 1);
+    appel(ch, { bch: 3000 });
+    expect(vi.mocked(calc_generateur_ch).mock.calls[0][5]).toBe(0);
+    expect(vi.mocked(calc_generateur_ch).mock.calls[1][5]).toBe(3000);
+    expect(ch.donnee_utilisateur.Pnominal).toBe(13000);
+  });
+
+  test('générateur unique avec priorité : besoin entier (pas de cascade)', () => {
+    vi.mocked(checkForGeneratorType).mockImplementation((_dpe, _de, _di, du) => {
+      du.isCombustionGenerator = true;
+    });
+    vi.mocked(tvColumnIDs).mockReturnValue([]);
+    const ch = installation(
+      [generateur({ priorite_generateur_cascade: 2 }, { pn: 17000 })],
+      [emetteur('1')]
+    );
+    appel(ch, { bch: 3000 });
+    expect(vi.mocked(calc_generateur_ch).mock.calls[0][5]).toBe(3000);
+    expect(ch.donnee_utilisateur.Pnominal).toBe(17000);
+  });
+});
+
+describe('generateursPrincipauxCascade', () => {
+  const gen = (priorite) => ({ donnee_entree: { priorite_generateur_cascade: priorite } });
+
+  test('priorité absente sur un générateur : tous principaux', () => {
+    const gens = [gen(1), gen(undefined)];
+    expect(generateursPrincipauxCascade(gens)).toEqual(gens);
+  });
+
+  test('priorité nulle ou invalide : tous principaux', () => {
+    const gens = [gen('0'), gen('2')];
+    expect(generateursPrincipauxCascade(gens)).toEqual(gens);
+  });
+
+  test('priorités saisies en chaîne : plus petite priorité retenue', () => {
+    const gens = [gen('2'), gen('1'), gen('3')];
+    expect(generateursPrincipauxCascade(gens)).toEqual([gens[1]]);
+  });
+
+  test('plusieurs générateurs de même priorité minimale : tous retenus', () => {
+    const gens = [gen(1), gen(1), gen(2)];
+    expect(generateursPrincipauxCascade(gens)).toEqual([gens[0], gens[1]]);
   });
 });
 
