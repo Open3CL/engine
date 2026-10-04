@@ -4,8 +4,8 @@
   "nbValidDpe": 10000,
   "nbInvalidDpeVersion": 0,
   "nbExcludedDpe": 0,
-  "nbAllChecksBelowThreshold": 8856,
-  "successRatio": "88.56 %",
+  "nbAllChecksBelowThreshold": 8858,
+  "successRatio": "88.58 %",
   "dpeRunFailed": [],
   "checks": {
     "deperdition_mur": { "nbBelowThreshold": 9939, "mandatory": false, "successRatio": "99.39 %" },
@@ -15,9 +15,9 @@
       "successRatio": "99.78 %"
     },
     "deperdition_plancher_bas": {
-      "nbBelowThreshold": 9064,
+      "nbBelowThreshold": 9216,
       "mandatory": false,
-      "successRatio": "90.64 %"
+      "successRatio": "92.16 %"
     },
     "deperdition_plancher_haut": {
       "nbBelowThreshold": 9888,
@@ -46,13 +46,13 @@
       "successRatio": "97.60 %"
     },
     "besoin_ecs": { "nbBelowThreshold": 10000, "mandatory": false, "successRatio": "100.00 %" },
-    "besoin_ch": { "nbBelowThreshold": 9495, "mandatory": false, "successRatio": "94.95 %" },
+    "besoin_ch": { "nbBelowThreshold": 9498, "mandatory": false, "successRatio": "94.98 %" },
     "conso_ecs": { "nbBelowThreshold": 9480, "mandatory": true, "successRatio": "94.80 %" },
-    "conso_ch": { "nbBelowThreshold": 9382, "mandatory": true, "successRatio": "93.82 %" },
+    "conso_ch": { "nbBelowThreshold": 9383, "mandatory": true, "successRatio": "93.83 %" },
     "conso_auxiliaire_distribution_ch": {
-      "nbBelowThreshold": 8564,
+      "nbBelowThreshold": 8563,
       "mandatory": false,
-      "successRatio": "85.64 %"
+      "successRatio": "85.63 %"
     },
     "conso_auxiliaire_distribution_ecs": {
       "nbBelowThreshold": 10000,
@@ -60,9 +60,9 @@
       "successRatio": "100.00 %"
     },
     "conso_auxiliaire_generation_ch": {
-      "nbBelowThreshold": 8396,
+      "nbBelowThreshold": 8398,
       "mandatory": false,
-      "successRatio": "83.96 %"
+      "successRatio": "83.98 %"
     },
     "conso_auxiliaire_generation_ecs": {
       "nbBelowThreshold": 9823,
@@ -74,7 +74,7 @@
       "mandatory": false,
       "successRatio": "96.60 %"
     },
-    "ep_conso_5_usages": { "nbBelowThreshold": 9367, "mandatory": true, "successRatio": "93.67 %" },
+    "ep_conso_5_usages": { "nbBelowThreshold": 9364, "mandatory": true, "successRatio": "93.64 %" },
     "ep_conso_5_usages_m2": {
       "nbBelowThreshold": 9348,
       "mandatory": true,
@@ -86,19 +86,19 @@
       "successRatio": "92.62 %"
     },
     "emission_ges_5_usages_m2": {
-      "nbBelowThreshold": 9335,
+      "nbBelowThreshold": 9344,
       "mandatory": true,
-      "successRatio": "93.35 %"
+      "successRatio": "93.44 %"
     }
   },
   "performance": {
     "count": 10000,
-    "mean": 5.158,
-    "median": 4.736,
-    "min": 1.908,
-    "max": 43.266,
-    "p95": 8.621,
-    "p99": 11.575,
-    "totalMs": 51583.226
+    "mean": 6.256,
+    "median": 5.656,
+    "min": 1.964,
+    "max": 47.197,
+    "p95": 11.286,
+    "p99": 15.141,
+    "totalMs": 62556.159
   }
 }
