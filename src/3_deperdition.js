@@ -230,7 +230,7 @@ export default function calc_deperdition(cg, zc, th, effetJoule, dpe, Sh) {
    */
   const versionDpe = parseFloat(dpe.administratif?.enum_version_id);
   mur_list.forEach((mur) => calc_mur(mur, zc, pc, effetJoule, versionDpe));
-  pb_list.forEach((pb) => calc_pb(pb, zc, pc, effetJoule, pb_list));
+  pb_list.forEach((pb) => calc_pb(pb, zc, pc, effetJoule));
   ph_list.forEach((ph) => calc_ph(ph, zc, pc, effetJoule));
   bv_list.forEach((bv) => calc_bv(bv, zc));
   porte_list.forEach((porte) => calc_porte(porte, zc));

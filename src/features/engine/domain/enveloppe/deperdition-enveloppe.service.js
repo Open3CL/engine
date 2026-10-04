@@ -207,11 +207,7 @@ export class DeperditionEnveloppeService {
 
     const plancherBas = enveloppe.plancher_bas_collection.plancher_bas || [];
     plancherBas?.forEach((pb) => {
-      pb.donnee_intermediaire = this.#deperditionPlancherBasService.execute(
-        ctx,
-        pb.donnee_entree,
-        plancherBas
-      );
+      pb.donnee_intermediaire = this.#deperditionPlancherBasService.execute(ctx, pb.donnee_entree);
       deperditions.deperdition_plancher_bas +=
         pb.donnee_intermediaire.b *
         pb.donnee_entree.surface_paroi_opaque *
