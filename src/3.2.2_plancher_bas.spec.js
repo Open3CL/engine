@@ -561,14 +561,17 @@ describe('calc_pb - calcul de Ue (tv_ue)', () => {
         enum_type_plancher_bas_id: '9',
         type_adjacence: 'terre-plein',
         enum_type_adjacence_id: '5',
-        surface_paroi_opaque: 4 // pas de surface_ue => fallback
+        surface_paroi_opaque: 4, // pas de surface_ue => fallback
+        perimetre_ue: 2
       }
     };
 
     calc_pb(pb, 'h1a', '1', '0', [pb1, pb, autre]);
 
-    // surfaceUe = 20 (pb1.surface_ue) + 4 (pb.surface_paroi_opaque) = 24 ; perimetreUe = 12 + 0 = 12
-    // 2S/P = round(48/12) = 4 (valeur présente dans values_2s_p)
+    // Calcul plancher par plancher (#46) : les autres planchers (pb1, autre) sont ignorés.
+    // Ce test encodait auparavant la somme par adjacence (S = 20 + 4, P = 12 + 0) ; perimetre_ue
+    // est désormais porté par le plancher courant pour conserver 2S/P = 4.
+    // surfaceUe = 4 (pb.surface_paroi_opaque) ; perimetreUe = 2 => 2S/P = round(8/2) = 4
     expect(tv).toHaveBeenCalledWith('ue', {
       type_adjacence_plancher: 'terre plein bâtiment construit avant 2001',
       '2s_p': '^4$',
@@ -651,5 +654,110 @@ describe('calc_pb - calcul de Ue (tv_ue)', () => {
     calc_pb(pb, 'h1a', '1', '0', [pb]);
 
     expect(pb.donnee_intermediaire.upb_final).toBe(0.19);
+  });
+
+  /**
+   * Issue #46 : ue calculé plancher par plancher, 2S/P issu du seul plancher courant.
+   * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.2.2 (tableau ue : « Les données ne figurant
+   * pas dans le tableau peuvent être obtenues par interpolation et extrapolation »)
+   */
+  describe('calcul plancher par plancher (#46)', () => {
+    /** Plancher non isolé (methode 1) dont upb = upb0 = 1,45. */
+    const plancher = (donnees) => ({
+      donnee_entree: {
+        enum_methode_saisie_u_id: '1',
+        methode_saisie_u0:
+          'déterminé selon le matériau et épaisseur à partir de la table de valeur forfaitaire',
+        enum_type_plancher_bas_id: '2',
+        type_adjacence: 'terre-plein',
+        enum_type_adjacence_id: '5',
+        ...donnees
+      }
+    });
+
+    /** Table ue mockée par couple (2s_p, upb) : terre-plein avant 2001. */
+    const UE = {
+      '^7$': { 0.85: 0.33, 1.5: 0.39 },
+      '^2$': { 0.85: 0.55, 1.5: 0.8 },
+      '^1$': { 0.85: 0.7, 1.5: 0.9 },
+      '^4$': { 0.85: 0.45, 1.5: 0.6 }
+    };
+
+    beforeEach(() => {
+      getRange.mockReturnValue([0.85, 1.5]);
+      tv.mockImplementation((table, matcher) => {
+        if (table === 'upb0') return { upb0: '1.45', tv_upb0_id: '2' };
+        if (table === 'ue') return { ue: String(UE[matcher['2s_p']][matcher.upb]) };
+        return null;
+      });
+    });
+
+    test('2187E0982591I plancher 1 : 2S/P = 7 et ue = 0,385384615 malgré un autre terre-plein', () => {
+      const pb1 = plancher({ surface_paroi_opaque: 44.8, perimetre_ue: 12.8 });
+      const pb3 = plancher({ surface_paroi_opaque: 10.5, perimetre_ue: 10 });
+
+      calc_pb(pb1, 'h1a', '1', '0', [pb1, pb3]);
+
+      // 2S/P = 2 * 44,8 / 12,8 = 7 (somme par adjacence : 2 * 55,3 / 22,8 ≈ 4,85 => 5)
+      expect(tv).toHaveBeenCalledWith('ue', {
+        type_adjacence_plancher: 'terre plein bâtiment construit avant 2001',
+        '2s_p': '^7$',
+        upb: '0.85'
+      });
+      expect(tv).toHaveBeenCalledWith('ue', {
+        type_adjacence_plancher: 'terre plein bâtiment construit avant 2001',
+        '2s_p': '^7$',
+        upb: '1.5'
+      });
+      expect(tv).not.toHaveBeenCalledWith('ue', expect.objectContaining({ '2s_p': '^5$' }));
+      // ue = 0,33 + (0,39 - 0,33) * (1,45 - 0,85) / (1,5 - 0,85) = 0,385384615 (valeur ADEME)
+      expect(pb1.donnee_entree.ue).toBeCloseTo(0.385384615, 9);
+      expect(pb1.donnee_intermediaire.upb_final).toBeCloseTo(0.385384615, 9);
+    });
+
+    test('deux planchers de même adjacence avec surface_ue / perimetre_ue différents : ue différents', () => {
+      const pbA = plancher({ surface_paroi_opaque: 50, surface_ue: 70, perimetre_ue: 20 });
+      const pbB = plancher({ surface_paroi_opaque: 50, surface_ue: 10, perimetre_ue: 10 });
+      const liste = [pbA, pbB];
+
+      liste.forEach((pb) => calc_pb(pb, 'h1a', '1', '0', liste));
+
+      // pbA : 2 * 70 / 20 = 7 => ue interpolé entre 0,33 et 0,39
+      expect(pbA.donnee_entree.ue).toBeCloseTo(0.385384615, 9);
+      // pbB : 2 * 10 / 10 = 2 => 0,55 + 0,25 * 0,6 / 0,65 (valeur de référence de régression)
+      expect(pbB.donnee_entree.ue).toBeCloseTo(0.780769231, 9);
+      expect(pbA.donnee_entree.ue).not.toBeCloseTo(pbB.donnee_entree.ue, 3);
+    });
+
+    test('surface_ue absente : surface_paroi_opaque du plancher courant utilisée', () => {
+      const pb = plancher({ surface_paroi_opaque: 20, perimetre_ue: 10 });
+      const autre = plancher({ surface_ue: 500, surface_paroi_opaque: 500, perimetre_ue: 10 });
+
+      calc_pb(pb, 'h1a', '1', '0', [pb, autre]);
+
+      // 2S/P = 2 * 20 / 10 = 4
+      expect(tv).toHaveBeenCalledWith('ue', expect.objectContaining({ '2s_p': '^4$' }));
+      // ue = 0,45 + 0,15 * 0,6 / 0,65 (valeur de référence de régression)
+      expect(pb.donnee_entree.ue).toBeCloseTo(0.588461538, 9);
+    });
+
+    test('surface_ue prioritaire sur surface_paroi_opaque', () => {
+      const pb = plancher({ surface_paroi_opaque: 20, surface_ue: 35, perimetre_ue: 10 });
+
+      calc_pb(pb, 'h1a', '1', '0', [pb]);
+
+      // 2S/P = 2 * 35 / 10 = 7
+      expect(tv).toHaveBeenCalledWith('ue', expect.objectContaining({ '2s_p': '^7$' }));
+    });
+
+    test('perimetre_ue absent : comportement inchangé (division par 0 => 2S/P = 1), même si un autre plancher en a un', () => {
+      const pb = plancher({ surface_paroi_opaque: 20 });
+      const autre = plancher({ surface_paroi_opaque: 20, perimetre_ue: 10 });
+
+      calc_pb(pb, 'h1a', '1', '0', [pb, autre]);
+
+      expect(tv).toHaveBeenCalledWith('ue', expect.objectContaining({ '2s_p': '^1$' }));
+      expect(pb.donnee_entree.ue).toBeCloseTo(0.884615385, 9);
+    });
   });
 });

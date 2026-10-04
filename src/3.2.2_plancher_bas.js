@@ -55,7 +55,15 @@ function tv_upb(di, de, du, pc_id, zc, effetJoule) {
 
 const values_2s_p = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16, 18, 20];
 
-function tv_ue(di, de, du, pc_id, pb_list) {
+/**
+ * Ue du plancher bas courant, calculé plancher par plancher (issue #46).
+ * 2S/P est déterminé avec la surface (surface_ue, à défaut surface_paroi_opaque) et le périmètre
+ * (perimetre_ue) du seul plancher courant, sans sommer les autres planchers de même adjacence.
+ * Les valeurs absentes du tableau sont obtenues par interpolation linéaire sur upb.
+ *
+ * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.2.2 (tableau ue)
+ */
+function tv_ue(di, de, du, pc_id) {
   const type_adjacence = enums.type_adjacence[de.enum_type_adjacence_id];
   let type_adjacence_plancher;
   let upb1, upb2;
@@ -72,21 +80,9 @@ function tv_ue(di, de, du, pc_id, pb_list) {
     [upb1, upb2] = getRange(di.upb, [0.31, 0.34, 0.37, 0.41, 0.45, 0.83, 1.43, 3.33]);
   }
 
-  /**
-   * La surface Ue est la surface de tous les planchers bas ayant le même type d'adjacence
-   * Le périmètre Ue est le périmètre de tous les planchers bas ayant le même type d'adjacence
-   */
-  const { surfaceUe, perimetreUe } = pb_list.reduce(
-    (acc, plancherBas) => {
-      if (plancherBas.donnee_entree.enum_type_adjacence_id === de.enum_type_adjacence_id) {
-        acc.surfaceUe +=
-          plancherBas.donnee_entree.surface_ue || plancherBas.donnee_entree.surface_paroi_opaque;
-        acc.perimetreUe += plancherBas.donnee_entree.perimetre_ue || 0;
-      }
-      return acc;
-    },
-    { surfaceUe: 0, perimetreUe: 0 }
-  );
+  // Surface et périmètre Ue du plancher courant uniquement
+  const surfaceUe = de.surface_ue || de.surface_paroi_opaque;
+  const perimetreUe = de.perimetre_ue || 0;
 
   const matcher = {
     type_adjacence_plancher,
@@ -134,7 +130,7 @@ function calc_upb0(di, de, du) {
   }
 }
 
-export default function calc_pb(pb, zc, pc_id, effetJoule, pb_list) {
+export default function calc_pb(pb, zc, pc_id, effetJoule) {
   const de = pb.donnee_entree;
   const du = {};
   const di = {};
@@ -246,7 +242,7 @@ export default function calc_pb(pb, zc, pc_id, effetJoule, pb_list) {
     case 'vide sanitaire':
     case 'sous-sol non chauffé':
     case 'terre-plein':
-      tv_ue(di, de, du, pc_id, pb_list);
+      tv_ue(di, de, du, pc_id);
       di.upb_final = de.ue;
       break;
     default:

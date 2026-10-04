@@ -158,10 +158,10 @@ describe('DeperditionEnveloppeService (§3 déperditions de l’enveloppe)', () 
     });
 
     // Délégation aux services de paroi
+    // Ue calculé plancher par plancher (#46) : la liste des planchers n'est plus transmise
     expect(plancherBasService.execute).toHaveBeenCalledWith(
       ctx,
-      env.plancher_bas_collection.plancher_bas[0].donnee_entree,
-      env.plancher_bas_collection.plancher_bas
+      env.plancher_bas_collection.plancher_bas[0].donnee_entree
     );
     expect(pontThermiqueService.execute).toHaveBeenCalledWith(
       ctx,

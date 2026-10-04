@@ -22,13 +22,12 @@ export class DeperditionPlancherBasService extends DeperditionService {
   /**
    * @param ctx {Contexte}
    * @param pbDE {PlancherBasDE}
-   * @param plancherBas {PlancherBas[]}
    * @return {PlancherBasDI}
    */
-  execute(ctx, pbDE, plancherBas) {
+  execute(ctx, pbDE) {
     const upb0 = this.#upb0(pbDE);
     const upb = this.#upb(pbDE, upb0, ctx);
-    const upb_final = this.#upbFinal(pbDE, upb, ctx, plancherBas);
+    const upb_final = this.#upbFinal(pbDE, upb, ctx);
     const b = this.b({
       enumTypeAdjacenceId: pbDE.enum_type_adjacence_id,
       surfaceAiu: pbDE.surface_aiu,
@@ -113,10 +112,9 @@ export class DeperditionPlancherBasService extends DeperditionService {
    * @param pbDE {PlancherBasDE}
    * @param upb {number}
    * @param ctx {Contexte}
-   * @param plancherBas {PlancherBas[]}
    * @return {number|undefined}
    */
-  #upbFinal(pbDE, upb, ctx, plancherBas) {
+  #upbFinal(pbDE, upb, ctx) {
     if (pbDE.calcul_ue === 1) {
       return pbDE.ue;
     }
@@ -131,23 +129,13 @@ export class DeperditionPlancherBasService extends DeperditionService {
     }
 
     /**
-     * La surface Ue est la surface de tous les planchers bas ayant le même type d'adjacence
-     * Le périmètre Ue est le périmètre de tous les planchers bas ayant le même type d'adjacence
+     * Calcul plancher par plancher (issue #46) : 2S/P est déterminé avec la surface (surface_ue, à
+     * défaut surface_paroi_opaque) et le périmètre (perimetre_ue) du seul plancher courant, sans
+     * sommer les autres planchers de même adjacence.
+     * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.2.2 (tableau ue)
      */
-    const { surfaceUe, perimetreUe } = plancherBas
-      .filter(
-        (plancherBas) =>
-          pbDE.enum_type_adjacence_id === plancherBas.donnee_entree.enum_type_adjacence_id
-      )
-      .reduce(
-        (acc, plancherBas) => {
-          acc.surfaceUe +=
-            plancherBas.donnee_entree.surface_ue || plancherBas.donnee_entree.surface_paroi_opaque;
-          acc.perimetreUe += plancherBas.donnee_entree.perimetre_ue || 0;
-          return acc;
-        },
-        { surfaceUe: 0, perimetreUe: 0 }
-      );
+    const surfaceUe = pbDE.surface_ue || pbDE.surface_paroi_opaque;
+    const perimetreUe = pbDE.perimetre_ue || 0;
 
     const available2sp = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16, 18, 20];
     let dsp = perimetreUe ? Math.round((2 * surfaceUe) / perimetreUe) : 1;
