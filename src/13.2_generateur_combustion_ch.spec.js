@@ -19,11 +19,16 @@ vi.mock('./enums.js', () => ({
       70: 'chaudière gaz basse température 2001-2015',
       12: 'radiateur à gaz',
       33: 'générateur à air chaud',
-      99: 'type de générateur inconnu'
+      99: 'type de générateur inconnu',
+      127: 'chaudière gpl/propane/butane classique avant 1981',
+      137: 'chaudière gpl/propane/butane à condensation 1986-2000'
     },
     type_energie: {
       2: 'gaz naturel',
-      4: 'bois – bûches'
+      4: 'bois – bûches',
+      9: 'propane',
+      10: 'butane',
+      13: 'gpl'
     }
   }
 }));
@@ -44,7 +49,8 @@ const {
   calc_generateur_combustion_ch,
   periodeEmetteursDeduiteDuDpe,
   periodeEmetteurAnneeConstruction,
-  PERIODES_INSTALLATION_EMETTEUR
+  PERIODES_INSTALLATION_EMETTEUR,
+  K
 } = await import('./13.2_generateur_combustion_ch.js');
 const { tv } = await import('./utils.js');
 
@@ -736,5 +742,88 @@ describe('calc_generateur_combustion_ch - rendement de génération', () => {
     );
     // le terme 0.45 × QP0 réduit bien le rendement
     expect(avecPertes.rg).toBeLessThan(sansPertes.rg);
+  });
+});
+
+/**
+ * Coefficient de conversion PCS / PCI : le propane et le butane sont des GPL (k = 1.09).
+ * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.1.2
+ */
+describe('K - coefficient PCS / PCI', () => {
+  test('propane et butane : même coefficient que le gpl (1.09), distinct du gaz naturel', () => {
+    expect(K.gpl).toBe(1.09);
+    expect(K.propane).toBe(K.gpl);
+    expect(K.butane).toBe(K.gpl);
+    expect(K['gaz naturel']).toBe(1.11);
+  });
+
+  /**
+   * Référence externe : autotests État CSTB `APP5-0-4` / `APP5-0-43` (Moteur_DPE.dll, Tribu).
+   * Chaudières propane (valeurs par défaut) en cascade avec priorité : le générateur prioritaire
+   * reçoit tout le besoin (Cdimref = 0.05 / TchFinal(Ch_5) de la sortie Tribu).
+   * Avant correctif (k = 1.11) : rg = 0.9319264144042921 (APP5-0-4) et 0.7459952855462689
+   * (APP5-0-43), soit −0,019 % sur Rg.
+   */
+  test.each([
+    {
+      cas: 'APP5-0-4 (condensation 1986-2000)',
+      type: '137',
+      di: { pn: 17538.46, rpn: 0.9330102995756797, rpint: 0.9930102995756798, qp0: 175.3846 },
+      tf: [38, 80],
+      tch5: 0.01481070099462132,
+      rgTribu: 0.9321065689001576
+    },
+    {
+      cas: 'APP5-0-43 (classique avant 1981)',
+      type: '127',
+      di: { pn: 13153.85, rpn: 0.883521827720847, rpint: 0.8652827415812706, qp0: 526.154 },
+      tf: [59, 80],
+      tch5: 0.019747593819765787,
+      rgTribu: 0.7461323116237667
+    }
+  ])('autotest État $cas : rg propane identique à Tribu', ({ type, di, tf, tch5, rgTribu }) => {
+    const d = { ...di, pveil: 0, temp_fonc_30: tf[0], temp_fonc_100: tf[1] };
+    const de = {
+      enum_type_generateur_ch_id: type,
+      enum_type_energie_id: '9',
+      type_energie: 'propane',
+      presence_regulation_combustion: true,
+      description: 't'
+    };
+    const cdimref = 0.05 / tch5;
+    calc_generateur_combustion_ch({}, d, de, { cdimref, cdimrefDep: cdimref });
+    expect(d.rg).toBeCloseTo(rgTribu, 12);
+  });
+
+  test('butane et propane donnent le même rendement que le gpl', () => {
+    const run = (energieId, typeEnergie) => {
+      const di = {
+        pn: 20000,
+        rpn: 0.93,
+        rpint: 0.99,
+        qp0: 200,
+        pveil: 0,
+        temp_fonc_30: 38,
+        temp_fonc_100: 80
+      };
+      const de = {
+        enum_type_generateur_ch_id: '137',
+        enum_type_energie_id: energieId,
+        type_energie: typeEnergie,
+        presence_regulation_combustion: true,
+        description: 't'
+      };
+      calc_generateur_combustion_ch({}, di, de, { cdimref: 3, cdimrefDep: 2.5 });
+      return di;
+    };
+    const gpl = run('13', 'gpl');
+    for (const [id, nom] of [
+      ['9', 'propane'],
+      ['10', 'butane']
+    ]) {
+      const di = run(id, nom);
+      expect(di.rg).toBeCloseTo(gpl.rg, 12);
+      expect(di.rg_dep).toBeCloseTo(gpl.rg_dep, 12);
+    }
   });
 });
