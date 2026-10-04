@@ -110,14 +110,17 @@ export default function calc_chauffage(
    * Cas particulier des PAC hybrides avec répartition forfaitaire du besoin
    * @type {number|number}
    */
-  const Pnominal = gen_ch.reduce((acc, gen) => acc + (gen.donnee_intermediaire.pn || 0), 0);
-  du.Pnominal = Pnominal;
-
   const nbCascadeAndCombustion = gen_ch.filter(
     (value) =>
       value.donnee_utilisateur.isCombustionGenerator &&
       Number.parseInt(de.enum_cfg_installation_ch_id) === 1
   ).length;
+
+  // Cascade avec priorité : seuls les générateurs principaux assurent le besoin (et dimensionnent
+  // le taux de charge) ; les générateurs secondaires (relève) ont un besoin nul.
+  const principaux = nbCascadeAndCombustion > 1 ? generateursPrincipauxCascade(gen_ch) : gen_ch;
+  const Pnominal = principaux.reduce((acc, gen) => acc + (gen.donnee_intermediaire.pn || 0), 0);
+  du.Pnominal = Pnominal;
 
   // Nombre de générateurs avec une consommation des auxiliaires de distribution
   const nbGenWithAuxConsoDistribution = gen_ch.reduce((acc, gen) => {
@@ -148,7 +151,8 @@ export default function calc_chauffage(
       nbCascadeAndCombustion,
       nbCascadeForSameEmetteur,
       Pnominal,
-      zc
+      zc,
+      principaux.includes(gen)
     );
     /* c8 ignore next 2 -- repli défensif inatteignable : donnee_utilisateur est toujours renseignée
        par la première boucle sur gen_ch ci-dessus */
@@ -195,6 +199,29 @@ export default function calc_chauffage(
 }
 
 /**
+ * 13.2.1.3 Cascade de deux générateurs à combustion avec priorité
+ *
+ * `priorite_generateur_cascade` (modèle DPE ADEME) : 1 = générateur principal, 2 = secondaire…
+ * « Dans le cas de deux générateurs en cascade sans priorité, les deux générateurs sont déclarés
+ * comme principal. » Les générateurs principaux sont ceux de plus petite priorité ; si aucune
+ * priorité n'est renseignée, ou si toutes sont identiques, tous les générateurs sont principaux
+ * (cascade sans priorité : prorata des puissances nominales).
+ *
+ * Comme le moteur de référence CSTB (Tribu, autotests État APP5-0-4/41/43), le générateur
+ * prioritaire assure la totalité du besoin et son taux de charge est calculé avec sa seule Pn.
+ *
+ * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.1.3
+ * @param gen_ch {GenerateurChauffageItem[]}
+ * @return {GenerateurChauffageItem[]} générateurs principaux
+ */
+export function generateursPrincipauxCascade(gen_ch) {
+  const priorites = gen_ch.map((gen) => Number(gen.donnee_entree.priorite_generateur_cascade));
+  if (priorites.some((p) => !(p > 0))) return gen_ch;
+  const prioriteMin = Math.min(...priorites);
+  return gen_ch.filter((_gen, i) => priorites[i] === prioriteMin);
+}
+
+/**
  * 13.2.1.3 Cascade de deux générateurs à combustion
  * Une puissance relative pour chaque générateur est calculée et appliquée à la conso globale de chauffage
  * Seuls les générateurs en cascade sont concernés
@@ -203,7 +230,14 @@ export default function calc_chauffage(
  * Cas particulier des PAC hybrides avec répartition forfaitaire du besoin
  * @type {number|number}
  */
-function getProrataGenerateur(genCh, nbCascadeAndCombustion, nbGenerateurCascade, Pnominal, zc) {
+function getProrataGenerateur(
+  genCh,
+  nbCascadeAndCombustion,
+  nbGenerateurCascade,
+  Pnominal,
+  zc,
+  estPrincipal
+) {
   // IDs des pompes à chaleur hybrides
   if (
     genCh.donnee_entree.enum_type_generateur_ch_id >= 145 &&
@@ -233,9 +267,11 @@ function getProrataGenerateur(genCh, nbCascadeAndCombustion, nbGenerateurCascade
     }
   }
 
-  return nbCascadeAndCombustion > 1
-    ? genCh.donnee_intermediaire.pn / Pnominal
-    : 1 / (nbGenerateurCascade || 1);
+  if (nbCascadeAndCombustion > 1) {
+    // générateur secondaire d'une cascade avec priorité : aucun besoin assuré
+    return estPrincipal ? genCh.donnee_intermediaire.pn / Pnominal : 0;
+  }
+  return 1 / (nbGenerateurCascade || 1);
 }
 
 /**
