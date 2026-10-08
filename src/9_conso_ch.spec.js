@@ -50,7 +50,7 @@ vi.mock('./enums.js', () => ({
   }
 }));
 
-const { conso_ch } = await import('./9_conso_ch.js');
+const { conso_ch, isPacHybride } = await import('./9_conso_ch.js');
 const { default: tvs } = await import('./tv.js');
 const { requestInputID } = await import('./utils.js');
 const { rendement_emission } = await import('./9_emetteur_ch.js');
@@ -366,7 +366,7 @@ describe('conso_ch - installation collective base + appoint', () => {
       s_chauffee_inst,
       gen_ch_list
     ] = baseAppointArgs(pos, opts);
-    conso_ch(
+    di.besoinCouvert = conso_ch(
       di,
       de,
       {},
@@ -399,6 +399,23 @@ describe('conso_ch - installation collective base + appoint', () => {
     const di = callBaseAppoint(1);
     // référence de régression (part d'appoint = bch - besoin de base)
     expect(di.conso_ch).toBeCloseTo(55.55555555555556, 9);
+  });
+
+  /**
+   * Besoin couvert retourné (auxiliaires de génération, §15.1) : base = Σ besoin de base (kWh),
+   * appoint = bch - base ; la somme vaut le besoin de l'installation (50 kWh).
+   */
+  test('besoin couvert : part de base (pos 0) et part d’appoint (pos 1) = besoin total', () => {
+    const base = callBaseAppoint(0).besoinCouvert;
+    const appoint = callBaseAppoint(1).besoinCouvert;
+    // référence de régression
+    expect(base).toBeCloseTo(5, 9);
+    expect(appoint).toBeCloseTo(45, 9);
+    expect(base + appoint).toBeCloseTo(50, 9);
+  });
+
+  test('besoin couvert nul quand la part de base calculée est nulle', () => {
+    expect(callBaseAppoint(0, { pn: 100 }).besoinCouvert).toBe(0);
   });
 
   test('puissance nulle (pe = 0) : le besoin de base est forfaitairement la moitié du besoin', () => {
@@ -507,5 +524,108 @@ describe('conso_ch - installation collective base + appoint', () => {
 
     // bch = 0 => la branche de calcul n'est pas exécutée
     expect(di.conso_ch).toBeUndefined();
+  });
+});
+
+/**
+ * Besoin couvert par le générateur (retour de conso_ch), utilisé pour ses auxiliaires de
+ * génération (§15.1 : Caux_g = Paux_g × Bch_générateur / Pn).
+ * Autotests CSTB APP5-0-5 (relève de PAC, 0,8 / 0,2) et IC4-0-1 (relève d'une chaudière bois,
+ * 0,75 / 0,25).
+ * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §9 et §15.1
+ */
+describe('conso_ch - besoin couvert par le générateur', () => {
+  beforeEach(() => {
+    vi.mocked(requestInputID).mockReset();
+    vi.mocked(rendement_emission).mockReset();
+    vi.mocked(calc_intermittence).mockReset();
+    vi.mocked(rendement_emission).mockReturnValue(0.8);
+    vi.mocked(calc_intermittence).mockImplementation((_gv, _sh, _hsp, i0) => i0);
+  });
+
+  function appel(de, pos, cfg, bch = 1000) {
+    const di = { rg: 1, rg_dep: 1 };
+    return conso_ch(
+      di,
+      { surface_chauffee: 100, ...de },
+      {},
+      pos,
+      cfg,
+      [emetteur(1)],
+      150,
+      100,
+      2.5,
+      bch,
+      2 * bch,
+      -9.5,
+      0,
+      1,
+      1
+    );
+  }
+
+  test.each([
+    ['installation de chauffage avec chaudière en relève de pac', 0, 800],
+    ['installation de chauffage avec chaudière en relève de pac', 1, 200],
+    [
+      'installation de chauffage avec une chaudière ou une pac en relève d’une chaudière bois',
+      0,
+      750
+    ],
+    [
+      'installation de chauffage avec une chaudière ou une pac en relève d’une chaudière bois',
+      1,
+      250
+    ],
+    ['installation de chauffage simple', 0, 1000]
+  ])('%s, position %i : besoin couvert = coefficient × besoin (%d)', (cfg, pos, attendu) => {
+    expect(appel({ enum_type_generateur_ch_id: '10' }, pos, cfg)).toBeCloseTo(attendu, 9);
+  });
+
+  test('PAC hybride : part déjà appliquée au besoin, pas de second coefficient', () => {
+    const cfg = 'installation de chauffage avec chaudière en relève de pac';
+    expect(appel({ enum_type_generateur_ch_id: '148' }, 1, cfg)).toBe(1000);
+  });
+
+  test('convecteurs bi-jonction : tout le besoin est couvert', () => {
+    expect(appel({ enum_type_generateur_ch_id: '10' }, 0, 'convecteurs bi-jonction')).toBe(1000);
+  });
+
+  test('base + appoint collectif : besoin nul => besoin couvert nul', () => {
+    const di = { rg: 1, rg_dep: 1, pn: 0 };
+    const couvert = conso_ch(
+      di,
+      { surface_chauffee: 100, enum_type_generateur_ch_id: '10' },
+      {},
+      0,
+      'installation de chauffage collectif avec base + appoint',
+      [emetteur(1)],
+      150,
+      100,
+      2.5,
+      0,
+      0,
+      -9.5,
+      0,
+      1,
+      1,
+      { Janvier: 0, Février: 0 },
+      100,
+      []
+    );
+    expect(couvert).toBe(0);
+  });
+});
+
+describe('isPacHybride', () => {
+  test.each([
+    ['145', true],
+    [170, true],
+    ['148', true],
+    ['144', false],
+    ['171', false],
+    [undefined, false]
+  ])('type %s : %s', (id, attendu) => {
+    expect(isPacHybride(id)).toBe(attendu);
   });
 });

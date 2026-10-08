@@ -59,6 +59,11 @@ function coef_ch(Fch) {
   };
 }
 
+/**
+ * Calcule la consommation de chauffage du générateur (di.conso_ch, di.conso_ch_depensier).
+ * @return {number} besoin de chauffage effectivement couvert par le générateur (kWh), utilisé
+ * pour ses auxiliaires de génération (§15.1 : Caux_g = Paux_g × Bch_générateur / Pn)
+ */
 export function conso_ch(
   di,
   de,
@@ -94,7 +99,7 @@ export function conso_ch(
 
   switch (cfg_ch) {
     case 'installation de chauffage collectif avec base + appoint': {
-      calc_ch_base_appoint(
+      return calc_ch_base_appoint(
         di,
         de,
         bch,
@@ -111,7 +116,6 @@ export function conso_ch(
         ilpa,
         tbase
       );
-      break;
     }
     case 'convecteurs bi-jonction': {
       // Installation individuelle
@@ -136,7 +140,7 @@ export function conso_ch(
       di.conso_ch = consoInd.conso_ch + consoColl.conso_ch;
       di.conso_ch_depensier = consoInd.conso_ch_dep + consoColl.conso_ch_dep;
 
-      break;
+      return bch;
     }
     default: {
       const { conso_ch, conso_ch_dep } = calc_conso_ch_default(
@@ -155,7 +159,12 @@ export function conso_ch(
       );
       di.conso_ch = conso_ch;
       di.conso_ch_depensier = conso_ch_dep;
-      break;
+      /**
+       * Part du besoin couverte par le générateur selon la configuration (ex. 0,75 / 0,25 pour une
+       * chaudière en relève d'une chaudière bois, 0,8 / 0,2 pour une chaudière en relève de PAC).
+       * Les PAC hybrides ont déjà leur part (prorata de zone) dans bch.
+       */
+      return isPacHybride(de.enum_type_generateur_ch_id) ? bch : coef * bch;
     }
   }
 }
@@ -224,6 +233,12 @@ function calc_ch_base_appoint(
   ilpa,
   tbase
 ) {
+  /**
+   * Besoin couvert par le générateur : part de base (pos 0) ou d'appoint (bch - base), au prorata
+   * de la surface de ses émetteurs. Autotest CSTB APP3-0-3 : chaudière bois en base (Tribu
+   * Bgen = 3108,34 kWh, Qaux_ch = 13,27 kWh), générateur d'air chaud en appoint (Qaux_ch = 0).
+   */
+  let besoinCouvert = 0;
   if (bch > 0) {
     let bch_base = 0;
 
@@ -296,15 +311,28 @@ function calc_ch_base_appoint(
     }
     if (!isAppoint) {
       const ratio_s_em = em.donnee_entree.surface_chauffee / de.surface_chauffee;
+      besoinCouvert = ratio_s_em * (bch_base / 1000);
       di.conso_ch = (ratio_s_em * (bch_base / 1000) * Ich * Int) / Rend;
     } else {
       const ratio_s_em =
         em.donnee_entree.surface_chauffee / emAppoint.donnee_entree.surface_chauffee;
+      besoinCouvert = ratio_s_em * (bch - bch_base / 1000);
       di.conso_ch = (ratio_s_em * (bch - bch_base / 1000) * Int * Ich) / Rend;
     }
 
     di.conso_ch = Math.max(di.conso_ch, 0);
   }
+  return Math.max(besoinCouvert, 0);
+}
+
+/**
+ * PAC hybride (partie PAC ou partie chaudière) : enum_type_generateur_ch_id 145 à 170.
+ * @param typeGenerateurId {string|number}
+ * @return {boolean}
+ */
+export function isPacHybride(typeGenerateurId) {
+  const id = Number.parseInt(typeGenerateurId);
+  return id >= 145 && id <= 170;
 }
 
 function getEmetteursFromGenerateur(de, em_filt, pos, cfg_ch) {

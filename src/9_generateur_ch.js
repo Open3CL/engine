@@ -249,8 +249,6 @@ export function calc_generateur_ch(
     tv_rendement_generation(di, de, du);
   }
 
-  conso_aux_gen(di, de, 'ch', bch, bch_dep);
-
   /**
    * 15 Calcul des consommations d’auxiliaires des installations de chauffage (Caux_ch) et d’ECS (Caux_ecs)
    */
@@ -258,7 +256,7 @@ export function calc_generateur_ch(
     conso_aux_distribution_ch(em_ch, de, di, du, Sh, zc_id, ca_id, ilpa, GV);
   }
   const paroi_ancienne = isParoisAncienneInertieLourde(dpe);
-  conso_ch(
+  const besoinCouvert = conso_ch(
     di,
     de,
     du,
@@ -278,6 +276,17 @@ export function calc_generateur_ch(
     s_chauffee_inst,
     gen_ch_list
   );
+
+  /**
+   * 15.1 Auxiliaires de génération : Caux_g = Paux_g × Bch / Pn, avec Bch le besoin couvert par
+   * ce générateur (part de base / d'appoint, relève), et non le besoin de toute l'installation.
+   * Autotests CSTB APP5-0-5 (chaudière fioul en relève de PAC, Tribu Qaux_ch = 2,13 kWh) et
+   * IC4-0-1 (chaudière en relève d'une chaudière bois).
+   * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §15.1
+   */
+  const besoinGenerateur = besoinCouvert ?? bch;
+  const besoinGenerateurDep = bch > 0 ? (bch_dep * besoinGenerateur) / bch : 0;
+  conso_aux_gen(di, de, 'ch', besoinGenerateur, besoinGenerateurDep);
 
   gen_ch.donnee_intermediaire = di;
   gen_ch.donnee_utilisateur = du;
