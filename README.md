@@ -557,6 +557,6 @@ Merci à toutes les personnes qui ont écrit, testé, relu ou corrigé une ligne
 [issues-shield]: https://img.shields.io/github/issues/Open3CL/engine.svg?style=for-the-badge
 [issues-url]: https://github.com/Open3CL/issues
 [license-shield]: https://img.shields.io/github/license/Open3CL/engine.svg?style=for-the-badge
-[license-url]: https://github.com/Open3CL/blob/main/LICENSE
+[license-url]: https://github.com/Open3CL/engine/blob/main/LICENSE
 [product-screenshot]: images/screenshot.png
 [Javascript]: https://img.shields.io/badge/javascript-000000?style=for-the-badge&logo=javascript&logoColor=white
