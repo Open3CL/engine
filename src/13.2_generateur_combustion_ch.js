@@ -395,9 +395,10 @@ export function calc_generateur_combustion_ch(dpe, di, de, du) {
   const k = K[type_energie];
 
   // Pveil and QP0 are in kW
-  const Pveil = di.pveil / 1000;
-  // rg est d'abord calculé sur PCS (puis × k pour revenir en PCI) : QP0 doit donc être exprimé
-  // sur PCS, comme dans QPx() (qp0 × k). Cf. issue #205.
+  // rg est d'abord calculé sur PCS (puis × k pour revenir en PCI) : QP0 et Pveil (pertes de la
+  // veilleuse, consommation de combustible) doivent donc être exprimés sur PCS, comme dans QPx()
+  // (qp0 × k). Cf. issue #205 et autotests État MI4-0-x (Tribu : Pveil × k).
+  const Pveil = (di.pveil * k) / 1000;
   const QP0 = qp0PcsKw(de, di, k);
 
   const rg_pcs = Pmfou / (Pmcons + 0.45 * QP0 + Pveil);
