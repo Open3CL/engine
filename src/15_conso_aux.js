@@ -205,6 +205,19 @@ export function conso_aux_distribution_ch(
  * @param Tbase {number} température
  */
 function getPuissanceCirculateur(em_ch, de, di, du, surfaceHabitable, GV, Tbase) {
+  /**
+   * Le circulateur dessert les émetteurs reliés au générateur (enum_lien_generateur_emetteur_id),
+   * et non ceux d'un autre générateur de l'installation (ex. convecteurs électriques d'appoint).
+   * Autotest CSTB IC5-0-3 : chaudière gaz sur plancher chauffant (lien 1) + convecteurs (lien 2),
+   * Tribu Caux_dist_ch = 1951,90 kWh (Fcot du plancher, 0,156).
+   */
+  const emetteursLies = em_ch.filter(
+    (em) =>
+      em.donnee_entree.enum_lien_generateur_emetteur_id === de.enum_lien_generateur_emetteur_id
+  );
+  if (emetteursLies.length > 0) {
+    em_ch = emetteursLies;
+  }
   const typeEmetteur = parseInt(em_ch[0].donnee_entree.enum_type_emission_distribution_id);
 
   // Perte de charge de l’émetteur
