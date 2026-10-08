@@ -14,6 +14,7 @@ vi.mock('./enums.js', () => ({
   default: {
     type_generateur_ch: {
       89: 'chaudière gaz standard 2001-2015',
+      86: 'chaudière gaz classique 1981-1985',
       55: 'chaudière bois bûche avant 1978',
       96: 'chaudière gaz à condensation 2001-2015',
       70: 'chaudière gaz basse température 2001-2015',
@@ -708,6 +709,88 @@ describe('calc_generateur_combustion_ch - rendement de génération', () => {
     calc_generateur_combustion_ch({}, di, de, { cdimref, cdimrefDep: cdimref });
     // Rg Tribu (sortie APP2-0-1_Sortie.xml) : 0.8511886946001722
     expect(di.rg).toBeCloseTo(0.8511886946001722, 12);
+  });
+
+  /**
+   * Référence externe : autotest État CSTB `MI4-0-1`, moteur Moteur_DPE.dll (Tribu). Chaudière gaz
+   * classique 1981-1985 avec veilleuse, Pn = 24 kW, valeurs par défaut (Rpn, Rpint, Qp0 = 480 W,
+   * Pveil = 150 W, Tfonc30/100 = 56/70, Cdimref = 0.05 / TchFinal(Ch_5)).
+   * Comme QP0, la puissance de veilleuse est exprimée sur PCS (Pveil × k) dans le dénominateur.
+   * Avant correctif (Pveil sur PCI) : rg = 0.740607866698453 (Cch −0,42 %).
+   * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.1.2
+   */
+  test('autotest État MI4-0-1 : rg identique à Tribu (Pveil exprimée sur PCS)', () => {
+    const di = {
+      pn: 24000,
+      rpn: 0.8676042248342321,
+      rpint: 0.8414063372513482,
+      qp0: 480,
+      pveilleuse: 150,
+      pveil: 150,
+      temp_fonc_30: 56,
+      temp_fonc_100: 70
+    };
+    const de = {
+      enum_type_generateur_ch_id: '86',
+      enum_type_energie_id: '2',
+      type_energie: 'gaz naturel',
+      presence_regulation_combustion: true,
+      description: 'Chaudière classique 81-85'
+    };
+    const cdimref = 0.05 / 0.01710986374076308;
+    calc_generateur_combustion_ch({}, di, de, { cdimref, cdimrefDep: cdimref });
+    // Rg Tribu (sortie MI4-0-1_Sortie.xml) : 0.7374941696172325
+    expect(di.rg).toBeCloseTo(0.7374941696172325, 12);
+  });
+
+  test('la veilleuse est convertie sur PCS : rg_pcs = Pmfou / (Pmcons + 0.45 × QP0 × k + Pveil × k)', () => {
+    const base = () => ({
+      pn: 24000,
+      rpn: 0.87,
+      rpint: 0.84,
+      qp0: 0,
+      pveilleuse: 150,
+      pveil: 150,
+      temp_fonc_30: 56,
+      temp_fonc_100: 70
+    });
+    const de = {
+      enum_type_generateur_ch_id: '86',
+      enum_type_energie_id: '2',
+      presence_regulation_combustion: true,
+      description: 't'
+    };
+    const avecVeilleuse = base();
+    calc_generateur_combustion_ch(
+      {},
+      avecVeilleuse,
+      { ...de, type_energie: 'gaz naturel' },
+      {
+        cdimref: 3
+      }
+    );
+    const sansVeilleuse = { ...base(), pveilleuse: 0, pveil: 0 };
+    calc_generateur_combustion_ch(
+      {},
+      sansVeilleuse,
+      { ...de, type_energie: 'gaz naturel' },
+      {
+        cdimref: 3
+      }
+    );
+    // rg = k × Pmfou / Pmcons sans veilleuse ; avec veilleuse : k × Pmfou / (Pmcons + 0.15 × k)
+    const k = 1.11;
+    const coefPond = { 0.05: 0.1, 0.15: 0.25, 0.25: 0.2, 0.35: 0.15, 0.45: 0.1, 0.55: 0.1 };
+    Object.assign(coefPond, { 0.65: 0.05, 0.75: 0.025, 0.85: 0.025, 0.95: 0 });
+    const pmfou = Object.entries(coefPond).reduce(
+      (acc, [x, c]) => acc + 24 * Math.min(1, Number(x) / 3) * c,
+      0
+    );
+    const pmcons = (k * pmfou) / sansVeilleuse.rg;
+    const attendu = (k * pmfou) / (pmcons + 0.15 * k);
+    expect(avecVeilleuse.rg).toBeCloseTo(attendu, 12);
+    // sur PCI (avant correctif), le rendement serait plus élevé
+    expect(avecVeilleuse.rg).toBeLessThan((k * pmfou) / (pmcons + 0.15));
   });
 
   test('les pertes à charge nulle QP0 réduisent le rendement de génération', () => {
