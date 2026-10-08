@@ -4,13 +4,19 @@ import tvs from './tv.js';
 import { DEFAULT_COEFF_EP } from './conso.js';
 
 export class ProductionENR {
+  /**
+   * Taux d'autoproduction limite par poste Taplpi (§16.2).
+   * Auxiliaires de distribution : 0,1 (valeur du moteur de référence CSTB, autotests MI5-0-2/21 :
+   * Celec_ac_aux_dist_ch / Celec_ac reproduit à 1e-15 avec 0,1 ; 9 fixtures ADEME PV sur 21 à ±0,1 %
+   * sur conso_elec_ac au lieu de 4 avec 0,05).
+   */
   #taplpi = {
     chauffage: 0.02,
     ecs: 0.05,
     refroidissement: 0.25,
     eclairage: 0.05,
     auxiliaire_ventilation: 0.5,
-    auxiliaire_distribution: 0.05,
+    auxiliaire_distribution: 0.1,
     autres: 0.45
   };
 

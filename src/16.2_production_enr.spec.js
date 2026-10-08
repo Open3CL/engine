@@ -147,8 +147,8 @@ describe('production ENR unit tests', () => {
       conso_elec_ac_eclairage: 0.018,
       conso_elec_ac_ecs: 0.03,
       conso_elec_ac_fr: 0.08,
-      conso_elec_ac_auxiliaire_distribution_ch: 0.005,
-      conso_elec_ac_auxiliaire_distribution_ecs: 0.0022,
+      conso_elec_ac_auxiliaire_distribution_ch: 0.01,
+      conso_elec_ac_auxiliaire_distribution_ecs: 0.0044,
       conso_elec_ac_auxiliaire_generation_ch: 0.0008,
       conso_elec_ac_auxiliaire_generation_ecs: 0.0024,
       conso_elec_ac_ventilation: 0.03,
@@ -436,5 +436,41 @@ describe('production ENR unit tests', () => {
     // les consommations d'énergie finale sont bien minorées par l'autoconsommation
     expect(conso.ef_conso.conso_ecs).toBeLessThan(1000);
     expect(conso.ef_conso.conso_5_usages).toBeLessThan(1500);
+  });
+
+  test('Taplpi des auxiliaires de distribution = 0,1 (chauffage et ECS)', () => {
+    const ret = productionENR.getTapl(
+      { conso_auxiliaire_distribution_ch: 100, conso_auxiliaire_distribution_ecs: 50 },
+      {},
+      0,
+      1000
+    );
+    expect(ret.conso_elec_ac_auxiliaire_distribution_ch).toBeCloseTo((0.1 * 100) / 1000, 12);
+    expect(ret.conso_elec_ac_auxiliaire_distribution_ecs).toBeCloseTo((0.1 * 50) / 1000, 12);
+  });
+
+  test('reproduit le Tapl et Celec_ac du moteur de référence CSTB (autotest MI5-0-2)', () => {
+    // MI5-0-2 (maison 136 m², chaudière gaz, PV 12 m²) : sorties Tribu Tap = 0,2911459118583647,
+    // Celec_ac = 1396,6145145780897, Celec_ac_aux_dist_ch = 9,334520076617249
+    const efConso = {
+      conso_eclairage: 258.06816,
+      conso_auxiliaire_ventilation: 438,
+      conso_auxiliaire_distribution_ch: 135.06,
+      conso_auxiliaire_generation_ch: 18.561508010921234,
+      conso_auxiliaire_generation_ecs: 3.2676571446810665
+    };
+    const ccom = productionENR.getCelecAu('maison', 136);
+    const celecTot = 438 + 258.06816 + 135.06 + 18.561508010921234 + 3.2676571446810665 + ccom;
+    const prod = productionENR.getTapl(efConso, {}, ccom, celecTot);
+    const tapl = Object.values(prod).reduce((acc, v) => acc + v, 0);
+    const ppv = 4521.818630399999;
+    const tap = 1 / (celecTot / ppv + 1 / tapl);
+
+    expect(tap).toBeCloseTo(0.2911459118583647, 12);
+    expect(celecTot * tap).toBeCloseTo(1396.6145145780897, 9);
+    expect((celecTot * tap * prod.conso_elec_ac_auxiliaire_distribution_ch) / tapl).toBeCloseTo(
+      9.334520076617249,
+      9
+    );
   });
 });
