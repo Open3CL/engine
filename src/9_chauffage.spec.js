@@ -59,7 +59,8 @@ const {
   default: calc_chauffage,
   tauxChargeForGenerator,
   isImmeuble,
-  generateursPrincipauxCascade
+  generateursPrincipauxCascade,
+  ratioDimensionnement
 } = await import('./9_chauffage.js');
 const { requestInput, tv, tvColumnIDs } = await import('./utils.js');
 const { calc_emetteur_ch } = await import('./9_emetteur_ch.js');
@@ -602,9 +603,9 @@ describe('calc_chauffage - initialisation défensive des données du générateu
  */
 describe('tauxChargeForGenerator - taux de charge des générateurs à combustion', () => {
   /** Installation avec un générateur à combustion. */
-  function installCombustion(pnominal = 5000, rdim) {
+  function installCombustion(pnominal = 5000, rdim, typeInstallation = '1') {
     return {
-      donnee_entree: { rdim },
+      donnee_entree: { rdim, enum_type_installation_id: typeInstallation },
       donnee_utilisateur: { Pnominal: pnominal },
       generateur_chauffage_collection: {
         generateur_chauffage: [{ donnee_utilisateur: { isCombustionGenerator: true } }]
@@ -612,32 +613,65 @@ describe('tauxChargeForGenerator - taux de charge des générateurs à combustio
     };
   }
 
+  const genDe = (install) => install.generateur_chauffage_collection.generateur_chauffage[0];
+
   test('maison : GV utilisé directement pour le calcul du taux de charge', () => {
     const install = installCombustion(5000);
     tauxChargeForGenerator([install], 200, 1, 1, 'maison');
 
-    const gen = install.generateur_chauffage_collection.generateur_chauffage[0];
+    const gen = genDe(install);
     // cdimref = Pn / (GV * (19 - tbase)) ; tbase = -9.5 (ca1/h1)
     expect(gen.donnee_utilisateur.cdimref).toBeCloseTo(5000 / (200 * (19 + 9.5)), 9);
     expect(gen.donnee_utilisateur.cdimrefDep).toBeCloseTo(5000 / (200 * (21 + 9.5)), 9);
   });
 
-  test('immeuble : GV corrigé par le ratio de dimensionnement rdim', () => {
+  test('maison : rdim ignoré (pas de ratio de dimensionnement hors immeuble)', () => {
+    const install = installCombustion(5000, 3);
+    tauxChargeForGenerator([install], 200, 1, 1, 'maison');
+
+    expect(genDe(install).donnee_utilisateur.cdimref).toBeCloseTo(5000 / (200 * 28.5), 9);
+  });
+
+  test('immeuble : puissance de l’installation individuelle multipliée par rdim', () => {
     const install = installCombustion(5000, 2);
     tauxChargeForGenerator([install], 200, 1, 1, 'immeuble');
 
-    const gen = install.generateur_chauffage_collection.generateur_chauffage[0];
-    const gvRatio = 200 * (1 / 2);
-    expect(gen.donnee_utilisateur.cdimref).toBeCloseTo(5000 / (gvRatio * (19 + 9.5)), 9);
+    const gen = genDe(install);
+    expect(gen.donnee_utilisateur.cdimref).toBeCloseTo((5000 * 2) / (200 * (19 + 9.5)), 9);
+    expect(gen.donnee_utilisateur.cdimrefDep).toBeCloseTo((5000 * 2) / (200 * (21 + 9.5)), 9);
   });
 
   test('immeuble sans rdim : ratio de dimensionnement par défaut (1)', () => {
     const install = installCombustion(5000);
     tauxChargeForGenerator([install], 200, 1, 1, 'immeuble');
 
-    const gen = install.generateur_chauffage_collection.generateur_chauffage[0];
-    // rdim absent => GV_ratio = GV
-    expect(gen.donnee_utilisateur.cdimref).toBeCloseTo(5000 / (200 * (19 + 9.5)), 9);
+    // rdim absent => Pn non multipliée
+    expect(genDe(install).donnee_utilisateur.cdimref).toBeCloseTo(5000 / (200 * (19 + 9.5)), 9);
+  });
+
+  test('immeuble à plusieurs installations individuelles : taux de charge unique = Σ Pn × rdim / (GV × ΔT)', () => {
+    // Cas 2567E0293668R : 2 installations individuelles de rdim 2,25 et 6,75
+    const inst1 = installCombustion(21198.3122362869, 2.25);
+    const inst2 = installCombustion(25373.7373737374, 6.75);
+    tauxChargeForGenerator([inst1, inst2], 1363.4740891570668, 1, 1, 'immeuble');
+
+    const attendu =
+      (21198.3122362869 * 2.25 + 25373.7373737374 * 6.75) / (1363.4740891570668 * 28.5);
+    // Avant correctif : 2,697 pour inst1 et 8,090 pour inst2 (Σ Pn × rdim de l'installation courante)
+    expect(genDe(inst1).donnee_utilisateur.cdimref).toBeCloseTo(attendu, 9);
+    expect(genDe(inst2).donnee_utilisateur.cdimref).toBeCloseTo(attendu, 9);
+    // valeur de référence de régression (tbase mocké = -9.5)
+    expect(genDe(inst1).donnee_utilisateur.cdimref).toBeCloseTo(5.634958819615692, 9);
+  });
+
+  test('immeuble mixte : installations individuelle et collective pondérées par leur rdim', () => {
+    const individuelle = installCombustion(10000, 4, '1');
+    const collective = installCombustion(100000, 2, '2');
+    tauxChargeForGenerator([individuelle, collective], 1000, 1, 1, 'immeuble');
+
+    const attendu = (10000 * 4 + 100000 * 2) / (1000 * 28.5);
+    expect(genDe(individuelle).donnee_utilisateur.cdimref).toBeCloseTo(attendu, 9);
+    expect(genDe(collective).donnee_utilisateur.cdimref).toBeCloseTo(attendu, 9);
   });
 
   test('installation sans générateur à combustion : ignorée', () => {
@@ -651,5 +685,23 @@ describe('tauxChargeForGenerator - taux de charge des générateurs à combustio
     // aucune erreur, aucune donnée de taux de charge écrite
     expect(() => tauxChargeForGenerator([installSans], 200, 1, 1, 'maison')).not.toThrow();
     expect(installSans.donnee_utilisateur.genCombustion).toBeUndefined();
+  });
+});
+
+describe('ratioDimensionnement', () => {
+  const inst = (enum_type_installation_id, rdim) => ({
+    donnee_entree: { enum_type_installation_id, rdim }
+  });
+
+  test.each([
+    ['maison', 'maison', inst('1', 3), 1],
+    ['appartement', 'appartement', inst('1', 3), 1],
+    ['immeuble, installation individuelle', 'immeuble', inst('1', 3), 3],
+    ['immeuble, installation collective', 'immeuble', inst('2', 8), 8],
+    ['immeuble, rdim saisi en texte', 'immeuble', inst(1, '2.25'), 2.25],
+    ['immeuble, rdim absent', 'immeuble', inst('1', undefined), 1],
+    ['immeuble, rdim nul', 'immeuble', inst('2', 0), 1]
+  ])('%s', (_label, th, installCh, attendu) => {
+    expect(ratioDimensionnement(installCh, th)).toBe(attendu);
   });
 });
