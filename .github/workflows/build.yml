@@ -25,18 +25,18 @@ jobs:
     env:
       NODE_OPTIONS: '--max-old-space-size=4096'
     steps:
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 24.14.1
 
       - name: Git checkout for source code analysis
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Install Dependencies
         run: npm ci
 
       - name: Cache Node.js modules
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.npm
           key: ${{ runner.OS }}-node-${{ hashFiles('**/package-lock.json') }}
@@ -48,14 +48,14 @@ jobs:
         run: npm run test:unit:ci -- --reporter=default --reporter=junit --outputFile.junit=./test-results/junit.xml
 
       - name: Publish test results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: test-results
           path: ./test-results/junit.xml
 
       - name: Publish coverage report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: coverage
@@ -68,18 +68,18 @@ jobs:
     env:
       NODE_OPTIONS: '--max-old-space-size=4096'
     steps:
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 24.14.1
 
       - name: Git checkout for source code analysis
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Install Dependencies
         run: npm ci
 
       - name: Cache Node.js modules
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.npm
           key: ${{ runner.OS }}-node-${{ hashFiles('**/package-lock.json') }}
@@ -112,7 +112,7 @@ jobs:
       # `main` plutôt que le commit déclencheur : le commit de release, poussé par
       # semantic-release, contient les résultats de corpus marqués publiés.
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: main
       # Le site ne publie que le rapport de corpus : la racine y renvoie, ce qui garde
@@ -134,12 +134,12 @@ jobs:
           </html>
           HTML
       - name: Setup Pages
-        uses: actions/configure-pages@v5
+        uses: actions/configure-pages@v6
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           # Upload dist repository
           path: 'dist'
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
