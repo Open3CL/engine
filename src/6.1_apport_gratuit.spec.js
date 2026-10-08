@@ -176,7 +176,9 @@ describe("Recherche de bugs dans le calcul de l'apport gratuit", () => {
 
     expect(calc_ai(ilpa, ca, zc, Sh, nadeq)).toStrictEqual({
       apport_interne_ch: 1459229.75,
-      apport_interne_fr: 8589.5569375
+      // Σ Nref28 (400-800m, h1c) = 5 + 19 + 46 + 46 = 116 h (annexe 18.2.2 de la méthode)
+      // anciennement 8589.5569375 avec les valeurs E_fr reprises à tort dans la table Nref28 (36.26 h)
+      apport_interne_fr: 27479.001785714285
     });
   });
 });
