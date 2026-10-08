@@ -336,19 +336,39 @@ export function tauxChargeForGenerator(installationChauffage, GV, caId, zcId, th
   const zc = enums.zone_climatique[zcId];
   const tbase = Tbase[ca][zc.slice(0, 2)];
 
-  // Pour N générateurs à combustion, puissance totale de tous les générateurs
+  // Pour N générateurs à combustion, puissance totale installée sur le périmètre du GV.
+  // En immeuble, le GV est celui de tout l'immeuble : la puissance d'une installation individuelle
+  // (représentant un logement type) est multipliée par son ratio de dimensionnement rdim.
+  // Le taux de charge obtenu est unique et commun à tous les générateurs à combustion.
+  // Cf. moteur de référence (Calcul_batiment.cs, CTchx) : Cdimref += Pn × Rdim / (GV × (Tcons − Tbase))
   const Pn = installChauffageWithCombustion.reduce(
-    (acc, gen) => acc + gen.donnee_utilisateur.Pnominal,
+    (acc, installCh) =>
+      acc + installCh.donnee_utilisateur.Pnominal * ratioDimensionnement(installCh, th),
     0
   );
+
+  const cdimref = Pn / (GV * (19 - tbase));
+  const cdimrefDep = Pn / (GV * (21 - tbase));
 
   installChauffageWithCombustion.forEach((installCh) => {
     /* c8 ignore next 2 -- repli défensif inatteignable : genCombustion est toujours renseignée sur les
        installations ajoutées à installChauffageWithCombustion */
     (installCh.donnee_utilisateur.genCombustion || []).forEach((gen) => {
-      const GV_ratio = th === 'immeuble' ? GV * (1 / (installCh.donnee_entree.rdim || 1)) : GV;
-      gen.donnee_utilisateur.cdimref = Pn / (GV_ratio * (19 - tbase));
-      gen.donnee_utilisateur.cdimrefDep = Pn / (GV_ratio * (21 - tbase));
+      gen.donnee_utilisateur.cdimref = cdimref;
+      gen.donnee_utilisateur.cdimrefDep = cdimrefDep;
     });
   });
+}
+
+/**
+ * Ratio de dimensionnement à appliquer à la puissance d'une installation pour le taux de charge.
+ * En immeuble, chaque installation est ramenée à l'échelle de l'immeuble par son rdim (y compris les
+ * installations collectives : rdim est renseigné par le logiciel et déjà appliqué au GV avant correctif).
+ *
+ * @param installCh {InstallationChauffageItem}
+ * @param th {string} type d'habitation
+ * @return {number}
+ */
+export function ratioDimensionnement(installCh, th) {
+  return th === 'immeuble' ? Number(installCh.donnee_entree.rdim) || 1 : 1;
 }
