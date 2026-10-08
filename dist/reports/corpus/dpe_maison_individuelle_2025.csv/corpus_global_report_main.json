@@ -86,19 +86,19 @@
       "successRatio": "92.63 %"
     },
     "emission_ges_5_usages_m2": {
-      "nbBelowThreshold": 9343,
+      "nbBelowThreshold": 9342,
       "mandatory": true,
-      "successRatio": "93.43 %"
+      "successRatio": "93.42 %"
     }
   },
   "performance": {
     "count": 10000,
-    "mean": 6.348,
-    "median": 5.773,
-    "min": 1.924,
-    "max": 56.357,
-    "p95": 11.266,
-    "p99": 14.392,
-    "totalMs": 63478.173
+    "mean": 6.392,
+    "median": 5.814,
+    "min": 1.917,
+    "max": 40.102,
+    "p95": 11.403,
+    "p99": 15.294,
+    "totalMs": 63924.579
   }
 }
