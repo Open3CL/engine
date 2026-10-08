@@ -47,12 +47,10 @@
     },
     "besoin_ecs": { "nbBelowThreshold": 9450, "mandatory": false, "successRatio": "94.50 %" },
     "besoin_ch": { "nbBelowThreshold": 8604, "mandatory": false, "successRatio": "86.04 %" },
-    "conso_ecs": { "nbBelowThreshold": 4779, "mandatory": true, "successRatio": "47.79 %" },
-    "conso_ch": { "nbBelowThreshold": 4852, "mandatory": true, "successRatio": "48.52 %" },
-    "conso_auxiliaire_distribution_ch": {
-      "nbBelowThreshold": 4652,
+    "conso_auxiliaire_distribution_ecs": {
+      "nbBelowThreshold": 7626,
       "mandatory": false,
-      "successRatio": "46.52 %"
+      "successRatio": "76.26 %"
     },
     "conso_auxiliaire_generation_ch": {
       "nbBelowThreshold": 6430,
@@ -64,11 +62,18 @@
       "mandatory": false,
       "successRatio": "68.23 %"
     },
+    "conso_auxiliaire_distribution_ch": {
+      "nbBelowThreshold": 4652,
+      "mandatory": false,
+      "successRatio": "46.52 %"
+    },
     "conso_auxiliaire_ventilation": {
       "nbBelowThreshold": 6771,
       "mandatory": false,
       "successRatio": "67.71 %"
     },
+    "conso_ch": { "nbBelowThreshold": 4852, "mandatory": true, "successRatio": "48.52 %" },
+    "conso_ecs": { "nbBelowThreshold": 4779, "mandatory": true, "successRatio": "47.79 %" },
     "ep_conso_5_usages": { "nbBelowThreshold": 3948, "mandatory": true, "successRatio": "39.48 %" },
     "ep_conso_5_usages_m2": {
       "nbBelowThreshold": 3950,
@@ -84,21 +89,16 @@
       "nbBelowThreshold": 3527,
       "mandatory": true,
       "successRatio": "35.27 %"
-    },
-    "conso_auxiliaire_distribution_ecs": {
-      "nbBelowThreshold": 7626,
-      "mandatory": false,
-      "successRatio": "76.26 %"
     }
   },
   "performance": {
     "count": 9993,
-    "mean": 6.286,
-    "median": 5.465,
-    "min": 1.668,
-    "max": 52.721,
-    "p95": 12.144,
-    "p99": 18.908,
-    "totalMs": 62814.141
+    "mean": 5.701,
+    "median": 4.905,
+    "min": 1.581,
+    "max": 40.639,
+    "p95": 10.766,
+    "p99": 16.085,
+    "totalMs": 56965.271
   }
 }
