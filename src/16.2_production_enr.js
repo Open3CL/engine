@@ -3,6 +3,38 @@ import { mois_liste, tv } from './utils.js';
 import tvs from './tv.js';
 import { DEFAULT_COEFF_EP } from './conso.js';
 
+/**
+ * Méthodes d'application « appartement chauffage individuel ECS individuel » : l'installation PV
+ * déclarée est celle du logement, aucune proratisation (exports ADEME non proratisés, cf. 2528E1249844E).
+ */
+const MAP_APPARTEMENT_INDIVIDUEL = ['2', '22', '25'];
+
+/**
+ * Coefficient de proratisation au logement de la production d'une installation PV d'immeuble.
+ *
+ * Le moteur de référence (Tribu, `Calcul_batiment.cs` l.1142-1156) calcule le taux de couverture
+ * Tcv = Ppv / Celec_tot avec la surface du logement : pour un appartement desservi par une
+ * installation d'immeuble, la surface de capteurs doit être ramenée au logement
+ * (S_capteur × Sh_logement / Sh_immeuble), comme pour les générateurs collectifs (l.253, l.303).
+ *
+ * @param th {string} type de bâtiment ('maison', 'appartement', 'immeuble')
+ * @param map_id {string} enum_methode_application_dpe_log_id
+ * @param surfaceLogement {number|string} surface_habitable_logement
+ * @param surfaceImmeuble {number|string} surface_habitable_immeuble
+ * @returns {number} 1 si aucune proratisation, sinon Sh_logement / Sh_immeuble
+ */
+export function ratioProrataPvLogement(th, map_id, surfaceLogement, surfaceImmeuble) {
+  const shl = Number(surfaceLogement);
+  const shi = Number(surfaceImmeuble);
+  if (th !== 'appartement' || MAP_APPARTEMENT_INDIVIDUEL.includes(String(map_id))) {
+    return 1;
+  }
+  if (!(shl > 0) || !(shi > shl)) {
+    return 1;
+  }
+  return shl / shi;
+}
+
 export class ProductionENR {
   /**
    * Taux d'autoproduction limite par poste Taplpi (§16.2).
@@ -29,8 +61,9 @@ export class ProductionENR {
    * @param th {string}
    * @param zc_id {string}
    * @param coeff_ep_override {number?}
+   * @param ratioPv {number?} proratisation au logement d'une installation d'immeuble (cf. ratioProrataPvLogement)
    */
-  calculateEnr(productionElecEnr, conso, Sh, th, zc_id, coeff_ep_override) {
+  calculateEnr(productionElecEnr, conso, Sh, th, zc_id, coeff_ep_override, ratioPv = 1) {
     const productionElectricite = {
       conso_elec_ac: 0,
       production_pv: 0,
@@ -49,7 +82,15 @@ export class ProductionENR {
 
     if (productionElecEnr && productionElecEnr.donnee_entree?.presence_production_pv === 1) {
       // Calcul de l'électricité auto-consommée pour chaque enveloppe
-      this.calculateConsoElecAc(productionElectricite, productionElecEnr, conso, zc_id, th, Sh);
+      this.calculateConsoElecAc(
+        productionElectricite,
+        productionElecEnr,
+        conso,
+        zc_id,
+        th,
+        Sh,
+        ratioPv
+      );
 
       // Mise à jour des consommations d'énergie finale en minorant l'énergie consommée par l'énergie autoconsommée par le poste
       this.updateEfConso(productionElectricite, conso, Sh);
@@ -78,10 +119,19 @@ export class ProductionENR {
    * @param zc_id
    * @param th
    * @param Sh
+   * @param ratioPv {number?}
    */
-  calculateConsoElecAc(productionElectricite, productionElecEnr, conso, zc_id, th, Sh) {
+  calculateConsoElecAc(
+    productionElectricite,
+    productionElecEnr,
+    conso,
+    zc_id,
+    th,
+    Sh,
+    ratioPv = 1
+  ) {
     // Production d’électricité par des capteurs photovoltaïques Ppv (en kWh/m²)
-    const Ppv = this.getPpv(productionElecEnr, zc_id);
+    const Ppv = this.getPpv(productionElecEnr, zc_id, ratioPv);
 
     // Consommation annuelle d’électricité pour les autres usages (kWhef/an)
     const CelecTotAu = this.getCelecAu(th, Sh);
@@ -342,9 +392,11 @@ export class ProductionENR {
    *
    * @param productionElecEnr
    * @param zc_id
+   * @param ratioPv {number?} proratisation au logement (1 = aucune). Non appliquée aux installations
+   * qui exportent un ratio_virtualisation (déjà virtualisées par le logiciel).
    * @returns {number}
    */
-  getPpv(productionElecEnr, zc_id) {
+  getPpv(productionElecEnr, zc_id, ratioPv = 1) {
     const ePvValues = tvs.e_pv;
     const zc = enums.zone_climatique[zc_id];
 
@@ -370,8 +422,23 @@ export class ProductionENR {
        */
       const k = row.coef_orientation_pv;
 
-      // Surface des panneaux photovoltaïques orientés et inclinés de la même manière (m²)
-      const Scapteur = 1.6 * panneaux_pv.nombre_module || panneaux_pv.surface_totale_capteurs;
+      /**
+       * Surface des panneaux photovoltaïques orientés et inclinés de la même manière (m²).
+       * Le moteur de référence n'a que S_capteur en entrée (Tribu `photovoltaique.cs` l.8) : la
+       * surface saisie est prioritaire, le forfait 1,6 m²/module ne sert qu'à défaut de surface.
+       */
+      let Scapteur = panneaux_pv.surface_totale_capteurs || 1.6 * panneaux_pv.nombre_module;
+
+      /**
+       * Installation d'immeuble : surface ramenée au logement (Sh_logement / Sh_immeuble).
+       * Si l'installation exporte un ratio_virtualisation, le logiciel de saisie a déjà virtualisé
+       * l'installation au logement et la production ADEME n'est pas proratisée (corpus : 36 exports
+       * LICIEL, autoconsommation ADEME reproduite sans proratisation, jamais avec ; ex. 2501E3381654V,
+       * 2369E0282894H, 2469E2989760O) : pas de proratisation supplémentaire.
+       */
+      if (ratioPv !== 1 && panneaux_pv.ratio_virtualisation == null) {
+        Scapteur *= ratioPv;
+      }
 
       // Rendement moyen des modules
       const r = 0.17;
