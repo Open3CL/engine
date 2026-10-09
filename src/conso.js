@@ -212,16 +212,29 @@ export function masqueEnergie(groupe) {
  * postes au prorata de leur consommation.
  * Immeuble : consommation des usages individuels rapportée au logement (N × f(C / N)) ;
  * chauffage / ECS des installations collectives tarifés sur leur total (f(C)).
+ * Appartement desservi par une installation collective : la tranche est déterminée sur la
+ * consommation de l'immeuble extrapolée (C × SH_immeuble / SH_logement) et le coût ramené au
+ * logement : f(C × k) / k avec k = SH_immeuble / SH_logement (moteur de référence CSTB :
+ * DPE.Core Calcul_cout.cs l.133-136 et l.152-154, appelé avec SH_batiment / SH par
+ * Calcul_batiment.cs l.1318). Vérifié sur 927 / 1000 DPE ADEME appartement gaz collectif 2026.
  *
  * @param base {object} barème (prix unitaires et fonctions par tranches)
  * @param consoGroupe {function(masque): {total: number, collectif: number}} consommations EF
  * @param nbLogements {number} nombre de logements (1 hors immeuble)
  * @param genCollectifs {Set} générateurs de chauffage / ECS d'installations collectives
+ * @param ratioSurfaceCollectif {number} SH_immeuble / SH_logement pour un appartement (1 sinon)
  * @returns {object}
  */
-export function coefCoutProrata(base, consoGroupe, nbLogements, genCollectifs) {
+export function coefCoutProrata(
+  base,
+  consoGroupe,
+  nbLogements,
+  genCollectifs,
+  ratioSurfaceCollectif = 1
+) {
   const coef = { ...base };
   const coefCollectif = { ...base };
+  const k = ratioSurfaceCollectif > 1 ? ratioSurfaceCollectif : 1;
   new Set(Object.values(ENERGIES_A_TRANCHES)).forEach((groupe) => {
     const { total, collectif } = consoGroupe(masqueEnergie(groupe));
     const individuel = total - collectif;
@@ -230,7 +243,7 @@ export function coefCoutProrata(base, consoGroupe, nbLogements, genCollectifs) {
       .forEach((cle) => {
         const f = base[cle];
         const prix = individuel > 0 ? (nbLogements * f(individuel / nbLogements)) / individuel : 0;
-        const prixCollectif = collectif > 0 ? f(collectif) / collectif : 0;
+        const prixCollectif = collectif > 0 ? f(collectif * k) / (collectif * k) : 0;
         coef[cle] = (c) => prix * c;
         coefCollectif[cle] = (c) => prixCollectif * c;
       });
@@ -321,7 +334,8 @@ export default function calc_conso(
   prorataChauffage,
   dateDpe,
   coeffEp,
-  nbLogements = 1
+  nbLogements = 1,
+  ratioSurfaceCollectif = 1
 ) {
   const gen_ch = ch.reduce((acc, ch) => {
     const generateur_chauffage = ch.generateur_chauffage_collection.generateur_chauffage;
@@ -369,7 +383,7 @@ export default function calc_conso(
     const base = getCoefCout(dateDpe);
     if (base === coef_cout) return coef_cout;
     const genCollectifs = new Set();
-    if (nbLogements > 1) {
+    if (nbLogements > 1 || ratioSurfaceCollectif > 1) {
       gen_ch
         .filter((g) => g.donnee_entree.enum_type_installation_id !== '1')
         .forEach((g) => genCollectifs.add(g));
@@ -408,7 +422,7 @@ export default function calc_conso(
       );
       return { total: tot.c_5_usages, collectif: coll.c_ch + coll.c_ecs };
     };
-    return coefCoutProrata(base, consoGroupe, nbLogements, genCollectifs);
+    return coefCoutProrata(base, consoGroupe, nbLogements, genCollectifs, ratioSurfaceCollectif);
   };
 
   const ret = {

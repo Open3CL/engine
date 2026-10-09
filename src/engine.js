@@ -583,6 +583,15 @@ export function calcul_3cl(inputDpe, options) {
     prorataChauffage = Sh / ShChauffageAndEcs;
   }
 
+  /**
+   * Appartement : rapport SH_immeuble / SH_logement utilisé pour déterminer la tranche du barème
+   * des installations collectives sur la consommation de l'immeuble (voir coefCoutProrata).
+   */
+  const ratioSurfaceCoutCollectif =
+    th === 'appartement' && Number(cg.surface_habitable_immeuble) > Number(Sh) && Number(Sh) > 0
+      ? Number(cg.surface_habitable_immeuble) / Number(Sh)
+      : 1;
+
   const conso = calc_conso(
     Sh,
     zc_id,
@@ -595,7 +604,8 @@ export function calcul_3cl(inputDpe, options) {
     prorataChauffage,
     dateDpe,
     coef_ep,
-    th === 'immeuble' ? Nb_lgt : 1
+    th === 'immeuble' ? Nb_lgt : 1,
+    ratioSurfaceCoutCollectif
   );
 
   // Proratisation au logement d'une installation PV d'immeuble (appartement)
@@ -628,7 +638,8 @@ export function calcul_3cl(inputDpe, options) {
     prorataChauffage,
     dateDpe,
     coef_ep_1_7,
-    th === 'immeuble' ? Nb_lgt : 1
+    th === 'immeuble' ? Nb_lgt : 1,
+    ratioSurfaceCoutCollectif
   );
 
   productionENR.calculateEnr(
@@ -653,7 +664,8 @@ export function calcul_3cl(inputDpe, options) {
     prorataChauffage,
     dateDpe,
     coef_ep_2_3,
-    th === 'immeuble' ? Nb_lgt : 1
+    th === 'immeuble' ? Nb_lgt : 1,
+    ratioSurfaceCoutCollectif
   );
 
   productionENR.calculateEnr(

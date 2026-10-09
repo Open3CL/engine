@@ -684,4 +684,53 @@ describe('calc_conso - coût avec le barème mis à jour (DPE 2026)', () => {
     // Élec totale 4100 kWh / 4 logements => 4 × (158 + 0,18954 × 1025)
     expect(res.cout.cout_5_usages).toBeCloseTo(4 * (158 + 0.18954 * 1025), 9);
   });
+
+  /**
+   * Appartement desservi par une installation collective : tranche déterminée sur la conso de
+   * l'immeuble extrapolée (C × k, k = SH_immeuble / SH_logement), coût ramené au logement (÷ k).
+   * @see Moteur_DPE.dll (CSTB) Calcul_cout.cs l.133-136 / l.152-154 ; autotests APP5-0-5x, APP3-0-2.
+   */
+  test('appartement, chauffage gaz collectif : tranche sur la conso extrapolée à l’immeuble', () => {
+    const ch = [
+      installCh({ enum_type_installation_id: '2' }, [
+        genCh('2', { conso_ch: 4000, conso_ch_depensier: 4000 })
+      ])
+    ];
+    const res = calc_conso(100, 1, 1, [], ch, [], [], 1, 1, DATE_DPE_2026, coef_ep, 1, 20);
+    // 4000 × 20 = 80000 kWh (> 50000) => (288 + 0,09274 × 80000) / 20 = 0,0965 €/kWh × 4000
+    expect(res.cout.cout_ch).toBeCloseTo((288 + 0.09274 * 80000) / 20, 9);
+    // Sans extrapolation, le logement serait tarifé en 1ʳᵉ tranche (0,1312 × 4000 = 524,8 €).
+    expect(res.cout.cout_ch).not.toBeCloseTo(0.1312 * 4000, 0);
+    // Éclairage (usage individuel) : tarifé sur la seule conso du logement (100 kWh).
+    expect(res.cout.cout_eclairage).toBeCloseTo(0.34721 * 100, 9);
+  });
+
+  test('appartement, ECS électrique collective : tranche élec sur la conso extrapolée', () => {
+    const ecs = [
+      installEcs({ enum_type_installation_id: '2' }, [
+        genEcs('1', { conso_ecs: 1400, conso_ecs_depensier: 1400 })
+      ])
+    ];
+    const res = calc_conso(100, 1, 1, [], [], ecs, [], 1, 1, DATE_DPE_2026, coef_ep, 1, 10);
+    // 1400 × 10 = 14000 kWh => (119 + 0,19726 × 14000) / 10
+    expect(res.cout.cout_ecs).toBeCloseTo((119 + 0.19726 * 14000) / 10, 9);
+  });
+
+  test('appartement, installations individuelles : ratio de surface sans effet', () => {
+    const ch = [installCh({}, [genCh('2', { conso_ch: 4000, conso_ch_depensier: 4000 })])];
+    const res = calc_conso(100, 1, 1, [], ch, [], [], 1, 1, DATE_DPE_2026, coef_ep, 1, 20);
+    expect(res.cout.cout_ch).toBeCloseTo(0.1312 * 4000, 9);
+  });
+});
+
+describe('coefCoutProrata - ratio de surface des installations collectives', () => {
+  test('ratio ≤ 1 : neutre (tarif sur la conso collective seule)', () => {
+    const base = getCoefCout('2026-01-15');
+    const consoGroupe = () => ({ total: 4000, collectif: 4000 });
+    [undefined, 1, 0.5].forEach((ratio) => {
+      const coef = coefCoutProrata(base, consoGroupe, 1, new Set(['g']), ratio);
+      const coll = Object.getOwnPropertySymbols(coef).map((s) => coef[s])[0].coef;
+      expect(coll['gaz naturel'](4000)).toBeCloseTo(0.1312 * 4000, 9);
+    });
+  });
 });
