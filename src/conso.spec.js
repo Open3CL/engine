@@ -55,6 +55,7 @@ const {
   getCoefCout,
   coefCoutProrata,
   masqueEnergie,
+  getAuxGenerationEcs,
   DATE_BAREME_COUT_2024
 } = await import('./conso.js');
 
@@ -683,5 +684,67 @@ describe('calc_conso - coût avec le barème mis à jour (DPE 2026)', () => {
     const res = calc_conso(100, 1, 1, [], [], ecs, [], 1, 1, DATE_DPE_2026, coef_ep, 4);
     // Élec totale 4100 kWh / 4 logements => 4 × (158 + 0,18954 × 1025)
     expect(res.cout.cout_5_usages).toBeCloseTo(4 * (158 + 0.18954 * 1025), 9);
+  });
+});
+
+/**
+ * Auxiliaires de génération ECS : multipliés par le rdim de l'installation (comme la conso ECS).
+ * @see Moteur_DPE.dll Calcul_batiment.cs l.660 (Qcirc_ecs1 += Qcirc × Rdim) ; autotests IC-echantillon-gaz.
+ */
+describe('getAuxGenerationEcs - auxiliaires de génération ECS et rdim', () => {
+  const coefUnitaire = { 'électricité auxiliaire': 1 };
+  const inst = (rdim, ...consos) =>
+    installEcs(
+      rdim === undefined ? {} : { rdim },
+      consos.map((c) =>
+        genEcs('1', {
+          conso_auxiliaire_generation_ecs: c,
+          conso_auxiliaire_generation_ecs_depensier: 2 * c
+        })
+      )
+    );
+
+  test('installation dimensionnée (rdim 3,25) : auxiliaires × rdim à l’échelle du DPE', () => {
+    const ecs = [inst(3.25, 2.74, 2.97), inst(undefined, 10)];
+    // (2,74 + 2,97) × 3,25 + 10 × 1
+    expect(
+      getAuxGenerationEcs(ecs, 'conso_auxiliaire_generation_ecs', coefUnitaire, 1)
+    ).toBeCloseTo((2.74 + 2.97) * 3.25 + 10, 9);
+    expect(
+      getAuxGenerationEcs(ecs, 'conso_auxiliaire_generation_ecs_depensier', coefUnitaire, 1)
+    ).toBeCloseTo(2 * ((2.74 + 2.97) * 3.25 + 10), 9);
+  });
+
+  test('appartement proratisé (prorataECS ≠ 1) : rdim non appliqué', () => {
+    const ecs = [inst(3.25, 4)];
+    expect(getAuxGenerationEcs(ecs, 'conso_auxiliaire_generation_ecs', coefUnitaire, 0.4)).toBe(4);
+  });
+
+  test('rdim non numérique ou générateur sans conso : neutre', () => {
+    const ecs = [inst('abc', 4), installEcs({ rdim: 2 }, [genEcs('1', {})])];
+    expect(getAuxGenerationEcs(ecs, 'conso_auxiliaire_generation_ecs', coefUnitaire, 1)).toBe(4);
+  });
+
+  test('calc_conso : auxiliaire_generation_ecs intègre le rdim', () => {
+    const ecs = [inst(2, 5)];
+    const res = calc_conso(100, 1, 1, [], [], ecs, [], 1, 1, DATE_DPE, coef_ep);
+    const sansRdim = calc_conso(
+      100,
+      1,
+      1,
+      [],
+      [],
+      [inst(undefined, 5)],
+      [],
+      1,
+      1,
+      DATE_DPE,
+      coef_ep
+    );
+    expect(res.ef_conso.conso_auxiliaire_generation_ecs).toBeCloseTo(
+      2 * sansRdim.ef_conso.conso_auxiliaire_generation_ecs,
+      9
+    );
+    expect(res.ef_conso.conso_auxiliaire_generation_ecs).toBeGreaterThan(0);
   });
 });

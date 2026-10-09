@@ -613,6 +613,28 @@ function getEcsConso(gen_ecs, field, coef, prorataECS, prefix) {
 }
 
 /**
+ * Consommation des auxiliaires de génération ECS (circulateurs des générateurs).
+ * Le besoin d'une installation dimensionnée (rdim > 1) est exprimé par unité : comme la
+ * consommation ECS (cle_repartition_ecs × rdim), les auxiliaires de génération sont multipliés
+ * par le rdim de l'installation lorsque la conso est calculée à l'échelle du DPE (prorataECS = 1).
+ * @see Moteur_DPE.dll Calcul_batiment.cs l.660 (Qcirc_ecs1 += Qcirc × Rdim)
+ * @param ecs {InstallationEcs[]}
+ * @param field {string} conso_auxiliaire_generation_ecs[_depensier]
+ * @param coef {object}
+ * @param prorataECS {number}
+ * @returns {number}
+ */
+export function getAuxGenerationEcs(ecs, field, coef, prorataECS) {
+  return ecs.reduce((acc, inst) => {
+    const rdim = prorataECS === 1 ? Number(inst.donnee_entree.rdim) || 1 : 1;
+    return inst.generateur_ecs_collection.generateur_ecs.reduce((acc2, gen) => {
+      const conso = (gen.donnee_intermediaire[field] || 0) * rdim;
+      return acc2 + getConso(coef, 'électricité auxiliaire', conso);
+    }, acc);
+  }, 0);
+}
+
+/**
  * Calcul de la consommation globale de chauffage
  * @param gen_ch {Generateur_chauffage_collection}
  * @param field {string}
@@ -707,15 +729,19 @@ function calc_conso_pond(
     prefix
   );
 
-  ret.auxiliaire_generation_ecs = gen_ecs.reduce((acc, gen_ecs) => {
-    const conso = gen_ecs.donnee_intermediaire.conso_auxiliaire_generation_ecs || 0;
-    return acc + getConso(coef, 'électricité auxiliaire', conso);
-  }, 0);
+  ret.auxiliaire_generation_ecs = getAuxGenerationEcs(
+    ecs_installations,
+    'conso_auxiliaire_generation_ecs',
+    coef,
+    prorataECS
+  );
 
-  ret.auxiliaire_generation_ecs_depensier = gen_ecs.reduce((acc, gen_ecs) => {
-    const conso = gen_ecs.donnee_intermediaire.conso_auxiliaire_generation_ecs_depensier || 0;
-    return acc + getConso(coef, 'électricité auxiliaire', conso);
-  }, 0);
+  ret.auxiliaire_generation_ecs_depensier = getAuxGenerationEcs(
+    ecs_installations,
+    'conso_auxiliaire_generation_ecs_depensier',
+    coef,
+    prorataECS
+  );
 
   ret.auxiliaire_distribution_ecs = ecs_installations.reduce((acc, inst) => {
     const conso = inst.donnee_intermediaire.conso_auxiliaire_distribution_ecs || 0;
