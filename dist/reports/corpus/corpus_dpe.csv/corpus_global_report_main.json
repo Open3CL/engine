@@ -4,8 +4,8 @@
   "nbValidDpe": 9980,
   "nbInvalidDpeVersion": 20,
   "nbExcludedDpe": 0,
-  "nbAllChecksBelowThreshold": 4605,
-  "successRatio": "46.05 %",
+  "nbAllChecksBelowThreshold": 4604,
+  "successRatio": "46.04 %",
   "dpeRunFailed": [],
   "checks": {
     "deperdition_baie_vitree": {
@@ -52,14 +52,14 @@
       "successRatio": "96.85 %"
     },
     "conso_auxiliaire_generation_ch": {
-      "nbBelowThreshold": 6648,
+      "nbBelowThreshold": 6746,
       "mandatory": false,
-      "successRatio": "66.48 %"
+      "successRatio": "67.46 %"
     },
     "conso_auxiliaire_generation_ecs": {
-      "nbBelowThreshold": 7735,
+      "nbBelowThreshold": 7821,
       "mandatory": false,
-      "successRatio": "77.35 %"
+      "successRatio": "78.21 %"
     },
     "conso_auxiliaire_ventilation": {
       "nbBelowThreshold": 5860,
@@ -78,27 +78,27 @@
       "successRatio": "86.67 %"
     },
     "besoin_ch": { "nbBelowThreshold": 8655, "mandatory": false, "successRatio": "86.55 %" },
+    "conso_ch": { "nbBelowThreshold": 6529, "mandatory": true, "successRatio": "65.29 %" },
     "emission_ges_5_usages_m2": {
       "nbBelowThreshold": 5890,
       "mandatory": true,
       "successRatio": "58.90 %"
     },
-    "conso_ch": { "nbBelowThreshold": 6529, "mandatory": true, "successRatio": "65.29 %" },
-    "ep_conso_5_usages": { "nbBelowThreshold": 5871, "mandatory": true, "successRatio": "58.71 %" },
+    "ep_conso_5_usages": { "nbBelowThreshold": 5870, "mandatory": true, "successRatio": "58.70 %" },
     "ep_conso_5_usages_m2": {
-      "nbBelowThreshold": 5893,
+      "nbBelowThreshold": 5896,
       "mandatory": true,
-      "successRatio": "58.93 %"
+      "successRatio": "58.96 %"
     }
   },
   "performance": {
     "count": 9980,
-    "mean": 4.352,
-    "median": 3.939,
-    "min": 0.208,
-    "max": 25.321,
-    "p95": 7.91,
-    "p99": 10.723,
-    "totalMs": 43429.54
+    "mean": 6.79,
+    "median": 5.99,
+    "min": 0.385,
+    "max": 52.092,
+    "p95": 12.983,
+    "p99": 19.51,
+    "totalMs": 67761.932
   }
 }

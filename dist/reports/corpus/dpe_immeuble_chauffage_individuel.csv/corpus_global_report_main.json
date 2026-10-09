@@ -60,14 +60,14 @@
       "successRatio": "99.95 %"
     },
     "conso_auxiliaire_generation_ch": {
-      "nbBelowThreshold": 6797,
+      "nbBelowThreshold": 6801,
       "mandatory": false,
-      "successRatio": "67.98 %"
+      "successRatio": "68.02 %"
     },
     "conso_auxiliaire_generation_ecs": {
-      "nbBelowThreshold": 6166,
+      "nbBelowThreshold": 6170,
       "mandatory": false,
-      "successRatio": "61.67 %"
+      "successRatio": "61.71 %"
     },
     "conso_auxiliaire_ventilation": {
       "nbBelowThreshold": 9661,
@@ -93,12 +93,12 @@
   },
   "performance": {
     "count": 9997,
-    "mean": 7.003,
-    "median": 5.989,
-    "min": 0.174,
-    "max": 91.375,
-    "p95": 14.243,
-    "p99": 23.001,
-    "totalMs": 70006.438
+    "mean": 11.559,
+    "median": 8.93,
+    "min": 0.188,
+    "max": 194.311,
+    "p95": 27.154,
+    "p99": 49.477,
+    "totalMs": 115555.8
   }
 }
