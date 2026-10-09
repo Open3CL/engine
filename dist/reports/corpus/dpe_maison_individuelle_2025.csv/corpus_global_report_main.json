@@ -60,9 +60,9 @@
       "successRatio": "100.00 %"
     },
     "conso_auxiliaire_generation_ch": {
-      "nbBelowThreshold": 9603,
+      "nbBelowThreshold": 9611,
       "mandatory": false,
-      "successRatio": "96.04 %"
+      "successRatio": "96.12 %"
     },
     "conso_auxiliaire_generation_ecs": {
       "nbBelowThreshold": 9822,
@@ -93,12 +93,12 @@
   },
   "performance": {
     "count": 9999,
-    "mean": 5.883,
-    "median": 5.269,
-    "min": 1.845,
-    "max": 50.532,
-    "p95": 10.691,
-    "p99": 13.95,
-    "totalMs": 58828.787
+    "mean": 6.09,
+    "median": 5.505,
+    "min": 1.839,
+    "max": 37.858,
+    "p95": 10.943,
+    "p99": 14.226,
+    "totalMs": 60894.816
   }
 }
