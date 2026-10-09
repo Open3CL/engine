@@ -4,8 +4,8 @@
   "nbValidDpe": 10000,
   "nbInvalidDpeVersion": 0,
   "nbExcludedDpe": 0,
-  "nbAllChecksBelowThreshold": 7159,
-  "successRatio": "71.59 %",
+  "nbAllChecksBelowThreshold": 7160,
+  "successRatio": "71.60 %",
   "dpeRunFailed": [],
   "checks": {
     "deperdition_mur": { "nbBelowThreshold": 9912, "mandatory": false, "successRatio": "99.12 %" },
@@ -93,12 +93,12 @@
   },
   "performance": {
     "count": 10000,
-    "mean": 4.437,
-    "median": 4.088,
-    "min": 1.553,
-    "max": 36.555,
-    "p95": 7.3,
-    "p99": 10.297,
-    "totalMs": 44369.535
+    "mean": 4.164,
+    "median": 3.749,
+    "min": 1.41,
+    "max": 35.78,
+    "p95": 6.877,
+    "p99": 8.688,
+    "totalMs": 41635.964
   }
 }
