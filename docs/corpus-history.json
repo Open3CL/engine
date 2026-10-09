@@ -2761,6 +2761,48 @@
           "total": 10000
         }
       }
+    },
+    {
+      "version": "1.8.30",
+      "date": "2026-10-09",
+      "results": {
+        "corpus_dpe.csv": {
+          "below": 4616,
+          "total": 10000
+        },
+        "dpe_appartement_individuel_chauffage_collectif_2025.csv": {
+          "below": 7159,
+          "total": 10000
+        },
+        "dpe_appartement_individuel_chauffage_individuel_2025.csv": {
+          "below": 9253,
+          "total": 10000
+        },
+        "dpe_immeuble_chauffage_collectif.csv": {
+          "below": 6510,
+          "total": 9999
+        },
+        "dpe_immeuble_chauffage_individuel.csv": {
+          "below": 7700,
+          "total": 9998
+        },
+        "dpe_immeuble_chauffage_mixte.csv": {
+          "below": 5214,
+          "total": 9999
+        },
+        "dpe_individuel_a_partir_dpe_immeuble_2026.csv": {
+          "below": 2706,
+          "total": 10000
+        },
+        "dpe_logement_individuel_2025.csv": {
+          "below": 8947,
+          "total": 9992
+        },
+        "dpe_maison_individuelle_2025.csv": {
+          "below": 8859,
+          "total": 9999
+        }
+      }
     }
   ]
 }
