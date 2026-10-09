@@ -247,9 +247,30 @@ export function isImmeubleMultiEcs(instal_ecs, th, Sh) {
  *   (Calcul_installation_ECS.cs, l. 347-350).
  * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §9.1.1 et §11.4
  */
-export function prorataEcsImmeubleMulti(de, Sh) {
-  const rdim = de.enum_type_installation_id === '1' ? Number(de.rdim) || 1 : 1;
+export function prorataEcsImmeubleMulti(de, Sh, surfaceParLogement = true) {
+  const rdim =
+    surfaceParLogement && de.enum_type_installation_id === '1' ? Number(de.rdim) || 1 : 1;
   return (Number(de.surface_habitable) / Number(Sh)) * rdim;
+}
+
+/**
+ * Convention d'export de Sh_ecs des installations individuelles (cf. 11_ecs.js,
+ * ratio_besoin_ecs_individuel) :
+ * - surface d'un logement (Σ Sh × rdim ≈ SH) → Sh_ecs à multiplier par rdim ;
+ * - surface totale desservie par l'installation (Σ Sh ≈ SH, ex. LICIEL) → pas de × rdim.
+ * Retourne true pour la convention « surface d'un logement ».
+ */
+export function isSurfaceEcsParLogement(instal_ecs, Sh) {
+  const des = instal_ecs.map((e) => e.donnee_entree);
+  const sommeSh = des.reduce((acc, d) => acc + (Number(d.surface_habitable) || 0), 0);
+  const sommeShRdim = des.reduce(
+    (acc, d) =>
+      acc +
+      (Number(d.surface_habitable) || 0) *
+        (d.enum_type_installation_id === '1' ? Number(d.rdim) || 1 : 1),
+    0
+  );
+  return Math.abs(sommeShRdim - Number(Sh)) < Math.abs(sommeSh - Number(Sh));
 }
 
 function calc_qrec(instal_ecs, nadeq, prorataEcs, ilpa, ca, zc, th, nbLogements, Sh) {
@@ -271,13 +292,14 @@ function calc_qrec(instal_ecs, nadeq, prorataEcs, ilpa, ca, zc, th, nbLogements,
   let total_becs_rdim = 0;
   let total_becs_dep_rdim = 0;
   const multiEcs = isImmeubleMultiEcs(instal_ecs, th, Sh);
+  const surfaceParLogement = multiEcs && isSurfaceEcsParLogement(instal_ecs, Sh);
   instal_ecs.forEach((ecs) => {
     let becs_int = 0;
     let becs_dep_int = 0;
     const isInstallationSimple = ecs.donnee_entree.enum_type_installation_id === '1';
     const Tau = isInstallationSimple ? 0.1 : 0.212;
     if (multiEcs) {
-      prorataEcs = prorataEcsImmeubleMulti(ecs.donnee_entree, Sh);
+      prorataEcs = prorataEcsImmeubleMulti(ecs.donnee_entree, Sh, surfaceParLogement);
     } else if (th === 'immeuble' && ecs.donnee_entree.rdim > 1) {
       prorataEcs = ecs.donnee_entree.rdim / nbLogements;
     }

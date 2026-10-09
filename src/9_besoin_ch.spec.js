@@ -61,6 +61,7 @@ const {
   calc_Fj,
   calc_bvj,
   isImmeubleMultiEcs,
+  isSurfaceEcsParLogement,
   prorataEcsImmeubleMulti
 } = await import('./9_besoin_ch.js');
 const { default: tvsBch } = await import('./tv.js');
@@ -614,11 +615,38 @@ describe('calc_besoin_ch - immeuble à installations ECS individuelles et collec
     ).toBeCloseTo(0.75, 12);
   });
 
+  test("prorataEcsImmeubleMulti : pas de × rdim si Sh_ecs est la surface totale de l'installation", () => {
+    expect(
+      prorataEcsImmeubleMulti(
+        { enum_type_installation_id: '1', surface_habitable: 3713, rdim: 64 },
+        3918,
+        false
+      )
+    ).toBeCloseTo(3713 / 3918, 12);
+  });
+
+  test("isSurfaceEcsParLogement : détecte la convention d'export de Sh_ecs", () => {
+    // Σ Sh × rdim = 20 × 3 + 115 = 175 = SH → surface d'un logement
+    expect(isSurfaceEcsParLogement([ecsIndividuelle(20, 3), ecsCollective(115)], 175)).toBe(true);
+    // Σ Sh = 3713 + 205 = 3918 = SH (ex. LICIEL) → surface totale de l'installation
+    expect(isSurfaceEcsParLogement([ecsIndividuelle(3713, 64), ecsCollective(205)], 3918)).toBe(
+      false
+    );
+  });
+
+  test('pertes récupérées sans × rdim quand Σ Sh_ecs = SH (DPE 2369E3867365O, LICIEL)', () => {
+    const instal_ecs = [ecsIndividuelle(160, 8), ecsCollective(40)];
+    const ret = calc_besoin_ch(0, 0, 0, 0, 200, 100, 3, instal_ecs, [], [], null, 'immeuble', 9);
+    const total = (0.1 * 10 * (160 / 200) + 0.212 * 10 * (40 / 200)) * 1000;
+    expect(ret.pertes_distribution_ecs_recup).toBeCloseTo((0.48 * 100 * total) / 8760, 9);
+  });
+
   test('pertes de distribution ECS récupérées pondérées par Sh_ecs / SH (et rdim en individuel)', () => {
-    const instal_ecs = [ecsIndividuelle(20, 3), ecsCollective(155)];
+    // Σ Sh × rdim = 20 × 3 + 115 = 175 = SH : Sh_ecs exportée par logement
+    const instal_ecs = [ecsIndividuelle(20, 3), ecsCollective(115)];
     const ret = calc_besoin_ch(0, 0, 0, 0, 175, 100, 3, instal_ecs, [], [], null, 'immeuble', 4);
-    // Σ Tau × Becs × prorata (Wh) : 0,1 × 10 × (20 / 175 × 3) + 0,212 × 10 × 155 / 175
-    const total = (0.1 * 10 * ((20 / 175) * 3) + 0.212 * 10 * (155 / 175)) * 1000;
+    // Σ Tau × Becs × prorata (Wh) : 0,1 × 10 × (20 / 175 × 3) + 0,212 × 10 × 115 / 175
+    const total = (0.1 * 10 * ((20 / 175) * 3) + 0.212 * 10 * (115 / 175)) * 1000;
     // un seul mois : Qrec_j = Qrec = 0,48 × ΣNref19 / 8760 × total
     expect(ret.pertes_distribution_ecs_recup).toBeCloseTo((0.48 * 100 * total) / 8760, 9);
   });
