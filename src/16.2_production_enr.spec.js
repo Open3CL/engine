@@ -95,24 +95,25 @@ describe('production ENR unit tests', () => {
       expect(productionENR.getPpv(panneau(), 1, 0.25)).toBeCloseTo(2120.1011712 * 0.25, 9);
     });
 
-    test('le ratio_virtualisation exporté est prioritaire sur Sh_logement / Sh_immeuble', () => {
-      expect(productionENR.getPpv(panneau({ ratio_virtualisation: 0.1 }), 1, 0.25)).toBeCloseTo(
-        212.01011712,
-        9
-      );
-    });
+    test.each([0.1, 0.01, 0])(
+      'installation déjà virtualisée par le logiciel (ratio_virtualisation %s) : pas de proratisation',
+      (ratio_virtualisation) => {
+        expect(productionENR.getPpv(panneau({ ratio_virtualisation }), 1, 0.25)).toBe(2120.1011712);
+      }
+    );
 
     test('le ratio_virtualisation est ignoré sans proratisation (maison, appartement individuel)', () => {
-      expect(productionENR.getPpv(panneau({ ratio_virtualisation: 0.1 }), 1, 1)).toBe(
-        2120.1011712
-      );
+      expect(productionENR.getPpv(panneau({ ratio_virtualisation: 0.1 }), 1, 1)).toBe(2120.1011712);
     });
 
     test('2469E1760405R : 2 m² saisis, 18 modules, Sh 67,42 / 1 921,43 m²', () => {
       // Ppv = S × Sh_log / Sh_imm × Σ k·0,17·Epv·0,86 : la production dépend de la surface
       // retenue (2 m², pas 1,6 × 18 = 28,8 m²) et est ramenée au logement.
       const ratio = ratioProrataPvLogement('appartement', '5', 67.42, 1921.43);
-      const pvImmeuble = productionENR.getPpv(panneau({ surface_totale_capteurs: 2, nombre_module: 18 }), 1);
+      const pvImmeuble = productionENR.getPpv(
+        panneau({ surface_totale_capteurs: 2, nombre_module: 18 }),
+        1
+      );
       const pvLogement = productionENR.getPpv(
         panneau({ surface_totale_capteurs: 2, nombre_module: 18 }),
         1,

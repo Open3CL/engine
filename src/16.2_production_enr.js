@@ -121,7 +121,15 @@ export class ProductionENR {
    * @param Sh
    * @param ratioPv {number?}
    */
-  calculateConsoElecAc(productionElectricite, productionElecEnr, conso, zc_id, th, Sh, ratioPv = 1) {
+  calculateConsoElecAc(
+    productionElectricite,
+    productionElecEnr,
+    conso,
+    zc_id,
+    th,
+    Sh,
+    ratioPv = 1
+  ) {
     // Production d’électricité par des capteurs photovoltaïques Ppv (en kWh/m²)
     const Ppv = this.getPpv(productionElecEnr, zc_id, ratioPv);
 
@@ -384,8 +392,8 @@ export class ProductionENR {
    *
    * @param productionElecEnr
    * @param zc_id
-   * @param ratioPv {number?} proratisation au logement (1 = aucune). Si l'installation exporte un
-   * ratio_virtualisation, celui-ci est retenu en priorité.
+   * @param ratioPv {number?} proratisation au logement (1 = aucune). Non appliquée aux installations
+   * qui exportent un ratio_virtualisation (déjà virtualisées par le logiciel).
    * @returns {number}
    */
   getPpv(productionElecEnr, zc_id, ratioPv = 1) {
@@ -421,9 +429,15 @@ export class ProductionENR {
        */
       let Scapteur = panneaux_pv.surface_totale_capteurs || 1.6 * panneaux_pv.nombre_module;
 
-      // Installation d'immeuble : surface ramenée au logement
-      if (ratioPv !== 1) {
-        Scapteur *= Number(panneaux_pv.ratio_virtualisation) || ratioPv;
+      /**
+       * Installation d'immeuble : surface ramenée au logement (Sh_logement / Sh_immeuble).
+       * Si l'installation exporte un ratio_virtualisation, le logiciel de saisie a déjà virtualisé
+       * l'installation au logement et la production ADEME n'est pas proratisée (corpus : 36 exports
+       * LICIEL, autoconsommation ADEME reproduite sans proratisation, jamais avec ; ex. 2501E3381654V,
+       * 2369E0282894H, 2469E2989760O) : pas de proratisation supplémentaire.
+       */
+      if (ratioPv !== 1 && panneaux_pv.ratio_virtualisation == null) {
+        Scapteur *= ratioPv;
       }
 
       // Rendement moyen des modules
