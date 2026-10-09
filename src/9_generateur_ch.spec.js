@@ -602,3 +602,71 @@ describe('calc_generateur_ch - orchestration du calcul générateur', () => {
     expect(gen.donnee_utilisateur).toBeDefined();
   });
 });
+
+/**
+ * 15.1 Auxiliaires de génération : Caux_g = Paux_g × Bch_générateur / Pn, avec le besoin
+ * effectivement couvert par le générateur (retourné par conso_ch : part de relève, de base ou
+ * d'appoint) et non le besoin de toute l'installation.
+ * Autotest CSTB APP5-0-5 : chaudière fioul en relève de PAC (part 0,2), Tribu Qaux_ch = 2,13 kWh.
+ * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §15.1
+ */
+describe('calc_generateur_ch - besoin couvert transmis aux auxiliaires de génération', () => {
+  const dpe = {
+    logement: {
+      enveloppe: { inertie: { enum_classe_inertie_id: '3' }, mur_collection: { mur: [] } }
+    }
+  };
+
+  function appel(gen, bch, bchDep) {
+    calc_generateur_ch(
+      dpe,
+      gen,
+      1,
+      [{ donnee_entree: { enum_lien_generateur_emetteur_id: '1' } }],
+      'installation de chauffage avec chaudière en relève de pac',
+      bch,
+      bchDep,
+      150,
+      100,
+      2.5,
+      1,
+      1,
+      0,
+      -9.5,
+      {},
+      100,
+      [gen]
+    );
+  }
+
+  test('relève : besoin couvert (part 0,2) et dépensier au même prorata', () => {
+    vi.mocked(conso_ch).mockReturnValue(200);
+    const gen = { donnee_entree: { enum_type_generateur_ch_id: '1' }, donnee_intermediaire: {} };
+    appel(gen, 1000, 1500);
+    expect(conso_aux_gen).toHaveBeenCalledWith(
+      gen.donnee_intermediaire,
+      gen.donnee_entree,
+      'ch',
+      200,
+      300
+    );
+    // les auxiliaires de génération sont calculés après la consommation du générateur
+    expect(vi.mocked(conso_ch).mock.invocationCallOrder[0]).toBeLessThan(
+      vi.mocked(conso_aux_gen).mock.invocationCallOrder[0]
+    );
+  });
+
+  test('conso_ch sans besoin couvert retourné : repli sur le besoin transmis', () => {
+    vi.mocked(conso_ch).mockReturnValue(undefined);
+    const gen = { donnee_entree: { enum_type_generateur_ch_id: '1' }, donnee_intermediaire: {} };
+    appel(gen, 1000, 1500);
+    expect(vi.mocked(conso_aux_gen).mock.calls[0].slice(2)).toEqual(['ch', 1000, 1500]);
+  });
+
+  test('besoin nul : besoin dépensier nul (pas de division par zéro)', () => {
+    vi.mocked(conso_ch).mockReturnValue(0);
+    const gen = { donnee_entree: { enum_type_generateur_ch_id: '1' }, donnee_intermediaire: {} };
+    appel(gen, 0, 0);
+    expect(vi.mocked(conso_aux_gen).mock.calls[0].slice(2)).toEqual(['ch', 0, 0]);
+  });
+});
