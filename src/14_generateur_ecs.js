@@ -166,6 +166,9 @@ function type_generateur_ecs(di, de, du, usage_generateur) {
   return type_generateur;
 }
 
+/** Rendement de génération d'une chaudière électrique (tv rendement_generation, id 30). */
+export const RG_CHAUDIERE_ELECTRIQUE = 0.97;
+
 export function rg_chauffe_eau_gaz(di, besoin_ecs) {
   return (
     1 /
@@ -303,6 +306,16 @@ export default function calc_gen_ecs(dpe, gen_ecs, ecs_di, ecs_de, GV, ca_id, zc
     }
     Iecs = 1 / di.rendement_stockage;
     Iecs_dep = 1 / di.rendement_stockage_depensier;
+    /**
+     * Chaudière électrique : rendement de génération forfaitaire Rg = 0,97 (comme en chauffage).
+     * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §11.2 (rendements de génération ECS)
+     */
+    if (type_generateur === 'chaudière électrique') {
+      di.rendement_generation = RG_CHAUDIERE_ELECTRIQUE;
+      di.rendement_generation_depensier = RG_CHAUDIERE_ELECTRIQUE;
+      Iecs /= RG_CHAUDIERE_ELECTRIQUE;
+      Iecs_dep /= RG_CHAUDIERE_ELECTRIQUE;
+    }
   } else if (isReseauChaleur) {
     if (bug_for_bug_compat) {
       if (di.rendement_generation_stockage === 0.9 && ecs_de.reseau_distribution_isole === 0) {

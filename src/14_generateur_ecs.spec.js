@@ -16,6 +16,8 @@ vi.mock('./enums.js', () => ({
     type_generateur_ecs: {
       60: 'ballon électrique à accumulation vertical',
       61: 'ballon électrique à accumulation vertical catégorie c ou 3 étoiles',
+      117: 'chauffe-eau électrique instantané',
+      118: 'chaudière électrique',
       gaz: 'chauffe-eau gaz',
       chaud: 'chaudière gaz condensation',
       accu: 'accumulateur gaz',
@@ -70,7 +72,8 @@ const {
   rg_chauffe_eau_gaz,
   rgrs_chaudiere,
   rg_accumulateur_gaz,
-  rgrsReseauUrbain
+  rgrsReseauUrbain,
+  RG_CHAUDIERE_ELECTRIQUE
 } = await import('./14_generateur_ecs.js');
 const { tvColumnIDs, requestInput, requestInputID, tv, getVolumeStockageFromDescription } =
   await import('./utils.js');
@@ -173,6 +176,26 @@ describe('calc_gen_ecs - consommation par générateur', () => {
     // valeur de référence de régression : 100 / 0.9
     expect(g.donnee_intermediaire.conso_ecs).toBeCloseTo(111.11111111111111, 9);
     expect(g.donnee_intermediaire.conso_ecs_depensier).toBeCloseTo(166.66666666666666, 9);
+  });
+
+  test('chaudière électrique : rendement de génération 0,97 (§11.2)', () => {
+    // @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §11.2 ; Tribu Calcul_generateur.cs (Rg_defaut = 0,97)
+    const g = gen({ type_energie: 'électricité', enum_type_generateur_ecs_id: '118' });
+    calc_gen_ecs({}, g, ecs_di, ecs_de, 0, '1', '1', 'maison');
+
+    expect(g.donnee_intermediaire.rendement_generation).toBe(RG_CHAUDIERE_ELECTRIQUE);
+    expect(g.donnee_intermediaire.rendement_generation_depensier).toBe(0.97);
+    // valeur de référence de régression : 100 / (0.97 * 0.9)
+    expect(g.donnee_intermediaire.conso_ecs).toBeCloseTo(114.5475372279496, 9);
+    expect(g.donnee_intermediaire.conso_ecs_depensier).toBeCloseTo(171.82130584192439, 9);
+  });
+
+  test('chauffe-eau électrique instantané : pas de rendement de génération (Rg = 1)', () => {
+    const g = gen({ type_energie: 'électricité', enum_type_generateur_ecs_id: '117' });
+    calc_gen_ecs({}, g, ecs_di, ecs_de, 0, '1', '1', 'maison');
+
+    expect(g.donnee_intermediaire.rendement_generation).toBeUndefined();
+    expect(g.donnee_intermediaire.conso_ecs).toBeCloseTo(111.11111111111111, 9);
   });
 
   test('ballon électrique 3 étoiles : bonus de 8 % sur le rendement de stockage', () => {
