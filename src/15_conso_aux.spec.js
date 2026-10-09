@@ -91,6 +91,31 @@ describe('conso_aux_gen - auxiliaires de génération', () => {
     expect(diCap.conso_auxiliaire_generation_ch_depensier).toBeCloseTo(1.584, 10);
   });
 
+  /**
+   * Le besoin transmis par calc_chauffage est déjà proratisé par Sc / Sh : aucun second prorata.
+   * Autotest CSTB MI5-0-8 : radiateur gaz (G = 40, H = 0), Sc = 96 m², Sh = 136 m².
+   * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §15.1
+   */
+  test('chauffage : surface chauffée partielle sans second prorata Sc / Sh du besoin', () => {
+    const diPartiel = { pn: 20000 };
+    const diTotal = { pn: 20000 };
+    conso_aux_gen(
+      diPartiel,
+      { enum_type_generateur_ch_id: '90', surface_chauffee: 96 },
+      'ch',
+      1000,
+      1200
+    );
+    conso_aux_gen(diTotal, { enum_type_generateur_ch_id: '90' }, 'ch', 1000, 1200);
+    // Paux = 20 + 1,6 × 20 = 52 W ; conso = 52 × 1000 / 20000 = 2,6 (sans facteur 96 / 136)
+    expect(diPartiel.conso_auxiliaire_generation_ch).toBeCloseTo(2.6, 10);
+    expect(diPartiel.conso_auxiliaire_generation_ch_depensier).toBeCloseTo(3.12, 10);
+    expect(diPartiel.conso_auxiliaire_generation_ch).toBeCloseTo(
+      diTotal.conso_auxiliaire_generation_ch,
+      10
+    );
+  });
+
   test('type ECS : aucun prorata de surface chauffée appliqué', () => {
     const de = { enum_type_generateur_ecs_id: '50' };
     conso_aux_gen(di, de, 'ecs', 800, 1000, 100);

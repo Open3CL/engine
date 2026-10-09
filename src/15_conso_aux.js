@@ -16,9 +16,8 @@ const H_CHAUDIERE_BOIS = 10.5;
  * @param type {'ecs'|'ch'}
  * @param besoin {number} Besoin en chauffage ou ecs pour ce générateur
  * @param besoin_dep {number} Besoin en chauffage ou ecs pour ce générateur (mode dépensier)
- * @param Sh {number} Surface habitable du logement
  */
-export function conso_aux_gen(di, de, type, besoin, besoin_dep, Sh) {
+export function conso_aux_gen(di, de, type, besoin, besoin_dep) {
   const typeGenerateur = parseInt(de[`enum_type_generateur_${type}_id`]);
 
   const presenceVentilateur = de.presenceVentilateur || 0;
@@ -62,17 +61,16 @@ export function conso_aux_gen(di, de, type, besoin, besoin_dep, Sh) {
   let besoinAppart = besoin * (de[`cle_repartition_${type}`] || 1);
   let besoinAppartDep = besoin_dep * (de[`cle_repartition_${type}`] || 1);
 
-  let ratio = 1;
-
-  // Pour le chauffage, le besoin de chauffage est proratisé à la surface chauffée
-  if (type === 'ch') {
-    const Sc = de.surface_chauffee || Sh;
-    ratio = Sc / Sh;
-  }
-
-  di[`conso_auxiliaire_generation_${type}`] = (Paux_g_ch * besoinAppart * ratio) / pnReel || 0;
-  di[`conso_auxiliaire_generation_${type}_depensier`] =
-    (Paux_g_ch * besoinAppartDep * ratio) / pnReel || 0;
+  /**
+   * Le besoin reçu est déjà celui de l'installation : calc_chauffage le proratise par
+   * Sc / Sh (surface chauffée de l'installation / surface habitable). Ne pas le proratiser une
+   * seconde fois (sinon Bch × (Sc / Sh)²), comme le moteur de référence CSTB (Tribu).
+   * Autotest CSTB MI5-0-8 : radiateur gaz, Sc = 96 m², Sh = 136 m², Tribu Qaux_ch = 84,69 kWh
+   * (59,78 kWh avec le double prorata, −29 %).
+   * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §15.1
+   */
+  di[`conso_auxiliaire_generation_${type}`] = (Paux_g_ch * besoinAppart) / pnReel || 0;
+  di[`conso_auxiliaire_generation_${type}_depensier`] = (Paux_g_ch * besoinAppartDep) / pnReel || 0;
 }
 
 /**
