@@ -291,6 +291,35 @@ describe('conso_ch - convecteurs bi-jonction (individuel + collectif)', () => {
     // l'intermittence collective est calculée avec I0 = 1.03
     expect(calc_intermittence).toHaveBeenCalledWith(150, 100, 2.5, 1.03);
   });
+
+  test("part d'appoint individuel mémorisée pour le coût (base collective / appoint individuel)", () => {
+    const di = { rg: 1, rg_dep: 1 };
+    const du = {};
+    const de = { enum_type_generateur_ch_id: '10', surface_chauffee: 100, fch: 0.5 };
+
+    conso_ch(
+      di,
+      de,
+      du,
+      0,
+      'convecteurs bi-jonction',
+      [emetteur(0.5)],
+      150,
+      100,
+      2.5,
+      1000,
+      2000,
+      -9.5,
+      0,
+      1,
+      1
+    );
+
+    // appoint individuel seul : 0.4 * (0.5 / 0.8) * 1000 = 250 (dépensier : × 2)
+    expect(du.conso_ch_appoint_bijonction).toBeCloseTo(250, 9);
+    expect(du.conso_ch_appoint_bijonction_depensier).toBeCloseTo(500, 9);
+    expect(di.conso_ch - du.conso_ch_appoint_bijonction).toBeCloseTo(772.5, 9);
+  });
 });
 
 describe('conso_ch - installation collective base + appoint', () => {

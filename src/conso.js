@@ -258,6 +258,47 @@ function coefPourGenerateur(coef, gen) {
   return collectif?.generateurs.has(gen) ? collectif.coef : coef;
 }
 
+/**
+ * Part d'appoint individuel (40 % du besoin, §9.1.6) de la consommation d'un convecteur
+ * bi-jonction, mémorisée par conso_ch (9_conso_ch.js) ; 0 pour les autres générateurs.
+ * @param gen {GenerateurChauffageItem}
+ * @param field {'conso_ch'|'conso_ch_depensier'}
+ * @returns {number}
+ */
+export function appointBijonction(gen, field) {
+  const du = gen.donnee_utilisateur || {};
+  const appoint =
+    field === 'conso_ch_depensier'
+      ? du.conso_ch_appoint_bijonction_depensier
+      : du.conso_ch_appoint_bijonction;
+  return appoint || 0;
+}
+
+/**
+ * Coût du chauffage d'un convecteur bi-jonction d'une installation collective : la base est
+ * facturée en électricité collective (tranche de l'installation collective), l'appoint
+ * individuel en électricité individuelle (tranche du logement).
+ * Moteur de référence CSTB : DPE.Core Calcul_batiment.cs l.861-872 (base Cch1 → conso_elec_coll_ch
+ * si l'installation n'est pas individuelle) et l.912-915 (Cch_appoint_elec → conso_elec_indiv_ch),
+ * Calcul_cout.cs l.149-172 (tarification séparée collectif / individuel).
+ * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §9.1.6 (convecteurs bi-jonction)
+ *
+ * @param coef {object} barème issu de coefCoutProrata
+ * @param gen {GenerateurChauffageItem}
+ * @param typeEnergie {string}
+ * @param conso {number} consommation du générateur (base + appoint)
+ * @param field {'conso_ch'|'conso_ch_depensier'}
+ * @returns {number|null} coût, ou null si la règle ne s'applique pas
+ */
+export function coutBijonction(coef, gen, typeEnergie, conso, field) {
+  const collectif = coef?.[COUT_COLLECTIF];
+  const appoint = appointBijonction(gen, field);
+  if (!collectif?.generateurs.has(gen) || appoint <= 0) return null;
+  return (
+    getConso(collectif.coef, typeEnergie, conso - appoint) + getConso(coef, typeEnergie, appoint)
+  );
+}
+
 function getConso(coef, type_energie, conso) {
   // is coef is a function, execute it
   if (!coef) return conso;
@@ -393,6 +434,16 @@ export default function calc_conso(
           inst.generateur_ecs_collection.generateur_ecs.forEach((g) => genCollectifs.add(g))
         );
     }
+    /**
+     * Convecteurs bi-jonction d'une installation non individuelle : base toujours facturée en
+     * électricité collective, même sans extrapolation à l'immeuble (Tribu : SH_total = SH).
+     */
+    gen_ch
+      .filter(
+        (g) =>
+          g.donnee_entree.enum_type_installation_id !== '1' && appointBijonction(g, 'conso_ch') > 0
+      )
+      .forEach((g) => genCollectifs.add(g));
     const consoGroupe = (masque) => {
       const tot = calc_conso_pond(
         Sh,
@@ -420,7 +471,21 @@ export default function calc_conso(
         prorataChauffage,
         []
       );
-      return { total: tot.c_5_usages, collectif: coll.c_ch + coll.c_ecs };
+      // Appoint individuel des convecteurs bi-jonction : tarifé en individuel (voir coutBijonction)
+      const appointIndividuel = gen_ch
+        .filter((g) => genCollectifs.has(g))
+        .reduce(
+          (acc, g) =>
+            acc +
+            getConso(
+              masque,
+              getTypeEnergie(g.donnee_entree, 'ch'),
+              appointBijonction(g, 'conso_ch')
+            ) *
+              g.donnee_entree.cle_repartition_ch,
+          0
+        );
+      return { total: tot.c_5_usages, collectif: coll.c_ch + coll.c_ecs - appointIndividuel };
     };
     return coefCoutProrata(base, consoGroupe, nbLogements, genCollectifs, ratioSurfaceCollectif);
   };
@@ -667,6 +732,9 @@ function getChauffageConso(gen_ch, field, coef, prorataChauffage, prefix) {
       gen_ch.donnee_entree.enum_type_installation_id !== '1'
         ? gen_ch.donnee_entree.cle_repartition_ch || prorataChauffage
         : prorataChauffage;
+
+    const coutBij = coutBijonction(coef, gen_ch, typeEnergie, conso, field);
+    if (coutBij !== null) return acc + coutBij * repartition;
 
     let coeffConsoChauffage = { ...coefPourGenerateur(coef, gen_ch) };
 

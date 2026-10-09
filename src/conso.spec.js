@@ -56,7 +56,9 @@ const {
   coefCoutProrata,
   masqueEnergie,
   getAuxGenerationEcs,
-  DATE_BAREME_COUT_2024
+  DATE_BAREME_COUT_2024,
+  appointBijonction,
+  coutBijonction
 } = await import('./conso.js');
 
 /**
@@ -795,5 +797,175 @@ describe('getAuxGenerationEcs - auxiliaires de génération ECS et rdim', () => 
       9
     );
     expect(res.ef_conso.conso_auxiliaire_generation_ecs).toBeGreaterThan(0);
+  });
+});
+
+/**
+ * Convecteurs bi-jonction (§9.1.6) : base (60 %) facturée en électricité collective, appoint
+ * individuel (40 %) en électricité individuelle.
+ * @see Moteur_DPE.dll (CSTB) Calcul_batiment.cs l.861-872 / l.912-915, Calcul_cout.cs l.149-172 ;
+ * autotests APP3-0-1 (base 1541 kWh → 311 €, appoint 858 kWh → 197 €) et IC1-0-5.
+ */
+describe('calc_conso - coût des convecteurs bi-jonction (base collective + appoint individuel)', () => {
+  const DATE_DPE_2026 = '2026-01-15';
+  let errorSpy;
+
+  beforeEach(() => {
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    errorSpy.mockRestore();
+  });
+
+  /** Installation bi-jonction (type 4) : conso totale 2400 kWh dont 900 kWh d'appoint. */
+  const bijonction = (typeInstallation = '4') => [
+    installCh({ enum_type_installation_id: typeInstallation }, [
+      {
+        ...genCh('1', { conso_ch: 2400, conso_ch_depensier: 4800 }),
+        donnee_utilisateur: {
+          conso_ch_appoint_bijonction: 900,
+          conso_ch_appoint_bijonction_depensier: 1800
+        }
+      }
+    ])
+  ];
+
+  test('appartement : base tarifée sur la tranche de l’immeuble, appoint avec les usages individuels', () => {
+    const res = calc_conso(
+      100,
+      1,
+      1,
+      [],
+      bijonction(),
+      [],
+      [],
+      1,
+      1,
+      DATE_DPE_2026,
+      coef_ep,
+      1,
+      20
+    );
+    // Base 1500 kWh × 20 = 30000 kWh (≥ 15000) => (78 + 0,20001 × 30000) / 20
+    const base = (78 + 0.20001 * 30000) / 20;
+    // Individuel : appoint 900 + éclairage 100 = 1000 kWh (tranche 1000-2500) au prorata
+    const indiv = 158 + 0.18954 * 1000;
+    expect(res.cout.cout_ch).toBeCloseTo(base + (indiv * 900) / 1000, 9);
+    expect(res.cout.cout_eclairage).toBeCloseTo((indiv * 100) / 1000, 9);
+    expect(res.cout.cout_5_usages).toBeCloseTo(base + indiv, 9);
+  });
+
+  test('immeuble : base sur le total collectif, appoint rapporté au logement (N × f(C / N))', () => {
+    const res = calc_conso(100, 1, 1, [], bijonction(), [], [], 1, 1, DATE_DPE_2026, coef_ep, 4);
+    // Base 1500 kWh (tranche 1000-2500) ; individuel (900 + 100) / 4 logements = 250 kWh
+    const base = 158 + 0.18954 * 1500;
+    const indiv = 4 * 0.34721 * 250;
+    expect(res.cout.cout_ch).toBeCloseTo(base + (indiv * 900) / 1000, 9);
+    expect(res.cout.cout_5_usages).toBeCloseTo(base + indiv, 9);
+  });
+
+  test('scénario dépensier : part d’appoint dépensière utilisée', () => {
+    const res = calc_conso(
+      100,
+      1,
+      1,
+      [],
+      bijonction(),
+      [],
+      [],
+      1,
+      1,
+      DATE_DPE_2026,
+      coef_ep,
+      1,
+      20
+    );
+    const coef = (c) => ((78 + 0.20001 * 30000) / 30000) * c;
+    const prixIndiv = (158 + 0.18954 * 1000) / 1000;
+    expect(res.cout.cout_ch_depensier).toBeCloseTo(coef(3000) + prixIndiv * 1800, 9);
+  });
+
+  test('installation individuelle : un seul barème (individuel) pour tout le générateur', () => {
+    const res = calc_conso(
+      100,
+      1,
+      1,
+      [],
+      bijonction('1'),
+      [],
+      [],
+      1,
+      1,
+      DATE_DPE_2026,
+      coef_ep,
+      1,
+      20
+    );
+    // Élec totale 2400 + 100 = 2500 kWh (tranche 2500-5000) au prorata
+    expect(res.cout.cout_ch).toBeCloseTo(((158 + 0.18949 * 2500) * 2400) / 2500, 9);
+  });
+
+  test('sans surface d’immeuble (ratio 1, 1 logement) : base et appoint tarifés séparément', () => {
+    const res = calc_conso(100, 1, 1, [], bijonction(), [], [], 1, 1, DATE_DPE_2026, coef_ep);
+    // Base 1500 kWh seule (tranche 1000-2500) ; individuel 900 + 100 = 1000 kWh
+    const base = 158 + 0.18954 * 1500;
+    const indiv = 158 + 0.18954 * 1000;
+    expect(res.cout.cout_ch).toBeCloseTo(base + (indiv * 900) / 1000, 9);
+    expect(res.cout.cout_5_usages).toBeCloseTo(base + indiv, 9);
+  });
+
+  test('DPE antérieur au 01/07/2024 : barème 2021 par poste, sans scission', () => {
+    const res = calc_conso(100, 1, 1, [], bijonction(), [], [], 1, 1, '2024-06-30', coef_ep, 1, 20);
+    expect(res.cout.cout_ch).toBeCloseTo(149 + 0.14066 * 2400, 9);
+  });
+
+  test('consommations EF / EP inchangées par la scission', () => {
+    const res = calc_conso(
+      100,
+      1,
+      1,
+      [],
+      bijonction(),
+      [],
+      [],
+      1,
+      1,
+      DATE_DPE_2026,
+      coef_ep,
+      1,
+      20
+    );
+    expect(res.ef_conso.conso_ch).toBeCloseTo(2400, 9);
+    expect(res.ep_conso.ep_conso_ch).toBeCloseTo(2400 * 1.9, 9);
+  });
+});
+
+describe('appointBijonction / coutBijonction', () => {
+  test('appointBijonction : part mémorisée selon le scénario, 0 sinon', () => {
+    const gen = {
+      donnee_utilisateur: {
+        conso_ch_appoint_bijonction: 9,
+        conso_ch_appoint_bijonction_depensier: 18
+      }
+    };
+    expect(appointBijonction(gen, 'conso_ch')).toBe(9);
+    expect(appointBijonction(gen, 'conso_ch_depensier')).toBe(18);
+    expect(appointBijonction({}, 'conso_ch')).toBe(0);
+    expect(appointBijonction({ donnee_utilisateur: {} }, 'conso_ch_depensier')).toBe(0);
+  });
+
+  test('coutBijonction : null hors barème collectif ou sans appoint', () => {
+    const gen = { donnee_utilisateur: { conso_ch_appoint_bijonction: 10 } };
+    const base = getCoefCout('2026-01-15');
+    expect(coutBijonction(base, gen, 'électricité ch', 30, 'conso_ch')).toBeNull();
+    expect(coutBijonction(null, gen, 'électricité ch', 30, 'conso_ch')).toBeNull();
+    const coef = coefCoutProrata(base, () => ({ total: 100, collectif: 50 }), 1, new Set([gen]));
+    expect(coutBijonction(coef, {}, 'électricité ch', 30, 'conso_ch')).toBeNull();
+    // base 20 kWh au prix collectif f(50)/50, appoint 10 kWh au prix individuel f(50)/50
+    expect(coutBijonction(coef, gen, 'électricité ch', 30, 'conso_ch')).toBeCloseTo(
+      0.34721 * 30,
+      9
+    );
   });
 });
