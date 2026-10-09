@@ -4,8 +4,8 @@
   "nbValidDpe": 9996,
   "nbInvalidDpeVersion": 0,
   "nbExcludedDpe": 0,
-  "nbAllChecksBelowThreshold": 7700,
-  "successRatio": "77.02 %",
+  "nbAllChecksBelowThreshold": 8419,
+  "successRatio": "84.21 %",
   "dpeRunFailed": [],
   "checks": {
     "deperdition_mur": { "nbBelowThreshold": 9948, "mandatory": false, "successRatio": "99.50 %" },
@@ -47,7 +47,7 @@
     },
     "besoin_ecs": { "nbBelowThreshold": 9993, "mandatory": false, "successRatio": "99.95 %" },
     "besoin_ch": { "nbBelowThreshold": 9441, "mandatory": false, "successRatio": "94.43 %" },
-    "conso_ecs": { "nbBelowThreshold": 8229, "mandatory": true, "successRatio": "82.31 %" },
+    "conso_ecs": { "nbBelowThreshold": 9008, "mandatory": true, "successRatio": "90.10 %" },
     "conso_ch": { "nbBelowThreshold": 9070, "mandatory": true, "successRatio": "90.72 %" },
     "conso_auxiliaire_distribution_ch": {
       "nbBelowThreshold": 9098,
@@ -65,40 +65,40 @@
       "successRatio": "97.22 %"
     },
     "conso_auxiliaire_generation_ecs": {
-      "nbBelowThreshold": 6170,
+      "nbBelowThreshold": 6765,
       "mandatory": false,
-      "successRatio": "61.71 %"
+      "successRatio": "67.66 %"
     },
     "conso_auxiliaire_ventilation": {
       "nbBelowThreshold": 9661,
       "mandatory": false,
       "successRatio": "96.63 %"
     },
-    "ep_conso_5_usages": { "nbBelowThreshold": 8234, "mandatory": true, "successRatio": "82.36 %" },
+    "ep_conso_5_usages": { "nbBelowThreshold": 8894, "mandatory": true, "successRatio": "88.96 %" },
     "ep_conso_5_usages_m2": {
-      "nbBelowThreshold": 8227,
+      "nbBelowThreshold": 8890,
       "mandatory": true,
-      "successRatio": "82.29 %"
+      "successRatio": "88.92 %"
     },
     "emission_ges_5_usages": {
-      "nbBelowThreshold": 8148,
+      "nbBelowThreshold": 8777,
       "mandatory": true,
-      "successRatio": "81.50 %"
+      "successRatio": "87.79 %"
     },
     "emission_ges_5_usages_m2": {
-      "nbBelowThreshold": 8258,
+      "nbBelowThreshold": 8865,
       "mandatory": true,
-      "successRatio": "82.60 %"
+      "successRatio": "88.67 %"
     }
   },
   "performance": {
     "count": 9997,
-    "mean": 7.031,
-    "median": 5.965,
-    "min": 0.106,
-    "max": 81.693,
-    "p95": 14.929,
-    "p99": 22.909,
-    "totalMs": 70292.389
+    "mean": 6.536,
+    "median": 5.581,
+    "min": 0.165,
+    "max": 81.944,
+    "p95": 13.203,
+    "p99": 21.713,
+    "totalMs": 65337.314
   }
 }
