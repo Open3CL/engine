@@ -444,7 +444,8 @@ describe('calcul_3cl - run intégral (maison)', () => {
       'maison',
       'zc1',
       undefined,
-      0.25
+      0.25,
+      {}
     ]);
     expect(calculateEnr.mock.calls[1][5]).toBe(1.7);
     expect(calculateEnr.mock.calls[2][5]).toBe(2.3);
@@ -491,6 +492,29 @@ describe('calcul_3cl - run intégral (maison)', () => {
 
     // Climatisation présente : calc_clim appelé.
     expect(calc_clim).toHaveBeenCalledTimes(1);
+  });
+
+  test('autoconsommation PV : GES et coût recalculés sur les consommations nettes (Tribu Calcul_batiment.cs l.1188 / l.1318)', () => {
+    const dpe = makeDpe();
+    const facteurs = { ch: 0.8 };
+    vi.mocked(calculateEnr).mockImplementationOnce((enr, conso, Sh, th, zc, coef, ratio, f) => {
+      Object.assign(f, facteurs);
+      return { pv: 1 };
+    });
+    const consoNette = {
+      ...consoResult,
+      emission_ges: { emission_ges_5_usages: 1 },
+      cout: { cout_5_usages: 2 }
+    };
+    vi.mocked(calc_conso).mockReturnValueOnce(consoResult).mockReturnValueOnce(consoNette);
+
+    calcul_3cl(dpe, { sanitize: false });
+
+    expect(calc_conso).toHaveBeenCalledTimes(4);
+    expect(calc_conso.mock.calls[1][13]).toEqual(facteurs);
+    expect(calc_conso.mock.calls[1][10]).toEqual(calc_conso.mock.calls[0][10]);
+    expect(dpe.logement.sortie.emission_ges).toEqual({ emission_ges_5_usages: 1 });
+    expect(dpe.logement.sortie.cout).toEqual({ cout_5_usages: 2 });
   });
 
   test('bâtiment matériaux anciens => ilpa = 1 ; incohérence inertie => erreur loggée', () => {

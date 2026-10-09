@@ -72,6 +72,108 @@ describe('production ENR unit tests', () => {
     }
   );
 
+  test('getFacteursNonAutoconsommes : part non autoconsommée de chaque poste électrique', () => {
+    const productionElectricite = {
+      conso_elec_ac_ch: 250,
+      conso_elec_ac_ecs: 0,
+      conso_elec_ac_fr: 0,
+      conso_elec_ac_eclairage: 50,
+      conso_elec_ac_ventilation: 30,
+      conso_elec_ac_auxiliaire_generation_ch: 0,
+      conso_elec_ac_auxiliaire_generation_ecs: 0,
+      conso_elec_ac_auxiliaire_distribution_ch: 10,
+      conso_elec_ac_auxiliaire_distribution_ecs: 0
+    };
+    const conso = {
+      ef_conso: {
+        conso_fr: 0,
+        conso_eclairage: 100,
+        conso_auxiliaire_ventilation: 120,
+        conso_auxiliaire_generation_ch: 0,
+        conso_auxiliaire_generation_ecs: 0,
+        conso_auxiliaire_distribution_ch: 40,
+        conso_auxiliaire_distribution_ecs: 0
+      },
+      sortie_par_energie_collection: {
+        sortie_par_energie: [
+          { enum_type_energie_id: '2', conso_ch: 5000, conso_ecs: 2000 },
+          { enum_type_energie_id: '1', conso_ch: 1000, conso_ecs: 0 }
+        ]
+      }
+    };
+    expect(productionENR.getFacteursNonAutoconsommes(productionElectricite, conso)).toStrictEqual({
+      ch: 0.75,
+      ecs: 1,
+      fr: 1,
+      eclairage: 0.5,
+      ventilation: 0.75,
+      auxiliaire_generation_ch: 1,
+      auxiliaire_generation_ecs: 1,
+      auxiliaire_distribution_ch: 0.75,
+      auxiliaire_distribution_ecs: 1
+    });
+  });
+
+  test('calculateEnr renseigne les facteurs avant minoration des consommations', () => {
+    const conso = {
+      ef_conso: {
+        conso_ch: 1000,
+        conso_ecs: 0,
+        conso_fr: 0,
+        conso_eclairage: 100,
+        conso_auxiliaire_ventilation: 0,
+        conso_auxiliaire_generation_ch: 0,
+        conso_auxiliaire_generation_ecs: 0,
+        conso_auxiliaire_distribution_ch: 0,
+        conso_auxiliaire_distribution_ecs: 0,
+        conso_totale_auxiliaire: 0,
+        conso_5_usages: 1100,
+        conso_5_usages_m2: 11
+      },
+      ep_conso: {
+        ep_conso_ch: 1900,
+        ep_conso_ecs: 0,
+        ep_conso_fr: 0,
+        ep_conso_eclairage: 190,
+        ep_conso_totale_auxiliaire: 0,
+        ep_conso_5_usages: 2090,
+        ep_conso_5_usages_m2: 20.9
+      },
+      sortie_par_energie_collection: {
+        sortie_par_energie: [
+          { enum_type_energie_id: '1', conso_ch: 1000, conso_ecs: 0, conso_5_usages: 1100 }
+        ]
+      }
+    };
+    const facteursAc = {};
+    productionENR.calculateEnr(
+      {
+        donnee_entree: { presence_production_pv: 1 },
+        panneaux_pv_collection: {
+          panneaux_pv: [
+            {
+              enum_orientation_pv_id: '3',
+              enum_inclinaison_pv_id: '2',
+              surface_totale_capteurs: 10
+            }
+          ]
+        }
+      },
+      conso,
+      100,
+      'maison',
+      1,
+      undefined,
+      1,
+      facteursAc
+    );
+    expect(facteursAc.ch).toBeGreaterThan(0);
+    expect(facteursAc.ch).toBeLessThan(1);
+    expect(facteursAc.eclairage).toBeGreaterThanOrEqual(0);
+    expect(facteursAc.eclairage).toBeLessThan(1);
+    expect(facteursAc.ecs).toBe(1);
+  });
+
   describe('proratisation au logement des installations PV d’immeuble', () => {
     const panneau = (extra = {}) => ({
       panneaux_pv_collection: {

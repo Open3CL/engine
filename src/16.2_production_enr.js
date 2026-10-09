@@ -62,8 +62,18 @@ export class ProductionENR {
    * @param zc_id {string}
    * @param coeff_ep_override {number?}
    * @param ratioPv {number?} proratisation au logement d'une installation d'immeuble (cf. ratioProrataPvLogement)
+   * @param facteursAc {object?} si fourni, reçoit par poste la part non autoconsommée (cf. getFacteursNonAutoconsommes)
    */
-  calculateEnr(productionElecEnr, conso, Sh, th, zc_id, coeff_ep_override, ratioPv = 1) {
+  calculateEnr(
+    productionElecEnr,
+    conso,
+    Sh,
+    th,
+    zc_id,
+    coeff_ep_override,
+    ratioPv = 1,
+    facteursAc = null
+  ) {
     const productionElectricite = {
       conso_elec_ac: 0,
       production_pv: 0,
@@ -91,6 +101,10 @@ export class ProductionENR {
         Sh,
         ratioPv
       );
+
+      if (facteursAc) {
+        Object.assign(facteursAc, this.getFacteursNonAutoconsommes(productionElectricite, conso));
+      }
 
       // Mise à jour des consommations d'énergie finale en minorant l'énergie consommée par l'énergie autoconsommée par le poste
       this.updateEfConso(productionElectricite, conso, Sh);
@@ -211,6 +225,55 @@ export class ProductionENR {
       productionElectricite.conso_elec_ac_ventilation;
 
     productionElectricite.conso_elec_ac_auxiliaire = consoAcAuxiliaires;
+  }
+
+  /**
+   * Part non autoconsommée (1 − Celec_ac_poste / Celec_poste) de la consommation électrique de chaque
+   * poste, à appliquer aux consommations électriques avant calcul des émissions GES et du coût.
+   *
+   * Le moteur de référence calcule les émissions et les coûts sur les consommations électriques
+   * minorées de l'autoconsommation PV (Tribu `Calcul_batiment.cs` l.1188 carbone_total :
+   * (Cch_electricite − Celec_ac_ch) × 0,079 + … ; l.1318 calc_cout.Calcul(…, num19 − num60, …)).
+   * Doit être appelée avant updateEfConso (consommations encore brutes).
+   *
+   * @param productionElectricite autoconsommation par poste (calculateConsoElecAc)
+   * @param conso consommations brutes (ef_conso, sortie_par_energie_collection)
+   * @returns {Object<string, number>} facteur par poste : ch, ecs, fr, eclairage, ventilation,
+   * auxiliaire_generation_ch, auxiliaire_generation_ecs, auxiliaire_distribution_ch,
+   * auxiliaire_distribution_ecs
+   */
+  getFacteursNonAutoconsommes(productionElectricite, conso) {
+    const consoElec = conso.sortie_par_energie_collection.sortie_par_energie.find(
+      (sortie) => sortie.enum_type_energie_id === '1'
+    );
+    const ef = conso.ef_conso;
+    const facteur = (ac, brut) => (brut > 0 ? 1 - ac / brut : 1);
+    return {
+      ch: facteur(productionElectricite.conso_elec_ac_ch, consoElec?.conso_ch),
+      ecs: facteur(productionElectricite.conso_elec_ac_ecs, consoElec?.conso_ecs),
+      fr: facteur(productionElectricite.conso_elec_ac_fr, ef.conso_fr),
+      eclairage: facteur(productionElectricite.conso_elec_ac_eclairage, ef.conso_eclairage),
+      ventilation: facteur(
+        productionElectricite.conso_elec_ac_ventilation,
+        ef.conso_auxiliaire_ventilation
+      ),
+      auxiliaire_generation_ch: facteur(
+        productionElectricite.conso_elec_ac_auxiliaire_generation_ch,
+        ef.conso_auxiliaire_generation_ch
+      ),
+      auxiliaire_generation_ecs: facteur(
+        productionElectricite.conso_elec_ac_auxiliaire_generation_ecs,
+        ef.conso_auxiliaire_generation_ecs
+      ),
+      auxiliaire_distribution_ch: facteur(
+        productionElectricite.conso_elec_ac_auxiliaire_distribution_ch,
+        ef.conso_auxiliaire_distribution_ch
+      ),
+      auxiliaire_distribution_ecs: facteur(
+        productionElectricite.conso_elec_ac_auxiliaire_distribution_ecs,
+        ef.conso_auxiliaire_distribution_ecs
+      )
+    };
   }
 
   /**
