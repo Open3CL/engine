@@ -291,6 +291,70 @@ describe('conso_aux_distribution_ch - auxiliaires de distribution', () => {
     expect(di.conso_auxiliaire_distribution_ch).toBeCloseTo(372.082418731648, 9);
   });
 
+  /**
+   * Seuls les émetteurs reliés au générateur (même enum_lien_generateur_emetteur_id) dimensionnent
+   * son circulateur. Autotest CSTB IC5-0-3 : chaudière (lien 1) sur plancher chauffant + convecteurs
+   * électriques d'appoint (lien 2) : Fcot du plancher (0,156), pas le forçage multi-émetteurs.
+   * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §15.2.1
+   */
+  test('émetteurs reliés à un autre générateur : exclus du dimensionnement du circulateur', () => {
+    const plancher = {
+      donnee_entree: {
+        enum_type_emission_distribution_id: '6',
+        enum_temp_distribution_ch_id: '3',
+        enum_lien_generateur_emetteur_id: '1'
+      }
+    };
+    const convecteur = {
+      donnee_entree: {
+        enum_type_emission_distribution_id: '1',
+        enum_temp_distribution_ch_id: '3',
+        enum_lien_generateur_emetteur_id: '2'
+      }
+    };
+    const diMixte = {};
+    const diSeul = {};
+    const de = { enum_lien_generateur_emetteur_id: '1' };
+    conso_aux_distribution_ch([plancher, convecteur], de, diMixte, {}, 100, 1, 1, '0', 100000);
+    conso_aux_distribution_ch([plancher], de, diSeul, {}, 100, 1, 1, '0', 100000);
+    // identique au plancher seul (valeur de référence ci-dessus : 215,178 kWh)
+    expect(diMixte.conso_auxiliaire_distribution_ch).toBeCloseTo(215.1781621610199, 9);
+    expect(diMixte.conso_auxiliaire_distribution_ch).toBeCloseTo(
+      diSeul.conso_auxiliaire_distribution_ch,
+      10
+    );
+  });
+
+  test('aucun émetteur relié au générateur : tous les émetteurs sont conservés', () => {
+    const em = (lien) => ({
+      donnee_entree: {
+        enum_type_emission_distribution_id: '6',
+        enum_temp_distribution_ch_id: '3',
+        enum_lien_generateur_emetteur_id: lien
+      }
+    });
+    const diSansLien = {};
+    const diDeuxEmetteurs = {};
+    conso_aux_distribution_ch(
+      [em('2'), em('3')],
+      { enum_lien_generateur_emetteur_id: '1' },
+      diSansLien,
+      {},
+      100,
+      1,
+      1,
+      '0',
+      100000
+    );
+    conso_aux_distribution_ch([em('2'), em('3')], {}, diDeuxEmetteurs, {}, 100, 1, 1, '0', 100000);
+    // repli : 2 émetteurs => Fcot forcé à 0,802, comme sans lien renseigné
+    expect(diSansLien.conso_auxiliaire_distribution_ch).toBeCloseTo(
+      diDeuxEmetteurs.conso_auxiliaire_distribution_ch,
+      10
+    );
+    expect(diSansLien.conso_auxiliaire_distribution_ch).toBeGreaterThan(215.1781621610199);
+  });
+
   test('plusieurs émetteurs : Fcot forcé à 0,802 (cas le plus défavorable)', () => {
     // Deux émetteurs de type plancher chauffant : sans le forçage, Fcot=0,156.
     const em = [

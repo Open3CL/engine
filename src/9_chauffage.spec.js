@@ -60,7 +60,8 @@ const {
   tauxChargeForGenerator,
   isImmeuble,
   generateursPrincipauxCascade,
-  ratioDimensionnement
+  ratioDimensionnement,
+  reseauCirculateurUnique
 } = await import('./9_chauffage.js');
 const { requestInput, tv, tvColumnIDs } = await import('./utils.js');
 const { calc_emetteur_ch } = await import('./9_emetteur_ch.js');
@@ -418,6 +419,35 @@ describe('calc_chauffage - nombre de générateurs pris en compte pour le circul
     appel(ch);
     expect(gen1.donnee_utilisateur.nbGenerateurCascade).toBe(2);
     expect(gen2.donnee_utilisateur.nbGenerateurCascade).toBe(2);
+  });
+});
+
+/**
+ * 15.2.1 Réseau à circulateur unique : relève d'une chaudière bois (cfg 6), chaudière en relève de
+ * PAC (cfg 8) et base + appoint collectif (cfg 10) partagent le réseau ; le circulateur est
+ * dimensionné pour tout le besoin, comme en installation simple (cfg 1).
+ * Autotests CSTB IC4-0-1 (cfg 6), IC5-0-1 (cfg 8), IC5-0-3 (cfg 10).
+ * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §15.2.1
+ */
+describe('reseauCirculateurUnique', () => {
+  test.each(['1', '6', '8', '10', 6, 8])('configuration %s : circulateur unique', (cfg) => {
+    expect(reseauCirculateurUnique(cfg)).toBe(true);
+  });
+
+  test.each(['2', '3', '4', '5', '7', '9', '11', undefined])(
+    'configuration %s : besoin réparti entre générateurs',
+    (cfg) => {
+      expect(reseauCirculateurUnique(cfg)).toBe(false);
+    }
+  );
+
+  test('chaudière en relève de PAC (cfg 8) avec 2 générateurs : pas de division du besoin', () => {
+    const gen1 = generateur();
+    const gen2 = generateur();
+    const ch = installation([gen1, gen2], [emetteur('1')], { enum_cfg_installation_ch_id: '8' });
+    appel(ch);
+    expect(gen1.donnee_utilisateur.nbGenerateurCascade).toBe(1);
+    expect(gen2.donnee_utilisateur.nbGenerateurCascade).toBe(1);
   });
 });
 

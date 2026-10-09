@@ -157,7 +157,7 @@ export default function calc_chauffage(
     /* c8 ignore next 2 -- repli défensif inatteignable : donnee_utilisateur est toujours renseignée
        par la première boucle sur gen_ch ci-dessus */
     (gen.donnee_utilisateur = gen.donnee_utilisateur || {}).nbGenerateurCascade =
-      Number.parseInt(de.enum_cfg_installation_ch_id) === 1 ? 1 : gen_ch.length;
+      reseauCirculateurUnique(de.enum_cfg_installation_ch_id) ? 1 : gen_ch.length;
 
     calc_generateur_ch(
       dpe,
@@ -230,6 +230,21 @@ export function generateursPrincipauxCascade(gen_ch) {
  * Cas particulier des PAC hybrides avec répartition forfaitaire du besoin
  * @type {number|number}
  */
+/**
+ * 15.2.1 Le circulateur est dimensionné pour tout le besoin du réseau (ratio du besoin couvert = 1)
+ * lorsque les générateurs alimentent le même réseau hydraulique : installation simple (cfg 1),
+ * relève d'une chaudière bois (cfg 6), chaudière en relève de PAC (cfg 8), base + appoint
+ * collectif (cfg 10). Le circulateur unique n'est pas divisé par le nombre de générateurs.
+ * Autotests CSTB IC4-0-1 (cfg 6, Tribu Caux_dist_ch = 8908,24 kWh), IC5-0-1 (cfg 8, 1777,76 kWh),
+ * IC5-0-3 (cfg 10, 1951,90 kWh).
+ * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §15.2.1
+ * @param cfgInstallationId {string|number} enum_cfg_installation_ch_id
+ * @return {boolean}
+ */
+export function reseauCirculateurUnique(cfgInstallationId) {
+  return [1, 6, 8, 10].includes(Number.parseInt(cfgInstallationId));
+}
+
 function getProrataGenerateur(
   genCh,
   nbCascadeAndCombustion,
