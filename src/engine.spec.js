@@ -710,6 +710,47 @@ describe('calcul_3cl - surfaces immeuble / appartement et prorata', () => {
     expect(conso_aux_distribution_ecs.mock.calls[0][3]).toBe(80);
     expect(conso_aux_distribution_ecs.mock.calls[0][4]).toBe(200);
   });
+
+  test('appartement : rapport SH immeuble / SH logement transmis au calcul du coût', () => {
+    enums.methode_application_dpe_log = { 2: 'dpe appartement individuel' };
+    const dpe = makeDpe();
+    dpe.logement.caracteristique_generale.enum_methode_application_dpe_log_id = '2';
+
+    calcul_3cl(dpe, { sanitize: false });
+
+    // 3 appels (coef_ep, 1,7, 2,3) : nbLogements = 1 (hors immeuble), ratio = 200 / 80 = 2,5.
+    expect(calc_conso).toHaveBeenCalledTimes(3);
+    calc_conso.mock.calls.forEach((call) => {
+      expect(call[11]).toBe(1);
+      expect(call[12]).toBeCloseTo(2.5, 9);
+    });
+  });
+
+  test('appartement sans surface immeuble exploitable : ratio neutre (1)', () => {
+    enums.methode_application_dpe_log = { 2: 'dpe appartement individuel' };
+    const dpe = makeDpe();
+    dpe.logement.caracteristique_generale.enum_methode_application_dpe_log_id = '2';
+    // Surface immeuble inférieure à celle du logement (saisie incohérente) => pas d'extrapolation.
+    dpe.logement.caracteristique_generale.surface_habitable_immeuble = 50;
+
+    calcul_3cl(dpe, { sanitize: false });
+
+    expect(calc_conso.mock.calls[0][12]).toBe(1);
+  });
+
+  test('maison et immeuble : ratio de surface du coût neutre (1)', () => {
+    const maison = makeDpe();
+    calcul_3cl(maison, { sanitize: false });
+    expect(calc_conso.mock.calls[0][12]).toBe(1);
+
+    vi.mocked(calc_conso).mockClear();
+    enums.methode_application_dpe_log = { 6: 'dpe immeuble collectif' };
+    const immeuble = makeDpe();
+    immeuble.logement.caracteristique_generale.enum_methode_application_dpe_log_id = '6';
+    calcul_3cl(immeuble, { sanitize: false });
+    expect(calc_conso.mock.calls[0][11]).toBe(4);
+    expect(calc_conso.mock.calls[0][12]).toBe(1);
+  });
 });
 
 describe("calcul_3cl - auxiliaires de distribution d'ECS", () => {
