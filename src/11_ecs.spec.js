@@ -82,6 +82,139 @@ describe('calc_ecs - ratio de besoin ECS', () => {
     expect(ecs.donnee_intermediaire.besoin_ecs).toBeCloseTo(25, 9);
   });
 
+  /**
+   * Immeuble à ECS individuelles de surfaces différentes (cas CSTB IC1-0-3 / IC1-0-5 : 4
+   * appartements de 20, 30, 45 et 80 m² sur 175 m², rdim 1) : besoin au prorata de la surface
+   * desservie, comme Tribu (Becs appartement 1 = Becs immeuble × 20 / 175).
+   * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §11.4
+   */
+  test('immeuble à ECS individuelles : ratio = surface desservie / surface de l’immeuble', () => {
+    const des = [20, 30, 45, 80].map((surface) => ({
+      tv_rendement_distribution_ecs_id: '5',
+      surface_habitable: surface,
+      rdim: 1
+    }));
+    const dpe = {
+      logement: { installation_ecs_collection: { installation_ecs: des.map((de) => makeEcs(de)) } }
+    };
+    const ratios = dpe.logement.installation_ecs_collection.installation_ecs.map((ecs) => {
+      calc_ecs(dpe, ecs, 100, 200, 1, 'ca1', 'h1a', 'immeuble', false, 175, 4, true);
+      return ecs.donnee_intermediaire;
+    });
+
+    expect(ratios[0].ratio_besoin_ecs).toBeCloseTo(20 / 175, 9);
+    expect(ratios[0].besoin_ecs).toBeCloseTo((100 * 20) / 175, 9);
+    expect(ratios[0].besoin_ecs_depensier).toBeCloseTo((200 * 20) / 175, 9);
+    expect(ratios[3].ratio_besoin_ecs).toBeCloseTo(80 / 175, 9);
+    expect(ratios.reduce((acc, di) => acc + di.ratio_besoin_ecs, 0)).toBeCloseTo(1, 9);
+  });
+
+  test('immeuble à ECS individuelles, surface d’un logement exportée (Σ Sh × rdim = SH) : ratio = Sh / SH', () => {
+    // 3 installations de 100 m² par logement, rdim 2, 2 et 1 → 500 m²
+    const dpe = {
+      logement: {
+        installation_ecs_collection: {
+          installation_ecs: [2, 2, 1].map((rdim) =>
+            makeEcs({ tv_rendement_distribution_ecs_id: '5', surface_habitable: 100, rdim })
+          )
+        }
+      }
+    };
+    const [ecs] = dpe.logement.installation_ecs_collection.installation_ecs;
+    calc_ecs(dpe, ecs, 100, 200, 1, 'ca1', 'h1a', 'immeuble', false, 500, 5, true);
+
+    // besoin par logement ; la conso est remultipliée par rdim à l'agrégation
+    expect(ecs.donnee_intermediaire.ratio_besoin_ecs).toBeCloseTo(100 / 500, 9);
+  });
+
+  test('immeuble à ECS individuelles, surface desservie totale exportée (Σ Sh = SH) : ratio = Sh / SH / rdim', () => {
+    // 2 installations desservant 300 m² (rdim 3) et 200 m² (rdim 2) → 500 m²
+    const dpe = {
+      logement: {
+        installation_ecs_collection: {
+          installation_ecs: [
+            makeEcs({ tv_rendement_distribution_ecs_id: '5', surface_habitable: 300, rdim: 3 }),
+            makeEcs({ tv_rendement_distribution_ecs_id: '5', surface_habitable: 200, rdim: 2 })
+          ]
+        }
+      }
+    };
+    const [ecs] = dpe.logement.installation_ecs_collection.installation_ecs;
+    calc_ecs(dpe, ecs, 100, 200, 1, 'ca1', 'h1a', 'immeuble', false, 500, 5, true);
+
+    expect(ecs.donnee_intermediaire.ratio_besoin_ecs).toBeCloseTo(300 / 500 / 3, 9);
+  });
+
+  test('immeuble à ECS individuelles, rdim absent : rdim pris à 1', () => {
+    // 4 installations de 50 m² sans rdim : Σ Sh = 200 m² = SH
+    const dpe = {
+      logement: {
+        installation_ecs_collection: {
+          installation_ecs: [1, 2, 3, 4].map(() =>
+            makeEcs({ tv_rendement_distribution_ecs_id: '5', surface_habitable: 50 })
+          )
+        }
+      }
+    };
+    const [ecs] = dpe.logement.installation_ecs_collection.installation_ecs;
+    calc_ecs(dpe, ecs, 100, 200, 1, 'ca1', 'h1a', 'immeuble', false, 200, 5, true);
+
+    expect(ecs.donnee_intermediaire.ratio_besoin_ecs).toBeCloseTo(50 / 200, 9);
+  });
+
+  test('immeuble à ECS individuelles, installation voisine sans surface ni rdim : ignorée dans la détection', () => {
+    const dpe = {
+      logement: {
+        installation_ecs_collection: {
+          installation_ecs: [
+            makeEcs({ tv_rendement_distribution_ecs_id: '5', surface_habitable: 100, rdim: 2 }),
+            makeEcs({ tv_rendement_distribution_ecs_id: '5' })
+          ]
+        }
+      }
+    };
+    const [ecs] = dpe.logement.installation_ecs_collection.installation_ecs;
+    calc_ecs(dpe, ecs, 100, 200, 1, 'ca1', 'h1a', 'immeuble', false, 200, 2, true);
+
+    // Σ Sh × rdim = 200 = SH → surface par logement
+    expect(ecs.donnee_intermediaire.ratio_besoin_ecs).toBeCloseTo(100 / 200, 9);
+  });
+
+  test('immeuble à ECS individuelles, surfaces exportées incohérentes avec SH → repli 1 / nombre d’appartements', () => {
+    // 2 installations de 88,67 m², rdim 1,33 (LICIEL) : Σ Sh = 177, Σ Sh × rdim = 236 ≠ 266 m²
+    const dpe = {
+      logement: {
+        installation_ecs_collection: {
+          installation_ecs: [1, 2].map(() =>
+            makeEcs({
+              tv_rendement_distribution_ecs_id: '5',
+              surface_habitable: 88.67,
+              rdim: 1.333
+            })
+          )
+        }
+      }
+    };
+    const [ecs] = dpe.logement.installation_ecs_collection.installation_ecs;
+    calc_ecs(dpe, ecs, 100, 200, 1, 'ca1', 'h1a', 'immeuble', false, 266, 4, true);
+
+    expect(ecs.donnee_intermediaire.ratio_besoin_ecs).toBe(0.25);
+  });
+
+  test('immeuble à ECS individuelles, surface couvrant tout l’immeuble → repli 1 / nombre d’appartements', () => {
+    const ecs = makeEcs({ tv_rendement_distribution_ecs_id: '5', surface_habitable: 175 });
+    calc_ecs({}, ecs, 100, 200, 1, 'ca1', 'h1a', 'immeuble', false, 175, 4, true);
+
+    expect(ecs.donnee_intermediaire.ratio_besoin_ecs).toBe(0.25);
+  });
+
+  test('immeuble à ECS individuelles, surface de l’immeuble absente → repli 1 / nombre d’appartements', () => {
+    const ecs = makeEcs({ tv_rendement_distribution_ecs_id: '5', surface_habitable: 20 });
+    calc_ecs({}, ecs, 100, 200, 1, 'ca1', 'h1a', 'immeuble', false, null, 4, true);
+
+    expect(ecs.donnee_intermediaire.ratio_besoin_ecs).toBe(0.25);
+  });
+
   test('présence de rdim : ratio = 1 / rdim', () => {
     const de = { tv_rendement_distribution_ecs_id: '5', rdim: 2 };
     const ecs = makeEcs(de);

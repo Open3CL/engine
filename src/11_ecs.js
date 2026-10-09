@@ -136,6 +136,49 @@ function calc_auxiliaire_distribution_ecs_immeuble(de, surfaceImmeuble, becsParM
   return 0;
 }
 
+/** Écart relatif toléré entre la somme des surfaces ECS exportées et SH. */
+const TOLERANCE_SURFACE_ECS = 0.05;
+
+/**
+ * Ratio de besoin ECS d'une installation individuelle d'un immeuble (par unité dimensionnée).
+ *
+ * Tribu (Moteur_DPE.dll, Calcul_batiment.Calcul_Cecs) : Ratio = Sh_ecs × Rdim / SH puis
+ * Becs = Becs_immeuble × Ratio / Rdim, la consommation étant remultipliée par rdim à l'agrégation
+ * (conso.js, cle_repartition_ecs). Les logiciels n'exportent pas tous Sh_ecs de la même façon :
+ * - surface d'un logement (Σ Sh × rdim ≈ SH) → ratio = Sh / SH ;
+ * - surface totale desservie par l'installation (Σ Sh ≈ SH) → ratio = Sh / SH / rdim.
+ * La convention est détectée sur l'ensemble des installations ECS du DPE. Repli sur
+ * 1 / nombre d'appartements si la surface est absente, si aucune des deux sommes ne retrouve SH
+ * (à TOLERANCE_SURFACE_ECS près) ou si le ratio est ≥ 1.
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §11.4
+ */
+export function ratio_besoin_ecs_individuel(dpe, de, surfaceImmeuble, nombreAppartements) {
+  const sh = Number(de.surface_habitable);
+  const SH = Number(surfaceImmeuble);
+  if (!(sh > 0 && SH > 0)) return 1 / nombreAppartements;
+
+  const installations = dpe?.logement?.installation_ecs_collection?.installation_ecs || [
+    { donnee_entree: de }
+  ];
+  const des = installations.map((inst) => inst.donnee_entree);
+  const sommeSh = des.reduce((acc, d) => acc + (Number(d.surface_habitable) || 0), 0);
+  const sommeShRdim = des.reduce(
+    (acc, d) => acc + (Number(d.surface_habitable) || 0) * (Number(d.rdim) || 1),
+    0
+  );
+  const ecartParLogement = Math.abs(sommeShRdim - SH);
+  const ecartParInstallation = Math.abs(sommeSh - SH);
+  const surfaceParLogement = ecartParLogement < ecartParInstallation;
+
+  // Surfaces exportées incohérentes avec SH (installations partielles, surface moyenne…) : repli
+  if (Math.min(ecartParLogement, ecartParInstallation) > TOLERANCE_SURFACE_ECS * SH) {
+    return 1 / nombreAppartements;
+  }
+
+  const ratio = surfaceParLogement ? sh / SH : sh / SH / (Number(de.rdim) || 1);
+  return ratio < 1 ? ratio : 1 / nombreAppartements;
+}
+
 export default function calc_ecs(
   dpe,
   ecs,
@@ -173,7 +216,12 @@ export default function calc_ecs(
     di.ratio_besoin_ecs = de.cle_repartition_ecs || 1;
   } else if (isImmeubleSystemEcsIndividuels) {
     if (nombreAppartements) {
-      di.ratio_besoin_ecs = 1 / nombreAppartements;
+      di.ratio_besoin_ecs = ratio_besoin_ecs_individuel(
+        dpe,
+        de,
+        surfaceImmeuble,
+        nombreAppartements
+      );
     } else {
       di.ratio_besoin_ecs =
         ((de.surface_habitable / (surfaceImmeuble || 1)) * (de.rdim || 1)) /
