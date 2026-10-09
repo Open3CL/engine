@@ -69,6 +69,7 @@ export default function calc_chauffage(
 
     genChDe.ratio_virtualisation = de.ratio_virtualisation || 1;
     genChDe.cle_repartition_ch = de.cle_repartition_ch || 1;
+    genChDe.enum_type_installation_id = de.enum_type_installation_id;
     genChDe.surface_chauffee = de.surface_chauffee || Sh;
     genChDe.rdim_installation_ch = isImmeuble(map_id) ? Number(de.rdim) || 1 : 1;
     genChDe.nombre_niveau_installation_ch = de.nombre_niveau_installation_ch || 1;

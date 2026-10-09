@@ -57,9 +57,20 @@ export function conso_aux_gen(di, de, type, besoin, besoin_dep) {
    */
   const Paux_g_ch = g + h * (pe / 1000);
 
-  // Pour les installations collectives, la conso des auxiliaires est calculée à partir du besoin de l'appartement
-  let besoinAppart = besoin * (de[`cle_repartition_${type}`] || 1);
-  let besoinAppartDep = besoin_dep * (de[`cle_repartition_${type}`] || 1);
+  /**
+   * Pour les installations collectives, la conso des auxiliaires est calculée à partir du besoin
+   * de l'appartement (clé de répartition).
+   * Pour une installation de chauffage individuelle (enum_type_installation_id = 1), la clé
+   * n'est pas appliquée : le besoin reçu est déjà proratisé par Sc / Sh dans calc_chauffage, et
+   * le moteur de référence CSTB (Tribu) n'utilise aucune clé de répartition pour ces
+   * installations (DPE.Core : Calcul_installation.cs l.79-80, Calcul_generateur.cs l.1497,
+   * Calcul_batiment.cs l.652). La clé reste appliquée au collectif et à l'ECS.
+   * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §15.1
+   */
+  const ignoreCle = type === 'ch' && String(de.enum_type_installation_id) === '1';
+  const cle = ignoreCle ? 1 : de[`cle_repartition_${type}`] || 1;
+  let besoinAppart = besoin * cle;
+  let besoinAppartDep = besoin_dep * cle;
 
   /**
    * Le besoin reçu est déjà celui de l'installation : calc_chauffage le proratise par

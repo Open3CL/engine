@@ -219,6 +219,15 @@ describe('calc_chauffage - cas nominal (1 générateur, 1 émetteur)', () => {
     expect(genDe.nombre_niveau_installation_ch).toBe(4);
   });
 
+  test("propage le type d'installation au générateur (clé de répartition, issue #252)", () => {
+    const ch = installation([generateur()], [emetteur('1')], {});
+    ch.donnee_entree.enum_type_installation_id = '1';
+    appel(ch);
+
+    const genDe = ch.generateur_chauffage_collection.generateur_chauffage[0].donnee_entree;
+    expect(genDe.enum_type_installation_id).toBe('1');
+  });
+
   test('prorata unitaire : le besoin complet est transmis au générateur', () => {
     const ch = installation([generateur()], [emetteur('1')]);
     appel(ch, { bch: 800 });
