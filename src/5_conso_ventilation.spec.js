@@ -9,7 +9,11 @@ vi.mock('./utils.js', () => ({
   requestInput: (de, du, field) => de[field]
 }));
 
-const { default: calc_pvent } = await import('./5_conso_ventilation.js');
+const {
+  default: calc_pvent,
+  RATIO_HYBRIDE_INDIVIDUEL,
+  RATIO_HYBRIDE_COLLECTIF
+} = await import('./5_conso_ventilation.js');
 
 /**
  * 5. Consommation des auxiliaires de ventilation
@@ -49,12 +53,11 @@ describe('calc_pvent - consommation des auxiliaires de ventilation', () => {
     expect(di.pvent_moy).toBe(80);
   });
 
-  test("maison, ventilation hybride : ratio de temps d'utilisation appliqué (14/168)", () => {
+  test("maison, ventilation hybride : ratio de temps d'utilisation tabulé (0,083)", () => {
     const de = { type_ventilation: 'ventilation hybride après 2012', ventilation_post_2012: 1 };
     calc_pvent(di, de, du, 'maison');
-    // hybride => type 'simple flux auto', post_2012 forcé à 0, coef = 14 / (24*7)
-    const coef = 14 / (24 * 7);
-    expect(di.pvent_moy).toBeCloseTo(65 * coef, 10);
+    // hybride => type 'simple flux auto', post_2012 forcé à 0, coef = 0,083 (valeur tabulée §5 p.42)
+    expect(di.pvent_moy).toBeCloseTo(65 * 0.083, 10);
   });
 
   test('immeuble, VMC double flux : Pvent proratisé au débit et à la surface ventilée', () => {
@@ -70,8 +73,8 @@ describe('calc_pvent - consommation des auxiliaires de ventilation', () => {
     expect(di.conso_auxiliaire_ventilation).toBeCloseTo(8.76 * 110, 10);
   });
 
-  test("immeuble, ventilation hybride : ratio de temps d'utilisation immeuble (28/168)", () => {
-    // Branche `th !== 'maison'` du ratio hybride (28 au lieu de 14)
+  test("immeuble, ventilation hybride : ratio de temps d'utilisation collectif tabulé (0,167)", () => {
+    // Branche `th !== 'maison'` du ratio hybride (0,167 au lieu de 0,083)
     di.qvarep_conv = 2;
     const de = {
       type_ventilation: 'ventilation hybride de 2001 à 2012',
@@ -80,8 +83,29 @@ describe('calc_pvent - consommation des auxiliaires de ventilation', () => {
     };
     calc_pvent(di, de, du, 'immeuble');
     // hybride => type 'simple flux auto', post_2012 forcé à 0 => pvent_immeuble = 0.46
-    const coef = 28 / (24 * 7);
-    expect(di.pvent_moy).toBeCloseTo(0.46 * 2 * 50 * coef, 10);
+    expect(di.pvent_moy).toBeCloseTo(0.46 * 2 * 50 * 0.167, 10);
+  });
+
+  test('ventilation hybride : ratios tabulés de la méthode, pas 14/168 ni 28/168', () => {
+    // @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §5 page 42 (Collectif 0,167 / individuel 0,083)
+    expect(RATIO_HYBRIDE_INDIVIDUEL).toBe(0.083);
+    expect(RATIO_HYBRIDE_COLLECTIF).toBe(0.167);
+    expect(RATIO_HYBRIDE_INDIVIDUEL).not.toBeCloseTo(14 / 168, 4);
+    expect(RATIO_HYBRIDE_COLLECTIF).not.toBeCloseTo(28 / 168, 4);
+  });
+
+  test('appartement, ventilation hybride : ratio collectif (0,167) et consommation = 8,76 × Pvent', () => {
+    // Valeur de référence : autotest CSTB APP4-0-13 (hybride, Qvarep 1,17, Sh 96 m²) =>
+    // Pventmoy Tribu = 0,46 × 1,17 × 96 × 0,167 = 8,6284224 W
+    di.qvarep_conv = 1.17;
+    const de = {
+      type_ventilation: 'ventilation hybride après 2012',
+      ventilation_post_2012: 1,
+      surface_ventile: 96
+    };
+    calc_pvent(di, de, du, 'appartement');
+    expect(di.pvent_moy).toBeCloseTo(8.6284224, 9);
+    expect(di.conso_auxiliaire_ventilation).toBeCloseTo(8.76 * 8.6284224, 9);
   });
 });
 
@@ -119,12 +143,12 @@ describe('calc_pvent - routage de tous les types de ventilation', () => {
   ];
 
   test.each(hybrides)(
-    'ventilation hybride "%s" : simple flux auto avec ratio 14/168 (maison)',
+    'ventilation hybride "%s" : simple flux auto avec ratio 0,083 (maison)',
     (type_ventilation) => {
       const di = {};
       // Même avec ventilation_post_2012 = 1, l'hybride force post_2012 = 0 (=> 65 W)
       calc_pvent(di, { type_ventilation, ventilation_post_2012: 1 }, {}, 'maison');
-      expect(di.pvent_moy).toBeCloseTo(65 * (14 / (24 * 7)), 10);
+      expect(di.pvent_moy).toBeCloseTo(65 * 0.083, 10);
     }
   );
 
