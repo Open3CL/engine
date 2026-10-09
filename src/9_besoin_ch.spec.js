@@ -56,7 +56,13 @@ vi.mock('./utils.js', () => ({
   }
 }));
 
-const { default: calc_besoin_ch, calc_Fj, calc_bvj } = await import('./9_besoin_ch.js');
+const {
+  default: calc_besoin_ch,
+  calc_Fj,
+  calc_bvj,
+  isImmeubleMultiEcs,
+  prorataEcsImmeubleMulti
+} = await import('./9_besoin_ch.js');
 const { default: tvsBch } = await import('./tv.js');
 const { calc_ai_j, calc_as_j } = await import('./6.1_apport_gratuit.js');
 const { calc_sse_j } = await import('./6.2_surface_sud_equivalente.js');
@@ -548,5 +554,72 @@ describe('calc_besoin_ch - récupération des pertes des générateurs ECS seuls
     );
     expect(calc_Qrec_gen_ecs_j).not.toHaveBeenCalled();
     expect(ret.pertes_generateur_ch_recup).toBe(0);
+  });
+});
+
+/**
+ * Immeuble à plusieurs installations ECS dont une collective (ex. installation mixte
+ * individuelle/collective) : besoin de chaque installation = Becs_immeuble × Sh_ecs / SH, × rdim
+ * pour une installation individuelle (Tribu, Calcul_batiment.Calcul_Cecs et l. 374).
+ * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §9.1.1 et §11.4
+ */
+describe('calc_besoin_ch - immeuble à installations ECS individuelles et collectives', () => {
+  const ecsIndividuelle = (surface_habitable, rdim) => ({
+    donnee_entree: { enum_type_installation_id: '1', surface_habitable, rdim },
+    generateur_ecs_collection: { generateur_ecs: [] }
+  });
+  const ecsCollective = (surface_habitable) => ({
+    donnee_entree: { enum_type_installation_id: '2', surface_habitable, rdim: 1 },
+    generateur_ecs_collection: { generateur_ecs: [] }
+  });
+
+  beforeEach(() => {
+    utilState.bug = false;
+    vi.mocked(calc_ai_j).mockReset().mockReturnValue(5000);
+    vi.mocked(calc_as_j).mockReset().mockReturnValue(2000);
+    vi.mocked(calc_sse_j).mockReset().mockReturnValue(10);
+    vi.mocked(calc_besoin_ecs_j).mockReset().mockReturnValue(10);
+    vi.mocked(calc_Qrec_gen_j).mockReset().mockReturnValue(0);
+  });
+
+  test('isImmeubleMultiEcs : immeuble, plusieurs installations dont une collective, surfaces renseignées', () => {
+    const mixte = [ecsIndividuelle(20, 1), ecsCollective(155)];
+    expect(isImmeubleMultiEcs(mixte, 'immeuble', 175)).toBe(true);
+    expect(isImmeubleMultiEcs(mixte, 'appartement', 175)).toBe(false);
+    expect(isImmeubleMultiEcs([ecsCollective(155)], 'immeuble', 175)).toBe(false);
+    expect(
+      isImmeubleMultiEcs([ecsIndividuelle(20, 1), ecsIndividuelle(155, 1)], 'immeuble', 175)
+    ).toBe(false);
+    expect(isImmeubleMultiEcs([ecsIndividuelle(0, 1), ecsCollective(155)], 'immeuble', 175)).toBe(
+      false
+    );
+    expect(isImmeubleMultiEcs(mixte, 'immeuble', 0)).toBe(false);
+  });
+
+  test('prorataEcsImmeubleMulti : Sh_ecs / SH, × rdim pour une installation individuelle seulement', () => {
+    expect(
+      prorataEcsImmeubleMulti(
+        { enum_type_installation_id: '1', surface_habitable: 20, rdim: 3 },
+        200
+      )
+    ).toBeCloseTo(0.3, 12);
+    expect(
+      prorataEcsImmeubleMulti({ enum_type_installation_id: '1', surface_habitable: 20 }, 200)
+    ).toBeCloseTo(0.1, 12);
+    expect(
+      prorataEcsImmeubleMulti(
+        { enum_type_installation_id: '2', surface_habitable: 150, rdim: 3 },
+        200
+      )
+    ).toBeCloseTo(0.75, 12);
+  });
+
+  test('pertes de distribution ECS récupérées pondérées par Sh_ecs / SH (et rdim en individuel)', () => {
+    const instal_ecs = [ecsIndividuelle(20, 3), ecsCollective(155)];
+    const ret = calc_besoin_ch(0, 0, 0, 0, 175, 100, 3, instal_ecs, [], [], null, 'immeuble', 4);
+    // Σ Tau × Becs × prorata (Wh) : 0,1 × 10 × (20 / 175 × 3) + 0,212 × 10 × 155 / 175
+    const total = (0.1 * 10 * ((20 / 175) * 3) + 0.212 * 10 * (155 / 175)) * 1000;
+    // un seul mois : Qrec_j = Qrec = 0,48 × ΣNref19 / 8760 × total
+    expect(ret.pertes_distribution_ecs_recup).toBeCloseTo((0.48 * 100 * total) / 8760, 9);
   });
 });

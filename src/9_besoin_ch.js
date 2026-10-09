@@ -89,7 +89,8 @@ export default function calc_besoin_ch(
     ca,
     zc,
     th,
-    nbLogements
+    nbLogements,
+    Sh
   );
 
   /**
@@ -220,7 +221,38 @@ export default function calc_besoin_ch(
   };
 }
 
-function calc_qrec(instal_ecs, nadeq, prorataEcs, ilpa, ca, zc, th, nbLogements) {
+/**
+ * Immeuble avec plusieurs installations ECS dont au moins une collective (installations
+ * collectives ou mixtes individuelles/collectives), toutes avec une surface habitable desservie.
+ * Le besoin ECS de chaque installation est alors Becs_immeuble × Sh_ecs / SH (cf. engine.js,
+ * isImmeubleMultiEcs).
+ */
+export function isImmeubleMultiEcs(instal_ecs, th, Sh) {
+  return (
+    th === 'immeuble' &&
+    instal_ecs.length > 1 &&
+    Number(Sh) > 0 &&
+    instal_ecs.some((e) => e.donnee_entree.enum_type_installation_id !== '1') &&
+    instal_ecs.every((e) => Number(e.donnee_entree.surface_habitable) > 0)
+  );
+}
+
+/**
+ * Prorata du besoin ECS de l'immeuble servant aux pertes de distribution récupérées d'une
+ * installation, cas isImmeubleMultiEcs. Tribu (Moteur_DPE.dll) :
+ * - Becs_inst = Becs_immeuble × Sh_ecs / SH (Calcul_batiment.Calcul_Cecs) ;
+ * - Qrec = 0,48 × Σ (Qdw_ind_vc × Rdim + Qdw_coll_vc) pour une installation individuelle,
+ *   0,48 × Σ (Qdw_ind_vc + Qdw_coll_vc) pour une collective (Calcul_batiment.cs, l. 374),
+ *   avec Qdw_ind_vc = 0,1 × Becs_inst et Qdw_coll_vc = 0,112 × Becs_inst
+ *   (Calcul_installation_ECS.cs, l. 347-350).
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §9.1.1 et §11.4
+ */
+export function prorataEcsImmeubleMulti(de, Sh) {
+  const rdim = de.enum_type_installation_id === '1' ? Number(de.rdim) || 1 : 1;
+  return (Number(de.surface_habitable) / Number(Sh)) * rdim;
+}
+
+function calc_qrec(instal_ecs, nadeq, prorataEcs, ilpa, ca, zc, th, nbLogements, Sh) {
   const Nref21 = tvs.nref21[ilpa];
   const Nref19 = tvs.nref19[ilpa];
 
@@ -238,12 +270,15 @@ function calc_qrec(instal_ecs, nadeq, prorataEcs, ilpa, ca, zc, th, nbLogements)
   let Qrec_dep = 0;
   let total_becs_rdim = 0;
   let total_becs_dep_rdim = 0;
+  const multiEcs = isImmeubleMultiEcs(instal_ecs, th, Sh);
   instal_ecs.forEach((ecs) => {
     let becs_int = 0;
     let becs_dep_int = 0;
     const isInstallationSimple = ecs.donnee_entree.enum_type_installation_id === '1';
     const Tau = isInstallationSimple ? 0.1 : 0.212;
-    if (th === 'immeuble' && ecs.donnee_entree.rdim > 1) {
+    if (multiEcs) {
+      prorataEcs = prorataEcsImmeubleMulti(ecs.donnee_entree, Sh);
+    } else if (th === 'immeuble' && ecs.donnee_entree.rdim > 1) {
       prorataEcs = ecs.donnee_entree.rdim / nbLogements;
     }
     for (const mois of mois_liste) {
