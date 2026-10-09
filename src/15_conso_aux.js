@@ -375,7 +375,15 @@ export function conso_aux_distribution_ecs(
   // CAS 3 - enum_bouclage_reseau_ecs_id = 3 (traçage)
   if (enumBouclage === 3) {
     const BECS_annuel = di.besoin_ecs;
-    const Sh_install = de.surface_habitable || Sh_logement;
+    /**
+     * Appartement : le besoin du logement est porté à l'échelle de l'installation (Sh_install / Sh).
+     * Immeuble (Sh_immeuble = Sh_logement) : di.besoin_ecs est déjà le besoin de l'installation
+     * (proratisé par di.ratio_besoin_ecs), aucune mise à l'échelle supplémentaire.
+     * @see Moteur_DPE.dll Calcul_installation_ECS.cs l.378 (Qtrac = 0,14 × Becs / ratio_batiment,
+     * ratio_batiment = 1 hors appartement : Calcul_batiment.cs l.303-309)
+     */
+    const Sh_install =
+      Sh_immeuble > Sh_logement ? de.surface_habitable || Sh_logement : Sh_logement;
     di.conso_auxiliaire_distribution_ecs = (0.14 * BECS_annuel * Sh_install) / Sh_logement;
     return;
   }

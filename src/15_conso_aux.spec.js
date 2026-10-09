@@ -654,6 +654,23 @@ describe("conso_aux_distribution_ecs - auxiliaires de distribution d'ECS", () =>
     expect(di.conso_auxiliaire_distribution_ecs).toBeCloseTo(168, 10);
   });
 
+  test("immeuble, traçage : 0,14 × besoin de l'installation (besoin déjà proratisé)", () => {
+    // Immeuble 175 m², installation 75 m² : di.besoin_ecs est déjà la part de l'installation.
+    // @see Moteur_DPE.dll Calcul_installation_ECS.cs l.378 ; autotest IC1-0-21
+    const di = { besoin_ecs: 1769.75 };
+    conso_aux_distribution_ecs(
+      {},
+      { enum_type_installation_id: '2', enum_bouclage_reseau_ecs_id: '3', surface_habitable: 75 },
+      di,
+      175,
+      175,
+      1,
+      1,
+      1
+    );
+    expect(di.conso_auxiliaire_distribution_ecs).toBeCloseTo(0.14 * 1769.75, 10);
+  });
+
   test("traçage sans surface d'installation : repli sur la surface du logement", () => {
     const di = { besoin_ecs: 1000 };
     conso_aux_distribution_ecs(
