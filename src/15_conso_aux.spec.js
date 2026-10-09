@@ -229,6 +229,70 @@ describe('conso_aux_gen - auxiliaires de génération', () => {
       10
     );
   });
+
+  /**
+   * Issue #252 : la clé de répartition du chauffage n'est pas appliquée au besoin d'une
+   * installation individuelle (enum_type_installation_id = 1) : ce besoin est déjà proratisé
+   * par Sc / Sh, et le moteur CSTB (Tribu) n'utilise aucune clé pour ces installations.
+   * La clé reste appliquée au collectif et à l'ECS.
+   * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §15.1
+   */
+  describe('clé de répartition (issue #252)', () => {
+    test('chauffage, installation individuelle : la clé de répartition est ignorée', () => {
+      const de = {
+        enum_type_generateur_ch_id: '90',
+        enum_type_installation_id: '1',
+        cle_repartition_ch: 0.5
+      };
+      conso_aux_gen(di, de, 'ch', 1000, 1200, 100);
+      // Paux = 20 + 1,6 × 20 = 52 W ; conso = 52 × 1000 / 20000 = 2,6 (sans facteur 0,5)
+      expect(di.conso_auxiliaire_generation_ch).toBeCloseTo(2.6, 10);
+      expect(di.conso_auxiliaire_generation_ch_depensier).toBeCloseTo(3.12, 10);
+    });
+
+    test('chauffage, installation individuelle (identifiant numérique) : clé ignorée', () => {
+      const de = {
+        enum_type_generateur_ch_id: '90',
+        enum_type_installation_id: 1,
+        cle_repartition_ch: 0.5
+      };
+      conso_aux_gen(di, de, 'ch', 1000, 1200, 100);
+      expect(di.conso_auxiliaire_generation_ch).toBeCloseTo(2.6, 10);
+      expect(di.conso_auxiliaire_generation_ch_depensier).toBeCloseTo(3.12, 10);
+    });
+
+    test('chauffage, installation collective : la clé de répartition est appliquée', () => {
+      const de = {
+        enum_type_generateur_ch_id: '90',
+        enum_type_installation_id: '2',
+        cle_repartition_ch: 0.5
+      };
+      conso_aux_gen(di, de, 'ch', 1000, 1200, 100);
+      // conso = 52 × (1000 × 0,5) / 20000 = 1,3
+      expect(di.conso_auxiliaire_generation_ch).toBeCloseTo(1.3, 10);
+      expect(di.conso_auxiliaire_generation_ch_depensier).toBeCloseTo(1.56, 10);
+    });
+
+    test("chauffage, type d'installation non renseigné : la clé de répartition est appliquée", () => {
+      const de = { enum_type_generateur_ch_id: '90', cle_repartition_ch: 0.5 };
+      conso_aux_gen(di, de, 'ch', 1000, 1200, 100);
+      expect(di.conso_auxiliaire_generation_ch).toBeCloseTo(1.3, 10);
+      expect(di.conso_auxiliaire_generation_ch_depensier).toBeCloseTo(1.56, 10);
+    });
+
+    test('ECS, installation individuelle : la clé de répartition ECS reste appliquée', () => {
+      const de = {
+        enum_type_generateur_ecs_id: '50',
+        enum_type_installation_id: '1',
+        cle_repartition_ecs: 0.5,
+        cle_repartition_ch: 0.25
+      };
+      conso_aux_gen(di, de, 'ecs', 800, 1000, 100);
+      // Sans clé : 2,08 / 2,6 ; avec la clé ECS 0,5 : 1,04 / 1,3
+      expect(di.conso_auxiliaire_generation_ecs).toBeCloseTo(1.04, 10);
+      expect(di.conso_auxiliaire_generation_ecs_depensier).toBeCloseTo(1.3, 10);
+    });
+  });
 });
 
 /**
