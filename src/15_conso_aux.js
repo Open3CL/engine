@@ -26,7 +26,16 @@ export function conso_aux_gen(di, de, type, besoin, besoin_dep, Sh) {
   const g = getG(type, typeGenerateur, presenceVentilateur === 1);
   const h = getH(type, typeGenerateur, presenceVentilateur === 1);
 
-  let pe = di.pn / (de.ratio_virtualisation || 1);
+  /**
+   * Caux_g = Paux_g × Bch / Pn : les plafonds ci-dessous (400 / 300 / 70 kW) ne s'appliquent
+   * qu'à la puissance utilisée dans Paux_g = G + H × Pn ; le dénominateur reste la puissance
+   * nominale réelle du générateur, comme le moteur de référence CSTB (Tribu) et comme le calcul
+   * dépensier. Autotests CSTB APP3-0-3 (chaudière bois collective 150 kW, Tribu Qaux_ch =
+   * 13,27 kWh) et IC4-0-1 (chaudière bois 300 kW, Tribu Qaux_ch = 864,60 kWh).
+   * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §15.1
+   */
+  const pnReel = di.pn / (de.ratio_virtualisation || 1);
+  let pe = pnReel;
 
   // Pour les chaudières gaz ou fioul : si Pn > 400 kW alors Pn = 400 kW
   if (g === G_CHAUDIERE && pe > 400000) {
@@ -61,9 +70,9 @@ export function conso_aux_gen(di, de, type, besoin, besoin_dep, Sh) {
     ratio = Sc / Sh;
   }
 
-  di[`conso_auxiliaire_generation_${type}`] = (Paux_g_ch * besoinAppart * ratio) / pe || 0;
+  di[`conso_auxiliaire_generation_${type}`] = (Paux_g_ch * besoinAppart * ratio) / pnReel || 0;
   di[`conso_auxiliaire_generation_${type}_depensier`] =
-    (Paux_g_ch * besoinAppartDep * ratio) / (di.pn / (de.ratio_virtualisation || 1)) || 0;
+    (Paux_g_ch * besoinAppartDep * ratio) / pnReel || 0;
 }
 
 /**

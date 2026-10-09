@@ -83,10 +83,11 @@ describe('conso_aux_gen - auxiliaires de génération', () => {
     expect(sansVentilateur.conso_auxiliaire_generation_ch).toBe(0);
   });
 
-  test('chaudière gaz avec Pn > 400 kW : puissance plafonnée à 400 kW', () => {
+  test('chaudière gaz avec Pn > 400 kW : puissance plafonnée à 400 kW dans Paux_g seulement', () => {
     const diCap = { pn: 500000 };
     conso_aux_gen(diCap, { enum_type_generateur_ch_id: '90' }, 'ch', 1000, 1200, 100);
-    expect(diCap.conso_auxiliaire_generation_ch).toBeCloseTo(1.65, 10);
+    // Paux = 20 + 1,6 × 400 = 660 W ; conso = 660 × 1000 / 500000 (Pn réel, §15.1)
+    expect(diCap.conso_auxiliaire_generation_ch).toBeCloseTo(1.32, 10);
     expect(diCap.conso_auxiliaire_generation_ch_depensier).toBeCloseTo(1.584, 10);
   });
 
@@ -102,8 +103,8 @@ describe('conso_aux_gen - auxiliaires de génération', () => {
     const diAir = { pn: 500000 };
     conso_aux_gen(diAir, { enum_type_generateur_ch_id: '50' }, 'ch', 1000, 1200, 100);
     // g=0, h=4, pe plafonné à 300000 => Paux = 0 + 4*300 = 1200
-    // conso = (1 * (1200 * 1000 * 1)) / 300000 = 4
-    expect(diAir.conso_auxiliaire_generation_ch).toBeCloseTo(4, 10);
+    // conso = (1200 * 1000) / 500000 = 2.4 (dénominateur = Pn réel, §15.1)
+    expect(diAir.conso_auxiliaire_generation_ch).toBeCloseTo(2.4, 10);
     // depensier utilise di.pn (500000, non plafonné) : (1200 * 1200) / 500000 = 2.88
     expect(diAir.conso_auxiliaire_generation_ch_depensier).toBeCloseTo(2.88, 10);
   });
@@ -120,8 +121,37 @@ describe('conso_aux_gen - auxiliaires de génération', () => {
       100
     );
     // pe plafonné à 70000 => Paux = 73.3 + 10.5*70 = 808.3
-    // conso = (1 * (808.3 * 1000 * 1)) / 70000
-    expect(diBois.conso_auxiliaire_generation_ch).toBeCloseTo((808.3 * 1000) / 70000, 10);
+    // conso = (808.3 * 1000) / 100000 (dénominateur = Pn réel, §15.1)
+    expect(diBois.conso_auxiliaire_generation_ch).toBeCloseTo((808.3 * 1000) / 100000, 10);
+  });
+
+  /**
+   * Autotest CSTB APP3-0-3 : chaudière bois collective (ventilateur), Pn logement 5589,19 W,
+   * ratio_virtualisation 0,0372613 => Pn immeuble 150 kW, plafonnée à 70 kW dans Paux_g seulement.
+   * Paux_g = 73,3 + 10,5 × 70 = 808,3 W ; Tribu Qaux_ch = 13,27 kWh = 808,3 × 2462,6 / 150000
+   * (avec le plafond au dénominateur : 808,3 × 2462,6 / 70000 = 28,4 kWh, +114 %).
+   */
+  test('chaudière bois virtualisée > 70 kW : Caux_g = Paux_g(70 kW) × Bch / Pn immeuble réelle', () => {
+    const diApp = { pn: 5589.19 };
+    conso_aux_gen(
+      diApp,
+      {
+        enum_type_generateur_ch_id: '60',
+        presenceVentilateur: 1,
+        ratio_virtualisation: 0.037261294829995344
+      },
+      'ch',
+      2462.6,
+      2462.6,
+      80
+    );
+    const pnImmeuble = 5589.19 / 0.037261294829995344;
+    expect(diApp.conso_auxiliaire_generation_ch).toBeCloseTo((808.3 * 2462.6) / pnImmeuble, 10);
+    expect(diApp.conso_auxiliaire_generation_ch).toBeCloseTo(13.27, 2);
+    expect(diApp.conso_auxiliaire_generation_ch_depensier).toBeCloseTo(
+      diApp.conso_auxiliaire_generation_ch,
+      10
+    );
   });
 
   test('type de générateur inconnu (ni ch ni ecs) : facteurs nuls, consommation nulle', () => {
