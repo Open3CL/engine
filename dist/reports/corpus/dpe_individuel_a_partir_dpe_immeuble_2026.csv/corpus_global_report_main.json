@@ -53,19 +53,32 @@
       "successRatio": "76.26 %"
     },
     "conso_auxiliaire_generation_ch": {
-      "nbBelowThreshold": 7516,
+      "nbBelowThreshold": 7533,
       "mandatory": false,
-      "successRatio": "75.16 %"
+      "successRatio": "75.33 %"
     },
     "conso_auxiliaire_generation_ecs": {
       "nbBelowThreshold": 6848,
       "mandatory": false,
       "successRatio": "68.48 %"
     },
+    "conso_ch": { "nbBelowThreshold": 4852, "mandatory": true, "successRatio": "48.52 %" },
+    "conso_ecs": { "nbBelowThreshold": 4779, "mandatory": true, "successRatio": "47.79 %" },
     "conso_auxiliaire_ventilation": {
       "nbBelowThreshold": 6771,
       "mandatory": false,
       "successRatio": "67.71 %"
+    },
+    "conso_auxiliaire_distribution_ch": {
+      "nbBelowThreshold": 4652,
+      "mandatory": false,
+      "successRatio": "46.52 %"
+    },
+    "ep_conso_5_usages": { "nbBelowThreshold": 3956, "mandatory": true, "successRatio": "39.56 %" },
+    "ep_conso_5_usages_m2": {
+      "nbBelowThreshold": 3934,
+      "mandatory": true,
+      "successRatio": "39.34 %"
     },
     "emission_ges_5_usages": {
       "nbBelowThreshold": 3518,
@@ -73,32 +86,19 @@
       "successRatio": "35.18 %"
     },
     "emission_ges_5_usages_m2": {
-      "nbBelowThreshold": 3524,
+      "nbBelowThreshold": 3525,
       "mandatory": true,
-      "successRatio": "35.24 %"
-    },
-    "conso_ch": { "nbBelowThreshold": 4852, "mandatory": true, "successRatio": "48.52 %" },
-    "conso_auxiliaire_distribution_ch": {
-      "nbBelowThreshold": 4652,
-      "mandatory": false,
-      "successRatio": "46.52 %"
-    },
-    "conso_ecs": { "nbBelowThreshold": 4779, "mandatory": true, "successRatio": "47.79 %" },
-    "ep_conso_5_usages": { "nbBelowThreshold": 3957, "mandatory": true, "successRatio": "39.57 %" },
-    "ep_conso_5_usages_m2": {
-      "nbBelowThreshold": 3934,
-      "mandatory": true,
-      "successRatio": "39.34 %"
+      "successRatio": "35.25 %"
     }
   },
   "performance": {
     "count": 9993,
-    "mean": 6.462,
-    "median": 5.753,
-    "min": 1.666,
-    "max": 61.536,
-    "p95": 12.256,
-    "p99": 18.203,
-    "totalMs": 64574.527
+    "mean": 5.444,
+    "median": 4.642,
+    "min": 1.707,
+    "max": 53.073,
+    "p95": 10.257,
+    "p99": 15.652,
+    "totalMs": 54403.81
   }
 }
