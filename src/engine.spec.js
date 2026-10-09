@@ -75,8 +75,12 @@ vi.mock('./ficheTechnique.js', () => ({ default: vi.fn() }));
 // On expose des méthodes mockées récupérables dans les tests.
 const calculateInertie = vi.fn();
 const calculateEnr = vi.fn();
+const ratioProrataPvLogement = vi.fn();
 vi.mock('./7_inertie.js', () => ({ Inertie: vi.fn(() => ({ calculateInertie })) }));
-vi.mock('./16.2_production_enr.js', () => ({ ProductionENR: vi.fn(() => ({ calculateEnr })) }));
+vi.mock('./16.2_production_enr.js', () => ({
+  ProductionENR: vi.fn(() => ({ calculateEnr })),
+  ratioProrataPvLogement: (...args) => ratioProrataPvLogement(...args)
+}));
 
 // Le service de sanitisation est instancié au chargement puis appelé : `execute`
 // renvoie l'entrée telle quelle.
@@ -153,6 +157,8 @@ beforeEach(() => {
   };
   vi.mocked(calc_conso).mockReturnValue(consoResult);
   vi.mocked(calculateEnr).mockReturnValue({ pv: 1 });
+  ratioProrataPvLogement.mockReset();
+  ratioProrataPvLogement.mockReturnValue(0.25);
   vi.mocked(calc_confort_ete).mockReturnValue('confort');
   vi.mocked(calc_qualite_isolation).mockReturnValue('qualite');
 });
@@ -426,17 +432,24 @@ describe('calcul_3cl - run intégral (maison)', () => {
     expect(calc_conso.mock.calls[0][7]).toBe(1);
     expect(calc_conso.mock.calls[0][8]).toBe(1);
 
-    // 3 calculs de production ENR ; le 1ᵉʳ sans coefficient.
+    // Coefficient de proratisation PV calculé à partir du type de bâtiment, de la méthode et des surfaces.
+    expect(ratioProrataPvLogement).toHaveBeenCalledWith('maison', '1', 80, 200);
+
+    // 3 calculs de production ENR ; le 1ᵉʳ sans coefficient ; le ratio PV est transmis aux 3 passes.
     expect(calculateEnr).toHaveBeenCalledTimes(3);
     expect(calculateEnr.mock.calls[0]).toEqual([
       dpe.logement.production_elec_enr,
       consoResult,
       80,
       'maison',
-      'zc1'
+      'zc1',
+      undefined,
+      0.25
     ]);
     expect(calculateEnr.mock.calls[1][5]).toBe(1.7);
     expect(calculateEnr.mock.calls[2][5]).toBe(2.3);
+    expect(calculateEnr.mock.calls[1][6]).toBe(0.25);
+    expect(calculateEnr.mock.calls[2][6]).toBe(0.25);
 
     // Sorties agrégées.
     expect(dpe.logement.sortie.deperdition).toEqual({ deperdition_enveloppe: 300 });

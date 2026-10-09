@@ -1,4 +1,4 @@
-import { ProductionENR } from './16.2_production_enr.js';
+import { ProductionENR, ratioProrataPvLogement } from './16.2_production_enr.js';
 import { describe, expect, test, it } from 'vitest';
 
 describe('production ENR unit tests', () => {
@@ -47,8 +47,12 @@ describe('production ENR unit tests', () => {
   });
 
   it.each([
-    [2826.8015616000007, 8, 9.6],
-    [2120.1011712, undefined, 9.6]
+    // surface saisie prioritaire sur le forfait 1,6 m²/module (Tribu : seule S_capteur en entrée)
+    [2120.1011712, 8, 9.6],
+    [2120.1011712, undefined, 9.6],
+    // à défaut de surface : 1,6 m² × nombre de modules
+    [2826.8015616000007, 8, undefined],
+    [2826.8015616000007, 8, 0]
   ])(
     'should get ppv %s with nombre module %s and surface totale capteur %s',
     (ppv, nombre_module, surface_totale_capteurs) => {
@@ -67,6 +71,96 @@ describe('production ENR unit tests', () => {
       expect(productionENR.getPpv(productionElecEnr, 1)).toBe(ppv);
     }
   );
+
+  describe('proratisation au logement des installations PV d’immeuble', () => {
+    const panneau = (extra = {}) => ({
+      panneaux_pv_collection: {
+        panneaux_pv: [
+          {
+            surface_totale_capteurs: 9.6,
+            nombre_module: 8,
+            enum_orientation_pv_id: 1,
+            enum_inclinaison_pv_id: 2,
+            ...extra
+          }
+        ]
+      }
+    });
+
+    test('ratio 1 par défaut : production de l’installation complète', () => {
+      expect(productionENR.getPpv(panneau(), 1)).toBe(2120.1011712);
+    });
+
+    test('la production est proratisée par Sh_logement / Sh_immeuble', () => {
+      expect(productionENR.getPpv(panneau(), 1, 0.25)).toBeCloseTo(2120.1011712 * 0.25, 9);
+    });
+
+    test('le ratio_virtualisation exporté est prioritaire sur Sh_logement / Sh_immeuble', () => {
+      expect(productionENR.getPpv(panneau({ ratio_virtualisation: 0.1 }), 1, 0.25)).toBeCloseTo(
+        212.01011712,
+        9
+      );
+    });
+
+    test('le ratio_virtualisation est ignoré sans proratisation (maison, appartement individuel)', () => {
+      expect(productionENR.getPpv(panneau({ ratio_virtualisation: 0.1 }), 1, 1)).toBe(
+        2120.1011712
+      );
+    });
+
+    test('2469E1760405R : 2 m² saisis, 18 modules, Sh 67,42 / 1 921,43 m²', () => {
+      // Ppv = S × Sh_log / Sh_imm × Σ k·0,17·Epv·0,86 : la production dépend de la surface
+      // retenue (2 m², pas 1,6 × 18 = 28,8 m²) et est ramenée au logement.
+      const ratio = ratioProrataPvLogement('appartement', '5', 67.42, 1921.43);
+      const pvImmeuble = productionENR.getPpv(panneau({ surface_totale_capteurs: 2, nombre_module: 18 }), 1);
+      const pvLogement = productionENR.getPpv(
+        panneau({ surface_totale_capteurs: 2, nombre_module: 18 }),
+        1,
+        ratio
+      );
+      expect(pvImmeuble).toBeCloseTo((2120.1011712 / 9.6) * 2, 9);
+      expect(pvLogement).toBeCloseTo(pvImmeuble * (67.42 / 1921.43), 9);
+    });
+
+    test('calculateEnr transmet le ratio à la production PV', () => {
+      const conso = {
+        ef_conso: { conso_ecs: 1000, conso_5_usages: 1500 },
+        ep_conso: { ep_conso_5_usages: 10000 },
+        sortie_par_energie_collection: {
+          sortie_par_energie: [{ enum_type_energie_id: '1', conso_5_usages: 1500 }]
+        }
+      };
+      const ret = productionENR.calculateEnr(
+        { donnee_entree: { presence_production_pv: 1 }, ...panneau() },
+        conso,
+        10,
+        'appartement',
+        1,
+        undefined,
+        0.5
+      );
+      expect(ret.production_pv).toBeCloseTo(2120.1011712 * 0.5, 9);
+    });
+  });
+
+  describe('ratioProrataPvLogement', () => {
+    test.each([
+      ['appartement, installation d’immeuble (map 5)', 'appartement', '5', 50, 200, 0.25],
+      ['appartement issu d’un DPE immeuble (map 33)', 'appartement', '33', 50, 200, 0.25],
+      ['surfaces sous forme de chaînes', 'appartement', '32', '48.3', '1113.35', 48.3 / 1113.35],
+      ['maison', 'maison', '1', 50, 200, 1],
+      ['immeuble', 'immeuble', '6', 200, 200, 1],
+      ['appartement chauffage + ECS individuels (map 2)', 'appartement', '2', 50, 200, 1],
+      ['appartement RT2012 individuel (map 22)', 'appartement', '22', 50, 200, 1],
+      ['appartement RE2020 individuel (map 25)', 'appartement', '25', 50, 200, 1],
+      ['surface immeuble absente', 'appartement', '5', 50, undefined, 1],
+      ['surface logement absente', 'appartement', '5', undefined, 200, 1],
+      ['surface immeuble égale à celle du logement', 'appartement', '5', 50, 50, 1],
+      ['surface immeuble inférieure à celle du logement', 'appartement', '5', 50, 40, 1]
+    ])('%s', (_label, th, mapId, shl, shi, attendu) => {
+      expect(ratioProrataPvLogement(th, mapId, shl, shi)).toBeCloseTo(attendu, 12);
+    });
+  });
 
   test('should update ef conso', () => {
     const productionElectricite = {

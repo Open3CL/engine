@@ -30,7 +30,7 @@ import {
 } from './utils.js';
 import { Inertie } from './7_inertie.js';
 import getFicheTechnique from './ficheTechnique.js';
-import { ProductionENR } from './16.2_production_enr.js';
+import { ProductionENR, ratioProrataPvLogement } from './16.2_production_enr.js';
 import DpeSanitizerService from './dpe-sanitizer.service.js';
 
 const LIB_VERSION = 'OPEN3CL_VERSION';
@@ -598,12 +598,22 @@ export function calcul_3cl(inputDpe, options) {
     th === 'immeuble' ? Nb_lgt : 1
   );
 
+  // Proratisation au logement d'une installation PV d'immeuble (appartement)
+  const ratioPv = ratioProrataPvLogement(
+    th,
+    map_id,
+    cg.surface_habitable_logement,
+    cg.surface_habitable_immeuble
+  );
+
   const production_electricite = productionENR.calculateEnr(
     dpe.logement.production_elec_enr,
     conso,
     Sh,
     th,
-    zc_id
+    zc_id,
+    undefined,
+    ratioPv
   );
 
   const conso1_7 = calc_conso(
@@ -627,7 +637,8 @@ export function calcul_3cl(inputDpe, options) {
     Sh,
     th,
     zc_id,
-    COEFF_EP_1_7
+    COEFF_EP_1_7,
+    ratioPv
   );
 
   const conso2_3 = calc_conso(
@@ -651,7 +662,8 @@ export function calcul_3cl(inputDpe, options) {
     Sh,
     th,
     zc_id,
-    COEFF_EP_2_3
+    COEFF_EP_2_3,
+    ratioPv
   );
 
   // get all baie_vitree orientations
