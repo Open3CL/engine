@@ -354,8 +354,23 @@ export default function calc_gen_ecs(dpe, gen_ecs, ecs_di, ecs_de, GV, ca_id, zc
       }
     }
 
-    di.rendement_generation_stockage = rgrsReseauUrbain(de, ecs_de);
-    di.rendement_generation_stockage_depensier = rgrsReseauUrbain(de, ecs_de);
+    const rgSaisi = di.rendement_generation_stockage;
+    let rgReseau = rgrsReseauUrbain(de, ecs_de);
+
+    /**
+     * Type 72 (réseau non isolé) exporté avec 0.9 : le logiciel n'a pas transmis
+     * isolation_equipement_reseau = installation_non_isoles au moteur de référence, qui applique alors
+     * 0.9 (Tribu Calcul_installation_ECS.cs, cas reseau_de_chaleur). On reproduit la valeur du DPE.
+     */
+    if (bug_for_bug_compat && de.enum_type_generateur_ecs_id === '72' && rgSaisi === 0.9) {
+      rgReseau = 0.9;
+      console.warn(
+        `Correction rendement_generation_stockage pour le générateur ECS ${de.description} (0.9 saisi pour un réseau de chaleur non isolé)`
+      );
+    }
+
+    di.rendement_generation_stockage = rgReseau;
+    di.rendement_generation_stockage_depensier = rgReseau;
 
     Iecs = 1 / di.rendement_generation_stockage;
     Iecs_dep = 1 / di.rendement_generation_stockage_depensier;

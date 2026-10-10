@@ -773,6 +773,54 @@ describe('calc_gen_ecs - consommation par générateur', () => {
     warnSpy.mockRestore();
   });
 
+  /**
+   * Type 72 exporté à 0.9 : le logiciel n'a pas transmis « non isolé » au moteur de référence
+   * (Tribu Calcul_installation_ECS.cs : 0.9 hors installation_non_isoles). En bug_for_bug_compat,
+   * on reproduit la valeur saisie.
+   */
+  test.each([0, 1])(
+    'bug_for_bug_compat : type 72 avec 0.9 saisi (distribution isolée = %s) -> 0.9 conservé',
+    (iso) => {
+      state.bug = true;
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      ecs_de.reseau_distribution_isole = iso;
+      const g = {
+        donnee_entree: {
+          usage_generateur: 'ecs',
+          type_stockage_ecs: "abscence de stockage d'ecs (production instantanée)",
+          volume_stockage: 0,
+          type_energie: 'réseau de chauffage urbain',
+          enum_type_generateur_ecs_id: '72'
+        },
+        donnee_intermediaire: { rendement_generation_stockage: 0.9 }
+      };
+      calc_gen_ecs({}, g, ecs_di, ecs_de, 0, '1', '1', 'immeuble');
+
+      expect(g.donnee_intermediaire.rendement_generation_stockage).toBe(0.9);
+      expect(g.donnee_intermediaire.rendement_generation_stockage_depensier).toBe(0.9);
+      // valeur de référence de régression : 100 / (0.9 * 0.9)
+      expect(g.donnee_intermediaire.conso_ecs).toBeCloseTo(123.45679012345678, 9);
+      warnSpy.mockRestore();
+    }
+  );
+
+  test('sans bug_for_bug_compat : type 72 avec 0.9 saisi -> 0.75 (méthode)', () => {
+    ecs_de.reseau_distribution_isole = 1;
+    const g = {
+      donnee_entree: {
+        usage_generateur: 'ecs',
+        type_stockage_ecs: "abscence de stockage d'ecs (production instantanée)",
+        volume_stockage: 0,
+        type_energie: 'réseau de chauffage urbain',
+        enum_type_generateur_ecs_id: '72'
+      },
+      donnee_intermediaire: { rendement_generation_stockage: 0.9 }
+    };
+    calc_gen_ecs({}, g, ecs_di, ecs_de, 0, '1', '1', 'immeuble');
+
+    expect(g.donnee_intermediaire.rendement_generation_stockage).toBe(0.75);
+  });
+
   test('usage chauffage + ecs : type de générateur limité aux générateurs mixtes', () => {
     const g = gen({
       type_energie: 'électricité',
