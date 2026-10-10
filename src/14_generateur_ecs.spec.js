@@ -73,7 +73,8 @@ const {
   rgrs_chaudiere,
   rg_accumulateur_gaz,
   rgrsReseauUrbain,
-  RG_CHAUDIERE_ELECTRIQUE
+  RG_CHAUDIERE_ELECTRIQUE,
+  typeGenerateurPertesStockage
 } = await import('./14_generateur_ecs.js');
 const { tvColumnIDs, requestInput, requestInputID, tv, getVolumeStockageFromDescription } =
   await import('./utils.js');
@@ -304,6 +305,43 @@ describe('calc_gen_ecs - consommation par générateur', () => {
     expect(g.donnee_intermediaire.conso_ecs).toBeCloseTo(1319.361111111111, 9);
     expect(g.donnee_intermediaire.conso_ecs_depensier).toBeCloseTo(1374.9166666666667, 9);
   });
+
+  test('chaudière électrique avec stockage : pertes lues sur la ligne ballon vertical autres ou inconnue (69)', () => {
+    // La chaudière électrique (118) figure sur toutes les lignes de pertes_stockage : sans
+    // redirection, le matcher tomberait sur la ligne « ballon horizontal » (cr 0,30 au lieu de 0,22).
+    vi.mocked(tvColumnIDs).mockImplementation((table) =>
+      table === 'pertes_stockage' ? ['118'] : []
+    );
+    vi.mocked(tv).mockReturnValue({ cr: '0.22', tv_pertes_stockage_id: '14' });
+    const g = gen({
+      type_energie: 'électricité',
+      enum_type_generateur_ecs_id: '118',
+      type_stockage_ecs: 'ballon vertical',
+      volume_stockage: 2000
+    });
+    calc_gen_ecs({}, g, ecs_di, ecs_de, 0, '1', '1', 'maison');
+
+    expect(tv).toHaveBeenCalledWith('pertes_stockage', {
+      enum_type_generateur_ecs_id: '69',
+      volume_ballon: '> 300'
+    });
+    expect(g.donnee_entree.tv_pertes_stockage_id).toBe(14);
+    // Qgw = (8592 * 45 / 24) * 2000 * 0.22 -- valeur de référence de régression
+    expect(g.donnee_intermediaire.Qgw).toBeCloseTo(7088400, 6);
+    expect(g.donnee_intermediaire.rendement_generation).toBe(RG_CHAUDIERE_ELECTRIQUE);
+  });
+
+  test.each([
+    ['118', '69'],
+    ['68', '68'],
+    ['69', '69'],
+    ['71', '71']
+  ])(
+    'typeGenerateurPertesStockage : %s -> %s (seule la chaudière électrique est redirigée)',
+    (id, attendu) => {
+      expect(typeGenerateurPertesStockage(id)).toBe(attendu);
+    }
+  );
 
   test.each([
     [50, '≤ 100'],

@@ -17,6 +17,20 @@ import { scopOrCop } from './12.4_pac.js';
 import getFicheTechnique from './ficheTechnique.js';
 import { getChaudiereFioulDefautId } from './13.2_generateur_combustion_chaudiere.js';
 
+/**
+ * Type de générateur utilisé pour lire la table des pertes de stockage.
+ * La chaudière électrique (118) est présente sur toutes les lignes de la table : le matcher
+ * renverrait la première (ballon horizontal). Comme les logiciels et le moteur de référence,
+ * on retient la ligne « ballon vertical autres ou inconnue » (69).
+ * Tribu : Calcul_installation_ECS.cs - calcul_Rs_elec (tab_Cr_ballon_elec, type de ballon inconnu)
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - pertes de stockage des ballons électriques (tableau Cr)
+ * @param {string} typeGenerateurId enum_type_generateur_ecs_id
+ * @returns {string}
+ */
+export function typeGenerateurPertesStockage(typeGenerateurId) {
+  return typeGenerateurId === '118' ? '69' : typeGenerateurId;
+}
+
 function tv_pertes_stockage(di, de, VsCollectif) {
   let vb;
   const Vs = VsCollectif ? VsCollectif : de.volume_stockage;
@@ -26,7 +40,7 @@ function tv_pertes_stockage(di, de, VsCollectif) {
   else vb = '> 300';
 
   let matcher = {
-    enum_type_generateur_ecs_id: de.enum_type_generateur_ecs_id,
+    enum_type_generateur_ecs_id: typeGenerateurPertesStockage(de.enum_type_generateur_ecs_id),
     volume_ballon: vb
   };
 
