@@ -46,6 +46,31 @@ function evaluateFormula(formulaOrValue, pn, E, F) {
 }
 
 /**
+ * Puissance nominale maximale (W) retenue dans la formule Qp0 = Pn × (E + F × log Pn) / 100 des
+ * chaudières gaz standard et basse température installées après 2015.
+ */
+export const PN_MAX_QP0_CHAUDIERE_GAZ = 400000;
+
+/**
+ * Puissance (W) à utiliser dans la formule qp0 de la ligne de table.
+ *
+ * Pour les chaudières gaz après 2015 (qp0 = Pn × (E + F × log Pn) / 100), le moteur de référence
+ * (Tribu, `Calcul_generateur.cs` Rpn_chaudieregaz, `Math.Min(400.0, Pn)`) plafonne Pn à 400 kW :
+ * au-delà, la formule n'est plus représentative (elle décroît et devient négative vers 1 500 kW).
+ * Le plafond ne s'applique pas aux chaudières fioul (Rpn_chaudierefioul : Pn non plafonné).
+ * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.2
+ *
+ * @param row {object} ligne de la table generateur_combustion
+ * @param pnCollectif {number} puissance nominale du générateur (W)
+ * @returns {number}
+ */
+export function puissanceFormuleQp0(row, pnCollectif) {
+  const formuleEF = /E\s*\+\s*F/.test(row.qp0_perc || '');
+  const chaudiereGaz = /chaudi[eè]re gaz/i.test(row.type_generateur || '');
+  return formuleEF && chaudiereGaz ? Math.min(pnCollectif, PN_MAX_QP0_CHAUDIERE_GAZ) : pnCollectif;
+}
+
+/**
  * Caractéristiques forfaitaires (rpn, rpint, qp0) d'un générateur à combustion.
  *
  * Si la consommation est obtenue par virtualisation du générateur collectif pour les besoins
@@ -78,7 +103,7 @@ export function caracteristiquesGenerateurCombustion(row, pn, ratio, E, F, type,
 
   if (![4, 5].includes(methodeSaisie)) {
     if (row.qp0_perc) {
-      const qp0_calc = evaluateFormula(row.qp0_perc, pn / ratio, E, F);
+      const qp0_calc = evaluateFormula(row.qp0_perc, puissanceFormuleQp0(row, pn / ratio), E, F);
       // Certaines chaudières ont un qp0 en % de pn, d'autres ont des valeurs constantes
       if (row.qp0_perc.includes('Pn')) {
         caracteristiques.qp0 = qp0_calc * 1000 * ratio;
