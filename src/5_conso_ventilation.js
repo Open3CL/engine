@@ -31,6 +31,15 @@ const pvent_immeuble = {
 };
 
 /**
+ * Ratio du temps d'utilisation du mode mécanique d'une ventilation hybride (valeurs tabulées).
+ * Les valeurs arrondies de la méthode sont appliquées telles quelles (et non 14/168 ou 28/168),
+ * comme dans le moteur de référence (Calcul_ventilation.cs, Calcul_Paux : 0,083 / 0,167).
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §5, page 42
+ */
+export const RATIO_HYBRIDE_INDIVIDUEL = 0.083;
+export const RATIO_HYBRIDE_COLLECTIF = 0.167;
+
+/**
  * 5 - Calcul des consommations d’auxiliaires de ventilation
  * Retourne le coefficient en fonction du type d'habitation et du type de ventilation
  * @param {string} th Type d'habitation (maison ou autre)
@@ -42,8 +51,7 @@ function getCoefficient(th, hybride) {
   if (!hybride) {
     return 1;
   }
-  const ratio = th === 'maison' ? 14 : 28;
-  return ratio / (24 * 7);
+  return th === 'maison' ? RATIO_HYBRIDE_INDIVIDUEL : RATIO_HYBRIDE_COLLECTIF;
 }
 
 export default function calc_pvent(di, de, du, th) {
