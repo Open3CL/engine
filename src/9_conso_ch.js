@@ -140,6 +140,14 @@ export function conso_ch(
       di.conso_ch = consoInd.conso_ch + consoColl.conso_ch;
       di.conso_ch_depensier = consoInd.conso_ch_dep + consoColl.conso_ch_dep;
 
+      /**
+       * Part d'appoint individuel (40 %) conservée pour le coût : la base (60 %) est facturée en
+       * électricité collective, l'appoint en électricité individuelle (voir conso.js,
+       * coutBijonction).
+       */
+      du.conso_ch_appoint_bijonction = consoInd.conso_ch;
+      du.conso_ch_appoint_bijonction_depensier = consoInd.conso_ch_dep;
+
       return bch;
     }
     default: {
