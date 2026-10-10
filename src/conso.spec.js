@@ -623,6 +623,91 @@ describe('calc_conso - agrégation des consommations', () => {
 });
 
 /**
+ * Ligne « électricité » de sortie_par_energie (issue #34).
+ * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §15, §16.2 ; arrêté DPE habitation du 31/03/2021 §3.a, §4.a
+ */
+describe('sortie_par_energie - ligne électricité (issue #34)', () => {
+  const elecDe = (res) =>
+    res.sortie_par_energie_collection.sortie_par_energie.find(
+      (e) => e.enum_type_energie_id === '1'
+    );
+
+  /** Chaudière gaz avec auxiliaires de génération et de distribution (électriques). */
+  const chGaz = () => [
+    installCh({ cle_repartition_ch: 1 }, [
+      genCh('2', {
+        conso_ch: 10000,
+        conso_ch_depensier: 12000,
+        conso_auxiliaire_generation_ch: 100,
+        conso_auxiliaire_distribution_ch: 50
+      })
+    ])
+  ];
+
+  test('chaudière gaz : auxiliaires rattachés à l’électricité, GES = Σ postes × coefficient par usage', () => {
+    const res = calc_conso(100, 1, 1, [], chGaz(), [], [], 1, 1, DATE_DPE, coef_ep);
+    const elec = elecDe(res);
+
+    // Pas de chauffage électrique ; éclairage = 1 × Sh = 100 ; auxiliaires = 100 + 50
+    expect(elec.conso_ch).toBe(0);
+    expect(elec.conso_5_usages).toBeCloseTo(100 + 150, 9);
+    // 100 × 0,069 (éclairage) + 150 × 0,064 (auxiliaires)
+    expect(elec.emission_ges_5_usages).toBeCloseTo(100 * 0.069 + 150 * 0.064, 9);
+    // La ligne gaz ne porte plus les auxiliaires
+    const gaz = res.sortie_par_energie_collection.sortie_par_energie.find(
+      (e) => e.enum_type_energie_id === '2'
+    );
+    expect(gaz.conso_5_usages).toBeCloseTo(10000, 9);
+  });
+
+  test('somme des lignes par énergie = totaux 5 usages (EF et GES)', () => {
+    const ecs = [installEcs({}, [genEcs('1', { conso_ecs: 1000, conso_ecs_depensier: 1100 })])];
+    const vt = [{ donnee_entree: {}, donnee_intermediaire: { conso_auxiliaire_ventilation: 40 } }];
+    const res = calc_conso(100, 1, 1, vt, chGaz(), ecs, [], 1, 1, DATE_DPE, coef_ep);
+    const lignes = res.sortie_par_energie_collection.sortie_par_energie;
+    const somme = (k) => lignes.reduce((acc, l) => acc + l[k], 0);
+
+    expect(somme('conso_5_usages')).toBeCloseTo(res.ef_conso.conso_5_usages, 9);
+    expect(somme('emission_ges_5_usages')).toBeCloseTo(res.emission_ges.emission_ges_5_usages, 9);
+    // ECS électrique au coefficient ECS (0,065)
+    expect(elecDe(res).emission_ges_ecs).toBeCloseTo(1000 * 0.065, 9);
+  });
+
+  test('froid : électrique compté dans la ligne électricité, réseau de froid exclu', () => {
+    const frElec = [
+      { donnee_entree: { enum_type_energie_id: '1' }, donnee_intermediaire: { conso_fr: 200 } }
+    ];
+    const frReseau = [
+      { donnee_entree: { enum_type_energie_id: '3' }, donnee_intermediaire: { conso_fr: 200 } }
+    ];
+    const avecElec = elecDe(calc_conso(100, 1, 1, [], [], [], frElec, 1, 1, DATE_DPE, coef_ep));
+    const avecReseau = elecDe(calc_conso(100, 1, 1, [], [], [], frReseau, 1, 1, DATE_DPE, coef_ep));
+
+    expect(avecElec.conso_5_usages).toBeCloseTo(100 + 200, 9);
+    expect(avecElec.emission_ges_5_usages).toBeCloseTo(100 * 0.069 + 200 * 0.064, 9);
+    expect(avecReseau.conso_5_usages).toBeCloseTo(100, 9);
+  });
+
+  test('autoconsommation PV : ligne électricité nette, usage par usage', () => {
+    const facteursAc = { eclairage: 0.5, auxiliaire_generation_ch: 0.8 };
+    const net = elecDe(
+      calc_conso(100, 1, 1, [], chGaz(), [], [], 1, 1, DATE_DPE, coef_ep, 1, 1, facteursAc)
+    );
+
+    // éclairage 100 × 0,5 ; génération 100 × 0,8 ; distribution 50 inchangée
+    expect(net.conso_5_usages).toBeCloseTo(50 + 80 + 50, 9);
+    expect(net.emission_ges_5_usages).toBeCloseTo(50 * 0.069 + (80 + 50) * 0.064, 9);
+  });
+
+  test('aucune émission NaN sur la ligne électricité', () => {
+    const res = calc_conso(100, 1, 1, [], chGaz(), [], [], 1, 1, DATE_DPE, coef_ep);
+    for (const ligne of res.sortie_par_energie_collection.sortie_par_energie) {
+      expect(Number.isFinite(ligne.emission_ges_5_usages)).toBe(true);
+    }
+  });
+});
+
+/**
  * Barème des prix des énergies selon la date d'établissement du DPE.
  * Barème 2021 : Annexe 7 de l'arrêté du 31/03/2021.
  * Barème mis à jour (DPE à partir du 01/07/2024) : valeurs calées sur les sorties Tribu (CSTB)
