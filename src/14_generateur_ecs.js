@@ -17,6 +17,20 @@ import { scopOrCop } from './12.4_pac.js';
 import getFicheTechnique from './ficheTechnique.js';
 import { getChaudiereFioulDefautId } from './13.2_generateur_combustion_chaudiere.js';
 
+/**
+ * Type de générateur utilisé pour lire la table des pertes de stockage.
+ * La chaudière électrique (118) est présente sur toutes les lignes de la table : le matcher
+ * renverrait la première (ballon horizontal). Comme les logiciels et le moteur de référence,
+ * on retient la ligne « ballon vertical autres ou inconnue » (69).
+ * Tribu : Calcul_installation_ECS.cs - calcul_Rs_elec (tab_Cr_ballon_elec, type de ballon inconnu)
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - pertes de stockage des ballons électriques (tableau Cr)
+ * @param {string} typeGenerateurId enum_type_generateur_ecs_id
+ * @returns {string}
+ */
+export function typeGenerateurPertesStockage(typeGenerateurId) {
+  return typeGenerateurId === '118' ? '69' : typeGenerateurId;
+}
+
 function tv_pertes_stockage(di, de, VsCollectif) {
   let vb;
   const Vs = VsCollectif ? VsCollectif : de.volume_stockage;
@@ -26,7 +40,7 @@ function tv_pertes_stockage(di, de, VsCollectif) {
   else vb = '> 300';
 
   let matcher = {
-    enum_type_generateur_ecs_id: de.enum_type_generateur_ecs_id,
+    enum_type_generateur_ecs_id: typeGenerateurPertesStockage(de.enum_type_generateur_ecs_id),
     volume_ballon: vb
   };
 
@@ -166,6 +180,9 @@ function type_generateur_ecs(di, de, du, usage_generateur) {
   return type_generateur;
 }
 
+/** Rendement de génération d'une chaudière électrique (tv rendement_generation, id 30). */
+export const RG_CHAUDIERE_ELECTRIQUE = 0.97;
+
 export function rg_chauffe_eau_gaz(di, besoin_ecs) {
   return (
     1 /
@@ -303,6 +320,16 @@ export default function calc_gen_ecs(dpe, gen_ecs, ecs_di, ecs_de, GV, ca_id, zc
     }
     Iecs = 1 / di.rendement_stockage;
     Iecs_dep = 1 / di.rendement_stockage_depensier;
+    /**
+     * Chaudière électrique : rendement de génération forfaitaire Rg = 0,97 (comme en chauffage).
+     * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §11.2 (rendements de génération ECS)
+     */
+    if (type_generateur === 'chaudière électrique') {
+      di.rendement_generation = RG_CHAUDIERE_ELECTRIQUE;
+      di.rendement_generation_depensier = RG_CHAUDIERE_ELECTRIQUE;
+      Iecs /= RG_CHAUDIERE_ELECTRIQUE;
+      Iecs_dep /= RG_CHAUDIERE_ELECTRIQUE;
+    }
   } else if (isReseauChaleur) {
     if (bug_for_bug_compat) {
       if (di.rendement_generation_stockage === 0.9 && ecs_de.reseau_distribution_isole === 0) {
