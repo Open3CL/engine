@@ -282,6 +282,64 @@ describe('calc_conso - agrégation des consommations', () => {
     expect(net.cout.cout_eclairage).toBeCloseTo(brut.cout.cout_eclairage, 9);
   });
 
+  test('autoconsommation PV : froid électrique minoré, froid non électrique non minoré', () => {
+    const frElec = [
+      {
+        donnee_entree: { enum_type_energie_id: '1' },
+        donnee_intermediaire: { conso_fr: 200, conso_fr_depensier: 250 }
+      }
+    ];
+    const frGaz = [
+      {
+        donnee_entree: { enum_type_energie_id: '2' },
+        donnee_intermediaire: { conso_fr: 200, conso_fr_depensier: 250 }
+      }
+    ];
+    const facteursAc = { fr: 0.5 };
+
+    const brutElec = calc_conso(100, 1, 1, [], [], [], frElec, 1, 1, DATE_DPE, coef_ep);
+    const netElec = calc_conso(
+      100,
+      1,
+      1,
+      [],
+      [],
+      [],
+      frElec,
+      1,
+      1,
+      DATE_DPE,
+      coef_ep,
+      1,
+      1,
+      facteursAc
+    );
+    expect(netElec.emission_ges.emission_ges_fr).toBeCloseTo(
+      brutElec.emission_ges.emission_ges_fr * 0.5,
+      9
+    );
+
+    const brutGaz = calc_conso(100, 1, 1, [], [], [], frGaz, 1, 1, DATE_DPE, coef_ep);
+    const netGaz = calc_conso(
+      100,
+      1,
+      1,
+      [],
+      [],
+      [],
+      frGaz,
+      1,
+      1,
+      DATE_DPE,
+      coef_ep,
+      1,
+      1,
+      facteursAc
+    );
+    expect(netGaz.emission_ges.emission_ges_fr).toBeGreaterThan(0);
+    expect(netGaz.emission_ges.emission_ges_fr).toBe(brutGaz.emission_ges.emission_ges_fr);
+  });
+
   test('sans facteurs d’autoconsommation : résultats identiques', () => {
     const ch = [
       installCh({ cle_repartition_ch: 1 }, [

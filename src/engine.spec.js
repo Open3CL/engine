@@ -602,6 +602,21 @@ describe('calcul_3cl - surfaces immeuble / appartement et prorata', () => {
     expect(conso_aux_distribution_ecs.mock.calls[0][3]).toBe(200);
   });
 
+  test('immeuble avec autoconsommation PV : conso nette calculée avec le nombre de logements', () => {
+    enums.methode_application_dpe_log = { 1: 'dpe immeuble collectif' };
+    const dpe = makeDpe();
+    vi.mocked(calculateEnr).mockImplementationOnce((enr, conso, Sh, th, zc, coef, ratio, f) => {
+      Object.assign(f, { ch: 0.8 });
+      return { pv: 1 };
+    });
+
+    calcul_3cl(dpe, { sanitize: false });
+
+    // Nombre de logements de l'immeuble (nombre_appartement = 4) pour le recalcul net.
+    expect(calc_conso.mock.calls[1][11]).toBe(4);
+    expect(calc_conso.mock.calls[1][13]).toEqual({ ch: 0.8 });
+  });
+
   test('immeuble : systèmes ECS non tous individuels sans surfaces => repli sur la division par deux', () => {
     enums.methode_application_dpe_log = { 1: 'dpe immeuble collectif' };
     const dpe = makeDpe();
