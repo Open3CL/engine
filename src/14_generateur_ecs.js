@@ -219,6 +219,14 @@ export function rgrsReseauUrbain(de, ecs_de) {
     return 0.9;
   }
   /**
+   * Type 72 explicitement non isolé : 0.75, quel que soit reseau_distribution_isole (qui porte sur
+   * le réseau de distribution ECS, pas sur l'équipement du réseau de chaleur). Moteur de référence
+   * CSTB : Calcul_installation_ECS.cs, isolation_equipement_reseau = installation_non_isoles -> 0.75.
+   */
+  if (de.enum_type_generateur_ecs_id === '72') {
+    return 0.75;
+  }
+  /**
    * Pour les autres générateurs assimilés à un réseau de chaleur (ex : installation
    * collective multi-bâtiment modélisée comme un réseau de chaleur), on retombe sur
    * l'indicateur reseau_distribution_isole de l'installation ECS s'il est renseigné.

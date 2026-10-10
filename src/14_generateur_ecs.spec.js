@@ -118,16 +118,31 @@ describe('rgrsReseauUrbain - rendement d’un réseau de chaleur', () => {
     expect(rgrsReseauUrbain({ enum_type_generateur_ecs_id: '73' }, {})).toBe(0.9);
   });
 
-  test('réseau marqué isolé au niveau de l’installation : 0.9', () => {
+  test('type 72 (réseau non isolé) : 0.75, même si le réseau de distribution est isolé', () => {
+    // reseau_distribution_isole porte sur la distribution ECS, pas sur l'équipement du réseau de
+    // chaleur : le type 72 impose 0.75 (Calcul_installation_ECS.cs, installation_non_isoles).
     expect(
       rgrsReseauUrbain({ enum_type_generateur_ecs_id: '72' }, { reseau_distribution_isole: 1 })
-    ).toBe(0.9);
+    ).toBe(0.75);
   });
 
-  test('réseau non isolé par défaut : 0.75', () => {
+  test('type 72 (réseau non isolé), distribution non isolée : 0.75', () => {
     expect(
       rgrsReseauUrbain({ enum_type_generateur_ecs_id: '72' }, { reseau_distribution_isole: 0 })
     ).toBe(0.75);
+  });
+
+  test('autre générateur assimilé réseau de chaleur, installation marquée isolée : 0.9', () => {
+    expect(
+      rgrsReseauUrbain({ enum_type_generateur_ecs_id: '84' }, { reseau_distribution_isole: 1 })
+    ).toBe(0.9);
+  });
+
+  test('autre générateur assimilé réseau de chaleur, non isolé par défaut : 0.75', () => {
+    expect(
+      rgrsReseauUrbain({ enum_type_generateur_ecs_id: '84' }, { reseau_distribution_isole: 0 })
+    ).toBe(0.75);
+    expect(rgrsReseauUrbain({ enum_type_generateur_ecs_id: '84' }, undefined)).toBe(0.75);
   });
 });
 
@@ -839,8 +854,9 @@ describe('calc_gen_ecs - consommation par générateur', () => {
     };
     calc_gen_ecs({}, g, ecs_di, ecs_de, 0, '1', '1', 'immeuble');
 
-    // Le réseau reste isolé (0.9) car reseau_distribution_isole = 1
-    expect(g.donnee_intermediaire.rendement_generation_stockage).toBe(0.9);
+    // Type 72 (réseau non isolé) : 0.75 conservé malgré reseau_distribution_isole = 1, l'avertissement
+    // d'incohérence reste émis.
+    expect(g.donnee_intermediaire.rendement_generation_stockage).toBe(0.75);
     expect(warnSpy).toHaveBeenCalled();
     warnSpy.mockRestore();
   });
