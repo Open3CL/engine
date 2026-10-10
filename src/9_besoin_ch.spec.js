@@ -634,6 +634,15 @@ describe('calc_besoin_ch - immeuble à installations ECS individuelles et collec
     );
   });
 
+  test('isSurfaceEcsParLogement : surface ou rdim absents comptés 0 et 1', () => {
+    const sansRdim = { donnee_entree: { enum_type_installation_id: '1', surface_habitable: 50 } };
+    const sansSurface = { donnee_entree: { enum_type_installation_id: '2' } };
+    // Σ Sh = Σ Sh × rdim = 50 : égalité → convention « surface de l'installation »
+    expect(isSurfaceEcsParLogement([sansRdim, sansSurface], 50)).toBe(false);
+    // Σ Sh × rdim = 20 × 3 = 60 = SH, Σ Sh = 20
+    expect(isSurfaceEcsParLogement([ecsIndividuelle(20, 3), sansSurface], 60)).toBe(true);
+  });
+
   test('pertes récupérées sans × rdim quand Σ Sh_ecs = SH (DPE 2369E3867365O, LICIEL)', () => {
     const instal_ecs = [ecsIndividuelle(160, 8), ecsCollective(40)];
     const ret = calc_besoin_ch(0, 0, 0, 0, 200, 100, 3, instal_ecs, [], [], null, 'immeuble', 9);

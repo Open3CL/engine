@@ -677,6 +677,24 @@ describe("conso_aux_distribution_ecs - auxiliaires de distribution d'ECS", () =>
     expect(di.conso_auxiliaire_distribution_ecs).toBeCloseTo(280, 10);
   });
 
+  test('traçage, immeuble à plusieurs installations ECS, rdim absent : rdim = 1', () => {
+    const di = { besoin_ecs: 1000 };
+    conso_aux_distribution_ecs(
+      {},
+      { enum_type_installation_id: '2', enum_bouclage_reseau_ecs_id: '3', surface_habitable: 60 },
+      di,
+      175,
+      175,
+      1,
+      1,
+      30,
+      1,
+      true
+    );
+    // 0,14 × 1000 × 1
+    expect(di.conso_auxiliaire_distribution_ecs).toBeCloseTo(140, 10);
+  });
+
   test("traçage sans surface d'installation : repli sur la surface du logement", () => {
     const di = { besoin_ecs: 1000 };
     conso_aux_distribution_ecs(
