@@ -118,16 +118,31 @@ describe('rgrsReseauUrbain - rendement d’un réseau de chaleur', () => {
     expect(rgrsReseauUrbain({ enum_type_generateur_ecs_id: '73' }, {})).toBe(0.9);
   });
 
-  test('réseau marqué isolé au niveau de l’installation : 0.9', () => {
+  test('type 72 (réseau non isolé) : 0.75, même si le réseau de distribution est isolé', () => {
+    // reseau_distribution_isole porte sur la distribution ECS, pas sur l'équipement du réseau de
+    // chaleur : le type 72 impose 0.75 (Calcul_installation_ECS.cs, installation_non_isoles).
     expect(
       rgrsReseauUrbain({ enum_type_generateur_ecs_id: '72' }, { reseau_distribution_isole: 1 })
-    ).toBe(0.9);
+    ).toBe(0.75);
   });
 
-  test('réseau non isolé par défaut : 0.75', () => {
+  test('type 72 (réseau non isolé), distribution non isolée : 0.75', () => {
     expect(
       rgrsReseauUrbain({ enum_type_generateur_ecs_id: '72' }, { reseau_distribution_isole: 0 })
     ).toBe(0.75);
+  });
+
+  test('autre générateur assimilé réseau de chaleur, installation marquée isolée : 0.9', () => {
+    expect(
+      rgrsReseauUrbain({ enum_type_generateur_ecs_id: '84' }, { reseau_distribution_isole: 1 })
+    ).toBe(0.9);
+  });
+
+  test('autre générateur assimilé réseau de chaleur, non isolé par défaut : 0.75', () => {
+    expect(
+      rgrsReseauUrbain({ enum_type_generateur_ecs_id: '84' }, { reseau_distribution_isole: 0 })
+    ).toBe(0.75);
+    expect(rgrsReseauUrbain({ enum_type_generateur_ecs_id: '84' }, undefined)).toBe(0.75);
   });
 });
 
@@ -758,6 +773,54 @@ describe('calc_gen_ecs - consommation par générateur', () => {
     warnSpy.mockRestore();
   });
 
+  /**
+   * Type 72 exporté à 0.9 : le logiciel n'a pas transmis « non isolé » au moteur de référence
+   * (Tribu Calcul_installation_ECS.cs : 0.9 hors installation_non_isoles). En bug_for_bug_compat,
+   * on reproduit la valeur saisie.
+   */
+  test.each([0, 1])(
+    'bug_for_bug_compat : type 72 avec 0.9 saisi (distribution isolée = %s) -> 0.9 conservé',
+    (iso) => {
+      state.bug = true;
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      ecs_de.reseau_distribution_isole = iso;
+      const g = {
+        donnee_entree: {
+          usage_generateur: 'ecs',
+          type_stockage_ecs: "abscence de stockage d'ecs (production instantanée)",
+          volume_stockage: 0,
+          type_energie: 'réseau de chauffage urbain',
+          enum_type_generateur_ecs_id: '72'
+        },
+        donnee_intermediaire: { rendement_generation_stockage: 0.9 }
+      };
+      calc_gen_ecs({}, g, ecs_di, ecs_de, 0, '1', '1', 'immeuble');
+
+      expect(g.donnee_intermediaire.rendement_generation_stockage).toBe(0.9);
+      expect(g.donnee_intermediaire.rendement_generation_stockage_depensier).toBe(0.9);
+      // valeur de référence de régression : 100 / (0.9 * 0.9)
+      expect(g.donnee_intermediaire.conso_ecs).toBeCloseTo(123.45679012345678, 9);
+      warnSpy.mockRestore();
+    }
+  );
+
+  test('sans bug_for_bug_compat : type 72 avec 0.9 saisi -> 0.75 (méthode)', () => {
+    ecs_de.reseau_distribution_isole = 1;
+    const g = {
+      donnee_entree: {
+        usage_generateur: 'ecs',
+        type_stockage_ecs: "abscence de stockage d'ecs (production instantanée)",
+        volume_stockage: 0,
+        type_energie: 'réseau de chauffage urbain',
+        enum_type_generateur_ecs_id: '72'
+      },
+      donnee_intermediaire: { rendement_generation_stockage: 0.9 }
+    };
+    calc_gen_ecs({}, g, ecs_di, ecs_de, 0, '1', '1', 'immeuble');
+
+    expect(g.donnee_intermediaire.rendement_generation_stockage).toBe(0.75);
+  });
+
   test('usage chauffage + ecs : type de générateur limité aux générateurs mixtes', () => {
     const g = gen({
       type_energie: 'électricité',
@@ -839,8 +902,9 @@ describe('calc_gen_ecs - consommation par générateur', () => {
     };
     calc_gen_ecs({}, g, ecs_di, ecs_de, 0, '1', '1', 'immeuble');
 
-    // Le réseau reste isolé (0.9) car reseau_distribution_isole = 1
-    expect(g.donnee_intermediaire.rendement_generation_stockage).toBe(0.9);
+    // Type 72 (réseau non isolé) : 0.75 conservé malgré reseau_distribution_isole = 1, l'avertissement
+    // d'incohérence reste émis.
+    expect(g.donnee_intermediaire.rendement_generation_stockage).toBe(0.75);
     expect(warnSpy).toHaveBeenCalled();
     warnSpy.mockRestore();
   });
