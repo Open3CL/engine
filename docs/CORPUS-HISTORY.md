@@ -14,6 +14,7 @@ reconstruit à l'identique avec `npm run reports:readme`.
 
 | Version    | Généraliste | Logement individuel (2025) | Maison individuelle (2025) | Appartement · chauffage individuel (2025) | Appartement · chauffage collectif (2025) | Immeuble · chauffage individuel | Immeuble · chauffage collectif | Immeuble · chauffage mixte | Individuel généré depuis l'immeuble (2026) |
 | :--------- | ----------: | -------------------------: | -------------------------: | ----------------------------------------: | ---------------------------------------: | ------------------------------: | -----------------------------: | -------------------------: | -----------------------------------------: |
+| **1.8.40** |       4 618 |                      8 948 |                      8 860 |                                     9 254 |                                    7 160 |                           8 420 |                          6 618 |                      5 372 |                                      2 706 |
 | **1.8.39** |       4 618 |                      8 947 |                      8 860 |                                     9 253 |                                    7 160 |                           8 420 |                          6 618 |                      5 369 |                                      2 706 |
 | **1.8.38** |       4 618 |                      8 947 |                      8 860 |                                     9 253 |                                    7 160 |                           8 420 |                          6 618 |                      5 369 |                                      2 706 |
 | **1.8.37** |       4 618 |                      8 947 |                      8 860 |                                     9 253 |                                    7 160 |                           8 419 |                          6 618 |                      5 369 |                                      2 706 |
@@ -108,6 +109,64 @@ reconstruit à l'identique avec `npm run reports:readme`.
 d'une version n'était pas encore joué à cette date : la courbe démarre à sa première mesure.</sub>
 
 <!-- CORPUS-CHART:END -->
+
+## 1.8.40 — 2026-10-10
+
+> **Version `1.8.40`** · publiée le 2026-10-10
+> Seuil de tolérance **5%**
+
+<table>
+<tr>
+<td align="center"><strong>9</strong><br/><sub>corpus</sub></td>
+<td align="center"><strong>89 984</strong><br/><sub>DPE analysés</sub></td>
+<td align="center"><strong>61 956</strong><br/><sub>DPE conformes</sub></td>
+<td align="center"><strong>68,85 %</strong><br/><sub>réussite globale</sub></td>
+</tr>
+</table>
+
+|     | Corpus                                                                                                                  |    Réussite |                        |  DPE conformes |
+| :-: | :---------------------------------------------------------------------------------------------------------------------- | ----------: | :--------------------- | -------------: |
+| 🔴  | **Généraliste**<br/><sub>`corpus_dpe.csv`</sub>                                                                         | **46,18 %** | `█████████░░░░░░░░░░░` |  4 618 / 9 999 |
+| 🟢  | **Appartement · chauffage individuel (2025)**<br/><sub>`dpe_appartement_individuel_chauffage_individuel_2025.csv`</sub> | **92,54 %** | `███████████████████░` | 9 254 / 10 000 |
+| 🟢  | **Logement individuel (2025)**<br/><sub>`dpe_logement_individuel_2025.csv`</sub>                                        | **89,55 %** | `██████████████████░░` |  8 948 / 9 992 |
+| 🟢  | **Maison individuelle (2025)**<br/><sub>`dpe_maison_individuelle_2025.csv`</sub>                                        | **88,61 %** | `██████████████████░░` |  8 860 / 9 999 |
+| 🟡  | **Immeuble · chauffage individuel**<br/><sub>`dpe_immeuble_chauffage_individuel.csv`</sub>                              | **84,22 %** | `█████████████████░░░` |  8 420 / 9 998 |
+| 🟡  | **Appartement · chauffage collectif (2025)**<br/><sub>`dpe_appartement_individuel_chauffage_collectif_2025.csv`</sub>   | **71,60 %** | `██████████████░░░░░░` | 7 160 / 10 000 |
+| 🟡  | **Immeuble · chauffage collectif**<br/><sub>`dpe_immeuble_chauffage_collectif.csv`</sub>                                | **66,19 %** | `█████████████░░░░░░░` |  6 618 / 9 999 |
+| 🔴  | **Immeuble · chauffage mixte**<br/><sub>`dpe_immeuble_chauffage_mixte.csv`</sub>                                        | **53,74 %** | `███████████░░░░░░░░░` |  5 372 / 9 997 |
+| 🔴  | **Individuel généré depuis l'immeuble (2026)**<br/><sub>`dpe_individuel_a_partir_dpe_immeuble_2026.csv`</sub>           | **27,06 %** | `█████░░░░░░░░░░░░░░░` | 2 706 / 10 000 |
+
+<sub>🟢 ≥ 85 % · 🟡 ≥ 60 % · 🔴 < 60 %</sub>
+
+#### Temps d’exécution
+
+> Durée de l’appel à `calcul_3cl` par DPE, sur 89 950 calculs.
+> La copie défensive de l’entrée et la lecture du fichier sont exclues de la mesure.
+
+<table>
+<tr>
+<td align="center"><strong>4,76 ms</strong><br/><sub>moyenne</sub></td>
+<td align="center"><strong>4,15 ms</strong><br/><sub>médiane</sub></td>
+<td align="center"><strong>0,12 ms</strong><br/><sub>min</sub></td>
+<td align="center"><strong>705,6 ms</strong><br/><sub>max</sub></td>
+</tr>
+</table>
+
+| Corpus                                         | Moyenne | Médiane |     Min |      Max |     p95 |     p99 |
+| :--------------------------------------------- | ------: | ------: | ------: | -------: | ------: | ------: |
+| **Généraliste**                                | 4,07 ms | 3,65 ms | 0,22 ms |  28,8 ms | 7,49 ms | 10,1 ms |
+| **Appartement · chauffage individuel (2025)**  | 3,71 ms | 3,38 ms | 1,40 ms |  27,1 ms | 6,41 ms | 8,18 ms |
+| **Logement individuel (2025)**                 | 4,46 ms | 3,95 ms | 1,65 ms |  39,9 ms | 8,31 ms | 11,3 ms |
+| **Maison individuelle (2025)**                 | 5,46 ms | 4,87 ms | 1,84 ms |  39,8 ms | 9,77 ms | 12,9 ms |
+| **Immeuble · chauffage individuel**            | 5,80 ms | 4,92 ms | 0,12 ms |  83,3 ms | 11,6 ms | 19,0 ms |
+| **Appartement · chauffage collectif (2025)**   | 4,27 ms | 3,90 ms | 1,50 ms |  35,0 ms | 7,03 ms | 9,07 ms |
+| **Immeuble · chauffage collectif**             | 5,12 ms | 4,32 ms | 0,12 ms |  92,3 ms | 9,55 ms | 16,6 ms |
+| **Immeuble · chauffage mixte**                 | 4,62 ms | 3,78 ms | 0,17 ms | 705,6 ms | 9,38 ms | 15,3 ms |
+| **Individuel généré depuis l'immeuble (2026)** | 5,29 ms | 4,53 ms | 1,68 ms |  45,3 ms | 9,97 ms | 15,4 ms |
+
+<sub>La moyenne est tirée vers le haut par les DPE collectifs, dont le coût atteint plusieurs
+dizaines de fois la médiane : c’est la médiane qui décrit le cas courant, et p95/p99 le cas
+défavorable réel.</sub>
 
 ## 1.8.39 — 2026-10-10
 
@@ -336,64 +395,6 @@ défavorable réel.</sub>
 | **Immeuble · chauffage collectif**             | 5,22 ms | 4,41 ms | 0,11 ms |  93,8 ms | 9,69 ms | 16,8 ms |
 | **Immeuble · chauffage mixte**                 | 5,18 ms | 4,23 ms | 0,22 ms | 468,0 ms | 10,7 ms | 17,7 ms |
 | **Individuel généré depuis l'immeuble (2026)** | 6,07 ms | 5,20 ms | 1,63 ms |  47,3 ms | 11,7 ms | 18,6 ms |
-
-<sub>La moyenne est tirée vers le haut par les DPE collectifs, dont le coût atteint plusieurs
-dizaines de fois la médiane : c’est la médiane qui décrit le cas courant, et p95/p99 le cas
-défavorable réel.</sub>
-
-## 1.8.35 — 2026-10-09
-
-> **Version `1.8.35`** · publiée le 2026-10-09
-> Seuil de tolérance **5%**
-
-<table>
-<tr>
-<td align="center"><strong>9</strong><br/><sub>corpus</sub></td>
-<td align="center"><strong>89 984</strong><br/><sub>DPE analysés</sub></td>
-<td align="center"><strong>61 950</strong><br/><sub>DPE conformes</sub></td>
-<td align="center"><strong>68,85 %</strong><br/><sub>réussite globale</sub></td>
-</tr>
-</table>
-
-|     | Corpus                                                                                                                  |    Réussite |                        |  DPE conformes |
-| :-: | :---------------------------------------------------------------------------------------------------------------------- | ----------: | :--------------------- | -------------: |
-| 🔴  | **Généraliste**<br/><sub>`corpus_dpe.csv`</sub>                                                                         | **46,18 %** | `█████████░░░░░░░░░░░` |  4 618 / 9 999 |
-| 🟢  | **Appartement · chauffage individuel (2025)**<br/><sub>`dpe_appartement_individuel_chauffage_individuel_2025.csv`</sub> | **92,53 %** | `███████████████████░` | 9 253 / 10 000 |
-| 🟢  | **Logement individuel (2025)**<br/><sub>`dpe_logement_individuel_2025.csv`</sub>                                        | **89,54 %** | `██████████████████░░` |  8 947 / 9 992 |
-| 🟢  | **Maison individuelle (2025)**<br/><sub>`dpe_maison_individuelle_2025.csv`</sub>                                        | **88,61 %** | `██████████████████░░` |  8 860 / 9 999 |
-| 🟡  | **Immeuble · chauffage individuel**<br/><sub>`dpe_immeuble_chauffage_individuel.csv`</sub>                              | **84,21 %** | `█████████████████░░░` |  8 419 / 9 998 |
-| 🟡  | **Appartement · chauffage collectif (2025)**<br/><sub>`dpe_appartement_individuel_chauffage_collectif_2025.csv`</sub>   | **71,60 %** | `██████████████░░░░░░` | 7 160 / 10 000 |
-| 🟡  | **Immeuble · chauffage collectif**<br/><sub>`dpe_immeuble_chauffage_collectif.csv`</sub>                                | **66,19 %** | `█████████████░░░░░░░` |  6 618 / 9 999 |
-| 🔴  | **Immeuble · chauffage mixte**<br/><sub>`dpe_immeuble_chauffage_mixte.csv`</sub>                                        | **53,71 %** | `███████████░░░░░░░░░` |  5 369 / 9 997 |
-| 🔴  | **Individuel généré depuis l'immeuble (2026)**<br/><sub>`dpe_individuel_a_partir_dpe_immeuble_2026.csv`</sub>           | **27,06 %** | `█████░░░░░░░░░░░░░░░` | 2 706 / 10 000 |
-
-<sub>🟢 ≥ 85 % · 🟡 ≥ 60 % · 🔴 < 60 %</sub>
-
-#### Temps d’exécution
-
-> Durée de l’appel à `calcul_3cl` par DPE, sur 89 950 calculs.
-> La copie défensive de l’entrée et la lecture du fichier sont exclues de la mesure.
-
-<table>
-<tr>
-<td align="center"><strong>5,06 ms</strong><br/><sub>moyenne</sub></td>
-<td align="center"><strong>4,41 ms</strong><br/><sub>médiane</sub></td>
-<td align="center"><strong>0,11 ms</strong><br/><sub>min</sub></td>
-<td align="center"><strong>768,9 ms</strong><br/><sub>max</sub></td>
-</tr>
-</table>
-
-| Corpus                                         | Moyenne | Médiane |     Min |      Max |     p95 |     p99 |
-| :--------------------------------------------- | ------: | ------: | ------: | -------: | ------: | ------: |
-| **Généraliste**                                | 4,20 ms | 3,76 ms | 0,22 ms |  34,2 ms | 7,69 ms | 10,6 ms |
-| **Appartement · chauffage individuel (2025)**  | 3,75 ms | 3,39 ms | 1,47 ms |  29,4 ms | 6,55 ms | 8,36 ms |
-| **Logement individuel (2025)**                 | 4,83 ms | 4,30 ms | 1,55 ms |  29,3 ms | 9,03 ms | 12,1 ms |
-| **Maison individuelle (2025)**                 | 5,88 ms | 5,27 ms | 1,84 ms |  50,5 ms | 10,7 ms | 13,9 ms |
-| **Immeuble · chauffage individuel**            | 6,26 ms | 5,33 ms | 0,11 ms |  74,5 ms | 12,9 ms | 19,8 ms |
-| **Appartement · chauffage collectif (2025)**   | 4,16 ms | 3,75 ms | 1,41 ms |  35,8 ms | 6,88 ms | 8,69 ms |
-| **Immeuble · chauffage collectif**             | 5,42 ms | 4,62 ms | 0,12 ms | 106,1 ms | 10,1 ms | 17,7 ms |
-| **Immeuble · chauffage mixte**                 | 5,23 ms | 4,26 ms | 0,17 ms | 768,9 ms | 10,7 ms | 17,1 ms |
-| **Individuel généré depuis l'immeuble (2026)** | 5,81 ms | 5,00 ms | 1,65 ms |  42,2 ms | 11,0 ms | 16,4 ms |
 
 <sub>La moyenne est tirée vers le haut par les DPE collectifs, dont le coût atteint plusieurs
 dizaines de fois la médiane : c’est la médiane qui décrit le cas courant, et p95/p99 le cas
