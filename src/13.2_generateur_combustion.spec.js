@@ -64,7 +64,9 @@ const {
   tv_generateur_combustion,
   findGenerateurChMixteJumeau,
   updateGenerateurCombustion,
-  caracteristiquesGenerateurCombustion
+  caracteristiquesGenerateurCombustion,
+  puissanceFormuleQp0,
+  PN_MAX_QP0_CHAUDIERE_GAZ
 } = await import('./13.2_generateur_combustion.js');
 const { tv, tvColumnLines } = await import('./utils.js');
 const { conventionPuissanceNominale } = await import('./13.2_generateur_combustion_pn.js');
@@ -1097,5 +1099,74 @@ describe('caracteristiquesGenerateurCombustion - selon la méthode de saisie', (
     expect(
       caracteristiquesGenerateurCombustion({ qp0_perc: '0.5' }, 2300, 0.1, 2.5, -0.8, 'ecs', 1).qp0
     ).toBeCloseTo(50, 9);
+  });
+});
+
+/**
+ * Plafond de Pn à 400 kW dans Qp0 = Pn × (E + F × log Pn) / 100 des chaudières gaz après 2015
+ * (moteur de référence Tribu : Calcul_generateur.cs, Rpn_chaudieregaz, Math.Min(400.0, Pn)).
+ * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.2
+ */
+describe('puissanceFormuleQp0 - plafond de Pn à 400 kW pour les chaudières gaz', () => {
+  const ROW_GAZ = {
+    type_generateur: 'Chaudière gaz basse température après 2015',
+    qp0_perc: 'Pn*(E+F*log10(Pn))/100'
+  };
+  const ROW_FIOUL = {
+    type_generateur: 'Chaudière fioul standard après 2015',
+    qp0_perc: 'Pn*(E+F*log10(Pn))/100'
+  };
+
+  test('chaudière gaz de 500 kW : puissance plafonnée à 400 kW', () => {
+    expect(PN_MAX_QP0_CHAUDIERE_GAZ).toBe(400000);
+    expect(puissanceFormuleQp0(ROW_GAZ, 500000)).toBe(400000);
+  });
+
+  test('chaudière gaz de 400 kW ou moins : puissance inchangée', () => {
+    expect(puissanceFormuleQp0(ROW_GAZ, 400000)).toBe(400000);
+    expect(puissanceFormuleQp0(ROW_GAZ, 24000)).toBe(24000);
+  });
+
+  test('chaudière fioul : pas de plafond', () => {
+    expect(puissanceFormuleQp0(ROW_FIOUL, 500000)).toBe(500000);
+  });
+
+  test('chaudière gaz avec qp0 forfaitaire (sans E, F) : pas de plafond', () => {
+    expect(
+      puissanceFormuleQp0(
+        { type_generateur: 'Chaudière gaz standard 2001-2015', qp0_perc: '1%' },
+        5e5
+      )
+    ).toBe(500000);
+  });
+
+  test('ligne sans libellé ni formule qp0 : pas de plafond', () => {
+    expect(puissanceFormuleQp0({}, 500000)).toBe(500000);
+  });
+
+  test('qp0 d’une chaudière gaz BT de 500 kW avec ventilateur (E = 1.75, F = -0.55) : Pn = 400 kW', () => {
+    const { qp0 } = caracteristiquesGenerateurCombustion(ROW_GAZ, 500000, 1, 1.75, -0.55, 'ch', 1);
+    // 400 × (1.75 − 0.55 × log10(400)) / 100 kW = Qp0 Tribu IC4-0-21 -- valeur de référence de régression
+    expect(qp0).toBeCloseTo(1275.468019078, 6);
+  });
+
+  test('qp0 d’une chaudière fioul de 500 kW : formule appliquée sur Pn = 500 kW', () => {
+    const { qp0 } = caracteristiquesGenerateurCombustion(
+      ROW_FIOUL,
+      500000,
+      1,
+      1.75,
+      -0.55,
+      'ch',
+      1
+    );
+    // 500 × (1.75 − 0.55 × log10(500)) / 100 kW -- valeur de référence de régression
+    expect(qp0).toBeCloseTo(500 * (1.75 - 0.55 * Math.log10(500)) * 10, 6);
+  });
+
+  test('chaudière gaz virtualisée : plafond appliqué sur Pn collectif puis qp0 ramené au logement', () => {
+    const { qp0 } = caracteristiquesGenerateurCombustion(ROW_GAZ, 50000, 0.1, 1.75, -0.55, 'ch', 1);
+    // Pn collectif = 500 kW plafonné à 400 kW, puis × ratio 0.1
+    expect(qp0).toBeCloseTo(127.5468019078, 6);
   });
 });
