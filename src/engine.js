@@ -651,6 +651,8 @@ export function calcul_3cl(inputDpe, options) {
       facteursAc
     );
     conso.emission_ges = consoNette.emission_ges;
+    // Ligne électricité de sortie_par_energie nette de l'autoconsommation (issue #34)
+    conso.sortie_par_energie_collection = consoNette.sortie_par_energie_collection;
     conso.cout = consoNette.cout;
   }
 
