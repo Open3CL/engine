@@ -345,6 +345,8 @@ export function getDeltaDim(em_ch) {
  * @param zcId {number} id de la zone climatique
  * @param nadeq {number} nombre d'unités d'équivalence
  * @param nombre_niveau_immeuble {number} nombre de niveaux de l'immeuble
+ * @param isImmeubleMultiEcs {boolean} immeuble à plusieurs installations ECS dont une collective :
+ * di.besoin_ecs est déjà proratisé (Becs_immeuble × Sh_ecs / SH / rdim, cf. 11_ecs.js)
  */
 export function conso_aux_distribution_ecs(
   ecs,
@@ -355,7 +357,8 @@ export function conso_aux_distribution_ecs(
   caId,
   zcId,
   nadeq,
-  nombre_niveau_immeuble
+  nombre_niveau_immeuble,
+  isImmeubleMultiEcs = false
 ) {
   const typeInstallation = parseInt(de.enum_type_installation_id);
 
@@ -375,6 +378,15 @@ export function conso_aux_distribution_ecs(
   // CAS 3 - enum_bouclage_reseau_ecs_id = 3 (traçage)
   if (enumBouclage === 3) {
     const BECS_annuel = di.besoin_ecs;
+    if (isImmeubleMultiEcs) {
+      /**
+       * Besoin déjà ramené à l'installation : pas de second prorata de surface.
+       * Tribu : Qtrac = 0,14 × Becs_immeuble × Sh_ecs / SH
+       * (Moteur_DPE.dll, Calcul_installation_ECS.C_circulateur et Calcul_batiment.Calcul_Cecs)
+       */
+      di.conso_auxiliaire_distribution_ecs = 0.14 * BECS_annuel * (Number(de.rdim) || 1);
+      return;
+    }
     const Sh_install = de.surface_habitable || Sh_logement;
     di.conso_auxiliaire_distribution_ecs = (0.14 * BECS_annuel * Sh_install) / Sh_logement;
     return;

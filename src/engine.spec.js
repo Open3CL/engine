@@ -486,7 +486,8 @@ describe('calcul_3cl - run intégral (maison)', () => {
       'ca1',
       'zc1',
       2, // nadeq
-      3 // nombre_niveau_immeuble
+      3, // nombre_niveau_immeuble
+      false // isImmeubleMultiEcs (maison)
     );
 
     // Climatisation présente : calc_clim appelé.

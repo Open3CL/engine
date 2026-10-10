@@ -472,7 +472,8 @@ export function calcul_3cl(inputDpe, options) {
         ca_id,
         zc_id,
         apport_et_besoin.nadeq,
-        dpe.logement.caracteristique_generale.nombre_niveau_immeuble
+        dpe.logement.caracteristique_generale.nombre_niveau_immeuble,
+        isImmeubleMultiEcs
       );
     }
   });
