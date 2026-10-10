@@ -617,6 +617,7 @@ export function calcul_3cl(inputDpe, options) {
     cg.surface_habitable_immeuble
   );
 
+  const facteursAc = {};
   const production_electricite = productionENR.calculateEnr(
     dpe.logement.production_elec_enr,
     conso,
@@ -624,8 +625,34 @@ export function calcul_3cl(inputDpe, options) {
     th,
     zc_id,
     undefined,
-    ratioPv
+    ratioPv,
+    facteursAc
   );
+
+  /**
+   * Émissions GES et coût calculés sur les consommations électriques minorées de l'autoconsommation
+   * PV (Tribu `Calcul_batiment.cs` l.1188 carbone_total, l.1318 calc_cout.Calcul).
+   */
+  if (Object.keys(facteursAc).length) {
+    const consoNette = calc_conso(
+      Sh,
+      zc_id,
+      ca_id,
+      vt_list,
+      instal_ch,
+      ecs,
+      clim,
+      prorataECS,
+      prorataChauffage,
+      dateDpe,
+      coef_ep,
+      th === 'immeuble' ? Nb_lgt : 1,
+      ratioSurfaceCoutCollectif,
+      facteursAc
+    );
+    conso.emission_ges = consoNette.emission_ges;
+    conso.cout = consoNette.cout;
+  }
 
   const conso1_7 = calc_conso(
     Sh,

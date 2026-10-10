@@ -238,6 +238,121 @@ describe('calc_conso - agrégation des consommations', () => {
     expect(res.ef_conso.conso_eclairage).toBe(100);
   });
 
+  test('autoconsommation PV : GES de tous les postes et coût hors éclairage/froid/ventilation minorés (Tribu Calcul_batiment.cs l.1188 / l.1318)', () => {
+    const ch = [
+      installCh({ cle_repartition_ch: 1 }, [
+        genCh('1', { conso_ch: 1000, conso_ch_depensier: 1200 })
+      ])
+    ];
+    // 25 % du chauffage et 50 % de l'éclairage autoconsommés
+    const facteursAc = { ch: 0.75, eclairage: 0.5 };
+
+    const brut = calc_conso(100, 1, 1, [], ch, [], [], 1, 1, DATE_DPE, coef_ep);
+    const net = calc_conso(100, 1, 1, [], ch, [], [], 1, 1, DATE_DPE, coef_ep, 1, 1, facteursAc);
+
+    // EF / EP inchangées (la minoration EF/EP reste faite par ProductionENR.updateEfConso)
+    expect(net.ef_conso).toStrictEqual(brut.ef_conso);
+    expect(net.ep_conso.ep_conso_5_usages).toBeCloseTo(brut.ep_conso.ep_conso_5_usages, 9);
+    // GES : 750 kWh × 0,079 ; éclairage 100 × 0,5 × coef
+    expect(net.emission_ges.emission_ges_ch).toBeCloseTo(750 * 0.079, 9);
+    expect(net.emission_ges.emission_ges_eclairage).toBeCloseTo(
+      brut.emission_ges.emission_ges_eclairage * 0.5,
+      9
+    );
+    // Coût : chauffage tarifé sur 750 kWh au lieu de 1000, éclairage tarifé brut
+    expect(net.cout.cout_ch).toBeLessThan(brut.cout.cout_ch);
+    expect(net.cout.cout_ch).toBeCloseTo(
+      calc_conso(
+        100,
+        1,
+        1,
+        [],
+        [
+          installCh({ cle_repartition_ch: 1 }, [
+            genCh('1', { conso_ch: 750, conso_ch_depensier: 900 })
+          ])
+        ],
+        [],
+        [],
+        1,
+        1,
+        DATE_DPE,
+        coef_ep
+      ).cout.cout_ch,
+      9
+    );
+    expect(net.cout.cout_eclairage).toBeCloseTo(brut.cout.cout_eclairage, 9);
+  });
+
+  test('autoconsommation PV : froid électrique minoré, froid non électrique non minoré', () => {
+    const frElec = [
+      {
+        donnee_entree: { enum_type_energie_id: '1' },
+        donnee_intermediaire: { conso_fr: 200, conso_fr_depensier: 250 }
+      }
+    ];
+    const frGaz = [
+      {
+        donnee_entree: { enum_type_energie_id: '2' },
+        donnee_intermediaire: { conso_fr: 200, conso_fr_depensier: 250 }
+      }
+    ];
+    const facteursAc = { fr: 0.5 };
+
+    const brutElec = calc_conso(100, 1, 1, [], [], [], frElec, 1, 1, DATE_DPE, coef_ep);
+    const netElec = calc_conso(
+      100,
+      1,
+      1,
+      [],
+      [],
+      [],
+      frElec,
+      1,
+      1,
+      DATE_DPE,
+      coef_ep,
+      1,
+      1,
+      facteursAc
+    );
+    expect(netElec.emission_ges.emission_ges_fr).toBeCloseTo(
+      brutElec.emission_ges.emission_ges_fr * 0.5,
+      9
+    );
+
+    const brutGaz = calc_conso(100, 1, 1, [], [], [], frGaz, 1, 1, DATE_DPE, coef_ep);
+    const netGaz = calc_conso(
+      100,
+      1,
+      1,
+      [],
+      [],
+      [],
+      frGaz,
+      1,
+      1,
+      DATE_DPE,
+      coef_ep,
+      1,
+      1,
+      facteursAc
+    );
+    expect(netGaz.emission_ges.emission_ges_fr).toBeGreaterThan(0);
+    expect(netGaz.emission_ges.emission_ges_fr).toBe(brutGaz.emission_ges.emission_ges_fr);
+  });
+
+  test('sans facteurs d’autoconsommation : résultats identiques', () => {
+    const ch = [
+      installCh({ cle_repartition_ch: 1 }, [
+        genCh('1', { conso_ch: 1000, conso_ch_depensier: 1200 })
+      ])
+    ];
+    const brut = calc_conso(100, 1, 1, [], ch, [], [], 1, 1, DATE_DPE, coef_ep);
+    const net = calc_conso(100, 1, 1, [], ch, [], [], 1, 1, DATE_DPE, coef_ep, 1, 1, {});
+    expect(net).toStrictEqual(brut);
+  });
+
   test('installation collective (méthode 2) : clé de répartition appliquée à conso et distribution', () => {
     const ch = [
       installCh(
