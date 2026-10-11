@@ -35,11 +35,6 @@
       "successRatio": "95.34 %"
     },
     "hperm": { "nbBelowThreshold": 9284, "mandatory": false, "successRatio": "92.85 %" },
-    "deperdition_pont_thermique": {
-      "nbBelowThreshold": 8666,
-      "mandatory": false,
-      "successRatio": "86.67 %"
-    },
     "surface_sud_equivalente": {
       "nbBelowThreshold": 9152,
       "mandatory": false,
@@ -89,16 +84,21 @@
       "nbBelowThreshold": 5940,
       "mandatory": true,
       "successRatio": "59.41 %"
+    },
+    "deperdition_pont_thermique": {
+      "nbBelowThreshold": 8666,
+      "mandatory": false,
+      "successRatio": "86.67 %"
     }
   },
   "performance": {
     "count": 9979,
-    "mean": 4.866,
-    "median": 4.398,
-    "min": 0.22,
-    "max": 50.356,
-    "p95": 8.767,
-    "p99": 12.46,
-    "totalMs": 48557.687
+    "mean": 5.366,
+    "median": 4.859,
+    "min": 0.264,
+    "max": 97.251,
+    "p95": 9.505,
+    "p99": 14.045,
+    "totalMs": 53542.639
   }
 }
