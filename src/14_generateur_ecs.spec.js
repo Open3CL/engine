@@ -548,6 +548,39 @@ describe('calc_gen_ecs - consommation par générateur', () => {
     expect(g.donnee_intermediaire.conso_ecs).toBeCloseTo(322.3456790123457, 9);
   });
 
+  /**
+   * Issue #39 : présence de veilleuse lue dans la fiche technique (de.presence_veilleuse).
+   * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §14.1
+   */
+  test.each([
+    [1, undefined, 0.02],
+    [0, 1, 0],
+    [undefined, 1, 0.02],
+    [undefined, undefined, 0]
+  ])(
+    'présence de veilleuse (fiche %s, pveilleuse %s) : pveil = %s',
+    (presenceVeilleuse, pveilleuse, attendu) => {
+      vi.mocked(tvColumnIDs).mockImplementation((table) =>
+        table === 'generateur_combustion' ? ['chaud'] : []
+      );
+      vi.mocked(tv_generateur_combustion).mockImplementation((dpe, di) => {
+        di.rpn = 0.9;
+        di.qp0 = 100;
+        di.pn = 20000;
+        di.pveil = 0.02;
+        di.pveilleuse = pveilleuse;
+      });
+      const g = gen({
+        type_energie: 'gaz',
+        enum_type_generateur_ecs_id: 'chaud',
+        enum_methode_saisie_carac_sys_id: '1',
+        presence_veilleuse: presenceVeilleuse
+      });
+      calc_gen_ecs({}, g, ecs_di, ecs_de, 0, '1', '1', 'maison');
+      expect(g.donnee_intermediaire.pveil).toBe(attendu);
+    }
+  );
+
   test('chaudière combustion avec stockage (Qgw > 0) : rendement génération + stockage', () => {
     vi.mocked(tvColumnIDs).mockImplementation((table) =>
       table === 'generateur_combustion' ? ['chaud'] : []

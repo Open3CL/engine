@@ -64,6 +64,8 @@ const {
   tv_generateur_combustion,
   findGenerateurChMixteJumeau,
   updateGenerateurCombustion,
+  presenceVeilleuse,
+  valeurVeilleuse,
   caracteristiquesGenerateurCombustion,
   puissanceFormuleQp0,
   PN_MAX_QP0_CHAUDIERE_GAZ
@@ -806,6 +808,20 @@ describe('tv_generateur_combustion - génération mixte avec plusieurs générat
 });
 
 /**
+ * Construit un DPE avec des fiches techniques (catégorie, liste [description, valeur]).
+ */
+const dpeFiches = (...fiches) => ({
+  fiche_technique_collection: {
+    fiche_technique: fiches.map(([categorie, sousFiches]) => ({
+      enum_categorie_fiche_technique_id: categorie,
+      sous_fiche_technique_collection: {
+        sous_fiche_technique: sousFiches.map(([description, valeur]) => ({ description, valeur }))
+      }
+    }))
+  }
+});
+
+/**
  * 13.2 - Orchestration des substitutions de générateurs et enrichissement fiches techniques.
  * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2
  */
@@ -887,6 +903,28 @@ describe('updateGenerateurCombustion - orchestration des substitutions', () => {
     updateGenerateurCombustion({}, deInconnu, 'ch');
     expect(deInconnu.ventilateurCombustion).toBeUndefined();
   });
+
+  test('présence de veilleuse lue dans la fiche technique : presence_veilleuse renseigné', () => {
+    getFicheTechnique.mockReturnValue(null);
+    const dpe = dpeFiches([
+      '8',
+      [
+        ['Type générateur', 'Chauffe-eau gaz'],
+        ["Présence d'une veilleuse", 'oui']
+      ]
+    ]);
+    const de = { description: 'Chauffe-eau gaz' };
+    updateGenerateurCombustion(dpe, de, 'ecs');
+    expect(de.presence_veilleuse).toBe(1);
+    expect(de.presenceVentilateur).toBeUndefined();
+  });
+
+  test('fiche veilleuse absente : presence_veilleuse non renseigné', () => {
+    getFicheTechnique.mockReturnValue(null);
+    const de = { description: 'gen' };
+    updateGenerateurCombustion({}, de, 'ch');
+    expect(de).not.toHaveProperty('presence_veilleuse');
+  });
 });
 
 /**
@@ -934,6 +972,126 @@ describe('tv_generateur_combustion - coefficients (E, F) selon le ventilateur de
     const de = { enum_type_generateur_ch_id: '93', ratio_virtualisation: 1, presence_ventouse: 1 };
     tv_generateur_combustion({}, di, de, 'ch', 200, -9, 1);
     expect(di.qp0).toBeCloseTo(237.81211609406802, 9);
+  });
+});
+
+/**
+ * Issue #39 : présence d'une veilleuse lue dans la sous-fiche technique du générateur.
+ * Tribu : entrée `Is_veilleuse` (DPE.DataClasses/generateur.cs), Pveil1 = 0 si absente
+ * (DPE.Core/Calcul_generateur.cs).
+ * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.4 / §14.1
+ */
+describe('presenceVeilleuse - fiche technique « Présence d’une veilleuse »', () => {
+  const ficheGen = (desc, veilleuse) => [
+    ['Type générateur', desc],
+    ["Année d'installation", '1995'],
+    ...(veilleuse === undefined ? [] : [['Présence d’une veilleuse', veilleuse]])
+  ];
+
+  test.each([
+    ['oui', 1],
+    [' Oui ', 1],
+    ['non', 0],
+    ['Non', 0],
+    ['Générateur sans veilleuse', 0],
+    ['Absence de veilleuse', 0],
+    ['NC', undefined],
+    ['', undefined],
+    [undefined, undefined]
+  ])('valeur « %s » -> %s', (valeur, attendu) => {
+    expect(valeurVeilleuse(valeur)).toBe(attendu);
+    const dpe = dpeFiches([
+      '7',
+      [
+        ['Type générateur', 'Chaudière'],
+        ['Présence d’une veilleuse', valeur]
+      ]
+    ]);
+    expect(presenceVeilleuse(dpe, { description: 'Chaudière' }, 'ch')).toBe(attendu);
+  });
+
+  test('catégorie 7 pour le chauffage, 8 pour l’ECS', () => {
+    const dpe = dpeFiches(
+      ['7', ficheGen('Chaudière gaz', 'oui')],
+      ['8', ficheGen('Chaudière gaz', 'non')]
+    );
+    expect(presenceVeilleuse(dpe, { description: 'Chaudière gaz' }, 'ch')).toBe(1);
+    expect(presenceVeilleuse(dpe, { description: 'Chaudière gaz' }, 'ecs')).toBe(0);
+  });
+
+  test('plusieurs générateurs dans la même fiche : veilleuse du générateur décrit', () => {
+    // cas réel 2551E0134306T (LICIEL) : condensation « non » puis standard « oui »
+    const dpe = dpeFiches([
+      '7',
+      [
+        ...ficheGen('Gaz Naturel - Chaudière gaz à condensation', 'non'),
+        ...ficheGen('Gaz Naturel - Chaudière gaz standard', 'oui')
+      ]
+    ]);
+    expect(
+      presenceVeilleuse(dpe, { description: 'Gaz Naturel - Chaudière gaz standard' }, 'ch')
+    ).toBe(1);
+    expect(
+      presenceVeilleuse(dpe, { description: 'Gaz Naturel - Chaudière gaz à condensation' }, 'ch')
+    ).toBe(0);
+  });
+
+  test('générateur sans ligne veilleuse : pas de reprise de celle du générateur suivant', () => {
+    const dpe = dpeFiches([
+      '7',
+      [...ficheGen('Poêle bûche'), ...ficheGen('Chaudière standard', 'oui')]
+    ]);
+    expect(presenceVeilleuse(dpe, { description: 'Poêle bûche' }, 'ch')).toBeUndefined();
+  });
+
+  test('même description répétée avec des réponses contradictoires : non renseigné', () => {
+    // cas réel 2567E1314804D : deux « Chaudière standard », l'une avec, l'autre sans veilleuse
+    const dpe = dpeFiches([
+      '7',
+      [...ficheGen('Chaudière standard', 'Oui'), ...ficheGen('Chaudière standard', 'Non')]
+    ]);
+    expect(presenceVeilleuse(dpe, { description: 'Chaudière standard' }, 'ch')).toBeUndefined();
+    const dpe2 = dpeFiches(
+      ['7', ficheGen('Chaudière standard', 'Oui')],
+      ['7', ficheGen('Chaudière standard', 'Oui')]
+    );
+    expect(presenceVeilleuse(dpe2, { description: 'Chaudière standard' }, 'ch')).toBe(1);
+  });
+
+  test('description absente, fiche absente ou générateur non décrit : non renseigné', () => {
+    const dpe = dpeFiches(['7', ficheGen('Chaudière', 'oui')], ['2', [['x', 'Chaudière']]]);
+    expect(presenceVeilleuse(dpe, {}, 'ch')).toBeUndefined();
+    expect(presenceVeilleuse({}, { description: 'Chaudière' }, 'ch')).toBeUndefined();
+    expect(presenceVeilleuse(dpe, { description: 'Poêle' }, 'ch')).toBeUndefined();
+    const fichesUniques = {
+      fiche_technique_collection: {
+        fiche_technique: {
+          enum_categorie_fiche_technique_id: '7',
+          sous_fiche_technique_collection: {
+            sous_fiche_technique: { description: 'Type', valeur: 'Chaudière' }
+          }
+        }
+      }
+    };
+    expect(presenceVeilleuse(fichesUniques, { description: 'Chaudière' }, 'ch')).toBeUndefined();
+    const sansSousFiche = {
+      fiche_technique_collection: {
+        fiche_technique: [null, { enum_categorie_fiche_technique_id: '7' }]
+      }
+    };
+    expect(presenceVeilleuse(sansSousFiche, { description: 'Chaudière' }, 'ch')).toBeUndefined();
+    const sousFichesVides = dpeFiches([
+      '7',
+      [
+        ['Type', 'Chaudière'],
+        [undefined, undefined],
+        [undefined, 'x']
+      ]
+    ]);
+    sousFichesVides.fiche_technique_collection.fiche_technique[0].sous_fiche_technique_collection.sous_fiche_technique.push(
+      null
+    );
+    expect(presenceVeilleuse(sousFichesVides, { description: 'Chaudière' }, 'ch')).toBeUndefined();
   });
 });
 

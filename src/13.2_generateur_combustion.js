@@ -355,13 +355,88 @@ export function updateGenerateurCombustion(dpe, de, type) {
 }
 
 /**
+ * Valeur de la sous-fiche « Présence d'une veilleuse » → 1 (oui), 0 (non) ou undefined (NC, autre).
+ * Valeurs observées : « oui », « non », « Non », « NC », « Générateur sans veilleuse ».
+ * @param valeur {string|number|undefined}
+ * @returns {1 | 0 | undefined}
+ */
+export function valeurVeilleuse(valeur) {
+  const v = (valeur ?? '').toString().trim().toLowerCase();
+  if (v.startsWith('oui')) return 1;
+  if (v.startsWith('non') || v.includes('sans veilleuse') || v.startsWith('absence')) return 0;
+  return undefined;
+}
+
+/**
+ * Présence d'une veilleuse sur un générateur à combustion, lue dans la sous-fiche technique
+ * « Présence d'une veilleuse » (catégorie 7 pour le chauffage, 8 pour l'ECS) du générateur.
+ *
+ * Le modèle ADEME n'a pas de donnée d'entrée « veilleuse » : la fiche technique est la seule trace
+ * de la saisie. Le moteur de référence (Tribu) prend cette information en entrée (`Is_veilleuse`,
+ * DPE.DataClasses/generateur.cs) et annule Pveil en son absence
+ * (DPE.Core/Calcul_generateur.cs, `Pveil1 = 0` si `Is_veilleuse != oui`).
+ *
+ * Une même fiche peut décrire plusieurs générateurs à la suite (ex. LICIEL : deux chaudières dans
+ * la même fiche de catégorie 7). getFicheTechnique() renverrait alors la veilleuse du premier
+ * générateur pour tous : la sous-fiche retenue est la première « veilleuse » qui suit la sous-fiche
+ * dont la valeur contient la description du générateur, avant le générateur suivant. En cas de
+ * réponses contradictoires (descriptions identiques) ou d'absence, la présence est non renseignée.
+ *
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.4 / §14.1 (« Pveil : si veilleuse »)
+ *
+ * @param dpe {FullDpe}
+ * @param de {Donnee_entree}
+ * @param type {'ch' | 'ecs'}
+ * @returns {1 | 0 | undefined} 1 si veilleuse, 0 si pas de veilleuse, undefined si non renseigné
+ */
+export function presenceVeilleuse(dpe, de, type) {
+  const description = (de.description ?? '').toString().toLowerCase();
+  if (!description) return undefined;
+
+  const categorie = type === 'ecs' ? '8' : '7';
+  const liste = (x) => (x === undefined || x === null ? [] : Array.isArray(x) ? x : [x]);
+  const valeurs = new Set();
+
+  for (const fiche of liste(dpe.fiche_technique_collection?.fiche_technique)) {
+    if (fiche?.enum_categorie_fiche_technique_id !== categorie) continue;
+    const sousFiches = liste(fiche.sous_fiche_technique_collection?.sous_fiche_technique);
+    const valeurMinuscule = (i) => (sousFiches[i]?.valeur ?? '').toString().toLowerCase();
+
+    for (let i = 0; i < sousFiches.length; i++) {
+      if (!valeurMinuscule(i).includes(description)) continue;
+      for (let j = i + 1; j < sousFiches.length; j++) {
+        const libelle = (sousFiches[j]?.description ?? '').toString().toLowerCase();
+        // début du générateur suivant
+        if (
+          valeurMinuscule(j).includes(description) ||
+          /^type (de )?g[ée]n[ée]rateur/.test(libelle)
+        ) {
+          break;
+        }
+        if (libelle.includes('veilleuse')) {
+          valeurs.add(valeurVeilleuse(sousFiches[j].valeur));
+          break;
+        }
+      }
+    }
+  }
+
+  return valeurs.size === 1 ? [...valeurs][0] : undefined;
+}
+
+/**
  * Récupération d'informations complémentaires issues des fiches techniques pour les générateurs
  *
  * @param dpe {FullDpe}
  * @param de {Donnee_entree}
- * @param type {'ch'|'ecs'}
+ * @param type {'ch' | 'ecs'}
  */
 function addInfosFromFichesTechniques(dpe, de, type) {
+  const veilleuse = presenceVeilleuse(dpe, de, type);
+  if (veilleuse !== undefined) {
+    de.presence_veilleuse = veilleuse;
+  }
+
   // Récupération de la présence ou non d'un système de ventilation
   // Fiches techniques : catégorie 7 pour le chauffage, catégorie 8 pour l'ECS
   const ficheTechnique = getFicheTechnique(

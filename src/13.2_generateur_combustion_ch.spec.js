@@ -857,6 +857,56 @@ describe('calc_generateur_combustion_ch - rendement de génération', () => {
     expect(avecVeilleuse.rg).toBeLessThan((k * pmfou) / (pmcons + 0.15));
   });
 
+  /**
+   * Issue #39 : la présence de veilleuse lue dans la fiche technique (de.presence_veilleuse)
+   * prime sur la valeur intermédiaire pveilleuse du DPE. Sans fiche, comportement inchangé.
+   * Tribu : Pveil1 = 0 si Is_veilleuse != oui (DPE.Core/Calcul_generateur.cs).
+   * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.4
+   */
+  describe('présence de veilleuse (issue #39)', () => {
+    const di = (extra) => ({
+      pn: 24000,
+      rpn: 0.87,
+      rpint: 0.84,
+      qp0: 0,
+      pveil: 150,
+      temp_fonc_30: 56,
+      temp_fonc_100: 70,
+      ...extra
+    });
+    const de = (extra) => ({
+      enum_type_generateur_ch_id: '86',
+      enum_type_energie_id: '2',
+      type_energie: 'gaz naturel',
+      presence_regulation_combustion: true,
+      description: 't',
+      ...extra
+    });
+
+    test('fiche « oui » sans pveilleuse exportée : Pveil de la table conservé', () => {
+      const d = di();
+      calc_generateur_combustion_ch({}, d, de({ presence_veilleuse: 1 }), { cdimref: 3 });
+      expect(d.pveil).toBe(150);
+    });
+
+    test('fiche « non » avec pveilleuse exportée : Pveil annulé', () => {
+      const d = di({ pveilleuse: 150 });
+      calc_generateur_combustion_ch({}, d, de({ presence_veilleuse: 0 }), { cdimref: 3 });
+      expect(d.pveil).toBe(0);
+    });
+
+    test('pas de fiche : Pveil conservé si pveilleuse exportée, annulé sinon', () => {
+      const avec = di({ pveilleuse: 150 });
+      calc_generateur_combustion_ch({}, avec, de(), { cdimref: 3 });
+      expect(avec.pveil).toBe(150);
+      const sans = di();
+      calc_generateur_combustion_ch({}, sans, de(), { cdimref: 3 });
+      expect(sans.pveil).toBe(0);
+      // la veilleuse dégrade le rendement
+      expect(avec.rg).toBeLessThan(sans.rg);
+    });
+  });
+
   test('les pertes à charge nulle QP0 réduisent le rendement de génération', () => {
     const di = () => ({
       pn: 23000,
