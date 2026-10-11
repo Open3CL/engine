@@ -256,8 +256,18 @@ export function tv_generateur_combustion(dpe, di, de, type, GV, tbase, methodeSa
 
   de.tv_generateur_combustion_id = Number(row.tv_generateur_combustion_id);
 
-  const E = E_tab[de.presence_ventouse];
-  const F = F_tab[de.presence_ventouse];
+  /**
+   * Les coefficients (E, F) dépendent de la présence d'un ventilateur ou autre dispositif de
+   * circulation d'air dans le circuit de combustion, et non de la ventouse (qui n'intervient que
+   * dans Cper). Le XML ne transporte pas cette donnée : elle est lue dans la fiche technique du
+   * générateur. Sans fiche technique, la ventouse est conservée comme approximation (choix
+   * Open3CL, la méthode ne prévoyant pas de valeur par défaut).
+   * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.2
+   * @see : Tribu Calcul_generateur.cs (ventilateur_combustion)
+   */
+  const indexEF = de.ventilateurCombustion ?? de.presence_ventouse;
+  const E = E_tab[indexEF];
+  const F = F_tab[indexEF];
 
   let ratioVirtualisation = de.ratio_virtualisation || 1;
 
@@ -341,7 +351,7 @@ export function updateGenerateurCombustion(dpe, de, type) {
   updateGenerateurBouilleurs(dpe, de, type);
   updateGenerateurChaudieres(dpe, de, type);
   updateGenerateurPacs(dpe, de, type);
-  addInfosFromFichesTechniques(dpe, de);
+  addInfosFromFichesTechniques(dpe, de, type);
 }
 
 /**
@@ -349,18 +359,25 @@ export function updateGenerateurCombustion(dpe, de, type) {
  *
  * @param dpe {FullDpe}
  * @param de {Donnee_entree}
+ * @param type {'ch'|'ecs'}
  */
-function addInfosFromFichesTechniques(dpe, de) {
+function addInfosFromFichesTechniques(dpe, de, type) {
   // Récupération de la présence ou non d'un système de ventilation
+  // Fiches techniques : catégorie 7 pour le chauffage, catégorie 8 pour l'ECS
   const ficheTechnique = getFicheTechnique(
     dpe,
-    '8',
+    type === 'ch' ? '7' : '8',
     'Présence ventilateur / dispositif circulation air dans circuit combustion',
     [de.description]
   )?.valeur;
 
   if (ficheTechnique && ficheTechnique === 'oui') {
     de.presenceVentilateur = 1;
+  }
+
+  // Présence d'un ventilateur dans le circuit de combustion (choix des coefficients E, F de qp0)
+  if (ficheTechnique === 'oui' || ficheTechnique === 'non') {
+    de.ventilateurCombustion = ficheTechnique === 'oui' ? 1 : 0;
   }
 }
 
