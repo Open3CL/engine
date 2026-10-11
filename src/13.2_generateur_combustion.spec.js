@@ -833,6 +833,108 @@ describe('updateGenerateurCombustion - orchestration des substitutions', () => {
     updateGenerateurCombustion({}, de, 'ch');
     expect(de.presenceVentilateur).toBeUndefined();
   });
+
+  /**
+   * Issue #35 : la fiche technique d'un générateur de chauffage est en catégorie 7, celle d'un
+   * générateur ECS en catégorie 8.
+   */
+  test('générateur de chauffage : fiche technique recherchée en catégorie 7 (#35)', () => {
+    getFicheTechnique.mockReturnValue(undefined);
+    const dpe = {};
+    updateGenerateurCombustion(dpe, { description: 'chaudière' }, 'ch');
+    expect(getFicheTechnique).toHaveBeenCalledWith(
+      dpe,
+      '7',
+      'Présence ventilateur / dispositif circulation air dans circuit combustion',
+      ['chaudière']
+    );
+  });
+
+  test('générateur ECS : fiche technique recherchée en catégorie 8 (#35)', () => {
+    getFicheTechnique.mockReturnValue(undefined);
+    const dpe = {};
+    updateGenerateurCombustion(dpe, { description: 'chauffe-eau' }, 'ecs');
+    expect(getFicheTechnique).toHaveBeenCalledWith(
+      dpe,
+      '8',
+      'Présence ventilateur / dispositif circulation air dans circuit combustion',
+      ['chauffe-eau']
+    );
+  });
+
+  test('ventilateur de combustion renseigné à 1 si la fiche indique « oui » (#35)', () => {
+    getFicheTechnique.mockReturnValue({ valeur: 'oui' });
+    const de = { description: 'gen' };
+    updateGenerateurCombustion({}, de, 'ch');
+    expect(de.ventilateurCombustion).toBe(1);
+  });
+
+  test('ventilateur de combustion renseigné à 0 si la fiche indique « non » (#35)', () => {
+    getFicheTechnique.mockReturnValue({ valeur: 'non' });
+    const de = { description: 'gen' };
+    updateGenerateurCombustion({}, de, 'ch');
+    expect(de.ventilateurCombustion).toBe(0);
+  });
+
+  test('ventilateur de combustion non renseigné sans fiche ou valeur inconnue (#35)', () => {
+    getFicheTechnique.mockReturnValue(undefined);
+    const deSansFiche = { description: 'gen' };
+    updateGenerateurCombustion({}, deSansFiche, 'ch');
+    expect(deSansFiche.ventilateurCombustion).toBeUndefined();
+
+    getFicheTechnique.mockReturnValue({ valeur: 'inconnu' });
+    const deInconnu = { description: 'gen' };
+    updateGenerateurCombustion({}, deInconnu, 'ch');
+    expect(deInconnu.ventilateurCombustion).toBeUndefined();
+  });
+});
+
+/**
+ * Issue #35 : les coefficients (E, F) de la formule qp0 dépendent de la présence d'un ventilateur
+ * dans le circuit de combustion (fiche technique), la ventouse n'étant qu'un repli.
+ * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.2
+ */
+describe('tv_generateur_combustion - coefficients (E, F) selon le ventilateur de combustion (#35)', () => {
+  const ROW_EF = { ...ROW_DEFAUT, rpn: 'E*40', qp0_perc: 'Pn*(E+F*log10(Pn))/100' };
+
+  test('ventouse mais pas de ventilateur : couple (E, F) sans ventilateur (2,5 ; -0,8)', () => {
+    tv.mockReturnValue({ ...ROW_EF });
+    const di = { pn: 24000 };
+    const de = {
+      enum_type_generateur_ch_id: '93',
+      ratio_virtualisation: 1,
+      presence_ventouse: 1,
+      ventilateurCombustion: 0
+    };
+    tv_generateur_combustion({}, di, de, 'ch', 200, -9, 1);
+    // E = 2.5 => rpn = 2.5*40/100 = 1
+    expect(di.rpn).toBeCloseTo(1, 9);
+    // qp0 = 24000 * (2.5 - 0.8 * log10(24)) / 100 -- valeur du DPE 2459E3195669T
+    expect(di.qp0).toBeCloseTo(334.99944159137164, 9);
+  });
+
+  test('ventilateur sans ventouse : couple (E, F) avec ventilateur (1,75 ; -0,55)', () => {
+    tv.mockReturnValue({ ...ROW_EF });
+    const di = { pn: 24000 };
+    const de = {
+      enum_type_generateur_ch_id: '93',
+      ratio_virtualisation: 1,
+      presence_ventouse: 0,
+      ventilateurCombustion: 1
+    };
+    tv_generateur_combustion({}, di, de, 'ch', 200, -9, 1);
+    expect(di.rpn).toBeCloseTo(0.7, 9);
+    // qp0 = 24000 * (1.75 - 0.55 * log10(24)) / 100 -- valeur de référence de régression
+    expect(di.qp0).toBeCloseTo(237.81211609406802, 9);
+  });
+
+  test('sans information de ventilateur : repli sur la présence de ventouse', () => {
+    tv.mockReturnValue({ ...ROW_EF });
+    const di = { pn: 24000 };
+    const de = { enum_type_generateur_ch_id: '93', ratio_virtualisation: 1, presence_ventouse: 1 };
+    tv_generateur_combustion({}, di, de, 'ch', 200, -9, 1);
+    expect(di.qp0).toBeCloseTo(237.81211609406802, 9);
+  });
 });
 
 /**
