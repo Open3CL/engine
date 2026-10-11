@@ -582,45 +582,140 @@ export default function calc_conso(
   ret.sortie_par_energie_collection = {};
   ret.sortie_par_energie_collection.sortie_par_energie = energie_ids.reduce((acc, energie_id) => {
     const type_energie = enums.type_energie[energie_id];
-    let vt_en, fr_en;
-    if (type_energie === 'électricité') {
-      vt_en = vt;
-      fr_en = fr;
-    } else {
-      vt_en = [];
-      fr_en = [];
-    }
     const gen_ch_en = gen_ch.filter(
       (gen_ch) => gen_ch.donnee_entree.enum_type_energie_id === energie_id
     );
     const gen_ecs_en = gen_ecs.filter(
       (gen_ecs) => gen_ecs.donnee_entree.enum_type_energie_id === energie_id
     );
-    let conso_en = calc_conso_pond(
+
+    if (type_energie === 'électricité') {
+      acc.push({
+        ...sortieElectricite(
+          Sh,
+          zc_id,
+          vt,
+          gen_ch,
+          gen_ecs,
+          gen_ch_en,
+          gen_ecs_en,
+          fr,
+          ecs,
+          prorataECS,
+          prorataChauffage,
+          facteursAc
+        ),
+        enum_type_energie_id: energie_id
+      });
+      return acc;
+    }
+
+    const conso_en = calc_conso_pond(
       Sh,
       zc_id,
-      vt_en,
+      [],
       gen_ch_en,
       gen_ecs_en,
-      fr_en,
+      [],
       '',
       null,
       prorataECS,
       prorataChauffage,
-      type_energie === 'électricité' ? ecs : []
+      []
     );
-    conso_en = {
+    acc.push({
       conso_ch: conso_en._ch,
       conso_ecs: conso_en._ecs,
-      conso_5_usages: conso_en._5_usages,
+      // Énergie non électrique : chauffage + ECS uniquement, l'éclairage, le froid et les
+      // auxiliaires étant électriques (portés par la ligne électricité)
+      conso_5_usages: conso_en._ch + conso_en._ecs,
       emission_ges_ch: conso_en._ch * coef_ges[getCoefKey(type_energie, 'ch')],
       emission_ges_ecs: conso_en._ecs * coef_ges[getCoefKey(type_energie, 'ecs')],
-      emission_ges_5_usages: conso_en._5_usages * coef_ges[type_energie] // TODO elec
-    };
-    conso_en.enum_type_energie_id = energie_id;
-    return acc.concat(conso_en);
+      enum_type_energie_id: energie_id
+    });
+    const ligne = acc[acc.length - 1];
+    ligne.emission_ges_5_usages = ligne.emission_ges_ch + ligne.emission_ges_ecs;
+    return acc;
   }, []);
   return ret;
+}
+
+/**
+ * Ligne « électricité » de sortie_par_energie (issue #34).
+ *
+ * - Chauffage et ECS : générateurs électriques uniquement.
+ * - Auxiliaires (génération et distribution ch/ecs, ventilation) : toujours électriques, quelle
+ *   que soit l'énergie du générateur (§15, §16.2 : « consommation annuelle d'électricité pour les
+ *   auxiliaires »), donc rattachés à l'électricité pour tous les générateurs.
+ * - Éclairage et froid électrique (un réseau de froid relève d'une autre énergie).
+ * - Émissions : coefficient GES propre à chaque usage (ch 0,079, ecs 0,065, fr 0,064,
+ *   éclairage 0,069, auxiliaires 0,064), aucun coefficient « électricité » global n'existant.
+ * - facteursAc : consommations nettes de l'autoconsommation PV par usage (arrêté DPE habitation
+ *   §3.a, méthode §16.2) ; vide pour le calcul brut servant au taux de couverture PV.
+ *
+ * @return {{conso_ch: number, conso_ecs: number, conso_5_usages: number, emission_ges_ch: number, emission_ges_ecs: number, emission_ges_5_usages: number}}
+ */
+export function sortieElectricite(
+  Sh,
+  zc_id,
+  vt,
+  gen_ch,
+  gen_ecs,
+  gen_ch_elec,
+  gen_ecs_elec,
+  fr,
+  ecs,
+  prorataECS,
+  prorataChauffage,
+  facteursAc = {}
+) {
+  const fr_elec = fr.filter((f) => getTypeEnergie(f.donnee_entree, 'fr') === 'électricité fr');
+  const postes = (coef) => {
+    const usages = calc_conso_pond(
+      Sh,
+      zc_id,
+      [],
+      gen_ch_elec,
+      gen_ecs_elec,
+      [],
+      '',
+      coef,
+      prorataECS,
+      prorataChauffage,
+      [],
+      facteursAc
+    );
+    const communs = calc_conso_pond(
+      Sh,
+      zc_id,
+      vt,
+      gen_ch,
+      gen_ecs,
+      fr_elec,
+      '',
+      coef,
+      prorataECS,
+      prorataChauffage,
+      ecs,
+      facteursAc
+    );
+    return {
+      ch: usages._ch,
+      ecs: usages._ecs,
+      total:
+        usages._ch + usages._ecs + communs._fr + communs._totale_auxiliaire + communs._eclairage
+    };
+  };
+  const conso = postes(null);
+  const ges = postes(coef_ges);
+  return {
+    conso_ch: conso.ch,
+    conso_ecs: conso.ecs,
+    conso_5_usages: conso.total,
+    emission_ges_ch: ges.ch,
+    emission_ges_ecs: ges.ecs,
+    emission_ges_5_usages: ges.total
+  };
 }
 
 export function classe_bilan_dpe(ep_conso_5_usages_m2, zc_id, ca_id, Sh) {
