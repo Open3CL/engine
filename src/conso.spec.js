@@ -1386,4 +1386,34 @@ describe('réseaux de chaleur - sélection de l’arrêté et du contenu CO2', (
     const autreRes = calc_conso(...args);
     expect(autreRes.emission_ges.emission_ges_ch).toBeCloseTo(61, 9);
   });
+
+  test('calc_conso : réseau à contenu CO2 nul, émissions chauffage et ECS nulles (pas de repli sur 1)', () => {
+    utilsState.bugForBugCompat = true;
+    // Réseau 1606C (MONTEMBOEUF), arrêté du 05/07/2024 : contenu_co2 = 0 (transmis par LICIEL)
+    mockTables({
+      '1606C': { reseau_chaleur_2023: { contenu_co2: '0', contenu_co2_acv: '0.024' } }
+    });
+    const de = { identifiant_reseau_chaleur: '1606C', date_arrete_reseau_chaleur: '2024-07-05' };
+    const ch = [
+      installCh({ cle_repartition_ch: 1 }, [
+        genCh('3', { conso_ch: 1000, conso_ch_depensier: 1200 }, de)
+      ])
+    ];
+    const ecs = [
+      installEcs({ cle_repartition_ecs: 1 }, [
+        genEcs('3', { conso_ecs: 500, conso_ecs_depensier: 600 }, de)
+      ])
+    ];
+    const args = [100, 1, 1, [], ch, ecs, [], 1, 1, '2025-03-06', coef_ep, 1, 1, {}];
+
+    const licielRes = calc_conso(...args, 'LICIEL Diagnostics v4');
+    // DPE 2516E0769459J : emission_ges_ch = emission_ges_ecs = 0 dans l'export ADEME (avant : 1000 et 500)
+    expect(licielRes.emission_ges.emission_ges_ch).toBe(0);
+    expect(licielRes.emission_ges.emission_ges_ecs).toBe(0);
+    expect(licielRes.emission_ges.emission_ges_ch_depensier).toBe(0);
+
+    // Hors LICIEL : contenu ACV 0,024
+    const autreRes = calc_conso(...args);
+    expect(autreRes.emission_ges.emission_ges_ch).toBeCloseTo(24, 9);
+  });
 });

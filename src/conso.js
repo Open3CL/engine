@@ -307,7 +307,9 @@ function getConso(coef, type_energie, conso) {
     const val = coef_val(conso);
     return val;
   }
-  if (coef_val) return coef_val * conso;
+  // Un coefficient nul est une valeur légitime (ex. réseau de chaleur à contenu CO2 nul) :
+  // seul un coefficient absent conserve la consommation telle quelle.
+  if (Number.isFinite(coef_val)) return coef_val * conso;
   return conso;
 }
 
