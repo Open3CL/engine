@@ -59,6 +59,14 @@ vi.mock('./ficheTechnique.js', () => ({
 vi.mock('./13.2_generateur_combustion_pn.js', () => ({
   conventionPuissanceNominale: vi.fn((pn, ratio) => ({ pn, ratio, convention: 'individualisee' }))
 }));
+/**
+ * Estimation Pdim → Pn (issue #271) : testée dans son propre spec. Par défaut, le double renvoie Pch.
+ */
+vi.mock('./13.2_generateur_combustion_pdim.js', () => ({
+  pnEstimeeDimensionnement: vi.fn(({ pch }) => pch),
+  anneeInstallationGenerateur: vi.fn(() => 2018),
+  valeurChaudiereMurale: vi.fn((v) => (v === 'oui' ? true : v === 'non' ? false : undefined))
+}));
 
 const {
   tv_generateur_combustion,
@@ -69,8 +77,13 @@ const {
   caracteristiquesGenerateurCombustion,
   puissanceFormuleQp0,
   PN_MAX_QP0_CHAUDIERE_GAZ,
-  pnEstimee
+  pnEstimee,
+  pnEstimeeGenerateur,
+  chaudiereMurale,
+  volumeStockageEcsMixte
 } = await import('./13.2_generateur_combustion.js');
+const { pnEstimeeDimensionnement, anneeInstallationGenerateur } =
+  await import('./13.2_generateur_combustion_pdim.js');
 const { tv, tvColumnLines } = await import('./utils.js');
 const { conventionPuissanceNominale } = await import('./13.2_generateur_combustion_pn.js');
 const { updateGenerateurBouilleurs } = await import('./13.2_generateur_combustion_bouilleur.js');
@@ -1477,5 +1490,187 @@ describe('pnEstimee - puissance nominale estimée (issue #264)', () => {
     ['absent', undefined]
   ])('ratio %s : pas de prorata (Pch du logement)', (_libelle, ratio) => {
     expect(pnEstimee(200, -9, ratio)).toBeCloseTo(PCH_LOGEMENT, 9);
+  });
+});
+
+/**
+ * Pn estimée par la puissance de dimensionnement (issue #271).
+ * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.2.4
+ */
+describe('pnEstimeeGenerateur - Pdim = max(Pch ; Pecs) et table Pdim → Pn (issue #271)', () => {
+  const dpeAvecEcsMixte = (generateursEcs) => ({
+    logement: {
+      caracteristique_generale: { annee_construction: '1975' },
+      installation_ecs_collection: {
+        installation_ecs: [{ generateur_ecs_collection: { generateur_ecs: generateursEcs } }]
+      }
+    }
+  });
+
+  beforeEach(() => {
+    vi.mocked(pnEstimeeDimensionnement).mockClear();
+    vi.mocked(anneeInstallationGenerateur).mockClear();
+    vi.mocked(getFicheTechnique).mockReset();
+  });
+
+  test('installation collective : Pch conservée, pas de table', () => {
+    const de = { enum_type_installation_id: '2', enum_type_generateur_ch_id: '89' };
+    expect(pnEstimeeGenerateur({}, de, 'ch', 7800)).toBe(7800);
+    expect(pnEstimeeDimensionnement).not.toHaveBeenCalled();
+  });
+
+  test('option installationIndividuelle prioritaire sur la donnée du générateur', () => {
+    const de = { enum_type_installation_id: '1', enum_type_generateur_ecs_id: 'A' };
+    expect(pnEstimeeGenerateur({}, de, 'ecs', 7800, { installationIndividuelle: false })).toBe(
+      7800
+    );
+    expect(pnEstimeeDimensionnement).not.toHaveBeenCalled();
+  });
+
+  test('chaudière de chauffage seul : paramètres transmis (libellé, pose murale, année)', () => {
+    vi.mocked(getFicheTechnique).mockReturnValue({ valeur: 'oui' });
+    const dpe = { logement: { caracteristique_generale: { annee_construction: '1975' } } };
+    const de = {
+      description: 'Chaudière gaz',
+      enum_type_installation_id: '1',
+      enum_usage_generateur_id: '1',
+      enum_type_generateur_ch_id: '89',
+      annee_installation: '2010'
+    };
+    pnEstimeeGenerateur(dpe, de, 'ch', 7800);
+
+    expect(getFicheTechnique).toHaveBeenCalledWith(dpe, '7', 'Chaudière murale', ['Chaudière gaz']);
+    expect(anneeInstallationGenerateur).toHaveBeenCalledWith(
+      '2010',
+      '1975',
+      'chaudière gaz standard 2001-2015'
+    );
+    expect(pnEstimeeDimensionnement).toHaveBeenCalledWith({
+      pch: 7800,
+      volumeStockage: undefined,
+      usageEcs: false,
+      usageChauffage: true,
+      libelleTypeGenerateur: 'chaudière gaz standard 2001-2015',
+      murale: true,
+      anneeInstallation: 2018
+    });
+  });
+
+  test('chaudière mixte : volume de stockage du générateur ECS jumeau (reference_generateur_mixte)', () => {
+    const dpe = dpeAvecEcsMixte([
+      {
+        donnee_entree: {
+          enum_usage_generateur_id: '3',
+          reference_generateur_mixte: 'A',
+          volume_stockage: 0
+        }
+      },
+      {
+        donnee_entree: {
+          enum_usage_generateur_id: '3',
+          reference_generateur_mixte: 'B',
+          volume_stockage: 150
+        }
+      }
+    ]);
+    const de = {
+      enum_type_installation_id: '1',
+      enum_usage_generateur_id: '3',
+      enum_type_generateur_ch_id: '89',
+      reference_generateur_mixte: 'B'
+    };
+    pnEstimeeGenerateur(dpe, de, 'ch', 7800);
+    expect(pnEstimeeDimensionnement).toHaveBeenCalledWith(
+      expect.objectContaining({ volumeStockage: 150, usageEcs: true, usageChauffage: true })
+    );
+  });
+
+  test('générateur ECS : volume de stockage du générateur, usage ECS seul', () => {
+    vi.mocked(getFicheTechnique).mockReturnValue({ valeur: 'non' });
+    const de = {
+      description: 'Chaudière gaz',
+      enum_usage_generateur_id: '2',
+      enum_type_generateur_ecs_id: 'A',
+      volume_stockage: 10
+    };
+    pnEstimeeGenerateur({}, de, 'ecs', 7800, { installationIndividuelle: true });
+    expect(getFicheTechnique).toHaveBeenCalledWith({}, '8', 'Chaudière murale', ['Chaudière gaz']);
+    expect(pnEstimeeDimensionnement).toHaveBeenCalledWith(
+      expect.objectContaining({
+        volumeStockage: 10,
+        usageEcs: true,
+        usageChauffage: false,
+        libelleTypeGenerateur: 'chaudière gaz',
+        murale: false
+      })
+    );
+  });
+
+  test('volume de stockage transmis en option prioritaire', () => {
+    const de = { enum_type_installation_id: '1', enum_usage_generateur_id: '2' };
+    pnEstimeeGenerateur({}, de, 'ecs', 7800, { volumeStockage: 300 });
+    expect(pnEstimeeDimensionnement).toHaveBeenCalledWith(
+      expect.objectContaining({ volumeStockage: 300 })
+    );
+  });
+
+  test('tv_generateur_combustion : pn absente estimée via pnEstimeeGenerateur', () => {
+    vi.mocked(pnEstimeeDimensionnement).mockReturnValueOnce(24000);
+    vi.mocked(tv).mockReturnValue({ tv_generateur_combustion_id: '1', rpn: '90', rpint: '90' });
+    const di = {};
+    const de = {
+      enum_type_generateur_ch_id: '89',
+      enum_type_installation_id: '1',
+      enum_usage_generateur_id: '1'
+    };
+    tv_generateur_combustion({}, di, de, 'ch', 200, -9, 1);
+    expect(di.pn).toBe(24000);
+  });
+});
+
+describe('volumeStockageEcsMixte - volume de stockage de l’ECS d’un générateur mixte', () => {
+  const ecs = (usage, reference, volume) => ({
+    donnee_entree: {
+      enum_usage_generateur_id: usage,
+      reference_generateur_mixte: reference,
+      volume_stockage: volume
+    }
+  });
+  const dpe = (generateurs) => ({
+    logement: {
+      installation_ecs_collection: {
+        installation_ecs: { generateur_ecs_collection: { generateur_ecs: generateurs } }
+      }
+    }
+  });
+
+  test('jumeau par reference_generateur_mixte', () => {
+    const d = dpe([ecs('3', 'R1', 80), ecs('3', 'R2', 200)]);
+    expect(volumeStockageEcsMixte(d, { reference_generateur_mixte: 'R2' })).toBe(200);
+  });
+
+  test('sans référence : générateur ECS mixte unique', () => {
+    const d = dpe([ecs('2', undefined, 300), ecs('3', undefined, 0)]);
+    expect(volumeStockageEcsMixte(d, {})).toBe(0);
+  });
+
+  test('plusieurs générateurs mixtes sans référence commune : volume inconnu', () => {
+    const d = dpe([ecs('3', 'R1', 80), ecs('3', 'R2', 200)]);
+    expect(volumeStockageEcsMixte(d, { reference_generateur_mixte: 'R3' })).toBeUndefined();
+    expect(volumeStockageEcsMixte(d, {})).toBeUndefined();
+  });
+
+  test('aucune installation ECS', () => {
+    expect(volumeStockageEcsMixte({}, {})).toBeUndefined();
+    expect(
+      volumeStockageEcsMixte(dpe(ecs('3', 'R', 50)), { reference_generateur_mixte: 'R' })
+    ).toBe(50);
+  });
+});
+
+describe('chaudiereMurale - sous-fiche « Chaudière murale »', () => {
+  test('fiche absente : pose inconnue', () => {
+    vi.mocked(getFicheTechnique).mockReturnValue(null);
+    expect(chaudiereMurale({}, { description: 'x' }, 'ch')).toBeUndefined();
   });
 });

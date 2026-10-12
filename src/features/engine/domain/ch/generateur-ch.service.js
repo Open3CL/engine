@@ -4,6 +4,11 @@ import { excel_to_js_exec } from '../../../../utils.js';
 import { TvStore } from '../../../dpe/infrastructure/tv.store.js';
 import { EmetteurChService } from './emetteur-ch.service.js';
 import { TypeGenerateur } from '../../../dpe/domain/models/type-generateur.model.js';
+import enums from '../../../../enums.js';
+import {
+  anneeInstallationGenerateur,
+  pnEstimeeDimensionnement
+} from '../../../../13.2_generateur_combustion_pdim.js';
 
 /**
  * Calcul des données de calcul pour chacun des générateurs
@@ -76,7 +81,8 @@ export class GenerateurChService {
           generateurChauffage.donnee_intermediaire.pn = this.pn(
             ctx,
             logement,
-            installationChauffage
+            installationChauffage,
+            generateurChauffage
           );
         }
 
@@ -206,9 +212,10 @@ export class GenerateurChService {
    * @param ctx {Contexte}
    * @param logement {Logement}
    * @param installationChauffage {InstallationChauffage}
+   * @param generateurChauffage {GenerateurChauffage}
    * @return {number}
    */
-  pn(ctx, logement, installationChauffage) {
+  pn(ctx, logement, installationChauffage, generateurChauffage) {
     const Tbase = this.#tvStore.getTempBase(ctx.altitude.id, ctx.zoneClimatique.id);
     // §13.2.2.4 : générateur individuel n'alimentant qu'une partie du logement => prorata Sh_installation / Sh.
     // Un générateur collectif dessert tout le bâtiment : pas de prorata.
@@ -218,9 +225,58 @@ export class GenerateurChService {
         ? installationDE.surface_chauffee / ctx.surfaceHabitable
         : 1;
     const prorata = ratio > 0 && ratio < 1 ? ratio : 1;
-    return (
-      (prorata * 1.2 * logement.sortie.deperdition.deperdition_enveloppe * (19 - Tbase)) / 0.95 ** 3
-    );
+    const pch =
+      (prorata * 1.2 * logement.sortie.deperdition.deperdition_enveloppe * (19 - Tbase)) /
+      0.95 ** 3;
+
+    // §13.2.2.4 : Pdim = max(Pch ; Pecs) puis table Pdim → Pn des chaudières (générateurs individuels)
+    if (String(installationDE?.enum_type_installation_id) !== '1' || !generateurChauffage) {
+      return pch;
+    }
+
+    const generateurDE = generateurChauffage.donnee_entree;
+    const usageMixte = String(generateurDE.enum_usage_generateur_id) === '3';
+    const libelleTypeGenerateur = enums.type_generateur_ch[generateurDE.enum_type_generateur_ch_id];
+
+    return pnEstimeeDimensionnement({
+      pch,
+      volumeStockage: usageMixte ? this.volumeStockageEcsMixte(logement, generateurDE) : undefined,
+      usageEcs: usageMixte,
+      libelleTypeGenerateur,
+      // Fiches techniques non disponibles dans la nouvelle architecture : pose murale inconnue
+      murale: undefined,
+      anneeInstallation: anneeInstallationGenerateur(
+        generateurDE.annee_installation,
+        ctx.anneeConstruction,
+        libelleTypeGenerateur
+      )
+    });
+  }
+
+  /**
+   * Volume de stockage (L) de la production d'ECS assurée par un générateur de chauffage mixte :
+   * générateur ECS mixte de même `reference_generateur_mixte`, sinon générateur ECS mixte unique.
+   *
+   * @param logement {Logement}
+   * @param generateurChauffageDE {GenerateurChauffageDE}
+   * @return {number|undefined}
+   */
+  volumeStockageEcsMixte(logement, generateurChauffageDE) {
+    const generateursEcsMixtes = (logement.installation_ecs_collection?.installation_ecs || [])
+      .flatMap((installation) => installation.generateur_ecs_collection?.generateur_ecs || [])
+      .filter((generateur) => String(generateur.donnee_entree?.enum_usage_generateur_id) === '3');
+
+    const reference = generateurChauffageDE.reference_generateur_mixte;
+    const jumeau =
+      (reference !== undefined &&
+        reference !== null &&
+        generateursEcsMixtes.find(
+          (generateur) =>
+            String(generateur.donnee_entree.reference_generateur_mixte) === String(reference)
+        )) ||
+      (generateursEcsMixtes.length === 1 ? generateursEcsMixtes[0] : undefined);
+
+    return jumeau?.donnee_entree.volume_stockage;
   }
 
   /**

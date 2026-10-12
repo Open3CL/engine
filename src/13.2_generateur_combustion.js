@@ -9,6 +9,11 @@ import { updateGenerateurPacs } from './13.2_generateur_pac.js';
 import getFicheTechnique from './ficheTechnique.js';
 import { evaluateFormula as evaluateTvFormula } from './formula.js';
 import { conventionPuissanceNominale } from './13.2_generateur_combustion_pn.js';
+import {
+  anneeInstallationGenerateur,
+  pnEstimeeDimensionnement,
+  valeurChaudiereMurale
+} from './13.2_generateur_combustion_pdim.js';
 
 function criterePn(Pn, matcher) {
   let critere_list = tvColumnLines('generateur_combustion', 'critere_pn', matcher);
@@ -145,6 +150,95 @@ export function pnEstimee(GV, tbase, ratioSurface = 1) {
 }
 
 /**
+ * Pose murale d'une chaudière, lue dans la sous-fiche technique « Chaudière murale » (catégorie 7
+ * pour le chauffage, 8 pour l'ECS) du générateur.
+ *
+ * @param dpe {FullDpe}
+ * @param de {Donnee_entree}
+ * @param type {'ch' | 'ecs'}
+ * @returns {boolean|undefined} undefined si non renseigné
+ */
+export function chaudiereMurale(dpe, de, type) {
+  const fiche = getFicheTechnique(dpe, type === 'ch' ? '7' : '8', 'Chaudière murale', [
+    de.description
+  ]);
+  return valeurChaudiereMurale(fiche?.valeur);
+}
+
+/**
+ * Volume de stockage (L) de la production d'ECS assurée par un générateur de chauffage mixte :
+ * générateur ECS mixte de même `reference_generateur_mixte`, sinon générateur ECS mixte unique.
+ *
+ * @param dpe {FullDpe}
+ * @param de {Donnee_entree} données du générateur de chauffage
+ * @returns {number|undefined}
+ */
+export function volumeStockageEcsMixte(dpe, de) {
+  const liste = (x) => (x === undefined || x === null ? [] : Array.isArray(x) ? x : [x]);
+  const generateursEcsMixtes = liste(dpe?.logement?.installation_ecs_collection?.installation_ecs)
+    .flatMap((installation) => liste(installation.generateur_ecs_collection?.generateur_ecs))
+    .filter((generateur) => String(generateur?.donnee_entree?.enum_usage_generateur_id) === '3');
+
+  const reference = de.reference_generateur_mixte;
+  const jumeau =
+    (reference !== undefined &&
+      reference !== null &&
+      generateursEcsMixtes.find(
+        (generateur) =>
+          String(generateur.donnee_entree.reference_generateur_mixte) === String(reference)
+      )) ||
+    (generateursEcsMixtes.length === 1 ? generateursEcsMixtes[0] : undefined);
+
+  return jumeau?.donnee_entree.volume_stockage;
+}
+
+/**
+ * Puissance nominale estimée (W) d'un générateur à combustion dont `pn` est absente.
+ *
+ * Méthode 3CL-DPE 2021 §13.2.2.4 : Pdim = max(Pch ; Pecs), puis table Pdim → Pn pour les chaudières
+ * (cf. 13.2_generateur_combustion_pdim.js). La méthode ne vise que les générateurs individuels :
+ * pour une installation collective, Pch est conservée (comportement historique).
+ *
+ * @param dpe {FullDpe}
+ * @param de {Donnee_entree} données du générateur
+ * @param type {'ch' | 'ecs'}
+ * @param pch {number} Pch (W) proratisée à la surface desservie
+ * @param optionsPn {{installationIndividuelle?: boolean, volumeStockage?: number}}
+ * @returns {number} Pn (W)
+ */
+export function pnEstimeeGenerateur(dpe, de, type, pch, optionsPn = {}) {
+  const installationIndividuelle =
+    optionsPn.installationIndividuelle ?? String(de.enum_type_installation_id) === '1';
+  if (!installationIndividuelle) {
+    return pch;
+  }
+
+  const usage = String(de.enum_usage_generateur_id);
+  const usageEcs = type === 'ecs' || usage === '3';
+  const usageChauffage = type === 'ch' || usage === '3';
+  const volumeStockage =
+    optionsPn.volumeStockage ??
+    (type === 'ecs' ? de.volume_stockage : usageEcs ? volumeStockageEcsMixte(dpe, de) : undefined);
+
+  const libelleTypeGenerateur =
+    enums[`type_generateur_${type}`]?.[de[`enum_type_generateur_${type}_id`]];
+
+  return pnEstimeeDimensionnement({
+    pch,
+    volumeStockage,
+    usageEcs,
+    usageChauffage,
+    libelleTypeGenerateur,
+    murale: chaudiereMurale(dpe, de, type),
+    anneeInstallation: anneeInstallationGenerateur(
+      de.annee_installation,
+      dpe?.logement?.caracteristique_generale?.annee_construction,
+      libelleTypeGenerateur
+    )
+  });
+}
+
+/**
  * Si la méthode de saisie n'est pas "Valeur forfaitaire" mais "caractéristiques saisies"
  * Documentation 3CL : "Pour les installations récentes ou recommandées, les caractéristiques réelles des chaudières présentées sur les bases
  * de données professionnelles peuvent être utilisées."
@@ -163,6 +257,8 @@ export function pnEstimee(GV, tbase, ratioSurface = 1) {
  * @param methodeSaisie {number} méthode de saisie des caractéristiques du générateur
  * @param ratioSurface {number} part de la surface du logement desservie par le générateur
  * (Sh_installation / Sh), utilisée pour proratiser la puissance nominale estimée (§13.2.2.4)
+ * @param optionsPn {{installationIndividuelle?: boolean, volumeStockage?: number}} données de
+ * l'installation pour l'estimation de Pn par Pdim (§13.2.2.4, cf. pnEstimeeGenerateur)
  */
 export function tv_generateur_combustion(
   dpe,
@@ -172,7 +268,8 @@ export function tv_generateur_combustion(
   GV,
   tbase,
   methodeSaisie,
-  ratioSurface = 1
+  ratioSurface = 1,
+  optionsPn = {}
 ) {
   const typeGenerateurKey = `enum_type_generateur_${type}_id`;
   let enumTypeGenerateurId = de[typeGenerateurKey];
@@ -240,7 +337,7 @@ export function tv_generateur_combustion(
   } else {
     // Calcul de la puissance nominale si non définie
     if (!di.pn) {
-      di.pn = pnEstimee(GV, tbase, ratioSurface);
+      di.pn = pnEstimeeGenerateur(dpe, de, type, pnEstimee(GV, tbase, ratioSurface), optionsPn);
     }
 
     selectionLigne = (pn, ratio) => {

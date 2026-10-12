@@ -380,7 +380,10 @@ export default function calc_gen_ecs(dpe, gen_ecs, ecs_di, ecs_de, GV, ca_id, zc
     const tbase = Tbase[ca][zc.slice(0, 2)];
 
     const methodeSaisie = parseInt(de.enum_methode_saisie_carac_sys_id);
-    tv_generateur_combustion(dpe, di, de, 'ecs', GV, tbase, methodeSaisie);
+    // §13.2.2.4 : Pn estimée (si absente) à partir de Pecs (volume de stockage) pour les installations individuelles
+    tv_generateur_combustion(dpe, di, de, 'ecs', GV, tbase, methodeSaisie, 1, {
+      installationIndividuelle: String(ecs_de.enum_type_installation_id) === '1'
+    });
 
     if (bug_for_bug_compat) {
       if (di.qp0 < 1) {
