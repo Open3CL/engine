@@ -56,6 +56,7 @@ const {
   coefCoutProrata,
   masqueEnergie,
   getAuxGenerationEcs,
+  getRdimEcs,
   DATE_BAREME_COUT_2024,
   appointBijonction,
   coutBijonction
@@ -536,6 +537,20 @@ describe('calc_conso - agrégation des consommations', () => {
     expect(res.ef_conso.conso_ecs).toBe(600);
   });
 
+  test('ECS collective en immeuble, rdim neutralisé (11_ecs.js) : conso non remultipliée par rdim', () => {
+    const inst = installEcs({ cle_repartition_ecs: 2, rdim: 22 }, [
+      genEcs('1', { conso_ecs: 100, conso_ecs_depensier: 120 })
+    ]);
+    inst.donnee_intermediaire.rdim_neutralise = true;
+
+    const res = calc_conso(100, 1, 1, [], [], [inst], [], 1, 1, DATE_DPE, coef_ep);
+    // clé = 2 × 1 (rdim neutralisé) => conso_ecs = 100 × 2
+    expect(inst.generateur_ecs_collection.generateur_ecs[0].donnee_entree.cle_repartition_ecs).toBe(
+      2
+    );
+    expect(res.ef_conso.conso_ecs).toBe(200);
+  });
+
   test('ECS avec prorataECS différent de 1 : clé issue du prorata', () => {
     // Quand prorataECS !== 1, la boucle ECS ne renseigne pas donnee_utilisateur :
     // on la fournit en amont (coefficient GES déjà connu) pour refléter les données réelles.
@@ -976,6 +991,14 @@ describe('getAuxGenerationEcs - auxiliaires de génération ECS et rdim', () => 
     expect(getAuxGenerationEcs(ecs, 'conso_auxiliaire_generation_ecs', coefUnitaire, 1)).toBe(4);
   });
 
+  test('installation ECS collective en immeuble (rdim neutralisé) : auxiliaires non multipliés', () => {
+    const collective = inst(22, 4);
+    collective.donnee_intermediaire.rdim_neutralise = true;
+    const ecs = [collective, inst(3, 1)];
+    // 4 × 1 (rdim neutralisé) + 1 × 3
+    expect(getAuxGenerationEcs(ecs, 'conso_auxiliaire_generation_ecs', coefUnitaire, 1)).toBe(7);
+  });
+
   test('calc_conso : auxiliaire_generation_ecs intègre le rdim', () => {
     const ecs = [inst(2, 5)];
     const res = calc_conso(100, 1, 1, [], [], ecs, [], 1, 1, DATE_DPE, coef_ep);
@@ -997,6 +1020,23 @@ describe('getAuxGenerationEcs - auxiliaires de génération ECS et rdim', () => 
       9
     );
     expect(res.ef_conso.conso_auxiliaire_generation_ecs).toBeGreaterThan(0);
+  });
+});
+
+/**
+ * Rdim appliqué à la conso ECS lors de l'agrégation : 1 si le besoin n'a pas été divisé par rdim.
+ * @see Moteur_DPE.dll Calcul_batiment.cs l.1067
+ */
+describe('getRdimEcs', () => {
+  test.each([
+    ['rdim renseigné', { rdim: 3 }, {}, 3],
+    ['rdim chaîne', { rdim: '2.5' }, {}, 2.5],
+    ['rdim absent', {}, {}, 1],
+    ['rdim non numérique', { rdim: 'abc' }, {}, 1],
+    ['rdim neutralisé', { rdim: 22 }, { rdim_neutralise: true }, 1],
+    ['sans donnée intermédiaire', { rdim: 4 }, undefined, 4]
+  ])('%s', (_libelle, de, di, attendu) => {
+    expect(getRdimEcs({ donnee_entree: de, donnee_intermediaire: di })).toBe(attendu);
   });
 });
 

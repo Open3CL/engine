@@ -406,7 +406,7 @@ export default function calc_conso(
       // S'il existe une clé de repartition ECS, utilisation de celle-ci pour répartir la conso ECS collective à l'appartement
       generateur_ecs.forEach((value) => {
         value.donnee_entree.cle_repartition_ecs =
-          (ecs.donnee_entree.cle_repartition_ecs || 1) * (ecs.donnee_entree.rdim || 1);
+          (ecs.donnee_entree.cle_repartition_ecs || 1) * getRdimEcs(ecs);
         (value.donnee_utilisateur = value.donnee_utilisateur || {}).coeffEmissionGes =
           getGesCoeffForGenerateur(value, 'ecs', dateDpe);
       });
@@ -795,6 +795,19 @@ function getEcsConso(gen_ecs, field, coef, prorataECS, prefix, facteurAc = 1) {
 }
 
 /**
+ * Rdim appliqué à la consommation d'une installation ECS lors de l'agrégation. Il vaut 1 lorsque le
+ * besoin n'a pas été divisé par rdim (installation ECS collective en immeuble, cf. 11_ecs.js
+ * isRdimEcsNeutralise), afin de rester cohérent avec le besoin calculé.
+ * @see Moteur_DPE.dll Calcul_batiment.cs l.1067 (conso × Rdim, Rdim = 1 transmis en collectif)
+ * @param inst {InstallationEcs}
+ * @returns {number}
+ */
+export function getRdimEcs(inst) {
+  if (inst.donnee_intermediaire?.rdim_neutralise) return 1;
+  return Number(inst.donnee_entree.rdim) || 1;
+}
+
+/**
  * Consommation des auxiliaires de génération ECS (circulateurs des générateurs).
  * Le besoin d'une installation dimensionnée (rdim > 1) est exprimé par unité : comme la
  * consommation ECS (cle_repartition_ecs × rdim), les auxiliaires de génération sont multipliés
@@ -809,7 +822,7 @@ function getEcsConso(gen_ecs, field, coef, prorataECS, prefix, facteurAc = 1) {
  */
 export function getAuxGenerationEcs(ecs, field, coef, prorataECS, facteurAc = 1) {
   return ecs.reduce((acc, inst) => {
-    const rdim = prorataECS === 1 ? Number(inst.donnee_entree.rdim) || 1 : 1;
+    const rdim = prorataECS === 1 ? getRdimEcs(inst) : 1;
     return inst.generateur_ecs_collection.generateur_ecs.reduce((acc2, gen) => {
       const conso = (gen.donnee_intermediaire[field] || 0) * rdim * facteurAc;
       return acc2 + getConso(coef, 'électricité auxiliaire', conso);

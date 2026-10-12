@@ -179,6 +179,33 @@ export function ratio_besoin_ecs_individuel(dpe, de, surfaceImmeuble, nombreAppa
   return ratio < 1 ? ratio : 1 / nombreAppartements;
 }
 
+/**
+ * enum_type_installation_id des installations ECS collectives :
+ * 2 - installation collective ; 3 - installation collective multi-bâtiment (réseau de chaleur)
+ */
+const TYPES_INSTALLATION_ECS_COLLECTIVE = ['2', '3'];
+
+/**
+ * Rdim (nombre d'installations individuelles identiques) sans objet pour une installation ECS
+ * collective décrite dans un DPE immeuble : elle dessert tout l'immeuble, le besoin ECS n'est donc
+ * pas ramené à un logement type. Sinon, le besoin serait divisé par rdim alors que les pertes de
+ * stockage (Qgw) et à l'arrêt (qp0) du générateur collectif restent celles de l'immeuble,
+ * effondrant les rendements de génération et de stockage.
+ * @see Guide Tribu TE-211208 p. 24 (Rdim = nombre d'installations individuelles identiques)
+ * @see Moteur_DPE.dll Calcul_batiment.cs l.583-592 (Becs / Rdim seulement pour une installation
+ * individuelle en immeuble ; Becs × Sh_ecs / SH sans Rdim pour une installation collective)
+ * @param th {string} type de bâtiment (maison, appartement, immeuble)
+ * @param de {Donnee_entree} donnée d'entrée de l'installation ECS
+ * @returns {boolean}
+ */
+export function isRdimEcsNeutralise(th, de) {
+  return (
+    th === 'immeuble' &&
+    TYPES_INSTALLATION_ECS_COLLECTIVE.includes(String(de.enum_type_installation_id)) &&
+    Number(de.rdim) > 1
+  );
+}
+
 export default function calc_ecs(
   dpe,
   ecs,
@@ -227,6 +254,12 @@ export default function calc_ecs(
         ((de.surface_habitable / (surfaceImmeuble || 1)) * (de.rdim || 1)) /
         (de.nombre_logement * nombreAppartements);
     }
+  } else if (isRdimEcsNeutralise(th, de)) {
+    /**
+     * Installation ECS collective d'un DPE immeuble : le besoin est celui de l'immeuble (pas de
+     * division par rdim), la consommation n'étant pas remultipliée par rdim (conso.js).
+     */
+    di.rdim_neutralise = true;
   } else if (de.rdim) {
     di.ratio_besoin_ecs = 1 / de.rdim || 1;
   }
