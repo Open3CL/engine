@@ -35,6 +35,11 @@
       "successRatio": "95.34 %"
     },
     "hperm": { "nbBelowThreshold": 9284, "mandatory": false, "successRatio": "92.85 %" },
+    "deperdition_pont_thermique": {
+      "nbBelowThreshold": 8666,
+      "mandatory": false,
+      "successRatio": "86.67 %"
+    },
     "surface_sud_equivalente": {
       "nbBelowThreshold": 9152,
       "mandatory": false,
@@ -55,9 +60,9 @@
       "successRatio": "96.86 %"
     },
     "conso_auxiliaire_generation_ch": {
-      "nbBelowThreshold": 7031,
+      "nbBelowThreshold": 7030,
       "mandatory": false,
-      "successRatio": "70.32 %"
+      "successRatio": "70.31 %"
     },
     "conso_auxiliaire_generation_ecs": {
       "nbBelowThreshold": 7820,
@@ -84,21 +89,16 @@
       "nbBelowThreshold": 5940,
       "mandatory": true,
       "successRatio": "59.41 %"
-    },
-    "deperdition_pont_thermique": {
-      "nbBelowThreshold": 8666,
-      "mandatory": false,
-      "successRatio": "86.67 %"
     }
   },
   "performance": {
     "count": 9979,
-    "mean": 4.987,
-    "median": 4.386,
-    "min": 0.214,
-    "max": 95.474,
-    "p95": 9.05,
-    "p99": 14.629,
-    "totalMs": 49766.851
+    "mean": 4.503,
+    "median": 4.069,
+    "min": 0.211,
+    "max": 36.695,
+    "p95": 8.236,
+    "p99": 11.164,
+    "totalMs": 44934.937
   }
 }
