@@ -411,6 +411,25 @@ export function getContenuCo2ReseauChaleur(
 }
 
 /**
+ * Générateurs « chaudière(s) <énergie> multi bâtiment modélisée(s) comme un réseau de chaleur »
+ * (enum_type_generateur_ch_id 109-111, enum_type_generateur_ecs_id 74-76) : énergie réellement
+ * consommée par les chaudières, dont le facteur d'émission s'applique à la place du facteur
+ * « autres réseaux de chaleur ».
+ *
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §17.3 p.118 : « l'installation de chauffage est
+ * traitée comme un réseau de chaleur local. Les émissions de gaz à effet de serre seront calculées
+ * à partir des énergies consommées réellement par les générateurs. »
+ * Tribu (Calcul_batiment.cs l.1189) applique `contenu_CO2_RCU_ch`, transmis par le logiciel : LICIEL
+ * et Pleiades y placent le facteur de l'énergie des chaudières (« Taux CO2 fonction du système réel »).
+ * Le bois retient 0,03 (bûches / granulés), valeur exportée par la majorité des DPE LICIEL.
+ * Les PAC multi-bâtiment (112 / 77) ne sont pas couvertes : facteurs exportés non reproductibles.
+ */
+const ENERGIE_MULTI_BATIMENT = {
+  ch: { 109: 'bois – bûches', 110: 'fioul domestique', 111: 'gaz naturel' },
+  ecs: { 74: 'bois – bûches', 75: 'fioul domestique', 76: 'gaz naturel' }
+};
+
+/**
  * Récupération du coefficient d'émission GES pour le générateur
  * @param gen_ch {GenerateurChauffageItem||GenerateurEcsItem}
  * @param suffix {'ch'|'ecs'}
@@ -435,6 +454,10 @@ function getGesCoeffForGenerateur(gen_ch, suffix, dateDpe, versionLogiciel) {
         versionLogiciel
       );
     }
+    // Chaudière(s) multi bâtiment sans identifiant : facteur de l'énergie des chaudières (§17.3)
+    const typeGenerateur = gen_ch.donnee_entree[`enum_type_generateur_${suffix}_id`];
+    const energieMultiBatiment = ENERGIE_MULTI_BATIMENT[suffix][typeGenerateur];
+    if (energieMultiBatiment) return coef_ges[energieMultiBatiment];
     // Prendre la valeur pour "AUTRES RESEAUX DE CHALEUR"
     return COEF_GES_AUTRES_RESEAUX_CHALEUR;
   }
