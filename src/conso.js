@@ -1,7 +1,7 @@
 import enums from './enums.js';
 import calc_conso_eclairage from './16_conso_eclairage.js';
 import tvs from './tv.js';
-import { tv } from './utils.js';
+import { bug_for_bug_compat, tv } from './utils.js';
 
 export const COEFF_EP_2_3 = 2.3;
 export const COEFF_EP_1_9 = 1.9;
@@ -312,52 +312,129 @@ function getConso(coef, type_energie, conso) {
 }
 
 /**
+ * Arrêtés « réseaux de chaleur » et table de valeurs associée (modèle de données de l'observatoire
+ * DPE, `modele_donnee/arrete_reseau_chaleur.json`). Le nom de la table ne correspond pas à l'année
+ * de l'arrêté (ex. l'arrêté du 05/07/2024 publie la table `reseau_chaleur_2023`).
+ * - date_arrete : valeur attendue dans `date_arrete_reseau_chaleur` ;
+ * - date_application : date à partir de laquelle l'arrêté s'applique (DPE sans date d'arrêté).
+ */
+export const ARRETES_RESEAU_CHALEUR = [
+  { table: 'reseau_chaleur_2020', date_arrete: '2020-10-12', date_application: '2020-10-17' },
+  { table: 'reseau_chaleur_2021', date_arrete: '2021-10-21', date_application: '2022-01-18' },
+  { table: 'reseau_chaleur_2022', date_arrete: '2023-03-16', date_application: '2023-04-16' },
+  { table: 'reseau_chaleur_2023', date_arrete: '2024-07-05', date_application: '2024-08-09' },
+  { table: 'reseau_chaleur_2024', date_arrete: '2025-04-11', date_application: '2025-05-26' },
+  { table: 'reseau_chaleur_2025', date_arrete: '2026-04-25', date_application: '2026-05-25' }
+];
+
+/** Facteur « AUTRES RESEAUX DE CHALEUR » (réseau non répertorié ou inconnu), kgCO2/kWh */
+export const COEF_GES_AUTRES_RESEAUX_CHALEUR = 0.385;
+
+/**
+ * Normalise une date (chaîne ISO ou Date) au format AAAA-MM-JJ, null si invalide.
+ * @param date {string|Date|undefined}
+ * @returns {string|null}
+ */
+function isoDate(date) {
+  if (typeof date !== 'string' && !(date instanceof Date)) return null;
+  const d = new Date(date);
+  return isNaN(d.getTime()) ? null : d.toISOString().slice(0, 10);
+}
+
+/**
+ * Index (dans ARRETES_RESEAU_CHALEUR) de l'arrêté réseau de chaleur utilisé par le générateur :
+ * - `date_arrete_reseau_chaleur` renseignée : dernier arrêté publié à cette date ou avant ;
+ * - sinon : dernier arrêté applicable à la date d'établissement du DPE ;
+ * - date antérieure au premier arrêté ou illisible : premier arrêté.
+ * @param dateArrete {string|undefined} date_arrete_reseau_chaleur du générateur
+ * @param dateDpe {string|undefined} date d'établissement du DPE
+ * @returns {number}
+ */
+export function indexArreteReseauChaleur(dateArrete, dateDpe) {
+  const arrete = isoDate(dateArrete);
+  const ref = arrete ?? isoDate(dateDpe);
+  const champ = arrete ? 'date_arrete' : 'date_application';
+  let index = 0;
+  if (ref) {
+    ARRETES_RESEAU_CHALEUR.forEach((a, i) => {
+      if (a[champ] <= ref) index = i;
+    });
+  }
+  return index;
+}
+
+/**
+ * Contenu CO2 d'un réseau de chaleur répertorié (kgCO2/kWh).
+ *
+ * Le facteur réglementaire est le contenu CO2 en analyse de cycle de vie (`contenu_co2_acv`) de la
+ * table publiée par l'arrêté utilisé. Si l'identifiant n'y figure pas (réseau retiré d'un arrêté plus
+ * récent), on retient la table antérieure la plus récente qui le contient. Réseau introuvable :
+ * facteur « autres réseaux de chaleur » (0,385).
+ *
+ * Mode bug_for_bug_compat : avec l'arrêté du 05/07/2024 (table reseau_chaleur_2023), LICIEL
+ * transmet au moteur le contenu CO2 hors ACV (`contenu_co2`) : 1 226/1 234 générateurs LICIEL des
+ * corpus immeuble, alors que DPEWIN, Pleiades et 4.1.1 exportent la valeur ACV (ex. réseau 6403C
+ * de Pau : 0,047 au lieu de 0,061).
+ *
+ * @param identifiant_reseau {string}
+ * @param dateArrete {string|undefined}
+ * @param dateDpe {string|undefined}
+ * @param versionLogiciel {string|undefined} administratif.diagnostiqueur.version_logiciel
+ * @returns {number}
+ */
+export function getContenuCo2ReseauChaleur(
+  identifiant_reseau,
+  dateArrete,
+  dateDpe,
+  versionLogiciel
+) {
+  const index = indexArreteReseauChaleur(dateArrete, dateDpe);
+
+  for (let i = index; i >= 0; i--) {
+    const { table } = ARRETES_RESEAU_CHALEUR[i];
+    const row = tv(table, { identifiant_reseau });
+    if (row) {
+      const contenuHorsAcv =
+        bug_for_bug_compat &&
+        table === 'reseau_chaleur_2023' &&
+        /liciel/i.test(versionLogiciel || '');
+      return Number(contenuHorsAcv ? row.contenu_co2 : row.contenu_co2_acv);
+    }
+  }
+
+  console.error(
+    `Aucun coefficient GES trouvé pour le réseau de chaleur ${identifiant_reseau} : valeur « autres réseaux de chaleur » ${COEF_GES_AUTRES_RESEAUX_CHALEUR}`
+  );
+  return COEF_GES_AUTRES_RESEAUX_CHALEUR;
+}
+
+/**
  * Récupération du coefficient d'émission GES pour le générateur
  * @param gen_ch {GenerateurChauffageItem||GenerateurEcsItem}
  * @param suffix {'ch'|'ecs'}
  * @param dateDpe {string} date d'établissement du DPE
+ * @param versionLogiciel {string} version du logiciel de saisie
  * @returns {number}
  */
-function getGesCoeffForGenerateur(gen_ch, suffix, dateDpe) {
+function getGesCoeffForGenerateur(gen_ch, suffix, dateDpe, versionLogiciel) {
   const typeEnergie = getTypeEnergie(gen_ch.donnee_entree, suffix);
-
-  let anneeDpe;
-  try {
-    if (gen_ch.donnee_entree.date_arrete_reseau_chaleur) {
-      anneeDpe = new Date(gen_ch.donnee_entree.date_arrete_reseau_chaleur).getFullYear() - 1;
-    } else {
-      anneeDpe = new Date(dateDpe).getFullYear() - 1;
-    }
-
-    if (anneeDpe < 2024) {
-      anneeDpe = 2022;
-    }
-  } catch (e) {
-    anneeDpe = 2022;
-  }
-
-  const key_reseau_chaleur = `reseau_chaleur_${anneeDpe}`;
 
   /**
    * Cas spécifique des réseaux de chaleur urbain qui ont des coefficients différents en fonction de réseau de distribution
    */
   if (typeEnergie === 'réseau de chauffage urbain') {
-    const identifiant_reseau = gen_ch.donnee_entree.identifiant_reseau_chaleur;
+    const { identifiant_reseau_chaleur, date_arrete_reseau_chaleur } = gen_ch.donnee_entree;
 
-    if (identifiant_reseau) {
-      const row = tv(key_reseau_chaleur, { identifiant_reseau });
-
-      if (row) {
-        return row.contenu_co2_acv;
-      } else {
-        console.error(`
-          Aucun coefficient GES trouvé pour le réseau de chaleur ${identifiant_reseau}
-        `);
-      }
-    } else {
-      // Prendre la valeur pour "AUTRES RESEAUX DE CHALEUR"
-      return 0.385;
+    if (identifiant_reseau_chaleur) {
+      return getContenuCo2ReseauChaleur(
+        identifiant_reseau_chaleur,
+        date_arrete_reseau_chaleur,
+        dateDpe,
+        versionLogiciel
+      );
     }
+    // Prendre la valeur pour "AUTRES RESEAUX DE CHALEUR"
+    return COEF_GES_AUTRES_RESEAUX_CHALEUR;
   }
 
   return coef_ges[typeEnergie] ?? 1;
@@ -377,7 +454,8 @@ export default function calc_conso(
   coeffEp,
   nbLogements = 1,
   ratioSurfaceCollectif = 1,
-  facteursAc = {}
+  facteursAc = {},
+  versionLogiciel = undefined
 ) {
   const gen_ch = ch.reduce((acc, ch) => {
     const generateur_chauffage = ch.generateur_chauffage_collection.generateur_chauffage;
@@ -393,7 +471,7 @@ export default function calc_conso(
         ch.donnee_entree.enum_methode_calcul_conso_id;
       value.donnee_entree.enum_type_installation_id = ch.donnee_entree.enum_type_installation_id;
       (value.donnee_utilisateur = value.donnee_utilisateur || {}).coeffEmissionGes =
-        getGesCoeffForGenerateur(value, 'ch', dateDpe);
+        getGesCoeffForGenerateur(value, 'ch', dateDpe, versionLogiciel);
     });
     return acc.concat(generateur_chauffage);
   }, []);
@@ -408,7 +486,7 @@ export default function calc_conso(
         value.donnee_entree.cle_repartition_ecs =
           (ecs.donnee_entree.cle_repartition_ecs || 1) * (ecs.donnee_entree.rdim || 1);
         (value.donnee_utilisateur = value.donnee_utilisateur || {}).coeffEmissionGes =
-          getGesCoeffForGenerateur(value, 'ecs', dateDpe);
+          getGesCoeffForGenerateur(value, 'ecs', dateDpe, versionLogiciel);
       });
     }
     return acc.concat(generateur_ecs);
