@@ -61,9 +61,106 @@ jobs:
           name: coverage
           path: ./coverage
 
+  # Autotests de conformité CSTB (dépôt privé Open3CL/autotests-ademe).
+  # Le code et le corpus des autotests ne sont JAMAIS copiés dans ce dépôt : ils sont
+  # récupérés à l'exécution dans un dossier temporaire du runner, puis exécutés contre le
+  # moteur de ce commit, empaqueté comme le paquet npm publié (pkgRoot = src).
+  # Le dépôt engine étant public, les logs n'affichent que le décompte et les identifiants
+  # des tests en échec (aucune valeur de référence, aucun artefact publié).
+  # Prérequis : secret AUTOTESTS_ADEME_TOKEN = token en lecture seule (Contents: read)
+  # sur Open3CL/autotests-ademe.
+  autotests-ademe:
+    name: Autotests ADEME (CSTB)
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    # Les PR issues de forks n'ont pas accès aux secrets : elles sont validées au merge sur main.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    env:
+      NODE_OPTIONS: '--max-old-space-size=4096'
+    steps:
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24.14.1
+
+      - name: Vérifier la présence du token autotests-ademe
+        env:
+          AUTOTESTS_ADEME_TOKEN: ${{ secrets.AUTOTESTS_ADEME_TOKEN }}
+        run: |
+          if [ -z "$AUTOTESTS_ADEME_TOKEN" ]; then
+            echo "::error::Secret AUTOTESTS_ADEME_TOKEN absent : impossible de récupérer Open3CL/autotests-ademe."
+            exit 1
+          fi
+
+      - name: Git checkout engine
+        uses: actions/checkout@v7
+
+      - name: Git checkout autotests-ademe (privé, hors de l'arborescence engine)
+        uses: actions/checkout@v7
+        with:
+          repository: Open3CL/autotests-ademe
+          token: ${{ secrets.AUTOTESTS_ADEME_TOKEN }}
+          path: .autotests-ademe
+          persist-credentials: false
+
+      - name: Isoler les autotests hors du workspace engine
+        run: mv .autotests-ademe "$RUNNER_TEMP/autotests-ademe"
+
+      - name: Install Dependencies (engine)
+        run: npm ci
+
+      - name: Generate assets
+        run: npm run assets:sync
+
+      - name: Empaqueter le moteur (identique au paquet npm publié)
+        run: |
+          cp package.json README.md src/
+          cd src
+          npm pack --pack-destination "$RUNNER_TEMP"
+          mv "$RUNNER_TEMP"/open3cl-engine-*.tgz "$RUNNER_TEMP/open3cl-engine.tgz"
+
+      - name: Installer les autotests avec le moteur de ce commit
+        working-directory: ${{ runner.temp }}/autotests-ademe
+        run: |
+          npm ci --no-audit --no-fund
+          npm install --no-save --no-audit --no-fund "$RUNNER_TEMP/open3cl-engine.tgz"
+
+      - name: Exécuter les autotests ADEME
+        working-directory: ${{ runner.temp }}/autotests-ademe
+        run: |
+          set +e
+          npx vitest run --reporter=json --outputFile="$RUNNER_TEMP/autotests-ademe.json" > /dev/null 2>&1
+          status=$?
+          set -e
+          if [ ! -s "$RUNNER_TEMP/autotests-ademe.json" ]; then
+            echo "::error::Les autotests ADEME n'ont produit aucun résultat (code $status)."
+            exit 1
+          fi
+          node -e '
+            const r = JSON.parse(require("fs").readFileSync(process.argv[1], "utf8"));
+            const failed = r.testResults.flatMap((f) =>
+              f.assertionResults.filter((a) => a.status === "failed").map((a) => a.fullName)
+            );
+            const lines = [
+              "### Autotests ADEME (CSTB)",
+              "",
+              `${r.numPassedTests} réussis, ${r.numFailedTests} en échec, ${r.numPendingTests} ignorés (${r.numTotalTests} au total)`
+            ];
+            if (failed.length) lines.push("", "Tests en échec :", "", ...failed.map((n) => `- ${n}`));
+            const out = lines.join("\n");
+            console.log(out);
+            require("fs").appendFileSync(process.env.GITHUB_STEP_SUMMARY, out + "\n");
+            if (failed.length || !r.success) {
+              console.log(`::error::${r.numFailedTests} autotests ADEME en échec`);
+              process.exit(1);
+            }
+          ' "$RUNNER_TEMP/autotests-ademe.json"
+
   build:
     name: Build
-    needs: test
+    needs: [test, autotests-ademe]
+    # autotests-ademe peut être ignoré (PR de fork) : on bloque seulement sur un échec.
+    if: ${{ !failure() && !cancelled() }}
     runs-on: ubuntu-24.04
     env:
       NODE_OPTIONS: '--max-old-space-size=4096'
