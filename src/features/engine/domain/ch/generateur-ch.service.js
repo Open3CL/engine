@@ -73,7 +73,11 @@ export class GenerateurChService {
       if (generateurChauffage.donnee_utilisateur.combustion) {
         // Calcul de la puissance nominale si non définie
         if (!generateurChauffageDI.pn) {
-          generateurChauffage.donnee_intermediaire.pn = this.pn(ctx, logement);
+          generateurChauffage.donnee_intermediaire.pn = this.pn(
+            ctx,
+            logement,
+            installationChauffage
+          );
         }
 
         generateurChauffage.donnee_utilisateur.generateur = this.#chTvStore.getGenerateurCombustion(
@@ -201,11 +205,22 @@ export class GenerateurChService {
    *
    * @param ctx {Contexte}
    * @param logement {Logement}
+   * @param installationChauffage {InstallationChauffage}
    * @return {number}
    */
-  pn(ctx, logement) {
+  pn(ctx, logement, installationChauffage) {
     const Tbase = this.#tvStore.getTempBase(ctx.altitude.id, ctx.zoneClimatique.id);
-    return (1.2 * logement.sortie.deperdition.deperdition_enveloppe * (19 - Tbase)) / 0.95 ** 3;
+    // §13.2.2.4 : générateur individuel n'alimentant qu'une partie du logement => prorata Sh_installation / Sh.
+    // Un générateur collectif dessert tout le bâtiment : pas de prorata.
+    const installationDE = installationChauffage?.donnee_entree;
+    const ratio =
+      String(installationDE?.enum_type_installation_id) === '1'
+        ? installationDE.surface_chauffee / ctx.surfaceHabitable
+        : 1;
+    const prorata = ratio > 0 && ratio < 1 ? ratio : 1;
+    return (
+      (prorata * 1.2 * logement.sortie.deperdition.deperdition_enveloppe * (19 - Tbase)) / 0.95 ** 3
+    );
   }
 
   /**

@@ -123,6 +123,28 @@ export function caracteristiquesGenerateurCombustion(row, pn, ratio, E, F, type,
 }
 
 /**
+ * Estimation de la puissance nominale (W) d'un générateur à combustion dont la puissance n'est pas connue :
+ * Pch = Sh1 / Shtot × 1,2 × GV × (19 − Tbase) / 0,95³
+ *
+ * Si le générateur n'alimente qu'une partie du logement, la puissance est proratisée à la surface desservie.
+ * Le ratio est borné à ]0 ; 1] : une surface absente, nulle ou supérieure à Sh ne modifie pas Pch.
+ *
+ * Remarque : la méthode ne prévoit cette estimation que pour les générateurs individuels. Pour un générateur
+ * collectif sans pn, la même formule (GV du logement, convention pn = Pe) est une extrapolation.
+ *
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.2.4 Calcul des puissances nominales (p.90-91)
+ *
+ * @param GV {number} déperditions enveloppe + renouvellement d'air (W/K)
+ * @param tbase {number} température extérieure de base (°C)
+ * @param ratioSurface {number} Sh_installation / Sh
+ * @returns {number}
+ */
+export function pnEstimee(GV, tbase, ratioSurface = 1) {
+  const prorata = ratioSurface > 0 && ratioSurface < 1 ? ratioSurface : 1;
+  return (prorata * 1.2 * GV * (19 - tbase)) / 0.95 ** 3;
+}
+
+/**
  * Si la méthode de saisie n'est pas "Valeur forfaitaire" mais "caractéristiques saisies"
  * Documentation 3CL : "Pour les installations récentes ou recommandées, les caractéristiques réelles des chaudières présentées sur les bases
  * de données professionnelles peuvent être utilisées."
@@ -139,8 +161,19 @@ export function caracteristiquesGenerateurCombustion(row, pn, ratio, E, F, type,
  * @param GV {number} déperdition de l'enveloppe
  * @param tbase {number} température de fonctionnement du générateur
  * @param methodeSaisie {number} méthode de saisie des caractéristiques du générateur
+ * @param ratioSurface {number} part de la surface du logement desservie par le générateur
+ * (Sh_installation / Sh), utilisée pour proratiser la puissance nominale estimée (§13.2.2.4)
  */
-export function tv_generateur_combustion(dpe, di, de, type, GV, tbase, methodeSaisie) {
+export function tv_generateur_combustion(
+  dpe,
+  di,
+  de,
+  type,
+  GV,
+  tbase,
+  methodeSaisie,
+  ratioSurface = 1
+) {
   const typeGenerateurKey = `enum_type_generateur_${type}_id`;
   let enumTypeGenerateurId = de[typeGenerateurKey];
   let row;
@@ -207,7 +240,7 @@ export function tv_generateur_combustion(dpe, di, de, type, GV, tbase, methodeSa
   } else {
     // Calcul de la puissance nominale si non définie
     if (!di.pn) {
-      di.pn = (1.2 * GV * (19 - tbase)) / 0.95 ** 3;
+      di.pn = pnEstimee(GV, tbase, ratioSurface);
     }
 
     selectionLigne = (pn, ratio) => {

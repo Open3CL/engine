@@ -79,3 +79,52 @@ describe('Températures de fonctionnement des générateurs de chauffage', () =>
     );
   });
 });
+
+/**
+ * Puissance nominale estimée d'un générateur à combustion sans pn.
+ * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.2.4
+ */
+describe('Puissance nominale estimée des générateurs de chauffage (issue #264)', () => {
+  /** @type {TvStore} */
+  let tvStore;
+  const ctx = { altitude: { id: 1 }, zoneClimatique: { id: 1 }, surfaceHabitable: 100 };
+  const logement = { sortie: { deperdition: { deperdition_enveloppe: 200 } } };
+  // 1,2 × 200 × (19 − (−9)) / 0,95³ -- valeur de référence de régression
+  const PCH_LOGEMENT = 7837.877241580406;
+
+  beforeEach(() => {
+    tvStore = new TvStore();
+    service = new GenerateurChService(new ChTvStore(), tvStore, new EmetteurChService());
+    vi.spyOn(tvStore, 'getTempBase').mockReturnValue(-9);
+  });
+
+  test('installation desservant tout le logement : Pch sans prorata', () => {
+    const installation = { donnee_entree: { surface_chauffee: 100, enum_type_installation_id: 1 } };
+    expect(service.pn(ctx, logement, installation)).toBeCloseTo(PCH_LOGEMENT, 9);
+    expect(tvStore.getTempBase).toHaveBeenCalledWith(1, 1);
+  });
+
+  test('installation desservant 40 % du logement : Pch proratisée à la surface chauffée', () => {
+    const installation = { donnee_entree: { surface_chauffee: 40, enum_type_installation_id: 1 } };
+    expect(service.pn(ctx, logement, installation)).toBeCloseTo(0.4 * PCH_LOGEMENT, 9);
+  });
+
+  test.each([
+    ['surface chauffée absente', { donnee_entree: { enum_type_installation_id: 1 } }],
+    [
+      'installation collective',
+      { donnee_entree: { surface_chauffee: 40, enum_type_installation_id: 2 } }
+    ],
+    ['installation absente', undefined],
+    [
+      'surface chauffée supérieure à Sh',
+      { donnee_entree: { surface_chauffee: 130, enum_type_installation_id: 1 } }
+    ],
+    [
+      'surface chauffée nulle',
+      { donnee_entree: { surface_chauffee: 0, enum_type_installation_id: 1 } }
+    ]
+  ])('%s : pas de prorata', (_libelle, installation) => {
+    expect(service.pn(ctx, logement, installation)).toBeCloseTo(PCH_LOGEMENT, 9);
+  });
+});

@@ -336,6 +336,42 @@ describe('calc_chauffage - générateurs à combustion', () => {
     expect(tv_temp_fonc_30_100).toHaveBeenCalled();
   });
 
+  /**
+   * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.2.4 (prorata de Pch à la surface desservie)
+   */
+  test('ratio surface chauffée de l’installation / Sh transmis pour la Pn estimée (issue #264)', () => {
+    const ch = installation(
+      [generateur({ enum_type_generateur_ch_id: '5', enum_methode_saisie_carac_sys_id: '1' })],
+      [emetteur('1')],
+      { surface_chauffee: 40, enum_type_installation_id: '1' }
+    );
+    appel(ch, { Sh: 100, GV: 150 });
+    const args = vi.mocked(tv_generateur_combustion).mock.calls[0];
+    expect(args[3]).toBe('ch');
+    expect(args[4]).toBe(150);
+    expect(args[7]).toBeCloseTo(0.4, 9);
+  });
+
+  test('surface chauffée absente : repli sur Sh, ratio de 1', () => {
+    const ch = installation(
+      [generateur({ enum_type_generateur_ch_id: '5', enum_methode_saisie_carac_sys_id: '1' })],
+      [emetteur('1')],
+      { surface_chauffee: undefined, enum_type_installation_id: '1' }
+    );
+    appel(ch, { Sh: 100 });
+    expect(vi.mocked(tv_generateur_combustion).mock.calls[0][7]).toBe(1);
+  });
+
+  test('installation collective : pas de prorata, le générateur dessert tout le bâtiment', () => {
+    const ch = installation(
+      [generateur({ enum_type_generateur_ch_id: '5', enum_methode_saisie_carac_sys_id: '1' })],
+      [emetteur('1')],
+      { surface_chauffee: 40, enum_type_installation_id: '2' }
+    );
+    appel(ch, { Sh: 100 });
+    expect(vi.mocked(tv_generateur_combustion).mock.calls[0][7]).toBe(1);
+  });
+
   test('méthode 5 avec températures déjà connues : pas de recalcul', () => {
     const ch = installation(
       [

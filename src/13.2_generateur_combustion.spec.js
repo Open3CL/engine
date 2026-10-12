@@ -68,7 +68,8 @@ const {
   valeurVeilleuse,
   caracteristiquesGenerateurCombustion,
   puissanceFormuleQp0,
-  PN_MAX_QP0_CHAUDIERE_GAZ
+  PN_MAX_QP0_CHAUDIERE_GAZ,
+  pnEstimee
 } = await import('./13.2_generateur_combustion.js');
 const { tv, tvColumnLines } = await import('./utils.js');
 const { conventionPuissanceNominale } = await import('./13.2_generateur_combustion_pn.js');
@@ -124,6 +125,22 @@ describe('tv_generateur_combustion - caractéristiques du générateur', () => {
     const di = { pn: 12345 };
     const de = { enum_type_generateur_ch_id: '89', ratio_virtualisation: 1, presence_ventouse: 0 };
     tv_generateur_combustion({}, di, de, 'ch', 200, -9, 1);
+    expect(di.pn).toBe(12345);
+  });
+
+  test('puissance nominale absente, générateur desservant 40 % du logement : Pn proratisée (issue #264)', () => {
+    tv.mockReturnValue({ ...ROW_DEFAUT });
+    const di = {};
+    const de = { enum_type_generateur_ch_id: '89', ratio_virtualisation: 1, presence_ventouse: 0 };
+    tv_generateur_combustion({}, di, de, 'ch', 200, -9, 1, 0.4);
+    expect(di.pn).toBeCloseTo(0.4 * 7837.877241580406, 9);
+  });
+
+  test('puissance nominale renseignée : le prorata de surface ne s’applique pas', () => {
+    tv.mockReturnValue({ ...ROW_DEFAUT });
+    const di = { pn: 12345 };
+    const de = { enum_type_generateur_ch_id: '89', ratio_virtualisation: 1, presence_ventouse: 0 };
+    tv_generateur_combustion({}, di, de, 'ch', 200, -9, 1, 0.4);
     expect(di.pn).toBe(12345);
   });
 
@@ -1428,5 +1445,37 @@ describe('puissanceFormuleQp0 - plafond de Pn à 400 kW pour les chaudières gaz
     const { qp0 } = caracteristiquesGenerateurCombustion(ROW_GAZ, 50000, 0.1, 1.75, -0.55, 'ch', 1);
     // Pn collectif = 500 kW plafonné à 400 kW, puis × ratio 0.1
     expect(qp0).toBeCloseTo(127.5468019078, 6);
+  });
+});
+
+/**
+ * Estimation de la puissance nominale d'un générateur à combustion (pn absente).
+ * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.2.4
+ */
+describe('pnEstimee - puissance nominale estimée (issue #264)', () => {
+  // 1,2 × 200 × (19 − (−9)) / 0,95³ -- valeur de référence de régression
+  const PCH_LOGEMENT = 7837.877241580406;
+
+  test('générateur desservant tout le logement : Pch = 1,2 × GV × (19 − Tbase) / 0,95³', () => {
+    expect(pnEstimee(200, -9)).toBeCloseTo(PCH_LOGEMENT, 9);
+    expect(pnEstimee(200, -9, 1)).toBeCloseTo(PCH_LOGEMENT, 9);
+  });
+
+  test('générateur desservant une partie du logement : Pch1 = Sh1 / Shtot × Pch', () => {
+    expect(pnEstimee(200, -9, 0.25)).toBeCloseTo(0.25 * PCH_LOGEMENT, 9);
+  });
+
+  test('deux générateurs se partageant le logement : Pch1 + Pch2 = Pch', () => {
+    expect(pnEstimee(200, -9, 0.3) + pnEstimee(200, -9, 0.7)).toBeCloseTo(PCH_LOGEMENT, 9);
+  });
+
+  test.each([
+    ['nul', 0],
+    ['négatif', -0.5],
+    ['supérieur à 1', 1.4],
+    ['non numérique', NaN],
+    ['absent', undefined]
+  ])('ratio %s : pas de prorata (Pch du logement)', (_libelle, ratio) => {
+    expect(pnEstimee(200, -9, ratio)).toBeCloseTo(PCH_LOGEMENT, 9);
   });
 });

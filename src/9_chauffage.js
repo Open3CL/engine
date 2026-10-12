@@ -80,7 +80,11 @@ export default function calc_chauffage(
 
     if (genChDu.isCombustionGenerator) {
       const methodeSaisie = parseInt(genChDe.enum_methode_saisie_carac_sys_id);
-      tv_generateur_combustion(dpe, genChDi, genChDe, 'ch', GV, tbase, methodeSaisie);
+      // §13.2.2.4 : Pn estimée proratisée à la surface chauffée par l'installation (individuelle uniquement :
+      // un générateur collectif dessert tout le bâtiment, la surface chauffée du logement n'est pas la sienne)
+      const ratioSurface =
+        String(genChDe.enum_type_installation_id) === '1' ? genChDe.surface_chauffee / Sh : 1;
+      tv_generateur_combustion(dpe, genChDi, genChDe, 'ch', GV, tbase, methodeSaisie, ratioSurface);
 
       const type_gen_ch_list = tvColumnIDs('temp_fonc_30', 'type_generateur_ch');
       if (type_gen_ch_list.includes(genChDe.enum_type_generateur_ch_id)) {
