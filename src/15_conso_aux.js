@@ -327,6 +327,112 @@ export function getDeltaDim(em_ch) {
 }
 
 /**
+ * 15.2.3 Étape 3 : surfaces de référence et longueur par défaut du bouclage d'ECS
+ *
+ * Lb = 4 × (Sh / Niv_inst_ecs)^0,5 + 6 × (Niv_inst_ecs − 0,5)
+ * avec Sh la surface habitable des logements desservis par l'installation et Niv_inst_ecs le
+ * nombre de niveaux desservis par l'installation d'ECS.
+ *
+ * Pour un appartement, l'installation collective est ramenée à l'échelle de l'immeuble :
+ * Sh = Sh_install × Sh_immeuble / Sh_logement, comme le moteur de référence CSTB (Tribu,
+ * Calcul_installation_ECS.C_circulateur : Sh_ecs / ratio_batiment, ratio_batiment = SH / SH_batiment
+ * pour une ECS collective en appartement, 1 sinon).
+ *
+ * Règles de cohérence des surfaces :
+ * - sans surface immeuble (maison), l'immeuble se réduit au logement (ratio_batiment = 1) ;
+ * - la surface desservie ne peut excéder celle de l'immeuble : une installation décrite à l'échelle
+ *   de l'immeuble (surface_habitable > surface du logement, ex. DPE appartement généré à partir
+ *   d'un DPE immeuble) n'est pas portée une seconde fois à l'échelle immeuble
+ *   (Sh_install plafonnée à Sh_logement, donc Sh plafonnée à Sh_immeuble) ;
+ * - installation collective virtualisée (0 < ratio_virtualisation < 1) sans surface immeuble
+ *   exploitable : l'immeuble est reconstruit à partir du ratio (Sh_immeuble = Sh_logement / ratio)
+ *   et l'installation dessert tous les niveaux de l'immeuble.
+ *
+ * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §15.2.3
+ * @param de {Donnee_entree} donnée d'entrée de l'installation (surface_habitable,
+ * nombre_niveau_installation_ecs, ratio_virtualisation)
+ * @param Sh_logement {number} surface habitable du logement (de l'immeuble pour un DPE immeuble)
+ * @param Sh_immeuble {number} surface habitable de l'immeuble
+ * @param nombre_niveau_immeuble {number} nombre de niveaux de l'immeuble
+ * @return {{Sh_immeuble_ratio: number, Sh_install: number, Niv_inst_ecs: number, Lb: number}}
+ */
+export function calc_bouclage_ecs(de, Sh_logement, Sh_immeuble, nombre_niveau_immeuble) {
+  const ratioVirtu = parseFloat(de.ratio_virtualisation);
+  let Sh_immeuble_ratio = Number(Sh_immeuble) || Sh_logement;
+  let Sh_install = Math.min(Number(de.surface_habitable) || Sh_logement, Sh_logement);
+  let Niv_inst_ecs = Number(de.nombre_niveau_installation_ecs) || 1;
+
+  if (!(Sh_immeuble_ratio > Sh_logement) && ratioVirtu > 0 && ratioVirtu < 1) {
+    Sh_immeuble_ratio = Sh_logement / ratioVirtu;
+    Sh_install = Sh_logement;
+    Niv_inst_ecs = Number(nombre_niveau_immeuble) || Niv_inst_ecs;
+  }
+
+  // Sh est la surface habitable des logements desservis par l'installation d'ECS
+  // Pour l'appartement, on utilise la surface à l'échelle de l'immeuble
+  const Sh = (Sh_install / Sh_logement) * Sh_immeuble_ratio;
+  const Lb = 4 * Math.pow(Sh / Niv_inst_ecs, 0.5) + 6 * (Niv_inst_ecs - 0.5);
+
+  return { Sh_immeuble_ratio, Sh_install, Niv_inst_ecs, Lb };
+}
+
+/**
+ * Longueur par défaut du bouclage d'ECS Lb (m), appelable depuis l'extérieur de la librairie.
+ *
+ * Même calcul que l'étape 3 de `conso_aux_distribution_ecs` (§15.2.3, `calc_bouclage_ecs`), à
+ * partir des caractéristiques générales du DPE et des données d'entrée d'une installation :
+ * - installation d'ECS : `surface_habitable`, `nombre_niveau_installation_ecs` ;
+ * - installation de chauffage (à défaut des champs ECS) : `surface_chauffee`,
+ *   `nombre_niveau_installation_ch` ;
+ * - `ratio_virtualisation` (installation collective virtualisée).
+ *
+ * Le bouclage n'existe que pour une installation d'ECS collective à réseau bouclé : pour une
+ * installation d'ECS (enum_bouclage_reseau_ecs_id renseigné) individuelle, non bouclée ou avec
+ * traçage, Lb = 0 (aucun circulateur de bouclage, comme `conso_aux_distribution_ecs`).
+ *
+ * Surface de référence identique au moteur (engine.js) : surface du logement, ou de l'immeuble
+ * pour un DPE immeuble.
+ *
+ * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §15.2.3
+ * @param cg {Caracteristique_generale} caractéristiques générales du DPE
+ * (enum_methode_application_dpe_log_id, surface_habitable_logement, surface_habitable_immeuble,
+ * nombre_niveau_immeuble)
+ * @param de {Donnee_entree} donnée d'entrée de l'installation d'ECS ou de chauffage
+ * @return {number} Lb (m)
+ */
+export function longueur_bouclage_ecs(cg, de = {}) {
+  if (de.enum_bouclage_reseau_ecs_id != null) {
+    const individuelle = String(de.enum_type_installation_id) === '1';
+    if (individuelle || String(de.enum_bouclage_reseau_ecs_id) !== '2') {
+      return 0;
+    }
+  }
+
+  const methode = enums.methode_application_dpe_log[cg.enum_methode_application_dpe_log_id] || '';
+  // Même règle que calc_th (engine.js) : « maison » et « appartement » priment sur « immeuble »
+  const isImmeuble =
+    methode.includes('immeuble') && !methode.includes('maison') && !methode.includes('appartement');
+
+  const Sh_logement = Number(
+    isImmeuble ? cg.surface_habitable_immeuble : cg.surface_habitable_logement
+  );
+
+  const deInstallation = {
+    surface_habitable: de.surface_habitable ?? de.surface_chauffee,
+    nombre_niveau_installation_ecs:
+      de.nombre_niveau_installation_ecs ?? de.nombre_niveau_installation_ch,
+    ratio_virtualisation: de.ratio_virtualisation
+  };
+
+  return calc_bouclage_ecs(
+    deInstallation,
+    Sh_logement,
+    cg.surface_habitable_immeuble,
+    cg.nombre_niveau_immeuble
+  ).Lb;
+}
+
+/**
  * 15.2.3 Consommation des auxiliaires de distribution d'ECS
  * Calcul installation par installation pour le cas appartement
  *
@@ -396,22 +502,13 @@ export function conso_aux_distribution_ecs(
   const ca = enums.classe_altitude[caId];
   const zc = enums.zone_climatique[zcId];
 
-  const ratioVirtu = parseFloat(de.ratio_virtualisation);
-  let Sh_immeuble_ratio = Sh_immeuble;
-  let Sh_install = de.surface_habitable || Sh_logement;
-  let Niv_inst_ecs = de.nombre_niveau_installation_ecs || 1;
-
-  if (!(Sh_immeuble > Sh_logement) && ratioVirtu > 0 && ratioVirtu < 1) {
-    Sh_immeuble_ratio = Sh_logement / ratioVirtu;
-    Sh_install = Sh_logement;
-    Niv_inst_ecs = nombre_niveau_immeuble || Niv_inst_ecs;
-  }
-
   // Etape 3: Lb - longueur par défaut du bouclage ECS (m)
-  // Sh est la surface habitable des logements desservis par l'installation d'ECS
-  // Pour l'appartement, on utilise la surface à l'échelle de l'immeuble
-  const Sh = (Sh_install / Sh_logement) * Sh_immeuble_ratio;
-  const Lb = 4 * Math.pow(Sh / Niv_inst_ecs, 0.5) + 6 * (Niv_inst_ecs - 0.5);
+  const { Sh_immeuble_ratio, Sh_install, Lb } = calc_bouclage_ecs(
+    de,
+    Sh_logement,
+    Sh_immeuble,
+    nombre_niveau_immeuble
+  );
 
   // Etape 4: DeltaPb (kPa) - perte de charge dans le bouclage
   const DeltaPb = 0.2 * Lb + 10;

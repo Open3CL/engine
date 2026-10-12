@@ -13,7 +13,13 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 vi.mock('./enums.js', () => ({
   default: {
     classe_altitude: { 1: 'ca1' },
-    zone_climatique: { 1: 'h1a' }
+    zone_climatique: { 1: 'h1a' },
+    methode_application_dpe_log: {
+      1: 'dpe maison individuelle',
+      5: 'dpe appartement individuel chauffage collectif ecs collectif',
+      9: 'dpe immeuble collectif chauffage collectif ecs collectif',
+      13: 'dpe appartement généré à partir des données dpe immeuble chauffage collectif ecs collectif'
+    }
   }
 }));
 
@@ -31,8 +37,14 @@ vi.mock('./utils.js', () => ({
   Tbase: { ca1: { h1: -9 } }
 }));
 
-const { conso_aux_gen, conso_aux_distribution_ch, conso_aux_distribution_ecs, getDeltaDim } =
-  await import('./15_conso_aux.js');
+const {
+  conso_aux_gen,
+  conso_aux_distribution_ch,
+  conso_aux_distribution_ecs,
+  getDeltaDim,
+  calc_bouclage_ecs,
+  longueur_bouclage_ecs
+} = await import('./15_conso_aux.js');
 
 /**
  * 15.1 Consommation des auxiliaires de génération
@@ -837,25 +849,32 @@ describe("conso_aux_distribution_ecs - auxiliaires de distribution d'ECS", () =>
     );
   });
 
-  test("installation desservant tout l'immeuble : Sh_installation étendue à l'immeuble", () => {
-    const di = {};
-    conso_aux_distribution_ecs(
-      {},
-      {
-        enum_type_installation_id: '2',
-        enum_bouclage_reseau_ecs_id: '2',
-        surface_habitable: 2000,
-        nombre_niveau_installation_ecs: 2
-      },
-      di,
-      50,
-      2000,
-      1,
-      1,
-      30
-    );
+  test("installation décrite à l'échelle de l'immeuble : pas de second passage à l'échelle immeuble", () => {
+    const consoPour = (surface_habitable) => {
+      const di = {};
+      conso_aux_distribution_ecs(
+        {},
+        {
+          enum_type_installation_id: '2',
+          enum_bouclage_reseau_ecs_id: '2',
+          surface_habitable,
+          nombre_niveau_installation_ecs: 2
+        },
+        di,
+        50,
+        2000,
+        1,
+        1,
+        30
+      );
+      return di.conso_auxiliaire_distribution_ecs;
+    };
+    // surface_habitable = 2000 m² (immeuble) : Sh plafonnée à Sh_immeuble (et non
+    // 2000 × 2000 / 50 = 80 000 m²), soit le même résultat qu'une installation à l'échelle
+    // du logement (Sh_install = Sh_logement).
+    expect(consoPour(2000)).toBeCloseTo(consoPour(50), 10);
     // valeur de référence de régression
-    expect(di.conso_auxiliaire_distribution_ecs).toBeCloseTo(72.84189246242042, 9);
+    expect(consoPour(2000)).toBeCloseTo(2.4208575056559525, 9);
   });
 });
 
@@ -941,5 +960,249 @@ describe("conso_aux_distribution_ecs - surface d'immeuble incohérente", () => {
     expect(
       consoEcs({ ratio_virtualisation: String(RATIO_VIRTUALISATION) }, SH_IMMEUBLE_RECONSTRUITE, 6)
     ).toBeCloseTo(consoEcs({}, SH_IMMEUBLE_RECONSTRUITE, 6), 10);
+  });
+});
+
+/**
+ * 15.2.3 Étape 3 : longueur par défaut du bouclage d'ECS
+ * Lb = 4 × (Sh / Niv_inst_ecs)^0,5 + 6 × (Niv_inst_ecs − 0,5)
+ * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §15.2.3
+ */
+describe("calc_bouclage_ecs - longueur par défaut du bouclage d'ECS", () => {
+  test("DPE immeuble, installation desservant tout l'immeuble : Sh = surface immeuble", () => {
+    // Sh = 400 ; Lb = 4 × √(400 / 4) + 6 × 3,5 = 40 + 21
+    const res = calc_bouclage_ecs(
+      { surface_habitable: 400, nombre_niveau_installation_ecs: 4 },
+      400,
+      400
+    );
+    expect(res.Lb).toBeCloseTo(61, 10);
+    expect(res.Sh_immeuble_ratio).toBe(400);
+    expect(res.Sh_install).toBe(400);
+    expect(res.Niv_inst_ecs).toBe(4);
+  });
+
+  test("DPE immeuble, installation desservant une partie de l'immeuble", () => {
+    // Sh = 100 ; Lb = 4 × √(100 / 1) + 6 × 0,5 = 43
+    expect(calc_bouclage_ecs({ surface_habitable: 100 }, 400, 400).Lb).toBeCloseTo(43, 10);
+  });
+
+  test("appartement : surface desservie ramenée à l'échelle de l'immeuble (Sh_ecs / ratio_batiment)", () => {
+    // Sh = 50 × 2000 / 50 = 2000 ; Lb = 4 × √(2000 / 5) + 6 × 4,5 = 107
+    const res = calc_bouclage_ecs(
+      { surface_habitable: 50, nombre_niveau_installation_ecs: 5 },
+      50,
+      2000
+    );
+    expect(res.Lb).toBeCloseTo(107, 10);
+  });
+
+  test("installation décrite à l'échelle de l'immeuble : Sh plafonnée à la surface de l'immeuble", () => {
+    // surface_habitable = 2000 > Sh_logement : sans plafond, Sh = 2000 × 2000 / 50 = 80 000 m²
+    const res = calc_bouclage_ecs(
+      { surface_habitable: 2000, nombre_niveau_installation_ecs: 5 },
+      50,
+      2000
+    );
+    expect(res.Sh_install).toBe(50);
+    expect(res.Lb).toBeCloseTo(107, 10);
+  });
+
+  test('valeurs par défaut : Sh_install = Sh_logement et un seul niveau', () => {
+    // Sh = 100 ; Lb = 4 × √100 + 6 × 0,5 = 43
+    expect(calc_bouclage_ecs({}, 100, 100).Lb).toBeCloseTo(43, 10);
+  });
+
+  test("sans surface immeuble : l'immeuble se réduit au logement", () => {
+    const res = calc_bouclage_ecs({}, 100, undefined);
+    expect(res.Sh_immeuble_ratio).toBe(100);
+    expect(res.Lb).toBeCloseTo(43, 10);
+  });
+
+  test('valeurs XML en chaînes de caractères', () => {
+    expect(
+      calc_bouclage_ecs(
+        { surface_habitable: '50', nombre_niveau_installation_ecs: '5' },
+        50,
+        '2000',
+        '7'
+      ).Lb
+    ).toBeCloseTo(107, 10);
+  });
+
+  test('installation virtualisée sans surface immeuble : immeuble reconstruit par le ratio', () => {
+    // Sh_immeuble = 50 / 0,1 = 500, Niv = nombre de niveaux de l'immeuble (5)
+    const res = calc_bouclage_ecs(
+      { surface_habitable: 80, nombre_niveau_installation_ecs: 1, ratio_virtualisation: '0.1' },
+      50,
+      50,
+      '5'
+    );
+    expect(res.Sh_immeuble_ratio).toBeCloseTo(500, 10);
+    expect(res.Sh_install).toBe(50);
+    expect(res.Niv_inst_ecs).toBe(5);
+    expect(res.Lb).toBeCloseTo(4 * Math.sqrt(100) + 27, 10);
+  });
+
+  test("installation virtualisée sans nombre de niveaux d'immeuble : niveaux de l'installation", () => {
+    const res = calc_bouclage_ecs(
+      { nombre_niveau_installation_ecs: 2, ratio_virtualisation: '0.1' },
+      50,
+      50
+    );
+    expect(res.Niv_inst_ecs).toBe(2);
+  });
+
+  test('installation virtualisée avec surface immeuble connue : ratio ignoré', () => {
+    const res = calc_bouclage_ecs(
+      { surface_habitable: 50, nombre_niveau_installation_ecs: 2, ratio_virtualisation: '0.1' },
+      50,
+      2000,
+      5
+    );
+    expect(res.Sh_immeuble_ratio).toBe(2000);
+    expect(res.Niv_inst_ecs).toBe(2);
+  });
+
+  test.each(['1', '0', 'abc'])(
+    'ratio de virtualisation %s hors ]0 ; 1[ : pas de reconstruction',
+    (ratio) => {
+      const res = calc_bouclage_ecs({ ratio_virtualisation: ratio }, 50, 50, 5);
+      expect(res.Sh_immeuble_ratio).toBe(50);
+      expect(res.Niv_inst_ecs).toBe(1);
+    }
+  );
+
+  test('plus de niveaux desservis : bouclage plus court sur un grand immeuble', () => {
+    const lb = (Niv) => calc_bouclage_ecs({ nombre_niveau_installation_ecs: Niv }, 2000, 2000).Lb;
+    expect(lb(4)).toBeLessThan(lb(1));
+  });
+});
+
+describe('longueur_bouclage_ecs - fonction exportée hors de la librairie', () => {
+  const ECS_BOUCLEE = { enum_type_installation_id: '2', enum_bouclage_reseau_ecs_id: '2' };
+
+  test("DPE immeuble : surface de référence = surface habitable de l'immeuble", () => {
+    const cg = {
+      enum_methode_application_dpe_log_id: '9',
+      surface_habitable_logement: 60,
+      surface_habitable_immeuble: 400
+    };
+    // Sh = 400, Niv = 4 => Lb = 61
+    expect(
+      longueur_bouclage_ecs(cg, { ...ECS_BOUCLEE, nombre_niveau_installation_ecs: 4 })
+    ).toBeCloseTo(61, 10);
+  });
+
+  test("DPE appartement : installation collective ramenée à l'immeuble", () => {
+    const cg = {
+      enum_methode_application_dpe_log_id: '5',
+      surface_habitable_logement: 50,
+      surface_habitable_immeuble: 2000
+    };
+    expect(
+      longueur_bouclage_ecs(cg, {
+        ...ECS_BOUCLEE,
+        surface_habitable: 50,
+        nombre_niveau_installation_ecs: 5
+      })
+    ).toBeCloseTo(107, 10);
+  });
+
+  test("DPE appartement généré depuis un DPE immeuble, installation à l'échelle immeuble", () => {
+    const cg = {
+      enum_methode_application_dpe_log_id: '13',
+      surface_habitable_logement: 50,
+      surface_habitable_immeuble: 2000
+    };
+    // Sh plafonnée à 2000 (et non 2000 × 2000 / 50) => Lb = 107
+    expect(
+      longueur_bouclage_ecs(cg, {
+        ...ECS_BOUCLEE,
+        surface_habitable: 2000,
+        nombre_niveau_installation_ecs: 5
+      })
+    ).toBeCloseTo(107, 10);
+  });
+
+  test.each([
+    ['individuelle', { enum_type_installation_id: '1', enum_bouclage_reseau_ecs_id: '2' }],
+    ['non bouclée', { enum_type_installation_id: '2', enum_bouclage_reseau_ecs_id: '1' }],
+    ['avec traçage', { enum_type_installation_id: '2', enum_bouclage_reseau_ecs_id: '3' }],
+    ['bouclage non renseigné (chaîne vide)', { enum_bouclage_reseau_ecs_id: '' }]
+  ])("installation d'ECS %s : pas de bouclage, Lb = 0", (_, de) => {
+    const cg = { enum_methode_application_dpe_log_id: '1', surface_habitable_logement: 100 };
+    expect(longueur_bouclage_ecs(cg, de)).toBe(0);
+  });
+
+  test("installation collective bouclée sans type d'installation : Lb calculée", () => {
+    const cg = { enum_methode_application_dpe_log_id: '1', surface_habitable_logement: 100 };
+    expect(longueur_bouclage_ecs(cg, { enum_bouclage_reseau_ecs_id: 2 })).toBeCloseTo(43, 10);
+  });
+
+  test('maison sans surface immeuble : immeuble assimilé au logement', () => {
+    const cg = { enum_methode_application_dpe_log_id: '1', surface_habitable_logement: 100 };
+    expect(longueur_bouclage_ecs(cg)).toBeCloseTo(43, 10);
+  });
+
+  test('installation de chauffage : surface_chauffee et nombre_niveau_installation_ch', () => {
+    const cg = { enum_methode_application_dpe_log_id: '1', surface_habitable_logement: 100 };
+    // Sh = 64, Niv = 2 => Lb = 4 × √32 + 9
+    expect(
+      longueur_bouclage_ecs(cg, { surface_chauffee: 64, nombre_niveau_installation_ch: 2 })
+    ).toBeCloseTo(4 * Math.sqrt(32) + 9, 10);
+  });
+
+  test('champs ECS prioritaires sur les champs chauffage, valeurs XML en chaînes', () => {
+    const cg = {
+      enum_methode_application_dpe_log_id: '1',
+      surface_habitable_logement: '100',
+      nombre_niveau_immeuble: '3'
+    };
+    const de = {
+      ...ECS_BOUCLEE,
+      surface_habitable: '100',
+      surface_chauffee: '64',
+      nombre_niveau_installation_ecs: '1',
+      nombre_niveau_installation_ch: '2'
+    };
+    expect(longueur_bouclage_ecs(cg, de)).toBeCloseTo(43, 10);
+  });
+
+  test("installation virtualisée : ratio et nombre de niveaux de l'immeuble transmis", () => {
+    const cg = {
+      enum_methode_application_dpe_log_id: '5',
+      surface_habitable_logement: 50,
+      nombre_niveau_immeuble: 5
+    };
+    expect(longueur_bouclage_ecs(cg, { ...ECS_BOUCLEE, ratio_virtualisation: '0.1' })).toBeCloseTo(
+      4 * Math.sqrt(100) + 27,
+      10
+    );
+  });
+
+  test("méthode d'application inconnue : traitée comme un logement", () => {
+    const cg = { enum_methode_application_dpe_log_id: '999', surface_habitable_logement: 100 };
+    expect(longueur_bouclage_ecs(cg)).toBeCloseTo(43, 10);
+  });
+
+  test('cohérence avec conso_aux_distribution_ecs : même Lb que le moteur', () => {
+    const de = { ...ECS_BOUCLEE, surface_habitable: 50, nombre_niveau_installation_ecs: 2 };
+    const di = {};
+    conso_aux_distribution_ecs({}, de, di, 50, 2000, 1, 1, 30);
+    // valeur de référence de régression inchangée par l'extraction
+    expect(di.conso_auxiliaire_distribution_ecs).toBeCloseTo(2.4208575056559525, 9);
+    const cg = {
+      enum_methode_application_dpe_log_id: '5',
+      surface_habitable_logement: 50,
+      surface_habitable_immeuble: 2000
+    };
+    expect(longueur_bouclage_ecs(cg, de)).toBeCloseTo(calc_bouclage_ecs(de, 50, 2000).Lb, 10);
+    expect(longueur_bouclage_ecs(cg, de)).toBeCloseTo(4 * Math.sqrt(1000) + 9, 10);
+  });
+
+  test('de non fourni : valeurs par défaut', () => {
+    const cg = { enum_methode_application_dpe_log_id: '1', surface_habitable_logement: 100 };
+    expect(longueur_bouclage_ecs(cg, undefined)).toBeCloseTo(43, 10);
   });
 });

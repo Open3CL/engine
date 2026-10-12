@@ -219,6 +219,20 @@ Consommation      : 174 kWh/m²/an
 | `get_classe_ges_dpe(dpe)`       | DPE calculé | Recalcule les étiquettes énergie et climat                 |
 | `get_conso_coeff_1_7_2027(dpe)` | DPE calculé | Projette la consommation avec le coefficient EP 1,7 (2027) |
 | `getVersion()`                  | –           | Version du moteur utilisée                                 |
+| `longueur_bouclage_ecs(cg, de)` | Objets JSON | Longueur par défaut du bouclage ECS Lb en m (§15.2.3)      |
+
+```javascript
+import { longueur_bouclage_ecs } from '@open3cl/engine';
+
+// cg : caracteristique_generale du DPE ; de : donnee_entree d'une installation ECS
+// (surface_habitable, nombre_niveau_installation_ecs) ou chauffage (surface_chauffee,
+// nombre_niveau_installation_ch), + ratio_virtualisation éventuel.
+// Renvoie 0 pour une installation d'ECS individuelle, non bouclée ou avec traçage.
+const lb = longueur_bouclage_ecs(
+  dpe.logement.caracteristique_generale,
+  dpe.logement.installation_ecs_collection.installation_ecs[0].donnee_entree
+);
+```
 
 ### Options de calcul
 

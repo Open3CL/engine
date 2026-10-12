@@ -79,6 +79,7 @@ interface Caracteristique_generale {
   surface_habitable_logement: number;
   surface_habitable_immeuble?: number;
   nombre_niveau_logement: number;
+  nombre_niveau_immeuble?: number;
   hsp: number;
   nombre_appartement: number;
 }

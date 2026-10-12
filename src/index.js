@@ -8,3 +8,5 @@ import {
 export { calcul_3cl, calcul_3cl_xml, get_classe_ges_dpe, get_conso_coeff_1_7_2027, getVersion };
 import { Umur, Uph, Upb, Uporte, Ubv, Upt } from './3_deperdition.js';
 export { Umur, Uph, Upb, Uporte, Ubv, Upt };
+import { longueur_bouclage_ecs } from './15_conso_aux.js';
+export { longueur_bouclage_ecs };

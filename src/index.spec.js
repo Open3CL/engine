@@ -24,9 +24,14 @@ vi.mock('./3_deperdition.js', () => ({
   Upt: vi.fn()
 }));
 
+vi.mock('./15_conso_aux.js', () => ({
+  longueur_bouclage_ecs: vi.fn()
+}));
+
 const index = await import('./index.js');
 const engine = await import('./engine.js');
 const deperdition = await import('./3_deperdition.js');
+const consoAux = await import('./15_conso_aux.js');
 
 describe('index - ré-exports depuis engine.js', () => {
   test.each(['calcul_3cl', 'calcul_3cl_xml', 'get_classe_ges_dpe', 'getVersion'])(
@@ -50,5 +55,12 @@ describe('index - ré-exports depuis 3_deperdition.js', () => {
   test("ne ré-exporte pas l'export par défaut de 3_deperdition.js", () => {
     // index.js n'expose que les exports nommés Umur, Uph, ...
     expect(index.default).toBeUndefined();
+  });
+});
+
+describe('index - ré-exports depuis 15_conso_aux.js', () => {
+  test("ré-exporte longueur_bouclage_ecs à l'identique depuis 15_conso_aux.js", () => {
+    expect(index.longueur_bouclage_ecs).toBe(consoAux.longueur_bouclage_ecs);
+    expect(typeof index.longueur_bouclage_ecs).toBe('function');
   });
 });
