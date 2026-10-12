@@ -19,40 +19,39 @@ const DIFF_VALUE_THRESHOLD = 5;
 const dpeStorageClient = new UploadDpeToObjectStorage();
 
 /**
- * Ajout des informations id et label des générateurs ECS et CH dans le fichier de sortie
+ * Ajout des informations id et label des générateurs ECS et CH dans le fichier de sortie.
+ *
+ * Pousse TOUJOURS 4 valeurs par type (id/label du générateur de la 1re puis de la 2e
+ * installation), vides si l'installation ou le générateur est absent : le CSV est positionnel,
+ * une valeur manquante décalerait toutes les colonnes suivantes par rapport à l'en-tête
+ * (cf. OUTPUT_CSV_HEADERS). Cas réel : DPE immeuble sans installation ECS
+ * (`installation_ecs_collection: ""`).
+ *
  * @param inputDpe {FullDpe}
  * @param csvOutputDpe {Array}
  */
-const addGenerateurs = (inputDpe, csvOutputDpe) => {
+export const addGenerateurs = (inputDpe, csvOutputDpe) => {
   ['ecs', 'chauffage'].forEach((type) => {
     const typeGenerateur = `type_generateur_${type === 'ecs' ? 'ecs' : 'ch'}`;
     const generateurCollection = `generateur_${type}_collection`;
     const generateur = `generateur_${type}`;
 
     const installations =
-      inputDpe.logement[`installation_${type}_collection`][`installation_${type}`];
+      inputDpe.logement?.[`installation_${type}_collection`]?.[`installation_${type}`];
 
-    if (installations) {
-      const generateurs =
-        installations[0][generateurCollection][generateur][0].donnee_entree[
+    [0, 1].forEach((index) => {
+      const generateurId =
+        installations?.[index]?.[generateurCollection]?.[generateur]?.[0]?.donnee_entree?.[
           `enum_${typeGenerateur}_id`
         ];
 
-      csvOutputDpe.push(generateurs);
-      csvOutputDpe.push(enums[typeGenerateur][generateurs]);
-
-      if (installations.length > 1) {
-        const generateur2 =
-          installations[1][generateurCollection][generateur][0].donnee_entree[
-            `enum_${typeGenerateur}_id`
-          ];
-        csvOutputDpe.push(generateur2);
-        csvOutputDpe.push(enums[typeGenerateur][generateur2]);
-      } else {
-        csvOutputDpe.push('');
-        csvOutputDpe.push('');
-      }
-    }
+      csvOutputDpe.push(generateurId ?? '');
+      csvOutputDpe.push(
+        generateurId !== undefined && generateurId !== null
+          ? (enums[typeGenerateur]?.[generateurId] ?? '')
+          : ''
+      );
+    });
   });
 };
 
