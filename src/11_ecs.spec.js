@@ -31,7 +31,7 @@ vi.mock('./14_generateur_ecs.js', () => ({
   default: vi.fn()
 }));
 
-const { default: calc_ecs } = await import('./11_ecs.js');
+const { default: calc_ecs, isRdimEcsNeutralise } = await import('./11_ecs.js');
 const { tv, requestInput } = await import('./utils.js');
 const { default: calc_gen_ecs } = await import('./14_generateur_ecs.js');
 
@@ -376,6 +376,91 @@ describe('calc_ecs - immeuble à plusieurs installations ECS (prorata des surfac
     calc_ecs({}, ecs, 1000, 1500, 1, 'ca1', 'h1a', 'immeuble', false, 200, null, false, {});
 
     expect(ecs.donnee_intermediaire.ratio_besoin_ecs).toBe(0.25);
+  });
+});
+
+/**
+ * Installation ECS collective unique d'un DPE immeuble : le rdim (nombre d'installations
+ * individuelles identiques) est sans objet, le besoin n'est pas divisé par rdim et la consommation
+ * n'est pas remultipliée par rdim à l'agrégation (conso.js getRdimEcs).
+ * @see Guide Tribu TE-211208 p. 24
+ * @see Moteur_DPE.dll Calcul_batiment.cs l.583-592 (Becs / Rdim seulement en installation individuelle)
+ */
+describe('calc_ecs - installation ECS collective en immeuble : rdim neutralisé', () => {
+  test.each([
+    ['collective', '2'],
+    ['collective multi-bâtiment', '3']
+  ])('installation %s, rdim 22 : besoin de l’immeuble (ratio 1)', (_libelle, type) => {
+    const ecs = makeEcs({
+      tv_rendement_distribution_ecs_id: '5',
+      enum_type_installation_id: type,
+      rdim: 22
+    });
+    calc_ecs({}, ecs, 1000, 1500, 1, 'ca1', 'h1a', 'immeuble', false, 681, 22, false, {});
+
+    expect(ecs.donnee_intermediaire.ratio_besoin_ecs).toBe(1);
+    expect(ecs.donnee_intermediaire.besoin_ecs).toBe(1000);
+    expect(ecs.donnee_intermediaire.besoin_ecs_depensier).toBe(1500);
+    expect(ecs.donnee_intermediaire.rdim_neutralise).toBe(true);
+    // le générateur reçoit le besoin de l'immeuble (cohérent avec ses pertes Qgw / qp0)
+    expect(vi.mocked(calc_gen_ecs).mock.calls[0][2].besoin_ecs).toBe(1000);
+  });
+
+  test.each([
+    ['installation individuelle en immeuble', '1', 'immeuble', 0.25],
+    ['installation hybride collective-individuelle', '4', 'immeuble', 0.25],
+    ['DPE appartement (installation collective)', '2', 'appartement', 0.25],
+    ['DPE maison', '2', 'maison', 0.25]
+  ])('%s : division par rdim conservée', (_libelle, type, th, ratio) => {
+    const ecs = makeEcs({
+      tv_rendement_distribution_ecs_id: '5',
+      enum_type_installation_id: type,
+      rdim: 4
+    });
+    calc_ecs({}, ecs, 1000, 1500, 1, 'ca1', 'h1a', th, false, 200, null, false, {});
+
+    expect(ecs.donnee_intermediaire.ratio_besoin_ecs).toBe(ratio);
+    expect(ecs.donnee_intermediaire.rdim_neutralise).toBeUndefined();
+  });
+
+  test('installation collective en immeuble, rdim 1 : inchangé (ratio 1, pas d’indicateur)', () => {
+    const ecs = makeEcs({
+      tv_rendement_distribution_ecs_id: '5',
+      enum_type_installation_id: '2',
+      rdim: 1
+    });
+    calc_ecs({}, ecs, 1000, 1500, 1, 'ca1', 'h1a', 'immeuble', false, 200, null, false, {});
+
+    expect(ecs.donnee_intermediaire.ratio_besoin_ecs).toBe(1);
+    expect(ecs.donnee_intermediaire.rdim_neutralise).toBeUndefined();
+  });
+
+  test('immeuble multi-installations : prorata Sh / SH / rdim conservé (branche prioritaire)', () => {
+    const ecs = makeEcs({
+      tv_rendement_distribution_ecs_id: '5',
+      enum_type_installation_id: '2',
+      surface_habitable: 100,
+      rdim: 4
+    });
+    calc_ecs({}, ecs, 1000, 1500, 1, 'ca1', 'h1a', 'immeuble', false, 200, null, false, {}, true);
+
+    expect(ecs.donnee_intermediaire.ratio_besoin_ecs).toBeCloseTo(100 / 200 / 4, 9);
+    expect(ecs.donnee_intermediaire.rdim_neutralise).toBeUndefined();
+  });
+});
+
+describe('isRdimEcsNeutralise', () => {
+  test.each([
+    ['immeuble', '2', 22, true],
+    ['immeuble', 3, '2', true],
+    ['immeuble', '2', 1, false],
+    ['immeuble', '2', undefined, false],
+    ['immeuble', '1', 22, false],
+    ['immeuble', '4', 22, false],
+    ['appartement', '2', 22, false],
+    ['maison', '2', 22, false]
+  ])('th %s, type %s, rdim %s → %s', (th, type, rdim, attendu) => {
+    expect(isRdimEcsNeutralise(th, { enum_type_installation_id: type, rdim })).toBe(attendu);
   });
 });
 
