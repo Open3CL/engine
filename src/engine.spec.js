@@ -518,6 +518,24 @@ describe('calcul_3cl - run intégral (maison)', () => {
     expect(dpe.logement.sortie.cout).toEqual({ cout_5_usages: 2 });
   });
 
+  test('version du logiciel de saisie transmise à tous les calculs de conso (facteur GES réseau de chaleur)', () => {
+    const dpe = makeDpe();
+    dpe.administratif.diagnostiqueur = { version_logiciel: 'LICIEL Diagnostics v4' };
+    const facteurs = { ch: 0.8 };
+    vi.mocked(calculateEnr).mockImplementationOnce((enr, conso, Sh, th, zc, coef, ratio, f) => {
+      Object.assign(f, facteurs);
+      return { pv: 1 };
+    });
+
+    calcul_3cl(dpe, { sanitize: false });
+
+    // Lue avant l'écrasement de `diagnostiqueur` par la version du moteur
+    expect(calc_conso).toHaveBeenCalledTimes(4);
+    calc_conso.mock.calls.forEach((call) => expect(call[14]).toBe('LICIEL Diagnostics v4'));
+    expect(calc_conso.mock.calls[0][13]).toEqual({});
+    expect(calc_conso.mock.calls[1][13]).toEqual(facteurs);
+  });
+
   test('bâtiment matériaux anciens => ilpa = 1 ; incohérence inertie => erreur loggée', () => {
     const dpe = makeDpe();
     dpe.logement.meteo.batiment_materiaux_anciens = 1;

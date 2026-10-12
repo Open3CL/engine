@@ -85,6 +85,7 @@ export function calcul_3cl(inputDpe, options) {
   }
   const modele = enums.modele_dpe[dpe.administratif.enum_modele_dpe_id];
   const dateDpe = dpe.administratif.date_etablissement_dpe;
+  const versionLogiciel = dpe.administratif.diagnostiqueur?.version_logiciel;
   if (modele !== 'dpe 3cl 2021 méthode logement') {
     console.error('Moteur dpe non implémenté pour le modèle: ' + modele);
     return null;
@@ -606,7 +607,9 @@ export function calcul_3cl(inputDpe, options) {
     dateDpe,
     coef_ep,
     th === 'immeuble' ? Nb_lgt : 1,
-    ratioSurfaceCoutCollectif
+    ratioSurfaceCoutCollectif,
+    {},
+    versionLogiciel
   );
 
   // Proratisation au logement d'une installation PV d'immeuble (appartement)
@@ -648,7 +651,8 @@ export function calcul_3cl(inputDpe, options) {
       coef_ep,
       th === 'immeuble' ? Nb_lgt : 1,
       ratioSurfaceCoutCollectif,
-      facteursAc
+      facteursAc,
+      versionLogiciel
     );
     conso.emission_ges = consoNette.emission_ges;
     // Ligne électricité de sortie_par_energie nette de l'autoconsommation (issue #34)
@@ -669,7 +673,9 @@ export function calcul_3cl(inputDpe, options) {
     dateDpe,
     coef_ep_1_7,
     th === 'immeuble' ? Nb_lgt : 1,
-    ratioSurfaceCoutCollectif
+    ratioSurfaceCoutCollectif,
+    {},
+    versionLogiciel
   );
 
   productionENR.calculateEnr(
@@ -695,7 +701,9 @@ export function calcul_3cl(inputDpe, options) {
     dateDpe,
     coef_ep_2_3,
     th === 'immeuble' ? Nb_lgt : 1,
-    ratioSurfaceCoutCollectif
+    ratioSurfaceCoutCollectif,
+    {},
+    versionLogiciel
   );
 
   productionENR.calculateEnr(

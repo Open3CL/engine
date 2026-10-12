@@ -37,13 +37,21 @@ vi.mock('./tv.js', () => ({
   }
 }));
 
+/** Mode bug_for_bug_compat piloté par les tests (export « live » du module utils mocké). */
+const utilsState = vi.hoisted(() => ({ bugForBugCompat: false }));
+
+/** Lecture des tables par défaut : réseau de chaleur "R1" connu, "R2" inconnu. */
+const tvParDefaut = (table, matcher) => {
+  if (matcher?.identifiant_reseau === 'R1') return { contenu_co2_acv: 0.15 };
+  return null;
+};
+
 vi.mock('./utils.js', () => ({
   set_bug_for_bug_compat: vi.fn(),
-  tv: vi.fn((table, matcher) => {
-    // Réseau de chaleur "R1" connu, "R2" inconnu
-    if (matcher?.identifiant_reseau === 'R1') return { contenu_co2_acv: 0.15 };
-    return null;
-  })
+  get bug_for_bug_compat() {
+    return utilsState.bugForBugCompat;
+  },
+  tv: vi.fn((table, matcher) => tvParDefaut(table, matcher))
 }));
 
 const {
@@ -58,8 +66,13 @@ const {
   getAuxGenerationEcs,
   DATE_BAREME_COUT_2024,
   appointBijonction,
-  coutBijonction
+  coutBijonction,
+  ARRETES_RESEAU_CHALEUR,
+  COEF_GES_AUTRES_RESEAUX_CHALEUR,
+  indexArreteReseauChaleur,
+  getContenuCo2ReseauChaleur
 } = await import('./conso.js');
+const { tv } = await import('./utils.js');
 
 /**
  * Classe énergétique (bilan DPE)
@@ -432,7 +445,7 @@ describe('calc_conso - agrégation des consommations', () => {
     expect(res.emission_ges.emission_ges_ch).toBeCloseTo(150, 9);
   });
 
-  test('réseau de chaleur inconnu (identifiant sans ligne) : erreur signalée', () => {
+  test('réseau de chaleur inconnu (identifiant sans ligne) : erreur signalée, facteur « autres réseaux » 0,385', () => {
     const ch = [
       installCh({ cle_repartition_ch: 1 }, [
         genCh(
@@ -443,8 +456,10 @@ describe('calc_conso - agrégation des consommations', () => {
       ])
     ];
 
-    calc_conso(100, 1, 1, [], ch, [], [], 1, 1, DATE_DPE, coef_ep);
+    const res = calc_conso(100, 1, 1, [], ch, [], [], 1, 1, DATE_DPE, coef_ep);
     expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('R2'));
+    // Plus de repli sur 1 kgCO2/kWh (GES = consommation) : 1000 * 0,385
+    expect(res.emission_ges.emission_ges_ch).toBeCloseTo(385, 9);
   });
 
   test('réseau de chaleur sans identifiant : coefficient GES forfaitaire 0,385', () => {
@@ -459,8 +474,8 @@ describe('calc_conso - agrégation des consommations', () => {
     expect(res.emission_ges.emission_ges_ch).toBeCloseTo(385, 9);
   });
 
-  test("date de DPE invalide (levée d'exception) : année de repli 2022", () => {
-    // date_arrete_reseau_chaleur = Symbol => new Date(...) lève => catch => 2022
+  test("date d'arrêté réseau de chaleur invalide : aucune exception", () => {
+    // date_arrete_reseau_chaleur = Symbol : ignorée (repli sur la date du DPE)
     const ch = [
       installCh({ cle_repartition_ch: 1 }, [
         genCh(
@@ -1167,5 +1182,168 @@ describe('appointBijonction / coutBijonction', () => {
       0.34721 * 30,
       9
     );
+  });
+});
+
+/**
+ * Facteur d'émission des réseaux de chaleur urbains : table de l'arrêté utilisé
+ * (modele_donnee/arrete_reseau_chaleur.json de l'observatoire DPE).
+ */
+describe('réseaux de chaleur - sélection de l’arrêté et du contenu CO2', () => {
+  let errorSpy;
+
+  beforeEach(() => {
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.mocked(tv).mockReset();
+    utilsState.bugForBugCompat = false;
+  });
+
+  afterEach(() => {
+    errorSpy.mockRestore();
+    vi.mocked(tv).mockImplementation(tvParDefaut);
+    utilsState.bugForBugCompat = false;
+  });
+
+  /** Tables mockées : identifiant -> { table: ligne } */
+  const mockTables = (lignes) =>
+    vi
+      .mocked(tv)
+      .mockImplementation((table, matcher) => lignes[matcher.identifiant_reseau]?.[table] ?? null);
+
+  test('six arrêtés, dans l’ordre chronologique, table ≠ année de l’arrêté', () => {
+    expect(ARRETES_RESEAU_CHALEUR.map((a) => a.table)).toEqual([
+      'reseau_chaleur_2020',
+      'reseau_chaleur_2021',
+      'reseau_chaleur_2022',
+      'reseau_chaleur_2023',
+      'reseau_chaleur_2024',
+      'reseau_chaleur_2025'
+    ]);
+    // L'arrêté du 05/07/2024 publie la table 2023 (cause du bug : 2024 - 1 = 2023 forcé à 2022)
+    expect(ARRETES_RESEAU_CHALEUR[3]).toMatchObject({
+      table: 'reseau_chaleur_2023',
+      date_arrete: '2024-07-05'
+    });
+    const dates = ARRETES_RESEAU_CHALEUR.map((a) => a.date_arrete);
+    expect([...dates].sort()).toEqual(dates);
+    ARRETES_RESEAU_CHALEUR.forEach((a) => expect(a.date_application >= a.date_arrete).toBe(true));
+  });
+
+  test.each([
+    ['2020-10-12', 0],
+    ['2021-10-21', 1],
+    ['2022-01-18', 1], // date hors liste : dernier arrêté publié avant
+    ['2023-03-16', 2],
+    ['2024-07-05', 3],
+    ['2024-07-10', 3],
+    ['2025-04-11', 4],
+    ['2026-04-25', 5],
+    ['2030-01-01', 5],
+    ['2019-01-01', 0]
+  ])('date_arrete_reseau_chaleur %s : arrêté n°%i', (dateArrete, index) => {
+    // La date du DPE est ignorée quand la date d'arrêté est renseignée
+    expect(indexArreteReseauChaleur(dateArrete, '2030-01-01')).toBe(index);
+  });
+
+  test.each([
+    ['2022-01-17', 0],
+    ['2022-01-18', 1],
+    ['2023-04-15', 1], // arrêté du 16/03/2023 applicable au 16/04/2023 seulement
+    ['2023-04-16', 2],
+    ['2024-08-09', 3],
+    [undefined, 0],
+    ['date invalide', 0]
+  ])('sans date d’arrêté, DPE du %s : arrêté applicable n°%i', (dateDpe, index) => {
+    expect(indexArreteReseauChaleur(undefined, dateDpe)).toBe(index);
+  });
+
+  test('date d’arrêté illisible (non chaîne) : repli sur la date du DPE', () => {
+    expect(indexArreteReseauChaleur(Symbol('invalide'), '2024-08-09')).toBe(3);
+    expect(indexArreteReseauChaleur(new Date('2024-07-05'), undefined)).toBe(3);
+  });
+
+  test('arrêté du 05/07/2024 : lecture de reseau_chaleur_2023 et contenu ACV (cas Pau 6403C)', () => {
+    mockTables({
+      '6403C': { reseau_chaleur_2023: { contenu_co2: '0.047', contenu_co2_acv: '0.061' } }
+    });
+    expect(getContenuCo2ReseauChaleur('6403C', '2024-07-05', '2025-01-24', 'Pleiades')).toBe(0.061);
+    expect(tv).toHaveBeenCalledTimes(1);
+    expect(tv).toHaveBeenCalledWith('reseau_chaleur_2023', { identifiant_reseau: '6403C' });
+  });
+
+  test('bug_for_bug_compat + LICIEL + table 2023 : contenu CO2 hors ACV transmis par le logiciel', () => {
+    utilsState.bugForBugCompat = true;
+    mockTables({
+      '6403C': {
+        reseau_chaleur_2023: { contenu_co2: '0.047', contenu_co2_acv: '0.061' },
+        reseau_chaleur_2022: { contenu_co2: '0.1', contenu_co2_acv: '0.2' }
+      }
+    });
+    const liciel = 'LICIEL Diagnostics v4 [Version XML:305]';
+    expect(getContenuCo2ReseauChaleur('6403C', '2024-07-05', '2025-01-24', liciel)).toBe(0.047);
+    // Autre logiciel : valeur ACV
+    expect(getContenuCo2ReseauChaleur('6403C', '2024-07-05', '2025-01-24', 'DPEWIN V5.2.5')).toBe(
+      0.061
+    );
+    expect(getContenuCo2ReseauChaleur('6403C', '2024-07-05', '2025-01-24', undefined)).toBe(0.061);
+    // LICIEL avec un autre arrêté (16/03/2023 -> table 2022) : valeur ACV
+    expect(getContenuCo2ReseauChaleur('6403C', '2023-03-16', '2023-06-01', liciel)).toBe(0.2);
+  });
+
+  test('sans bug_for_bug_compat, LICIEL lit aussi le contenu ACV', () => {
+    mockTables({
+      R: { reseau_chaleur_2023: { contenu_co2: '0.047', contenu_co2_acv: '0.061' } }
+    });
+    expect(getContenuCo2ReseauChaleur('R', '2024-07-05', undefined, 'LICIEL')).toBe(0.061);
+  });
+
+  test('réseau absent de la table de l’arrêté : table antérieure la plus récente qui le contient', () => {
+    mockTables({
+      R: {
+        reseau_chaleur_2021: { contenu_co2: '0.3', contenu_co2_acv: '0.33' },
+        reseau_chaleur_2020: { contenu_co2: '0.4', contenu_co2_acv: '0.44' }
+      }
+    });
+    expect(getContenuCo2ReseauChaleur('R', '2024-07-05', undefined, undefined)).toBe(0.33);
+    expect(vi.mocked(tv).mock.calls.map((c) => c[0])).toEqual([
+      'reseau_chaleur_2023',
+      'reseau_chaleur_2022',
+      'reseau_chaleur_2021'
+    ]);
+  });
+
+  test('réseau introuvable dans toutes les tables : facteur « autres réseaux de chaleur » 0,385 et erreur', () => {
+    mockTables({});
+    expect(COEF_GES_AUTRES_RESEAUX_CHALEUR).toBe(0.385);
+    expect(getContenuCo2ReseauChaleur('XXXX', '2024-07-05', undefined, undefined)).toBe(0.385);
+    expect(tv).toHaveBeenCalledTimes(4);
+    expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('XXXX'));
+  });
+
+  test('calc_conso : facteur réseau appliqué au chauffage et à l’ECS, version logiciel transmise', () => {
+    utilsState.bugForBugCompat = true;
+    mockTables({
+      '6403C': { reseau_chaleur_2023: { contenu_co2: '0.047', contenu_co2_acv: '0.061' } }
+    });
+    const de = { identifiant_reseau_chaleur: '6403C', date_arrete_reseau_chaleur: '2024-07-05' };
+    const ch = [
+      installCh({ cle_repartition_ch: 1 }, [
+        genCh('3', { conso_ch: 1000, conso_ch_depensier: 1200 }, de)
+      ])
+    ];
+    const ecs = [
+      installEcs({ cle_repartition_ecs: 1 }, [
+        genEcs('3', { conso_ecs: 500, conso_ecs_depensier: 600 }, de)
+      ])
+    ];
+    const args = [100, 1, 1, [], ch, ecs, [], 1, 1, '2025-01-24', coef_ep, 1, 1, {}];
+
+    const licielRes = calc_conso(...args, 'LICIEL Diagnostics v4');
+    // 1000 * 0,047 et 500 * 0,047 (valeur ADEME du DPE 2564E0255485Z) — avant : 1000 * 1
+    expect(licielRes.emission_ges.emission_ges_ch).toBeCloseTo(47, 9);
+    expect(licielRes.emission_ges.emission_ges_ecs).toBeCloseTo(23.5, 9);
+
+    const autreRes = calc_conso(...args);
+    expect(autreRes.emission_ges.emission_ges_ch).toBeCloseTo(61, 9);
   });
 });
