@@ -1416,4 +1416,66 @@ describe('réseaux de chaleur - sélection de l’arrêté et du contenu CO2', (
     const autreRes = calc_conso(...args);
     expect(autreRes.emission_ges.emission_ges_ch).toBeCloseTo(24, 9);
   });
+
+  /**
+   * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §17.3 p.118 : GES calculées à partir des énergies
+   * consommées réellement par les générateurs.
+   */
+  const calcMultiBatiment = (typeCh, typeEcs, deExtra = {}) => {
+    const ch = [
+      installCh({ cle_repartition_ch: 1 }, [
+        genCh(
+          '3',
+          { conso_ch: 1000, conso_ch_depensier: 1200 },
+          { enum_type_generateur_ch_id: typeCh, identifiant_reseau_chaleur: '', ...deExtra }
+        )
+      ])
+    ];
+    const ecs = [
+      installEcs({ cle_repartition_ecs: 1 }, [
+        genEcs(
+          '3',
+          { conso_ecs: 500, conso_ecs_depensier: 600 },
+          { enum_type_generateur_ecs_id: typeEcs, identifiant_reseau_chaleur: '', ...deExtra }
+        )
+      ])
+    ];
+    return calc_conso(100, 1, 1, [], ch, ecs, [], 1, 1, '2025-01-22', coef_ep, 1, 1, {}, 'LICIEL')
+      .emission_ges;
+  };
+
+  test.each([
+    // DPE 2373E0201684Z (109/74) : facteur ADEME 0,03 (0,024 sur quelques exports plaquettes)
+    ['109', '74', 0.03],
+    ['110', '75', 0.324],
+    // DPE 2467E0759983V-like (111/76) : 814 DPE LICIEL KO GES-seul à 0,227
+    ['111', '76', 0.227]
+  ])(
+    'chaudière(s) multi bâtiment %s / %s sans identifiant : facteur de l’énergie %f',
+    (typeCh, typeEcs, facteur) => {
+      const ges = calcMultiBatiment(typeCh, typeEcs);
+      expect(ges.emission_ges_ch).toBeCloseTo(1000 * facteur, 9);
+      expect(ges.emission_ges_ecs).toBeCloseTo(500 * facteur, 9);
+      expect(tv).not.toHaveBeenCalled();
+    }
+  );
+
+  test('PAC multi bâtiment (112 / 77) ou réseau sans identifiant : facteur « autres réseaux » 0,385', () => {
+    const ges = calcMultiBatiment('112', '77');
+    expect(ges.emission_ges_ch).toBeCloseTo(385, 9);
+    expect(ges.emission_ges_ecs).toBeCloseTo(192.5, 9);
+    // Réseau de chaleur classique (ch 71 / ecs 72) sans identifiant
+    const reseau = calcMultiBatiment('71', '72');
+    expect(reseau.emission_ges_ch).toBeCloseTo(385, 9);
+  });
+
+  test('chaudière multi bâtiment avec identifiant réseau : contenu CO2 de l’arrêté prioritaire', () => {
+    mockTables({ R: { reseau_chaleur_2023: { contenu_co2: '0.05', contenu_co2_acv: '0.06' } } });
+    const ges = calcMultiBatiment('111', '76', {
+      identifiant_reseau_chaleur: 'R',
+      date_arrete_reseau_chaleur: '2024-07-05'
+    });
+    expect(ges.emission_ges_ch).toBeCloseTo(60, 9);
+    expect(ges.emission_ges_ecs).toBeCloseTo(30, 9);
+  });
 });
