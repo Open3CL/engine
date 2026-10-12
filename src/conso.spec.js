@@ -1449,7 +1449,10 @@ describe('réseaux de chaleur - sélection de l’arrêté et du contenu CO2', (
     ['109', '74', 0.03],
     ['110', '75', 0.324],
     // DPE 2467E0759983V-like (111/76) : 814 DPE LICIEL KO GES-seul à 0,227
-    ['111', '76', 0.227]
+    ['111', '76', 0.227],
+    // DPE 2493E2686434C (112/77) : facteur ADEME 0,079 en chauffage ET en ECS (Tribu
+    // Calcul_batiment.cs l.1189 : un seul contenu_CO2_RCU_ch pour Cch_RCU + Cecs_RCU)
+    ['112', '77', 0.079]
   ])(
     'chaudière(s) multi bâtiment %s / %s sans identifiant : facteur de l’énergie %f',
     (typeCh, typeEcs, facteur) => {
@@ -1460,11 +1463,13 @@ describe('réseaux de chaleur - sélection de l’arrêté et du contenu CO2', (
     }
   );
 
-  test('PAC multi bâtiment (112 / 77) ou réseau sans identifiant : facteur « autres réseaux » 0,385', () => {
+  test('PAC multi bâtiment : l’ECS 77 prend le facteur chauffage 0,079 et non le facteur ECS 0,065', () => {
     const ges = calcMultiBatiment('112', '77');
-    expect(ges.emission_ges_ch).toBeCloseTo(385, 9);
-    expect(ges.emission_ges_ecs).toBeCloseTo(192.5, 9);
-    // Réseau de chaleur classique (ch 71 / ecs 72) sans identifiant
+    expect(ges.emission_ges_ecs).toBeCloseTo(500 * 0.079, 9);
+    expect(ges.emission_ges_ecs).not.toBeCloseTo(500 * 0.065, 9);
+  });
+
+  test('réseau de chaleur sans identifiant (ch 71 / ecs 72) : facteur « autres réseaux » 0,385', () => {
     const reseau = calcMultiBatiment('71', '72');
     expect(reseau.emission_ges_ch).toBeCloseTo(385, 9);
   });

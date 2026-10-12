@@ -422,11 +422,13 @@ export function getContenuCo2ReseauChaleur(
  * Tribu (Calcul_batiment.cs l.1189) applique `contenu_CO2_RCU_ch`, transmis par le logiciel : LICIEL
  * et Pleiades y placent le facteur de l'énergie des chaudières (« Taux CO2 fonction du système réel »).
  * Le bois retient 0,03 (bûches / granulés), valeur exportée par la majorité des DPE LICIEL.
- * Les PAC multi-bâtiment (112 / 77) ne sont pas couvertes : facteurs exportés non reproductibles.
+ * Les PAC multi-bâtiment (112 / 77) consomment de l'électricité : facteur électricité chauffage
+ * 0,079, y compris pour l'ECS 77, car Tribu applique le seul `contenu_CO2_RCU_ch` à
+ * Cch_RCU + Cecs_RCU (Calcul_batiment.cs l.1189).
  */
 const ENERGIE_MULTI_BATIMENT = {
-  ch: { 109: 'bois – bûches', 110: 'fioul domestique', 111: 'gaz naturel' },
-  ecs: { 74: 'bois – bûches', 75: 'fioul domestique', 76: 'gaz naturel' }
+  ch: { 109: 'bois – bûches', 110: 'fioul domestique', 111: 'gaz naturel', 112: 'électricité ch' },
+  ecs: { 74: 'bois – bûches', 75: 'fioul domestique', 76: 'gaz naturel', 77: 'électricité ch' }
 };
 
 /**
