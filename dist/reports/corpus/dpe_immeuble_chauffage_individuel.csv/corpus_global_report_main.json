@@ -4,8 +4,8 @@
   "nbValidDpe": 9996,
   "nbInvalidDpeVersion": 0,
   "nbExcludedDpe": 0,
-  "nbAllChecksBelowThreshold": 8449,
-  "successRatio": "84.51 %",
+  "nbAllChecksBelowThreshold": 8455,
+  "successRatio": "84.57 %",
   "dpeRunFailed": [],
   "checks": {
     "deperdition_mur": { "nbBelowThreshold": 9948, "mandatory": false, "successRatio": "99.50 %" },
@@ -47,7 +47,7 @@
     },
     "besoin_ecs": { "nbBelowThreshold": 9993, "mandatory": false, "successRatio": "99.95 %" },
     "besoin_ch": { "nbBelowThreshold": 9441, "mandatory": false, "successRatio": "94.43 %" },
-    "conso_ecs": { "nbBelowThreshold": 9039, "mandatory": true, "successRatio": "90.41 %" },
+    "conso_ecs": { "nbBelowThreshold": 9045, "mandatory": true, "successRatio": "90.47 %" },
     "conso_ch": { "nbBelowThreshold": 9076, "mandatory": true, "successRatio": "90.78 %" },
     "conso_auxiliaire_distribution_ch": {
       "nbBelowThreshold": 9098,
@@ -74,31 +74,31 @@
       "mandatory": false,
       "successRatio": "96.63 %"
     },
-    "ep_conso_5_usages": { "nbBelowThreshold": 8903, "mandatory": true, "successRatio": "89.05 %" },
+    "ep_conso_5_usages": { "nbBelowThreshold": 8907, "mandatory": true, "successRatio": "89.09 %" },
     "ep_conso_5_usages_m2": {
-      "nbBelowThreshold": 8897,
+      "nbBelowThreshold": 8901,
       "mandatory": true,
-      "successRatio": "88.99 %"
+      "successRatio": "89.03 %"
     },
     "emission_ges_5_usages": {
-      "nbBelowThreshold": 8784,
+      "nbBelowThreshold": 8789,
       "mandatory": true,
-      "successRatio": "87.86 %"
+      "successRatio": "87.91 %"
     },
     "emission_ges_5_usages_m2": {
-      "nbBelowThreshold": 8873,
+      "nbBelowThreshold": 8878,
       "mandatory": true,
-      "successRatio": "88.75 %"
+      "successRatio": "88.80 %"
     }
   },
   "performance": {
     "count": 9997,
-    "mean": 6.806,
-    "median": 5.718,
-    "min": 0.154,
-    "max": 173.174,
-    "p95": 13.905,
-    "p99": 22.794,
-    "totalMs": 68036.725
+    "mean": 7.219,
+    "median": 6.193,
+    "min": 0.134,
+    "max": 127.286,
+    "p95": 14.625,
+    "p99": 22.757,
+    "totalMs": 72166.567
   }
 }
