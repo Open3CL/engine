@@ -317,6 +317,8 @@ function getConso(coef, type_energie, conso) {
  * Arrêtés « réseaux de chaleur » et table de valeurs associée (modèle de données de l'observatoire
  * DPE, `modele_donnee/arrete_reseau_chaleur.json`). Le nom de la table ne correspond pas à l'année
  * de l'arrêté (ex. l'arrêté du 05/07/2024 publie la table `reseau_chaleur_2023`).
+ * Chaque arrêté remplace l'annexe 7 de l'arrêté du 15/09/2006 et entre en vigueur un mois après
+ * sa publication au JO (arrêté du 30/03/2026 : JO du 25/04/2026, applicable au 25/05/2026).
  * - date_arrete : valeur attendue dans `date_arrete_reseau_chaleur` ;
  * - date_application : date à partir de laquelle l'arrêté s'applique (DPE sans date d'arrêté).
  */
@@ -326,10 +328,15 @@ export const ARRETES_RESEAU_CHALEUR = [
   { table: 'reseau_chaleur_2022', date_arrete: '2023-03-16', date_application: '2023-04-16' },
   { table: 'reseau_chaleur_2023', date_arrete: '2024-07-05', date_application: '2024-08-09' },
   { table: 'reseau_chaleur_2024', date_arrete: '2025-04-11', date_application: '2025-05-26' },
-  { table: 'reseau_chaleur_2025', date_arrete: '2026-04-25', date_application: '2026-05-25' }
+  { table: 'reseau_chaleur_2025', date_arrete: '2026-03-30', date_application: '2026-05-25' }
 ];
 
-/** Facteur « AUTRES RESEAUX DE CHALEUR » (réseau non répertorié ou inconnu), kgCO2/kWh */
+/**
+ * Facteur « AUTRES RESEAUX DE CHALEUR » (réseau non répertorié ou inconnu), kgCO2/kWh.
+ * 0,385 dans les arrêtés des 21/10/2021, 16/03/2023, 05/07/2024, 11/04/2025 et 30/03/2026 : cette
+ * ligne peut être utilisée quel que soit le réseau ; le cas échéant, seule elle s'applique (art. 2 de
+ * l'arrêté du 21/10/2021, puis annexe 7 § IV). L'arrêté du 12/10/2020 ne contient pas cette ligne.
+ */
 export const COEF_GES_AUTRES_RESEAUX_CHALEUR = 0.385;
 
 /**
