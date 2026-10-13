@@ -462,6 +462,90 @@ describe('conso_ch - installation collective base + appoint', () => {
     expect(di.conso_ch).toBeCloseTo(0, 9);
   });
 
+  /**
+   * Immeuble à plusieurs installations base + appoint : le besoin mensuel (calculé pour tout le
+   * bâtiment) est proratisé à la surface chauffée par l'installation, comme `bch`.
+   * Tribu Calcul_installation.cs l.79-86 : bch = Bch1 × S_ratio / Rdim et
+   * Bch1_mensuel × S_ratio / Rdim, avec S_ratio = Sh_chauffée × Rdim / Stotal.
+   * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §9.8
+   */
+  describe('installation desservant une partie de l’immeuble (Sh_installation < Sh)', () => {
+    function appelPartiel(pos, { pn = 0, Sh = 200, sInst = 100, bch = 25, rdim = 1 } = {}) {
+      const args = baseAppointArgs(pos, { pn });
+      const [di, de, _pos, cfg, em_list, GV] = args;
+      de.rdim = rdim;
+      const besoinCouvert = conso_ch(
+        di,
+        de,
+        {},
+        _pos,
+        cfg,
+        em_list,
+        GV,
+        Sh,
+        2.5,
+        bch,
+        bch,
+        -9.5,
+        0,
+        1,
+        1,
+        { Janvier: 3000, Février: 2000 },
+        sInst,
+        args[16]
+      );
+      return { di, besoinCouvert };
+    }
+
+    test('pe = 0 : base = moitié du besoin mensuel de la seule part de l’installation', () => {
+      // Σ besoin mensuel immeuble = 5 kWh ; part de l'installation = 100 / 200 => base = 1,25 kWh
+      const { di, besoinCouvert } = appelPartiel(0);
+      expect(besoinCouvert).toBeCloseTo(1.25, 9);
+      // conso = base × Int (1) / (Rg 0,9 × Rendement émission 0,9)
+      expect(di.conso_ch).toBeCloseTo(1.25 / 0.81, 9);
+    });
+
+    test('pe = 0 : appoint = besoin de l’installation moins la base proratisée', () => {
+      const { besoinCouvert } = appelPartiel(1);
+      expect(besoinCouvert).toBeCloseTo(25 - 1.25, 9);
+    });
+
+    test('base + appoint = besoin de l’installation, quelle que soit la part de surface', () => {
+      for (const sInst of [20, 100, 180]) {
+        const bch = (50 * sInst) / 200;
+        const base = appelPartiel(0, { sInst, bch }).besoinCouvert;
+        const appoint = appelPartiel(1, { sInst, bch }).besoinCouvert;
+        expect(base + appoint).toBeCloseTo(bch, 9);
+        expect(base).toBeLessThanOrEqual(bch);
+      }
+    });
+
+    test('le rdim de l’installation ne modifie pas la part de base (S_ratio / Rdim)', () => {
+      const sansRdim = appelPartiel(0, { pn: 5000 }).besoinCouvert;
+      const avecRdim = appelPartiel(0, { pn: 5000, rdim: 7 }).besoinCouvert;
+      expect(avecRdim).toBeCloseTo(sansRdim, 9);
+    });
+
+    test('installation couvrant tout l’immeuble : comportement inchangé', () => {
+      // Sh = surface de l'installation => même résultat que le cas nominal
+      const { di } = appelPartiel(0, { Sh: 100, sInst: 100, bch: 50 });
+      expect(di.conso_ch).toBeCloseTo(3.0864197530864197, 9);
+    });
+
+    test('surface d’installation absente ou nulle : pas de proratisation du besoin mensuel', () => {
+      // Repli sur le besoin mensuel entier (ratio 1) : base = moitié de Σ besoin mensuel = 2,5 kWh
+      for (const sInst of [0, -1]) {
+        expect(appelPartiel(0, { sInst }).besoinCouvert).toBeCloseTo(2.5, 9);
+      }
+    });
+
+    test('surface habitable de l’immeuble nulle : pas de proratisation (aucune division par 0)', () => {
+      const { besoinCouvert } = appelPartiel(0, { Sh: 0 });
+      expect(Number.isFinite(besoinCouvert)).toBe(true);
+      expect(besoinCouvert).toBeCloseTo(2.5, 9);
+    });
+  });
+
   test('logement collectif ILPA + valeurs par défaut (rdim, rendement de génération)', () => {
     const di = { rg: 1, rg_dep: 1 };
     // pas de rdim => rdim = 1 ; pas de rendement_generation => Ich = 1

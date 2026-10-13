@@ -277,10 +277,15 @@ function calc_ch_base_appoint(
     const idx_ilpa = ilpa ? 1 : 0;
 
     const dh14Saison = mois_liste.reduce((acc, mois) => acc + dh14[idx_ilpa][ca][mois][zc], 0);
-    const rdim = de.rdim || 1;
-    const ratio_s = (s_chauffee_inst * rdim) / Sh;
-    const bch1 = (bch * ratio_s) / rdim;
-    const t = 14 - (pe * dh14Saison) / bch1;
+    /**
+     * Part de l'immeuble desservie par l'installation : S_ratio / Rdim = Sh_chauffée / Stotal
+     * (Tribu Calcul_installation.cs l.79-86 : bch et Bch1_mensuel sont proratisés tous les deux).
+     * `bch` est déjà proratisé par calc_chauffage ; le besoin mensuel, calculé pour tout le
+     * bâtiment, doit l'être avec le même ratio, sinon la part de base de chaque installation est
+     * calculée sur le besoin de l'immeuble entier.
+     */
+    const ratioSurface = s_chauffee_inst > 0 && Sh > 0 ? s_chauffee_inst / Sh : 1;
+    const t = 14 - (pe * dh14Saison) / bch;
 
     di.conso_ch = 0;
     for (const mois of mois_liste) {
@@ -310,10 +315,10 @@ function calc_ch_base_appoint(
         if (ratioDh <= 0) {
           bch_base_j = 0;
         } else {
-          bch_base_j = besoin_ch_mois[mois] * ratioDh;
+          bch_base_j = besoin_ch_mois[mois] * ratioSurface * ratioDh;
         }
       } else {
-        bch_base_j = besoin_ch_mois[mois] * 0.5;
+        bch_base_j = besoin_ch_mois[mois] * ratioSurface * 0.5;
       }
       bch_base += bch_base_j;
     }
