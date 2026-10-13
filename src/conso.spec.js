@@ -1277,7 +1277,9 @@ describe('réseaux de chaleur - sélection de l’arrêté et du contenu CO2', (
     ['2024-07-05', 3],
     ['2024-07-10', 3],
     ['2025-04-11', 4],
-    ['2026-04-25', 5],
+    ['2026-03-29', 4], // veille de l'arrêté du 30/03/2026
+    ['2026-03-30', 5],
+    ['2026-04-25', 5], // date de publication au JO
     ['2030-01-01', 5],
     ['2019-01-01', 0]
   ])('date_arrete_reseau_chaleur %s : arrêté n°%i', (dateArrete, index) => {
