@@ -531,6 +531,19 @@ describe('conso_ch - installation collective base + appoint', () => {
       const { di } = appelPartiel(0, { Sh: 100, sInst: 100, bch: 50 });
       expect(di.conso_ch).toBeCloseTo(3.0864197530864197, 9);
     });
+
+    test('surface d’installation absente ou nulle : pas de proratisation du besoin mensuel', () => {
+      // Repli sur le besoin mensuel entier (ratio 1) : base = moitié de Σ besoin mensuel = 2,5 kWh
+      for (const sInst of [0, -1]) {
+        expect(appelPartiel(0, { sInst }).besoinCouvert).toBeCloseTo(2.5, 9);
+      }
+    });
+
+    test('surface habitable de l’immeuble nulle : pas de proratisation (aucune division par 0)', () => {
+      const { besoinCouvert } = appelPartiel(0, { Sh: 0 });
+      expect(Number.isFinite(besoinCouvert)).toBe(true);
+      expect(besoinCouvert).toBeCloseTo(2.5, 9);
+    });
   });
 
   test('logement collectif ILPA + valeurs par défaut (rdim, rendement de génération)', () => {
