@@ -333,8 +333,9 @@ export const ARRETES_RESEAU_CHALEUR = [
 
 /**
  * Facteur « AUTRES RESEAUX DE CHALEUR » (réseau non répertorié ou inconnu), kgCO2/kWh.
- * 0,385 dans les arrêtés des 16/03/2023, 05/07/2024, 11/04/2025 et 30/03/2026 (annexe 7, § IV :
- * cette ligne peut être utilisée quel que soit le réseau ; le cas échéant, seule elle s'applique).
+ * 0,385 dans les arrêtés des 21/10/2021, 16/03/2023, 05/07/2024, 11/04/2025 et 30/03/2026 : cette
+ * ligne peut être utilisée quel que soit le réseau ; le cas échéant, seule elle s'applique (art. 2 de
+ * l'arrêté du 21/10/2021, puis annexe 7 § IV). L'arrêté du 12/10/2020 ne contient pas cette ligne.
  */
 export const COEF_GES_AUTRES_RESEAUX_CHALEUR = 0.385;
 
