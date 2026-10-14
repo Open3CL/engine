@@ -23,13 +23,30 @@ Implémentation open source du moteur Open3CL de l'ADEME.
     &middot;
     <a href="https://github.com/Open3CL/engine/issues/new?labels=enhancement&template=feature-request---.md">Créer une feature</a>
     &middot;
-    <a href="https://open3cl.github.io/engine/reports/corpus">Rapports de corpus</a>
+    <a href="https://open3cl.github.io/engine/">🏠 Démo 3D en ligne</a>
   </p>
 </div>
 
 <div align="center">
 
 **Donnez-lui un DPE au format XML ou JSON, il vous rend les consommations, les émissions et les étiquettes.**
+
+</div>
+
+<br />
+
+<div align="center">
+
+### 🏠 Voir un DPE en 3D
+
+**[➡️ Ouvrir la démo 3D en ligne](https://open3cl.github.io/engine/)**
+
+Chargez le DPE d'un logement : Open3CL le recalcule dans le navigateur et en reconstruit la maquette 3D.
+Chaque paroi, fenêtre et équipement s'affiche avec ses déperditions — consultables et modifiables en direct.
+
+<video src="https://github.com/Open3CL/engine/raw/main/images/open3cl_3D_demo.webm" controls muted loop width="900"></video>
+
+<sub>▶️ La vidéo ne s'affiche pas ? <a href="https://github.com/Open3CL/engine/raw/main/images/open3cl_3D_demo.webm">La télécharger</a> ou <a href="https://open3cl.github.io/engine/">ouvrir la démo en ligne</a>.</sub>
 
 </div>
 
@@ -92,7 +109,7 @@ consommations, émissions de gaz à effet de serre, coûts et étiquettes.
 | 🔍 **Vérifiable**       | ~90 000 DPE réels rejoués à chaque version, résultats publiés (voir [Résultats corpus](#résultats-corpus)) |
 | 🧩 **Sans dépendance**  | Pure JavaScript (ESM), aucun service externe, fonctionne en Node.js comme dans un navigateur               |
 | 📦 **Prête à intégrer** | Entrée XML ADEME ou objet JSON, sortie JSON complète                                                       |
-| 🆓 **Libre**            | Licence GPL-3.0, développée au grand jour                                                                  |
+| 🆓 **Libre**            | Licence MIT, développée au grand jour                                                                      |
 
 ### Ce que fait le moteur
 
@@ -139,11 +156,11 @@ flowchart LR
 
 ### L'écosystème Open3CL
 
-| Ressource                                                             | Description                                               |
-| :-------------------------------------------------------------------- | :-------------------------------------------------------- |
-| [open3cl.fr](https://open3cl.fr)                                      | Le site du projet                                         |
-| [Rapports de corpus](https://open3cl.github.io/engine/reports/corpus) | Le tableau de bord interactif des résultats sur DPE réels |
-| [@open3cl/engine](https://www.npmjs.com/package/@open3cl/engine)      | Le paquet npm                                             |
+| Ressource                                                        | Description                                                                |
+| :--------------------------------------------------------------- | :------------------------------------------------------------------------- |
+| [Démo 3D](https://open3cl.github.io/engine/)                     | Visualisation 3D des déperditions d'un DPE, recalculées dans le navigateur |
+| [open3cl.fr](https://open3cl.fr)                                 | Le site du projet                                                          |
+| [@open3cl/engine](https://www.npmjs.com/package/@open3cl/engine) | Le paquet npm                                                              |
 
 <p align="right">(<a href="#readme-top">Retour sommaire</a>)</p>
 
@@ -318,24 +335,14 @@ d'environnement, quotas de l'API ADEME, structure des rapports.
 ### Le rapport interactif
 
 Chaque exécution produit un tableau de bord HTML : jauge de réussite, ratio par contrôle, liste des DPE au-dessus du
-seuil avec le **détail des propriétés en écart**, et comparaison entre deux branches.
+seuil avec le **détail des propriétés en écart**, et comparaison entre deux branches. Il est écrit dans
+`dist/reports/corpus` et se consulte en local :
 
-<div align="center">
-  <a href="https://open3cl.github.io/engine/reports/corpus">
-    <img src="images/corpus-report.png" alt="Rapport de corpus Open3CL" width="900">
-  </a>
-  <br/>
-  <sub>👉 <a href="https://open3cl.github.io/engine/reports/corpus"><strong>Ouvrir le rapport interactif</strong></a></sub>
-</div>
+```sh
+npm run reports:preview   # sert dist/reports/corpus et ouvre le navigateur
+```
 
-> [!NOTE]
-> GitHub neutralise les scripts et les `iframe` dans les fichiers markdown : le rapport ne peut donc pas être
-> **intégré**
-> tel quel dans ce README. Il est affiché ici sous forme d'aperçu cliquable, et reste consultable en ligne ou en local :
->
-> ```sh
-> npm run reports:preview   # sert dist/reports/corpus et ouvre le navigateur
-> ```
+Les chiffres de la dernière exécution sont repris ci-dessous, dans [Résultats corpus](#résultats-corpus).
 
 ### Lancer un corpus
 
@@ -441,6 +448,7 @@ flowchart TD
     subgraph fait ["✅ Fait"]
         A1["Site Open3CL"]
         A2["Rapports de corpus interactifs"]
+        A3["Démo 3D en ligne"]
     end
     subgraph cours ["🚧 En cours"]
         B1["Refonte technique"]
@@ -450,13 +458,14 @@ flowchart TD
     fait --> cours
 ```
 
-| Étape               | Statut      | Détail                                                           |
-| :------------------ | :---------- | :--------------------------------------------------------------- |
-| Site Open3CL        | ✅ Terminé  | [open3cl.fr](https://open3cl.fr)                                 |
-| Rapports de tests   | ✅ Terminé  | Tableau de bord interactif publié à chaque exécution             |
-| Refonte technique   | 🚧 En cours | Découpage par article de la méthode, couverture de tests à 100 % |
-| DPE à l'immeuble    | 🚧 En cours | Fiabilisation des appartements générés depuis un DPE immeuble    |
-| Certification ADEME | 🚧 En cours | Objectif de long terme                                           |
+| Étape               | Statut      | Détail                                                                                           |
+| :------------------ | :---------- | :----------------------------------------------------------------------------------------------- |
+| Site Open3CL        | ✅ Terminé  | [open3cl.fr](https://open3cl.fr)                                                                 |
+| Démo 3D en ligne    | ✅ Terminé  | [Visualisation 3D des déperditions](https://open3cl.github.io/engine/), publiée sur GitHub Pages |
+| Rapports de tests   | ✅ Terminé  | Tableau de bord interactif généré à chaque exécution                                             |
+| Refonte technique   | 🚧 En cours | Découpage par article de la méthode, couverture de tests à 100 %                                 |
+| DPE à l'immeuble    | 🚧 En cours | Fiabilisation des appartements générés depuis un DPE immeuble                                    |
+| Certification ADEME | 🚧 En cours | Objectif de long terme                                                                           |
 
 Le détail complet des bugs et fonctionnalités en cours est dans les
 [issues](https://github.com/Open3CL/engine/issues).

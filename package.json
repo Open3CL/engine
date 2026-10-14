@@ -84,7 +84,7 @@
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
   },
   "author": "Open3Cl",
-  "license": "GPL-3.0",
+  "license": "MIT",
   "engines": {
     "node": ">=24.14.1"
   },

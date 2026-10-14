@@ -206,36 +206,33 @@ jobs:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     steps:
-      # `main` plutôt que le commit déclencheur : le commit de release, poussé par
-      # semantic-release, contient les résultats de corpus marqués publiés.
-      - name: Checkout
+      # GitHub Pages sert désormais la visualisation 3D Open3CL/open3cl-3d, et non
+      # plus le rapport de corpus. Le rapport reste généré et versionné dans ce dépôt
+      # (scripts reports:*, test:corpus, dist/reports/corpus) : il n'est simplement
+      # plus publié sur Pages. Les liens directs vers /reports/corpus ne sont donc
+      # plus servis par le site.
+      - name: Checkout de la visualisation 3D (Open3CL/open3cl-3d)
         uses: actions/checkout@v7
         with:
+          repository: Open3CL/open3cl-3d
           ref: main
-      # Le site ne publie que le rapport de corpus : la racine y renvoie, ce qui garde
-      # valides les liens existants vers /reports/corpus.
-      - name: Rediriger la racine vers le rapport de corpus
-        run: |
-          cat > dist/index.html <<'HTML'
-          <!doctype html>
-          <html lang="fr">
-            <head>
-              <meta charset="utf-8" />
-              <title>Open3CL — Rapports de corpus</title>
-              <meta http-equiv="refresh" content="0; url=./reports/corpus/" />
-              <link rel="canonical" href="./reports/corpus/" />
-            </head>
-            <body>
-              <a href="./reports/corpus/">Rapports de corpus Open3CL</a>
-            </body>
-          </html>
-          HTML
+          # open3cl-3d est public : le GITHUB_TOKEN par défaut suffit. S'il devenait
+          # privé, fournir ici un token : `token: ${{ secrets.OPEN3CL_3D_TOKEN }}`.
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24.14.1
+      - name: Install Dependencies (open3cl-3d)
+        run: npm ci
+      # La visu est buildée avec la version de @open3cl/engine figée dans son
+      # package-lock.json (dernière publiée sur npm), pas celle de ce commit.
+      - name: Build de la visualisation 3D
+        run: npm run build
       - name: Setup Pages
         uses: actions/configure-pages@v6
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v5
         with:
-          # Upload dist repository
+          # dist de open3cl-3d (build Vite, base relative)
           path: 'dist'
       - name: Deploy to GitHub Pages
         id: deployment
