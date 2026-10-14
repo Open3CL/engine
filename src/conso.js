@@ -962,9 +962,11 @@ function getChauffageConso(gen_ch, field, coef, prorataChauffage, prefix, facteu
     const conso =
       gen_ch.donnee_intermediaire[field] * (typeEnergie === 'électricité ch' ? facteurAc : 1);
 
-    // La clé de répartition n'est utilisée que dans le cadre des chauffages collectifs
+    // La clé de répartition n'est utilisée que dans le cadre des chauffages collectifs, ou d'un
+    // chauffage individuel calculé à l'échelle de l'immeuble (rdim reconstitué, § 17.2.2.2.2)
     const repartition =
-      gen_ch.donnee_entree.enum_type_installation_id !== '1'
+      gen_ch.donnee_entree.enum_type_installation_id !== '1' ||
+      gen_ch.donnee_entree.rdim_reconstitue
         ? gen_ch.donnee_entree.cle_repartition_ch || prorataChauffage
         : prorataChauffage;
 
@@ -1014,7 +1016,10 @@ function calc_conso_pond(
   ret.auxiliaire_generation_ch = gen_ch.reduce((acc, gen_ch) => {
     const conso =
       (gen_ch.donnee_intermediaire.conso_auxiliaire_generation_ch || 0) *
-      fAc('auxiliaire_generation_ch');
+      fAc('auxiliaire_generation_ch') *
+      (gen_ch.donnee_entree.rdim_reconstitue
+        ? gen_ch.donnee_entree.cle_repartition_ch || prorataChauffage
+        : 1);
     return acc + getConso(coef, 'électricité auxiliaire', conso);
   }, 0);
 

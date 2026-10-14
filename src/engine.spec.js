@@ -70,6 +70,9 @@ vi.mock('./15_conso_aux.js', () => ({ conso_aux_distribution_ecs: vi.fn() }));
 vi.mock('./2021_04_13_confort_ete.js', () => ({ default: vi.fn() }));
 vi.mock('./2021_04_13_qualite_isolation.js', () => ({ default: vi.fn() }));
 vi.mock('./ficheTechnique.js', () => ({ default: vi.fn() }));
+vi.mock('./17.2_rdim_dpe_genere_immeuble.js', () => ({
+  reconstituerRdimDpeGenereImmeuble: vi.fn()
+}));
 
 // Les instances Inertie / ProductionENR sont créées au chargement du module.
 // On expose des méthodes mockées récupérables dans les tests.
@@ -112,6 +115,7 @@ const { conso_aux_distribution_ecs } = await import('./15_conso_aux.js');
 const calc_confort_ete = (await import('./2021_04_13_confort_ete.js')).default;
 const calc_qualite_isolation = (await import('./2021_04_13_qualite_isolation.js')).default;
 const getFicheTechnique = (await import('./ficheTechnique.js')).default;
+const { reconstituerRdimDpeGenereImmeuble } = await import('./17.2_rdim_dpe_genere_immeuble.js');
 
 /** Objet conso renvoyé par le mock de `calc_conso` (mêmes réf pour les 3 appels). */
 let consoResult;
@@ -1095,6 +1099,102 @@ describe('calcul_3cl - réalignements ECS (bug_for_bug_compat)', () => {
     expect(generateurs[4].donnee_entree.enum_type_generateur_ecs_id).toBe('X1');
     expect(generateurs[5].donnee_entree.enum_type_generateur_ecs_id).toBe('SAME');
     errSpy.mockRestore();
+  });
+});
+
+/**
+ * DPE appartement généré depuis un DPE immeuble : reconstitution du rdim (issue #287).
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - § 17.2.2.2.2
+ */
+describe('calcul_3cl - rdim reconstitué des DPE générés depuis un DPE immeuble (#287)', () => {
+  const METHODE_GENEREE = '10';
+
+  function makeDpeGenere() {
+    enums.methode_application_dpe_log = {
+      1: 'dpe maison individuelle',
+      [METHODE_GENEREE]:
+        'dpe appartement généré à partir des données dpe immeuble chauffage individuel ecs individuel'
+    };
+    const dpe = makeDpe();
+    dpe.logement.caracteristique_generale.enum_methode_application_dpe_log_id = METHODE_GENEREE;
+    return dpe;
+  }
+
+  /** Type de bâtiment transmis à calc_ecs, calc_besoin_ch et au taux de charge. */
+  const thTransmis = () => ({
+    ecs: calc_ecs.mock.calls[0][7],
+    besoinCh: calc_besoin_ch.mock.calls[0][11],
+    tauxCharge: tauxChargeForGenerator.mock.calls[0][4]
+  });
+
+  test('bug_for_bug_compat : reconstitution appelée avec les caractéristiques et les installations', () => {
+    bugForBugCompat = true;
+    vi.mocked(reconstituerRdimDpeGenereImmeuble).mockReturnValue({ ch: false, ecs: false });
+    const dpe = makeDpeGenere();
+
+    calcul_3cl(dpe, { sanitize: false });
+
+    expect(reconstituerRdimDpeGenereImmeuble).toHaveBeenCalledWith(
+      dpe.logement.caracteristique_generale,
+      dpe.logement.installation_chauffage_collection.installation_chauffage,
+      dpe.logement.installation_ecs_collection.installation_ecs
+    );
+    expect(thTransmis()).toEqual({
+      ecs: 'appartement',
+      besoinCh: 'appartement',
+      tauxCharge: 'appartement'
+    });
+  });
+
+  test('chauffage et ECS reconstitués : calcul à l’échelle de l’immeuble partout', () => {
+    bugForBugCompat = true;
+    vi.mocked(reconstituerRdimDpeGenereImmeuble).mockReturnValue({ ch: true, ecs: true });
+
+    calcul_3cl(makeDpeGenere(), { sanitize: false });
+
+    expect(thTransmis()).toEqual({ ecs: 'immeuble', besoinCh: 'immeuble', tauxCharge: 'immeuble' });
+  });
+
+  test('chauffage seul reconstitué : seul le taux de charge passe à l’échelle de l’immeuble', () => {
+    bugForBugCompat = true;
+    vi.mocked(reconstituerRdimDpeGenereImmeuble).mockReturnValue({ ch: true, ecs: false });
+
+    calcul_3cl(makeDpeGenere(), { sanitize: false });
+
+    expect(thTransmis()).toEqual({
+      ecs: 'appartement',
+      besoinCh: 'appartement',
+      tauxCharge: 'immeuble'
+    });
+  });
+
+  test('ECS seule reconstituée : besoin et ECS à l’échelle de l’immeuble, pas le taux de charge', () => {
+    bugForBugCompat = true;
+    vi.mocked(reconstituerRdimDpeGenereImmeuble).mockReturnValue({ ch: false, ecs: true });
+
+    calcul_3cl(makeDpeGenere(), { sanitize: false });
+
+    expect(thTransmis()).toEqual({
+      ecs: 'immeuble',
+      besoinCh: 'immeuble',
+      tauxCharge: 'appartement'
+    });
+  });
+
+  test('sans bug_for_bug_compat : aucune reconstitution', () => {
+    calcul_3cl(makeDpeGenere(), { sanitize: false });
+
+    expect(reconstituerRdimDpeGenereImmeuble).not.toHaveBeenCalled();
+    expect(thTransmis().tauxCharge).toBe('appartement');
+  });
+
+  test('DPE non généré depuis un immeuble : aucune reconstitution, même en bug_for_bug_compat', () => {
+    bugForBugCompat = true;
+
+    calcul_3cl(makeDpe(), { sanitize: false });
+
+    expect(reconstituerRdimDpeGenereImmeuble).not.toHaveBeenCalled();
+    expect(thTransmis().tauxCharge).toBe('maison');
   });
 });
 
