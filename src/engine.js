@@ -33,6 +33,7 @@ import getFicheTechnique from './ficheTechnique.js';
 import { ProductionENR, ratioProrataPvLogement } from './16.2_production_enr.js';
 import DpeSanitizerService from './dpe-sanitizer.service.js';
 import { reconstituerRdimDpeGenereImmeuble } from './17.2_rdim_dpe_genere_immeuble.js';
+import { reconstituerRdimEcsIndividuelleUnique } from './11_rdim_ecs_individuelle_unique.js';
 
 const LIB_VERSION = 'OPEN3CL_VERSION';
 
@@ -291,6 +292,12 @@ export function calcul_3cl(inputDpe, options) {
   const ilpa = logement.meteo.batiment_materiaux_anciens === 1 ? '1' : '0';
 
   const ecs = logement.installation_ecs_collection.installation_ecs || [];
+  /**
+   * Immeuble avec une installation ECS individuelle unique décrite pour un logement type
+   * (Sh_ecs × nombre_logement ≈ SH, sans rdim) : rdim = nombre_logement.
+   * @see https://github.com/Open3CL/engine/issues/288
+   */
+  reconstituerRdimEcsIndividuelleUnique(th, ecs, cg.surface_habitable_immeuble);
   const Nb_lgt = cg.nombre_appartement || 1;
 
   /**
