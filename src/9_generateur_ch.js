@@ -252,7 +252,10 @@ export function calc_generateur_ch(
   /**
    * 15 Calcul des consommations d’auxiliaires des installations de chauffage (Caux_ch) et d’ECS (Caux_ecs)
    */
-  if (hasConsoForAuxDistribution(de.enum_type_generateur_ch_id)) {
+  if (
+    hasConsoForAuxDistribution(de.enum_type_generateur_ch_id) ||
+    hasEmetteurAerauliqueLie(em_ch, de)
+  ) {
     conso_aux_distribution_ch(em_ch, de, di, du, Sh, zc_id, ca_id, ilpa, GV);
   }
   const paroi_ancienne = isParoisAncienneInertieLourde(dpe);
@@ -313,6 +316,34 @@ export function hasConsoForAuxDistribution(enum_type_generateur_ch_id) {
     (id >= 55 && id <= 97) ||
     [48, 49, 50, 51, 52].includes(id) ||
     (id >= 4 && id <= 19)
+  );
+}
+
+/** enum_type_emission_distribution_id 5 : réseau aéraulique (air soufflé) */
+const TYPE_EMISSION_DISTRIBUTION_AERAULIQUE = 5;
+
+/**
+ * 15.2 Auxiliaires de distribution d'un réseau aéraulique (émetteur 5).
+ *
+ * Le moteur de référence calcule les auxiliaires de distribution à partir du réseau desservi
+ * (ΔθDim = 15, Fcot = 0,802), et non du générateur : une PAC air/air (1 à 3) sur réseau
+ * aéraulique a donc des auxiliaires de distribution, bien que hasConsoForAuxDistribution l'exclue.
+ * L'émetteur est rattaché au générateur s'il est seul, ou par enum_lien_generateur_emetteur_id.
+ *
+ * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §15.2
+ * @see Tribu Calcul_installation.cs (calcul_Cauxiliaires), Calcul_batiment.cs (Calcul_Cauxiliaires)
+ * @see https://github.com/Open3CL/engine/issues/291
+ * @param em_ch {EmetteurChauffageItem[]}
+ * @param de {Donnee_entree} donnée d'entrée du générateur de chauffage
+ * @returns {boolean}
+ */
+export function hasEmetteurAerauliqueLie(em_ch, de) {
+  return (em_ch || []).some(
+    (em) =>
+      Number(em.donnee_entree.enum_type_emission_distribution_id) ===
+        TYPE_EMISSION_DISTRIBUTION_AERAULIQUE &&
+      (em_ch.length === 1 ||
+        em.donnee_entree.enum_lien_generateur_emetteur_id === de.enum_lien_generateur_emetteur_id)
   );
 }
 
