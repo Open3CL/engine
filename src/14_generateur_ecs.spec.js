@@ -24,6 +24,8 @@ vi.mock('./enums.js', () => ({
       pac: 'pac double service',
       autre: 'générateur non implémenté',
       combautre: 'foyer fermé bois à combustion',
+      66: 'chauffe-eau gaz à production instantanée 2001-2015',
+      113: 'chauffe-eau gpl/propane/butane à production instantanée 2001-2015',
       84: 'chaudière fioul (système collectif par défaut)'
     },
     type_generateur_ch: { chaud_ch: 'chaudière gaz condensation' },
@@ -73,6 +75,8 @@ const {
   rgrs_chaudiere,
   rg_accumulateur_gaz,
   rgrsReseauUrbain,
+  isPveilChauffeEauGazInstantaneTribu,
+  PVEIL_CHAUFFE_EAU_GAZ_INSTANTANE_TRIBU,
   RG_CHAUDIERE_ELECTRIQUE,
   typeGenerateurPertesStockage
 } = await import('./14_generateur_ecs.js');
@@ -143,6 +147,39 @@ describe('rgrsReseauUrbain - rendement d’un réseau de chaleur', () => {
       rgrsReseauUrbain({ enum_type_generateur_ecs_id: '84' }, { reseau_distribution_isole: 0 })
     ).toBe(0.75);
     expect(rgrsReseauUrbain({ enum_type_generateur_ecs_id: '84' }, undefined)).toBe(0.75);
+  });
+});
+
+/**
+ * Veilleuse des chauffe-eau gaz / GPL instantanés 2001-2015 : 100 W selon la méthode, 10 W chez Tribu.
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §14.1.1
+ * @see https://github.com/Open3CL/engine/issues/289
+ */
+describe('isPveilChauffeEauGazInstantaneTribu - veilleuse 10 W du moteur de référence', () => {
+  test('valeur Tribu : 10 W', () => {
+    expect(PVEIL_CHAUFFE_EAU_GAZ_INSTANTANE_TRIBU).toBe(10);
+  });
+
+  test('types 66 (gaz) et 113 (GPL), pveil 100 W, pveilleuse exportée 10 W ou 0,01 kW : concerné', () => {
+    expect(isPveilChauffeEauGazInstantaneTribu('66', { pveil: 100, pveilleuse: 10 })).toBe(true);
+    expect(isPveilChauffeEauGazInstantaneTribu('66', { pveil: 100, pveilleuse: 0.01 })).toBe(true);
+    expect(isPveilChauffeEauGazInstantaneTribu(113, { pveil: 100, pveilleuse: '10' })).toBe(true);
+  });
+
+  test('autres chauffe-eau gaz instantanés (1990-2000, après 2015) : non concernés', () => {
+    expect(isPveilChauffeEauGazInstantaneTribu('65', { pveil: 100, pveilleuse: 10 })).toBe(false);
+    expect(isPveilChauffeEauGazInstantaneTribu('67', { pveil: 100, pveilleuse: 10 })).toBe(false);
+  });
+
+  test('pveilleuse exportée conforme à la méthode (100 W / 0,1 kW) ou absente : non concerné', () => {
+    expect(isPveilChauffeEauGazInstantaneTribu('66', { pveil: 100, pveilleuse: 100 })).toBe(false);
+    expect(isPveilChauffeEauGazInstantaneTribu('66', { pveil: 100, pveilleuse: 0.1 })).toBe(false);
+    expect(isPveilChauffeEauGazInstantaneTribu('66', { pveil: 100 })).toBe(false);
+  });
+
+  test('pveil retenue différente de 100 W (sans veilleuse, ou déjà 10 W) : non concerné', () => {
+    expect(isPveilChauffeEauGazInstantaneTribu('66', { pveil: 0, pveilleuse: 10 })).toBe(false);
+    expect(isPveilChauffeEauGazInstantaneTribu('66', { pveil: 10, pveilleuse: 10 })).toBe(false);
   });
 });
 
@@ -269,6 +306,62 @@ describe('calc_gen_ecs - consommation par générateur', () => {
     expect(g.donnee_intermediaire.rendement_generation).toBeCloseTo(0.8974283293793307, 9);
     // valeur de référence de régression : 100 / (0.8974283293793307 * 0.9)
     expect(g.donnee_intermediaire.conso_ecs).toBeCloseTo(123.81056790123455, 9);
+  });
+
+  describe('chauffe-eau gaz instantané 2001-2015 : veilleuse (#289)', () => {
+    function chauffeEau(type, pveilleuse) {
+      vi.mocked(tvColumnIDs).mockImplementation((table) =>
+        table === 'generateur_combustion' ? [type] : []
+      );
+      vi.mocked(tv_generateur_combustion).mockImplementation((dpe, di) => {
+        di.rpn = 0.84;
+        di.qp0 = 0;
+        di.pveil = 100;
+        di.pveilleuse = pveilleuse;
+        di.pn = 21000;
+      });
+      return gen({
+        type_energie: 'gaz naturel',
+        enum_type_generateur_ecs_id: type,
+        enum_methode_saisie_carac_sys_id: '1',
+        presence_veilleuse: 1
+      });
+    }
+
+    test('bug_for_bug_compat, pveilleuse exportée 10 W : Pveil = 10 W (Tribu)', () => {
+      state.bug = true;
+      const g = chauffeEau('66', 10);
+      calc_gen_ecs({}, g, ecs_di, ecs_de, 0, '1', '1', 'maison');
+
+      expect(g.donnee_intermediaire.pveil).toBe(10);
+      // valeur de référence de régression : 1 / (1 / 0.84 + 6970 * 10 / (100 * 1000))
+      expect(g.donnee_intermediaire.rendement_generation).toBeCloseTo(0.5298080076696016, 9);
+    });
+
+    test('bug_for_bug_compat, GPL (113), pveilleuse exportée 0,01 kW : Pveil = 10 W', () => {
+      state.bug = true;
+      const g = chauffeEau('113', 0.01);
+      calc_gen_ecs({}, g, ecs_di, ecs_de, 0, '1', '1', 'maison');
+
+      expect(g.donnee_intermediaire.pveil).toBe(10);
+    });
+
+    test('hors bug_for_bug_compat : Pveil de la méthode (100 W) conservée', () => {
+      const g = chauffeEau('66', 10);
+      calc_gen_ecs({}, g, ecs_di, ecs_de, 0, '1', '1', 'maison');
+
+      expect(g.donnee_intermediaire.pveil).toBe(100);
+      // valeur de référence de régression : 1 / (1 / 0.84 + 6970 * 100 / (100 * 1000))
+      expect(g.donnee_intermediaire.rendement_generation).toBeCloseTo(0.12254186847172784, 9);
+    });
+
+    test('bug_for_bug_compat, pveilleuse exportée 100 W : Pveil de la méthode conservée', () => {
+      state.bug = true;
+      const g = chauffeEau('66', 100);
+      calc_gen_ecs({}, g, ecs_di, ecs_de, 0, '1', '1', 'maison');
+
+      expect(g.donnee_intermediaire.pveil).toBe(100);
+    });
   });
 
   test('installation solaire : la couverture solaire réduit la consommation', () => {
