@@ -236,6 +236,28 @@ export function rg_accumulateur_gaz(di, besoin_ecs) {
   );
 }
 
+/**
+ * Rendements de génération + stockage possibles pour un réseau de chaleur (Tribu
+ * Calcul_installation_ECS.cs l. 264-286 : 0,75 si l'équipement réseau est non isolé, sinon 0,9).
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §14.3
+ */
+const RGS_RESEAU_CHALEUR = [0.75, 0.9];
+
+/**
+ * Le moteur de référence choisit 0,75 ou 0,9 à partir de isolation_equipement_reseau, qui n'est pas
+ * exporté dans le DPE. Le type de générateur (72 / 73) et reseau_distribution_isole ne le reflètent
+ * pas toujours : les logiciels exportent 0,75 pour des types 73 et, pour les générateurs assimilés à un
+ * réseau de chaleur (76, multi-bâtiment…), reseau_distribution_isole n'est qu'un proxy.
+ * En bug_for_bug_compat, le rendement saisi (0,75 ou 0,9) est donc la seule source fiable.
+ *
+ * @param {number} rgSaisi rendement_generation_stockage exporté dans le DPE
+ * @param {number} rgReseau rendement déduit par Open3CL
+ * @returns {boolean} true si le rendement saisi doit remplacer le rendement déduit
+ */
+export function isRgsReseauChaleurSaisiRepris(rgSaisi, rgReseau) {
+  return RGS_RESEAU_CHALEUR.includes(rgSaisi) && rgSaisi !== rgReseau;
+}
+
 export function rgrsReseauUrbain(de, ecs_de) {
   /**
    * Le rendement de génération d'un réseau de chaleur dépend de son caractère isolé ou non.
@@ -385,16 +407,11 @@ export default function calc_gen_ecs(dpe, gen_ecs, ecs_di, ecs_de, GV, ca_id, zc
     const rgSaisi = di.rendement_generation_stockage;
     let rgReseau = rgrsReseauUrbain(de, ecs_de);
 
-    /**
-     * Type 72 (réseau non isolé) exporté avec 0.9 : le logiciel n'a pas transmis
-     * isolation_equipement_reseau = installation_non_isoles au moteur de référence, qui applique alors
-     * 0.9 (Tribu Calcul_installation_ECS.cs, cas reseau_de_chaleur). On reproduit la valeur du DPE.
-     */
-    if (bug_for_bug_compat && de.enum_type_generateur_ecs_id === '72' && rgSaisi === 0.9) {
-      rgReseau = 0.9;
+    if (bug_for_bug_compat && isRgsReseauChaleurSaisiRepris(rgSaisi, rgReseau)) {
       console.warn(
-        `Correction rendement_generation_stockage pour le générateur ECS ${de.description} (0.9 saisi pour un réseau de chaleur non isolé)`
+        `Correction rendement_generation_stockage pour le générateur ECS ${de.description} (${rgSaisi} saisi au lieu de ${rgReseau})`
       );
+      rgReseau = rgSaisi;
     }
 
     di.rendement_generation_stockage = rgReseau;
