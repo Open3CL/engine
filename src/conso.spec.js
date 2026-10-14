@@ -435,6 +435,24 @@ describe('calc_conso - agrégation des consommations', () => {
     expect(res.ef_conso.conso_auxiliaire_generation_ch).toBe(40);
   });
 
+  test('chauffage individuel avec rdim reconstitué et clé nulle : repli sur le prorata chauffage, comme la conso', () => {
+    // clé installation 0 et prorata 0 → clé générateur 0 → repli sur prorataChauffage (0)
+    const ch = [
+      installCh({ cle_repartition_ch: 0, enum_methode_calcul_conso_id: '3' }, [
+        genCh(
+          '1',
+          { conso_ch: 1000, conso_ch_depensier: 1200, conso_auxiliaire_generation_ch: 40 },
+          { rdim_reconstitue: true }
+        )
+      ])
+    ];
+
+    const res = calc_conso(100, 1, 1, [], ch, [], [], 1, 0, DATE_DPE, coef_ep);
+
+    expect(res.ef_conso.conso_ch).toBe(0);
+    expect(res.ef_conso.conso_auxiliaire_generation_ch).toBe(0);
+  });
+
   test('installation avec clé absente (non collective) : répartition = prorata chauffage', () => {
     const ch = [
       installCh(

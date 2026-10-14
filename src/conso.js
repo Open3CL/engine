@@ -1017,7 +1017,9 @@ function calc_conso_pond(
     const conso =
       (gen_ch.donnee_intermediaire.conso_auxiliaire_generation_ch || 0) *
       fAc('auxiliaire_generation_ch') *
-      (gen_ch.donnee_entree.rdim_reconstitue ? gen_ch.donnee_entree.cle_repartition_ch || 1 : 1);
+      (gen_ch.donnee_entree.rdim_reconstitue
+        ? gen_ch.donnee_entree.cle_repartition_ch || prorataChauffage
+        : 1);
     return acc + getConso(coef, 'électricité auxiliaire', conso);
   }, 0);
 
