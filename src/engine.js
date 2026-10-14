@@ -32,6 +32,7 @@ import { Inertie } from './7_inertie.js';
 import getFicheTechnique from './ficheTechnique.js';
 import { ProductionENR, ratioProrataPvLogement } from './16.2_production_enr.js';
 import DpeSanitizerService from './dpe-sanitizer.service.js';
+import { reconstituerRdimDpeGenereImmeuble } from './17.2_rdim_dpe_genere_immeuble.js';
 
 const LIB_VERSION = 'OPEN3CL_VERSION';
 
@@ -291,6 +292,20 @@ export function calcul_3cl(inputDpe, options) {
 
   const ecs = logement.installation_ecs_collection.installation_ecs || [];
   const Nb_lgt = cg.nombre_appartement || 1;
+
+  /**
+   * DPE appartement généré depuis un DPE immeuble : installation individuelle décrite sur la surface
+   * de l'immeuble avec un rdim exporté à 1 → reconstitution du rdim implicite, calcul à l'échelle de
+   * l'immeuble puis application de la clé de répartition (§ 17.2.2.2.2).
+   * @see https://github.com/Open3CL/engine/issues/287
+   */
+  const rdimReconstitue =
+    bug_for_bug_compat && dpeGenereImmeuble
+      ? reconstituerRdimDpeGenereImmeuble(cg, instal_ch, ecs)
+      : { ch: false, ecs: false };
+  // Type de bâtiment pour le besoin / l'ECS (thCalc) et pour le taux de charge (thCh)
+  const thCalc = rdimReconstitue.ecs ? 'immeuble' : th;
+  const thCh = rdimReconstitue.ch ? 'immeuble' : th;
   const hsp = cg.hsp;
   const clim = logement.climatisation_collection.climatisation || [];
   let apport_et_besoin = calc_apport_et_besoin(
@@ -339,9 +354,9 @@ export function calcul_3cl(inputDpe, options) {
   if (ecs.length > 1) {
     // Immeuble avec différents systèmes individuels
     isImmeubleSystemEcsIndividuels =
-      th === 'immeuble' && ecs.every((e) => e.donnee_entree.enum_type_installation_id === '1');
+      thCalc === 'immeuble' && ecs.every((e) => e.donnee_entree.enum_type_installation_id === '1');
 
-    if (th === 'immeuble' && !isImmeubleSystemEcsIndividuels) {
+    if (thCalc === 'immeuble' && !isImmeubleSystemEcsIndividuels) {
       isImmeubleMultiEcs =
         Number(cg.surface_habitable_immeuble) > 0 &&
         ecs.every((e) => Number(e.donnee_entree.surface_habitable) > 0);
@@ -454,7 +469,7 @@ export function calcul_3cl(inputDpe, options) {
       GV,
       ca_id,
       zc_id,
-      th,
+      thCalc,
       virtualisationECS,
       dpe.logement.caracteristique_generale.surface_habitable_immeuble,
       dpe.logement.caracteristique_generale.nombre_appartement,
@@ -521,7 +536,7 @@ export function calcul_3cl(inputDpe, options) {
     instal_ch,
     bv_list,
     ets,
-    th,
+    thCalc,
     dpe.logement.caracteristique_generale.nombre_appartement
   );
   apport_et_besoin = { ...apport_et_besoin, ...besoin_ch };
@@ -535,7 +550,7 @@ export function calcul_3cl(inputDpe, options) {
    * 13.2.1.2 Présence d’un ou plusieurs générateurs à combustion indépendants
    * Calcul des taux de charge pour chacun des générateurs de chauffage
    */
-  tauxChargeForGenerator(instal_ch, GV, ca_id, zc_id, th);
+  tauxChargeForGenerator(instal_ch, GV, ca_id, zc_id, thCh);
 
   instal_ch.forEach((ch) => {
     calc_chauffage(

@@ -278,6 +278,15 @@ describe('calc_chauffage - rdim de l’installation transmis au générateur', (
     appel(ch, { map_id: 2 });
     expect(rdimGen(ch)).toBe(1);
   });
+
+  test('DPE appartement issu d’un DPE immeuble avec rdim reconstitué (issue #287) : rdim repris', () => {
+    const ch = installation([generateur()], [emetteur('1')], { rdim: 62, rdim_reconstitue: true });
+    appel(ch, { map_id: 10 });
+    expect(rdimGen(ch)).toBe(62);
+    expect(
+      ch.generateur_chauffage_collection.generateur_chauffage[0].donnee_entree.rdim_reconstitue
+    ).toBe(true);
+  });
 });
 
 describe('isImmeuble', () => {

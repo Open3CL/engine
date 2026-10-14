@@ -393,6 +393,48 @@ describe('calc_conso - agrégation des consommations', () => {
     expect(res.ef_conso.conso_auxiliaire_distribution_ch).toBe(200);
   });
 
+  test('chauffage individuel avec rdim reconstitué (issue #287) : clé appliquée à conso et aux. génération, pas à la distribution', () => {
+    // § 17.2.2.2.2 : chauffage individuel, coef_IFC = 1 → Cch_ap = Clé_ap × Cch_immeuble
+    const ch = [
+      installCh({ cle_repartition_ch: 0.25, enum_methode_calcul_conso_id: '3' }, [
+        genCh(
+          '1',
+          {
+            conso_ch: 1000,
+            conso_ch_depensier: 1200,
+            conso_auxiliaire_generation_ch: 40,
+            conso_auxiliaire_distribution_ch: 80
+          },
+          { rdim_reconstitue: true }
+        )
+      ])
+    ];
+
+    const res = calc_conso(100, 1, 1, [], ch, [], [], 1, 1, DATE_DPE, coef_ep);
+
+    expect(res.ef_conso.conso_ch).toBe(250);
+    expect(res.ef_conso.conso_auxiliaire_generation_ch).toBe(10);
+    // Distribution non proratisée, comme dans les sorties ADEME
+    expect(res.ef_conso.conso_auxiliaire_distribution_ch).toBe(80);
+  });
+
+  test('chauffage individuel sans rdim reconstitué : clé ignorée (prorata chauffage)', () => {
+    const ch = [
+      installCh({ cle_repartition_ch: 0.25, enum_methode_calcul_conso_id: '3' }, [
+        genCh('1', {
+          conso_ch: 1000,
+          conso_ch_depensier: 1200,
+          conso_auxiliaire_generation_ch: 40
+        })
+      ])
+    ];
+
+    const res = calc_conso(100, 1, 1, [], ch, [], [], 1, 1, DATE_DPE, coef_ep);
+
+    expect(res.ef_conso.conso_ch).toBe(1000);
+    expect(res.ef_conso.conso_auxiliaire_generation_ch).toBe(40);
+  });
+
   test('installation avec clé absente (non collective) : répartition = prorata chauffage', () => {
     const ch = [
       installCh(
