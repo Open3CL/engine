@@ -183,6 +183,34 @@ function type_generateur_ecs(di, de, du, usage_generateur) {
 /** Rendement de génération d'une chaudière électrique (tv rendement_generation, id 30). */
 export const RG_CHAUDIERE_ELECTRIQUE = 0.97;
 
+/**
+ * Chauffe-eau gaz / GPL à production instantanée 2001-2015 (types 66 et 113) : la méthode donne
+ * Pveil = 100 W, mais le moteur de référence (Tribu, Calcul_generateur.cs, Pveil1 = 0,01 kW pour
+ * Pn > 10 kW comme pour Pn ≤ 10 kW) applique 10 W. Les DPE exportent alors pveilleuse = 10 (W) ou
+ * 0,01 (kW). Ce cas n'est reproduit qu'en mode bug_for_bug_compat.
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §14.1.1
+ * @see https://github.com/Open3CL/engine/issues/289
+ */
+export const PVEIL_CHAUFFE_EAU_GAZ_INSTANTANE_TRIBU = 10;
+const TYPES_CHAUFFE_EAU_GAZ_INSTANTANE_2001_2015 = ['66', '113'];
+const PVEILLEUSES_EXPORTEES_TRIBU = [10, 0.01];
+
+/**
+ * Indique si la puissance de veilleuse du générateur doit être ramenée à la valeur Tribu (10 W) :
+ * chauffe-eau gaz / GPL instantané 2001-2015, veilleuse de la méthode (100 W) retenue, et
+ * pveilleuse exportée par le DPE égale à 10 W ou 0,01 kW.
+ * @param typeGenerateurId {string|number} enum_type_generateur_ecs_id
+ * @param di {Donnee_intermediaire}
+ * @returns {boolean}
+ */
+export function isPveilChauffeEauGazInstantaneTribu(typeGenerateurId, di) {
+  return (
+    TYPES_CHAUFFE_EAU_GAZ_INSTANTANE_2001_2015.includes(String(typeGenerateurId)) &&
+    di.pveil === 100 &&
+    PVEILLEUSES_EXPORTEES_TRIBU.includes(Number(di.pveilleuse))
+  );
+}
+
 export function rg_chauffe_eau_gaz(di, besoin_ecs) {
   return (
     1 /
@@ -403,6 +431,13 @@ export default function calc_gen_ecs(dpe, gen_ecs, ecs_di, ecs_de, GV, ca_id, zc
      */
     if (de.presence_veilleuse === 0 || (de.presence_veilleuse !== 1 && !di.pveilleuse)) {
       di.pveil = 0;
+    }
+
+    if (bug_for_bug_compat && isPveilChauffeEauGazInstantaneTribu(type_generateur_id, di)) {
+      console.warn(
+        `Correction pveil pour le générateur ECS ${de.description} : ${PVEIL_CHAUFFE_EAU_GAZ_INSTANTANE_TRIBU} W au lieu de ${di.pveil} W (moteur de référence)`
+      );
+      di.pveil = PVEIL_CHAUFFE_EAU_GAZ_INSTANTANE_TRIBU;
     }
 
     const type_generateur = enums.type_generateur_ecs[type_generateur_id];
