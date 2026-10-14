@@ -73,6 +73,9 @@ vi.mock('./ficheTechnique.js', () => ({ default: vi.fn() }));
 vi.mock('./17.2_rdim_dpe_genere_immeuble.js', () => ({
   reconstituerRdimDpeGenereImmeuble: vi.fn()
 }));
+vi.mock('./11_rdim_ecs_individuelle_unique.js', () => ({
+  reconstituerRdimEcsIndividuelleUnique: vi.fn()
+}));
 
 // Les instances Inertie / ProductionENR sont créées au chargement du module.
 // On expose des méthodes mockées récupérables dans les tests.
@@ -116,6 +119,8 @@ const calc_confort_ete = (await import('./2021_04_13_confort_ete.js')).default;
 const calc_qualite_isolation = (await import('./2021_04_13_qualite_isolation.js')).default;
 const getFicheTechnique = (await import('./ficheTechnique.js')).default;
 const { reconstituerRdimDpeGenereImmeuble } = await import('./17.2_rdim_dpe_genere_immeuble.js');
+const { reconstituerRdimEcsIndividuelleUnique } =
+  await import('./11_rdim_ecs_individuelle_unique.js');
 
 /** Objet conso renvoyé par le mock de `calc_conso` (mêmes réf pour les 3 appels). */
 let consoResult;
@@ -1195,6 +1200,27 @@ describe('calcul_3cl - rdim reconstitué des DPE générés depuis un DPE immeub
 
     expect(reconstituerRdimDpeGenereImmeuble).not.toHaveBeenCalled();
     expect(thTransmis().tauxCharge).toBe('maison');
+  });
+});
+
+describe('calcul_3cl - rdim de l’installation ECS individuelle unique d’un immeuble (#288)', () => {
+  test('reconstitution appelée avec le type de bâtiment, les installations ECS et SH, avant le calcul ECS', () => {
+    const dpe = makeDpe();
+    dpe.logement.caracteristique_generale.surface_habitable_immeuble = 640;
+    // la reconstitution doit précéder le calcul de l'ECS (besoin / rdim)
+    vi.mocked(reconstituerRdimEcsIndividuelleUnique).mockImplementationOnce(() => {
+      expect(calc_ecs).not.toHaveBeenCalled();
+      return false;
+    });
+
+    calcul_3cl(dpe, { sanitize: false });
+
+    expect(reconstituerRdimEcsIndividuelleUnique).toHaveBeenCalledWith(
+      'maison',
+      dpe.logement.installation_ecs_collection.installation_ecs,
+      640
+    );
+    expect(calc_ecs).toHaveBeenCalled();
   });
 });
 
