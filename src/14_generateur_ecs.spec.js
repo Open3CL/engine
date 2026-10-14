@@ -75,6 +75,7 @@ const {
   rgrs_chaudiere,
   rg_accumulateur_gaz,
   rgrsReseauUrbain,
+  isRgsReseauChaleurSaisiRepris,
   isPveilChauffeEauGazInstantaneTribu,
   PVEIL_CHAUFFE_EAU_GAZ_INSTANTANE_TRIBU,
   RG_CHAUDIERE_ELECTRIQUE,
@@ -148,6 +149,35 @@ describe('rgrsReseauUrbain - rendement d’un réseau de chaleur', () => {
     ).toBe(0.75);
     expect(rgrsReseauUrbain({ enum_type_generateur_ecs_id: '84' }, undefined)).toBe(0.75);
   });
+});
+
+/**
+ * Rendement saisi d'un réseau de chaleur repris en bug_for_bug_compat : isolation_equipement_reseau,
+ * lu par le moteur de référence, n'est pas exporté.
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §14.3
+ * @see https://github.com/Open3CL/engine/issues/290
+ */
+describe('isRgsReseauChaleurSaisiRepris - reprise du rendement saisi', () => {
+  test.each([
+    [0.75, 0.9],
+    [0.9, 0.75]
+  ])('saisi %s, déduit %s : rendement saisi repris', (saisi, deduit) => {
+    expect(isRgsReseauChaleurSaisiRepris(saisi, deduit)).toBe(true);
+  });
+
+  test.each([
+    [0.75, 0.75],
+    [0.9, 0.9]
+  ])('saisi %s identique au déduit %s : pas de reprise', (saisi, deduit) => {
+    expect(isRgsReseauChaleurSaisiRepris(saisi, deduit)).toBe(false);
+  });
+
+  test.each([0.8, 1, 0, undefined, null, '0.9'])(
+    'saisi hors {0,75 ; 0,9} (%s) : pas de reprise',
+    (saisi) => {
+      expect(isRgsReseauChaleurSaisiRepris(saisi, 0.75)).toBe(false);
+    }
+  );
 });
 
 /**
@@ -945,6 +975,103 @@ describe('calc_gen_ecs - consommation par générateur', () => {
     calc_gen_ecs({}, g, ecs_di, ecs_de, 0, '1', '1', 'immeuble');
 
     expect(g.donnee_intermediaire.rendement_generation_stockage).toBe(0.75);
+  });
+
+  /**
+   * Type 73 exporté à 0,75, générateur assimilé (76, multi-bâtiment) : le rendement saisi est repris
+   * en bug_for_bug_compat, quel que soit reseau_distribution_isole (#290).
+   */
+  test.each([
+    ['73', 1, 0.75],
+    ['73', 0, 0.75],
+    ['76', 1, 0.75],
+    ['84', 1, 0.75]
+  ])(
+    'bug_for_bug_compat : type %s (distribution isolée = %s), %s saisi -> repris',
+    (type, iso, saisi) => {
+      state.bug = true;
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      ecs_de.enum_type_installation_id = '3';
+      ecs_de.reseau_distribution_isole = iso;
+      const g = {
+        donnee_entree: {
+          usage_generateur: 'ecs',
+          type_stockage_ecs: "abscence de stockage d'ecs (production instantanée)",
+          volume_stockage: 0,
+          type_energie: 'réseau de chauffage urbain',
+          enum_type_generateur_ecs_id: type,
+          description: 'RCU'
+        },
+        donnee_intermediaire: { rendement_generation_stockage: saisi }
+      };
+      calc_gen_ecs({}, g, ecs_di, ecs_de, 0, '1', '1', 'immeuble');
+
+      expect(g.donnee_intermediaire.rendement_generation_stockage).toBe(saisi);
+      expect(g.donnee_intermediaire.rendement_generation_stockage_depensier).toBe(saisi);
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Correction rendement_generation_stockage')
+      );
+      warnSpy.mockRestore();
+    }
+  );
+
+  test('bug_for_bug_compat : type 73 avec 0,75 saisi -> conso ECS recalculée avec 0,75', () => {
+    state.bug = true;
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    ecs_de.reseau_distribution_isole = 1;
+    const g = {
+      donnee_entree: {
+        usage_generateur: 'ecs',
+        type_stockage_ecs: "abscence de stockage d'ecs (production instantanée)",
+        volume_stockage: 0,
+        type_energie: 'réseau de chauffage urbain',
+        enum_type_generateur_ecs_id: '73'
+      },
+      donnee_intermediaire: { rendement_generation_stockage: 0.75 }
+    };
+    calc_gen_ecs({}, g, ecs_di, ecs_de, 0, '1', '1', 'immeuble');
+
+    // valeur de référence de régression : 100 / (0.75 * 0.9)
+    expect(g.donnee_intermediaire.conso_ecs).toBeCloseTo(148.14814814814815, 9);
+    warnSpy.mockRestore();
+  });
+
+  test.each([
+    ['73', 0.75, 0.9],
+    ['76', 0.75, 0.9]
+  ])('sans bug_for_bug_compat : type %s avec %s saisi -> %s (méthode)', (type, saisi, attendu) => {
+    ecs_de.reseau_distribution_isole = 1;
+    const g = {
+      donnee_entree: {
+        usage_generateur: 'ecs',
+        type_stockage_ecs: "abscence de stockage d'ecs (production instantanée)",
+        volume_stockage: 0,
+        type_energie: 'réseau de chauffage urbain',
+        enum_type_generateur_ecs_id: type
+      },
+      donnee_intermediaire: { rendement_generation_stockage: saisi }
+    };
+    calc_gen_ecs({}, g, ecs_di, ecs_de, 0, '1', '1', 'immeuble');
+
+    expect(g.donnee_intermediaire.rendement_generation_stockage).toBe(attendu);
+  });
+
+  test('bug_for_bug_compat : rendement saisi hors {0,75 ; 0,9} -> rendement déduit conservé', () => {
+    state.bug = true;
+    ecs_de.reseau_distribution_isole = 1;
+    const g = {
+      donnee_entree: {
+        usage_generateur: 'ecs',
+        type_stockage_ecs: "abscence de stockage d'ecs (production instantanée)",
+        volume_stockage: 0,
+        type_energie: 'réseau de chauffage urbain',
+        enum_type_generateur_ecs_id: '73'
+      },
+      donnee_intermediaire: { rendement_generation_stockage: 0.8 }
+    };
+    calc_gen_ecs({}, g, ecs_di, ecs_de, 0, '1', '1', 'immeuble');
+
+    expect(g.donnee_intermediaire.rendement_generation_stockage).toBe(0.9);
   });
 
   test('usage chauffage + ecs : type de générateur limité aux générateurs mixtes', () => {
