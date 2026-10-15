@@ -80,6 +80,63 @@ function matcherEpaisseurTable(matcher) {
   };
 }
 
+/**
+ * Matériaux de structure des parois dites « anciennes », seules concernées par l'enduit isolant :
+ * « parois […] constituées de matériaux traditionnels à savoir pierres, terre, mur à colombage,
+ * brique ancienne ».
+ * 2, 3 - pierre de taille et moellons ; 4 - pisé / béton de terre ; 5, 6 - pan de bois (colombage) ;
+ * 7 - bois (rondin) ; 8, 9 - briques pleines ; 21 - autre matériau traditionnel ancien.
+ *
+ * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.2.1
+ * @see https://github.com/Open3CL/engine/issues/295
+ */
+export const MATERIAUX_PAROI_ANCIENNE = [2, 3, 4, 5, 6, 7, 8, 9, 21];
+
+/**
+ * Umur0 interpolé linéairement entre les deux colonnes d'épaisseur de la table Umur0 qui encadrent
+ * strictement l'épaisseur saisie (pratique de certains logiciels, ex : béton banché de 32 cm).
+ *
+ * La méthode ne précise pas de règle d'interpolation pour Umur0 : cette valeur n'est utilisée qu'en
+ * compatibilité (bug_for_bug), lorsque le DPE d'origine l'a manifestement appliquée.
+ *
+ * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.2.1.2
+ * @see https://github.com/Open3CL/engine/issues/295
+ *
+ * @param enumMateriauxStructureMurId {string|number}
+ * @param epaisseur {number|string}
+ * @returns {number|undefined} Umur0 interpolé, ou undefined si l'épaisseur n'est pas numérique,
+ * est une colonne de la table ou se situe hors des colonnes de la table
+ */
+export function umur0Interpole(enumMateriauxStructureMurId, epaisseur) {
+  const ep = Number(epaisseur);
+  if (!Number.isFinite(ep)) return undefined;
+
+  const points = tvs.umur0
+    .filter(
+      (row) =>
+        String(row.enum_materiaux_structure_mur_id) === String(enumMateriauxStructureMurId) &&
+        row.epaisseur_structure
+    )
+    .map((row) => ({
+      epaisseur: parseFloat(String(row.epaisseur_structure).replace(/[≤≥\s]/g, '')),
+      umur0: Number(row.umur0)
+    }))
+    .filter((point) => Number.isFinite(point.epaisseur))
+    .sort((a, b) => a.epaisseur - b.epaisseur);
+
+  for (let i = 0; i < points.length - 1; i++) {
+    const bas = points[i];
+    const haut = points[i + 1];
+    if (ep > bas.epaisseur && ep < haut.epaisseur) {
+      return (
+        bas.umur0 +
+        ((haut.umur0 - bas.umur0) * (ep - bas.epaisseur)) / (haut.epaisseur - bas.epaisseur)
+      );
+    }
+  }
+  return undefined;
+}
+
 function tv_umur0(di, de, du) {
   const matcher = {
     enum_materiaux_structure_mur_id: de.enum_materiaux_structure_mur_id
@@ -142,6 +199,27 @@ function tv_umur0(di, de, du) {
   if (row) {
     di.umur0 = Number(row.umur0);
     de.tv_umur0_id = Number(row.tv_umur0_id);
+
+    /**
+     * Certains logiciels interpolent Umur0 entre les deux colonnes d'épaisseur qui encadrent
+     * l'épaisseur saisie (ex : 2,28 pour un béton banché de 32 cm, entre 30 et 35 cm).
+     * Si l'Umur0 du DPE correspond à cette interpolation (tolérance empirique de 0,006), on la reprend.
+     * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.2.1.2
+     * @see https://github.com/Open3CL/engine/issues/295
+     */
+    if (bug_for_bug_compat && du.umur0_avant !== undefined) {
+      const umur0Interp = umur0Interpole(
+        de.enum_materiaux_structure_mur_id,
+        matcher.epaisseur_structure
+      );
+      if (
+        umur0Interp !== undefined &&
+        Math.abs(umur0Interp - di.umur0) > 0.001 &&
+        Math.abs(umur0Interp - Number(du.umur0_avant)) < 0.006
+      ) {
+        di.umur0 = umur0Interp;
+      }
+    }
   } else {
     console.error('!! pas de valeur forfaitaire trouvée pour umur0 !!');
   }
@@ -242,7 +320,25 @@ function calc_umur0(di, de, du, versionDpe) {
    * @see https://github.com/Open3CL/engine/issues/146
    */
   const type_isolation = parseInt(de.enum_type_isolation_id) || 1;
-  const hasIteOrIti = versionDpe >= 2.4 && [3, 4, 6, 7, 8].includes(type_isolation);
+  const isolationIteOuIti = [3, 4, 6, 7, 8].includes(type_isolation);
+  let hasIteOrIti = versionDpe >= 2.4 && isolationIteOuIti;
+
+  /**
+   * DPE antérieurs à la version 2.4 : certains logiciels n'y cumulent déjà pas le doublage avec une
+   * isolation ITE/ITI. Si l'Umur0 du DPE vaut min(2,5 ; Umur0 de la paroi nue), le doublage n'a pas
+   * été appliqué : on ne l'applique pas non plus.
+   * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.2.1
+   * @see https://github.com/Open3CL/engine/issues/295
+   */
+  if (
+    bug_for_bug_compat &&
+    !hasIteOrIti &&
+    isolationIteOuIti &&
+    umur0_avant !== undefined &&
+    Math.abs(Number(umur0_avant) - Math.min(2.5, Number(di.umur0))) < 0.001
+  ) {
+    hasIteOrIti = true;
+  }
 
   // Si présence d'un doublage et pas d'isolation ITE/ITI
   if (type_doublage > 2 && !hasIteOrIti) {
@@ -272,10 +368,24 @@ function calc_umur0(di, de, du, versionDpe) {
     const umur0Enduit = 1 / (1 / di.umur0 + 0.7);
     di.umur0Enduit = umur0Enduit;
 
+    /**
+     * L'Umur0 exporté par certains logiciels est la valeur avant enduit, alors que l'Umur exporté
+     * intègre l'enduit. Si l'Umur du DPE vaut min(2,5 ; Umur0 avec enduit), le DPE a bien appliqué
+     * l'enduit : l'Umur0 d'origine ne doit pas être conservé.
+     * Garde : l'enduit isolant ne vaut que pour les parois anciennes (MATERIAUX_PAROI_ANCIENNE).
+     * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.2.1
+     * @see https://github.com/Open3CL/engine/issues/295
+     */
+    const enduitAppliqueDansDpe =
+      MATERIAUX_PAROI_ANCIENNE.includes(parseInt(de.enum_materiaux_structure_mur_id)) &&
+      umur_avant !== undefined &&
+      Math.abs(Number(umur_avant) - Math.min(2.5, umur0Enduit)) < 0.001;
+
     if (
       bug_for_bug_compat &&
       umur0_avant !== undefined &&
-      parseFloat(umur0_avant).toFixed(3) === Math.min(2.5, di.umur0).toFixed(3)
+      parseFloat(umur0_avant).toFixed(3) === Math.min(2.5, di.umur0).toFixed(3) &&
+      !enduitAppliqueDansDpe
     ) {
       console.error(`
         Le mur ${de.description} est une paroi dite 'paroi ancienne avec enduit', la valeur de Umur0 devrait prendre en compte cet enduit et devrait être ${umur0Enduit}.
