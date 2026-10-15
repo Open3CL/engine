@@ -341,6 +341,16 @@ export class TvStore {
   }
 
   /**
+   * Ligne de la table q4pa_conv par son identifiant
+   * @param tvQ4paConvId {number|string|undefined}
+   * @return {object|undefined}
+   */
+  getQ4paConvById(tvQ4paConvId) {
+    if (tvQ4paConvId === undefined || tvQ4paConvId === null) return;
+    return tv['q4pa_conv'].find((v) => v.tv_q4pa_conv_id === String(tvQ4paConvId));
+  }
+
+  /**
    * Valeur conventionnelle de la perméabilité sous 4Pa
    * @see Chapitre 4 - Calcul des déperditions par renouvellement d’air
    *

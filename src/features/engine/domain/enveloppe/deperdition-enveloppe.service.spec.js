@@ -173,7 +173,17 @@ describe('DeperditionEnveloppeService (§3 déperditions de l’enveloppe)', () 
     // déperditive = mur 10 + porte 2 + plancher haut 30 + baie 4 = 46
     // isolée = mur 5 + plancher haut 7 = 12 ; non isolée = mur 10 + plancher haut 30 = 40
     // menuiseries avec joint = porte 2 + baie 4 = 6 ; sans joint = porte 3 + baie 6 = 9
-    expect(ventilationService.execute).toHaveBeenCalledWith(ctx, { id: 'v' }, 46, 12, 40, 6, 9);
+    // presence_joint renseigné sur au moins une menuiserie => indicateur #294 à false
+    expect(ventilationService.execute).toHaveBeenCalledWith(
+      ctx,
+      { id: 'v' },
+      46,
+      12,
+      40,
+      6,
+      9,
+      false
+    );
   });
 
   test('les surfaces sont réinitialisées à chaque calcul', () => {
@@ -186,7 +196,18 @@ describe('DeperditionEnveloppeService (§3 déperditions de l’enveloppe)', () 
     service.deperditions(ctx, logement);
     service.deperditions(ctx, logement);
 
-    expect(ventilationService.execute).toHaveBeenLastCalledWith(ctx, {}, 2, 0, 0, 0, 2);
+    // aucune menuiserie ne renseigne presence_joint => indicateur #294 à true
+    expect(ventilationService.execute).toHaveBeenLastCalledWith(ctx, {}, 2, 0, 0, 0, 2, true);
+  });
+
+  test('logement sans menuiserie : indicateur presence_joint non renseigné à false (issue #294)', () => {
+    const logement = logementVide();
+    logement.ventilation_collection.ventilation = [{ donnee_entree: {} }];
+    ventilationService.execute.mockReturnValue({ hvent: 0, hperm: 0 });
+
+    service.deperditions(ctx, logement);
+
+    expect(ventilationService.execute).toHaveBeenLastCalledWith(ctx, {}, 0, 0, 0, 0, 0, false);
   });
 
   describe('espaces tampons solarisés', () => {

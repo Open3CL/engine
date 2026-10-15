@@ -19,7 +19,11 @@ vi.mock('./5_conso_ventilation.js', () => ({
   default: vi.fn()
 }));
 
-const { default: calc_ventilation, calc_hperm } = await import('./4_ventilation.js');
+const {
+  default: calc_ventilation,
+  calc_hperm,
+  presenceJointNonRenseignee
+} = await import('./4_ventilation.js');
 const { tv } = await import('./utils.js');
 const { default: calc_pvent } = await import('./5_conso_ventilation.js');
 
@@ -403,5 +407,102 @@ describe('calc_ventilation - compatibilité bug_for_bug_compat activée', () => 
 
     expect(errorSpy).not.toHaveBeenCalled();
     errorSpy.mockRestore();
+  });
+
+  /**
+   * Issue #294 : presence_joint absent sur toutes les menuiseries => la valeur
+   * presence_joints_menuiserie de la ligne q4pa_conv du DPE est reprise.
+   */
+  describe('presence_joint non exporté (issue #294)', () => {
+    /** Avant 1948, surfaces non isolées : seul le critère des joints départage les lignes 1 et 12. */
+    const murNonIsole = [
+      {
+        donnee_intermediaire: { b: 1 },
+        donnee_entree: { enum_type_isolation_id: '2', surface_paroi_opaque: 100 }
+      }
+    ];
+    const vtLigne12 = () => ({
+      donnee_entree: { enum_type_ventilation_id: '1', tv_q4pa_conv_id: 12, description: 'v' }
+    });
+    const ROW_12 = {
+      q4pa_conv: '2.5',
+      tv_q4pa_conv_id: '12',
+      isolation_surfaces: '0',
+      presence_joints_menuiserie: '1'
+    };
+
+    test('aucune menuiserie ne renseigne le champ : joints du DPE repris, sans message', async () => {
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const { calc_ventilation_bug, tvBug } = await chargerAvecBug(ROW_12);
+      const baies = [{ donnee_entree: { surface_totale_baie: 10 } }];
+      const portes = [{ donnee_entree: { surface_porte: 2, presence_joint: null } }];
+
+      calc_ventilation_bug(vtLigne12(), CG, 'th', 80, 100, murNonIsole, [], portes, baies);
+
+      expect(tvBug).toHaveBeenLastCalledWith(
+        'q4pa_conv',
+        expect.objectContaining({ isolation_surfaces: '0', presence_joints_menuiserie: '1' })
+      );
+      expect(errorSpy).not.toHaveBeenCalled();
+      errorSpy.mockRestore();
+    });
+
+    test('ligne du DPE sans joints : la valeur "0" est conservée', async () => {
+      const { calc_ventilation_bug, tvBug } = await chargerAvecBug({
+        ...ROW_12,
+        tv_q4pa_conv_id: '1',
+        presence_joints_menuiserie: undefined
+      });
+      const baies = [{ donnee_entree: { surface_totale_baie: 10 } }];
+
+      calc_ventilation_bug(vtLigne12(), CG, 'th', 80, 100, murNonIsole, [], [], baies);
+
+      expect(tvBug).toHaveBeenLastCalledWith(
+        'q4pa_conv',
+        expect.objectContaining({ presence_joints_menuiserie: '0' })
+      );
+    });
+
+    test('presence_joint renseigné à 0 : la valeur recalculée prime et l’écart est signalé', async () => {
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const { calc_ventilation_bug, tvBug } = await chargerAvecBug(ROW_12);
+      const baies = [{ donnee_entree: { surface_totale_baie: 10, presence_joint: 0 } }];
+
+      calc_ventilation_bug(vtLigne12(), CG, 'th', 80, 100, murNonIsole, [], [], baies);
+
+      expect(tvBug).toHaveBeenLastCalledWith(
+        'q4pa_conv',
+        expect.objectContaining({ presence_joints_menuiserie: '0' })
+      );
+      expect(errorSpy).toHaveBeenCalledWith(
+        expect.stringContaining('La valeur recalculée presence_joints_menuiserie = 0 est utilisée')
+      );
+      errorSpy.mockRestore();
+    });
+  });
+});
+
+describe('presenceJointNonRenseignee', () => {
+  test('aucune menuiserie : faux', () => {
+    expect(presenceJointNonRenseignee([], [])).toBe(false);
+    expect(presenceJointNonRenseignee(undefined, undefined)).toBe(false);
+  });
+
+  test('champ absent, null ou vide sur toutes les menuiseries : vrai', () => {
+    expect(
+      presenceJointNonRenseignee(
+        [{ donnee_entree: { presence_joint: '' } }],
+        [{ donnee_entree: {} }, { donnee_entree: { presence_joint: null } }]
+      )
+    ).toBe(true);
+  });
+
+  test('au moins une menuiserie renseignée (même à 0) : faux', () => {
+    expect(
+      presenceJointNonRenseignee(
+        [{ donnee_entree: { presence_joint: 0 } }],
+        [{ donnee_entree: {} }]
+      )
+    ).toBe(false);
   });
 });

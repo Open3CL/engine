@@ -1,6 +1,7 @@
 import { DeperditionService } from '../deperdition.service.js';
 
 import { logger } from '../../../../../core/util/logger/log-service.js';
+import { bug_for_bug_compat } from '../../../../../utils.js';
 import { TypeHabitation } from '../../../../dpe/domain/models/type-habitation.model.js';
 import { TypeVentilation } from '../../../../dpe/domain/models/type-ventilation.model.js';
 
@@ -22,6 +23,7 @@ export class DeperditionVentilationService extends DeperditionService {
    * @param surfaceNonIsolee {number}
    * @param surfaceMenuiserieAvecJoint {number}
    * @param surfaceMenuiserieSansJoint {number}
+   * @param presenceJointNonRenseignee {boolean} aucune menuiserie n'exporte presence_joint (issue #294)
    * @return {VentilationDI}
    */
   execute(
@@ -31,7 +33,8 @@ export class DeperditionVentilationService extends DeperditionService {
     surfaceIsolee,
     surfaceNonIsolee,
     surfaceMenuiserieAvecJoint,
-    surfaceMenuiserieSansJoint
+    surfaceMenuiserieSansJoint,
+    presenceJointNonRenseignee = false
   ) {
     const q4paConv = this.q4paConv(
       ventilationDE,
@@ -39,7 +42,8 @@ export class DeperditionVentilationService extends DeperditionService {
       surfaceIsolee,
       surfaceNonIsolee,
       surfaceMenuiserieAvecJoint,
-      surfaceMenuiserieSansJoint
+      surfaceMenuiserieSansJoint,
+      presenceJointNonRenseignee
     );
     const debitsVentilation = this.#debitsVentilation(ventilationDE.enum_type_ventilation_id);
 
@@ -62,6 +66,7 @@ export class DeperditionVentilationService extends DeperditionService {
    * @param surfaceNonIsolee {number}
    * @param surfaceMenuiserieAvecJoint {number}
    * @param surfaceMenuiserieSansJoint {number}
+   * @param presenceJointNonRenseignee {boolean}
    * @return {number}
    */
   q4paConv(
@@ -70,7 +75,8 @@ export class DeperditionVentilationService extends DeperditionService {
     surfaceIsolee,
     surfaceNonIsolee,
     surfaceMenuiserieAvecJoint,
-    surfaceMenuiserieSansJoint
+    surfaceMenuiserieSansJoint,
+    presenceJointNonRenseignee = false
   ) {
     // Pour les bâtiments qui ont fait l’objet d’une mesure d’étanchéité à l’air moins de deux ans avant le diagnostic, la valeur
     // mesurée de Q4Paconv/m² peut être saisie.
@@ -91,6 +97,15 @@ export class DeperditionVentilationService extends DeperditionService {
         // Pour les bâtiments ou logements construits avant 1948, si les menuiseries possèdent des joints
         // (si les menuiseries représentant plus de 50% de la surface totale possèdent des joints) => valeur forfaitaire.
         if (surfaceMenuiserieAvecJoint > surfaceMenuiserieSansJoint) {
+          presenceJointsMenuiserie = '1';
+        } else if (
+          bug_for_bug_compat &&
+          presenceJointNonRenseignee &&
+          this.tvStore.getQ4paConvById(ventilationDE.tv_q4pa_conv_id)
+            ?.presence_joints_menuiserie === '1'
+        ) {
+          // Issue #294 : aucune menuiserie n'exporte presence_joint, rien ne contredit la ligne
+          // q4pa_conv « avant 1948 avec joints » retenue par le DPE => on la reprend.
           presenceJointsMenuiserie = '1';
         }
       }
