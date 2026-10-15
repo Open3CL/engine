@@ -26,7 +26,8 @@ vi.mock('./core/tv/infrastructure/tvs.store.js', () => ({
   TvsStore: vi.fn(() => mockTvsStore)
 }));
 
-const { rendement_emission, calc_emetteur_ch } = await import('./9_emetteur_ch.js');
+const { rendement_emission, calc_emetteur_ch, isIntermittenceCollectiveSaisie } =
+  await import('./9_emetteur_ch.js');
 const { tv } = await import('./utils.js');
 
 beforeEach(() => {
@@ -406,6 +407,126 @@ describe('tv_intermittence - intermittence', () => {
     expect(console.error).toHaveBeenCalledWith(
       '!! pas de valeur forfaitaire trouvée pour intermittence !!'
     );
+  });
+});
+
+/**
+ * Issue #292 : émetteur d'appoint individuel d'une installation hybride (type 4) base collective +
+ * appoint individuel (cfg 10). Tribu (Calcul_emetteur.cs l.80-129) lit I0 dans la table
+ * « chauffage individuel » pour cet émetteur.
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §9.8
+ */
+describe('tv_intermittence - émetteur d’appoint individuel (issue #292)', () => {
+  function emetteurAppoint(tvIntermittenceId) {
+    const em = emetteur({ typeEmissionDistributionId: '11' });
+    Object.assign(em.donnee_entree, {
+      enum_type_chauffage_id: '2',
+      enum_equipement_intermittence_id: '1',
+      enum_type_regulation_id: '1',
+      tv_intermittence_id: tvIntermittenceId
+    });
+    return em;
+  }
+
+  const ligneIndividuelle = {
+    i0: '0.97',
+    tv_intermittence_id: '112',
+    enum_type_installation_id: '1|4'
+  };
+  const ligneCollective = {
+    i0: '1.07',
+    tv_intermittence_id: '158',
+    enum_type_installation_id: '2|3|4'
+  };
+
+  test('appoint individuel : matcher sur installation individuelle, sans comptage', () => {
+    const em = emetteurAppoint();
+    mockTv({ intermittence: ligneIndividuelle });
+
+    calc_emetteur_ch(em, { enum_type_installation_id: '4' }, '31', '3', true);
+
+    expect(tvMatchers('intermittence')).toEqual([
+      {
+        enum_methode_application_dpe_log_id: '31',
+        enum_type_installation_id: '1',
+        enum_type_chauffage_id: '2',
+        enum_equipement_intermittence_id: '1',
+        enum_type_regulation_id: '1',
+        enum_type_emission_distribution_id: '11'
+      }
+    ]);
+    expect(em.donnee_intermediaire.i0).toBeCloseTo(0.97, 10);
+    expect(em.donnee_entree.tv_intermittence_id).toBe(112);
+  });
+
+  test('émetteur de base (non appoint) : matcher inchangé (type 4, comptage)', () => {
+    const em = emetteurAppoint();
+    mockTv({ intermittence: ligneCollective });
+
+    calc_emetteur_ch(em, { enum_type_installation_id: '4' }, '31', '3');
+
+    const [matcher] = tvMatchers('intermittence');
+    expect(matcher.enum_type_installation_id).toBe('4');
+    expect(matcher.comptage_individuel).toBe('Absence');
+    expect(em.donnee_intermediaire.i0).toBeCloseTo(1.07, 10);
+  });
+
+  test('bug_for_bug_compat : ligne individuelle saisie par le logiciel → table individuelle', () => {
+    utilsState.bugForBugCompat = true;
+    const em = emetteurAppoint(112);
+    mockTv({ intermittence: ligneIndividuelle });
+
+    calc_emetteur_ch(em, { enum_type_installation_id: '4' }, '31', '3', true);
+
+    const matchers = tvMatchers('intermittence');
+    expect(matchers.at(-1).enum_type_installation_id).toBe('1');
+    expect(matchers.at(-1)).not.toHaveProperty('comptage_individuel');
+  });
+
+  test('bug_for_bug_compat : ligne collective saisie par le logiciel → table collective conservée', () => {
+    utilsState.bugForBugCompat = true;
+    const em = emetteurAppoint(158);
+    mockTv({ intermittence: ligneCollective });
+
+    calc_emetteur_ch(em, { enum_type_installation_id: '4' }, '27', '3', true);
+
+    const matchers = tvMatchers('intermittence');
+    expect(matchers.at(-1).enum_type_installation_id).toBe('4');
+    expect(matchers.at(-1).comptage_individuel).toBe('Absence');
+    expect(em.donnee_intermediaire.i0).toBeCloseTo(1.07, 10);
+  });
+});
+
+describe('isIntermittenceCollectiveSaisie', () => {
+  test('hors bug_for_bug_compat : toujours faux, sans lecture de table', () => {
+    expect(isIntermittenceCollectiveSaisie({ tv_intermittence_id: 158 })).toBe(false);
+    expect(tv).not.toHaveBeenCalled();
+  });
+
+  test('bug_for_bug_compat sans tv_intermittence_id : faux', () => {
+    utilsState.bugForBugCompat = true;
+    expect(isIntermittenceCollectiveSaisie({})).toBe(false);
+    expect(tv).not.toHaveBeenCalled();
+  });
+
+  test.each([
+    ['2|3|4', true],
+    ['2', true],
+    ['1|4', false],
+    ['1', false],
+    [undefined, false]
+  ])('type d’installation de la ligne saisie = %s → %s', (types, attendu) => {
+    utilsState.bugForBugCompat = true;
+    mockTv({ intermittence: { tv_intermittence_id: '7', enum_type_installation_id: types } });
+
+    expect(isIntermittenceCollectiveSaisie({ tv_intermittence_id: 7 })).toBe(attendu);
+    expect(tvMatchers('intermittence')).toEqual([{ tv_intermittence_id: 7 }]);
+  });
+
+  test('ligne saisie introuvable : faux', () => {
+    utilsState.bugForBugCompat = true;
+    mockTv({});
+    expect(isIntermittenceCollectiveSaisie({ tv_intermittence_id: 7 })).toBe(false);
   });
 });
 

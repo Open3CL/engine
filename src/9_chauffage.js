@@ -22,6 +22,25 @@ export function isImmeuble(map_id) {
   return map.includes('immeuble') && !map.includes('appartement') && !map.includes('maison');
 }
 
+/**
+ * Installation hybride collective-individuelle (enum_type_installation_id = 4) en configuration
+ * « chauffage collectif avec base + appoint » (enum_cfg_installation_ch_id = 10) : le premier
+ * émetteur est celui de la base collective, les suivants sont les émetteurs de l'appoint
+ * individuel. L'intermittence de ces derniers relève de la table « immeuble collectif, chauffage
+ * individuel » (Tribu Calcul_emetteur.cs : Is_individuel = oui pour l'émetteur d'appoint).
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §9.8
+ * @param {object} instChDe donnee_entree de l'installation de chauffage
+ * @param {number} idx rang de l'émetteur dans l'installation
+ * @returns {boolean}
+ */
+export function isEmetteurAppointIndividuel(instChDe, idx) {
+  return (
+    idx >= 1 &&
+    Number(instChDe.enum_type_installation_id) === 4 &&
+    Number(instChDe.enum_cfg_installation_ch_id) === 10
+  );
+}
+
 export default function calc_chauffage(
   dpe,
   ch,
@@ -50,8 +69,8 @@ export default function calc_chauffage(
   di.besoin_ch_depensier = bch_dep;
 
   const em_ch = ch.emetteur_chauffage_collection.emetteur_chauffage;
-  em_ch.forEach((em_ch) => {
-    calc_emetteur_ch(em_ch, de, map_id, inertie_id);
+  em_ch.forEach((em_ch, idx) => {
+    calc_emetteur_ch(em_ch, de, map_id, inertie_id, isEmetteurAppointIndividuel(de, idx));
   });
 
   if (de.surface_chauffee !== Sh) {

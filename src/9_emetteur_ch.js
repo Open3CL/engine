@@ -65,7 +65,20 @@ function tv_rendement_regulation(di, de) {
   }
 }
 
-function tv_intermittence(di, de, inst_ch_de, map_id, inertie_id) {
+/**
+ * En bug_for_bug_compat, indique si l'intermittence saisie par le logiciel (tv_intermittence_id)
+ * correspond à une ligne de la table réservée aux installations collectives.
+ * @param {object} de donnee_entree de l'émetteur
+ * @returns {boolean}
+ */
+export function isIntermittenceCollectiveSaisie(de) {
+  if (!bug_for_bug_compat || !de.tv_intermittence_id) return false;
+  const row = tv('intermittence', { tv_intermittence_id: de.tv_intermittence_id }, de);
+  if (!row || !row.enum_type_installation_id) return false;
+  return !row.enum_type_installation_id.split('|').includes('1');
+}
+
+function tv_intermittence(di, de, inst_ch_de, map_id, inertie_id, isAppointIndividuel) {
   let hasComptage = false;
   let row;
 
@@ -106,6 +119,15 @@ function tv_intermittence(di, de, inst_ch_de, map_id, inertie_id) {
     matcher.enum_classe_inertie_id = inertie_id;
   }
 
+  // Émetteur d'appoint individuel d'une installation base collective + appoint individuel :
+  // table « chauffage individuel », sans notion de comptage individuel (§9.8).
+  // En bug_for_bug_compat, on conserve la table collective si le logiciel l'a retenue pour cet
+  // émetteur (tv_intermittence_id saisi sur une ligne sans installation individuelle).
+  if (isAppointIndividuel && !isIntermittenceCollectiveSaisie(de)) {
+    matcher.enum_type_installation_id = '1';
+    delete matcher.comptage_individuel;
+  }
+
   row = tv('intermittence', matcher, de);
   if (row) {
     di.i0 = Number(row.i0);
@@ -115,7 +137,13 @@ function tv_intermittence(di, de, inst_ch_de, map_id, inertie_id) {
   }
 }
 
-export function calc_emetteur_ch(em_ch, inst_ch_de, map_id, inertie_id) {
+export function calc_emetteur_ch(
+  em_ch,
+  inst_ch_de,
+  map_id,
+  inertie_id,
+  isAppointIndividuel = false
+) {
   const de = em_ch.donnee_entree;
   const di = {};
   const du = {};
@@ -123,7 +151,7 @@ export function calc_emetteur_ch(em_ch, inst_ch_de, map_id, inertie_id) {
   tv_rendement_distribution_ch(di, de);
   tv_rendement_emission(di, de);
   tv_rendement_regulation(di, de);
-  tv_intermittence(di, de, inst_ch_de, map_id, inertie_id);
+  tv_intermittence(di, de, inst_ch_de, map_id, inertie_id, isAppointIndividuel);
 
   em_ch.donnee_intermediaire = di;
   em_ch.donnee_utilisateur = du;
