@@ -36,7 +36,8 @@ vi.mock('./utils.js', () => ({
   }
 }));
 
-const { default: calc_pont_thermique } = await import('./3.4_pont_thermique.js');
+const { default: calc_pont_thermique, ligneDpeSiSeulDormantDiffere } =
+  await import('./3.4_pont_thermique.js');
 const { tv } = await import('./utils.js');
 
 /** Enveloppe minimale avec collections contrôlées. */
@@ -752,7 +753,9 @@ describe('calc_pont_thermique - liaison menuiserie / mur', () => {
 
     calc_pont_thermique(pt, '1', logement({ mur, bv: [menuiserie] }));
 
-    expect(tv).toHaveBeenLastCalledWith(
+    // 3e appel tv : vérification de la ligne exportée (issue #296), sans effet ici
+    expect(tv).toHaveBeenNthCalledWith(
+      2,
       'pont_thermique',
       expect.objectContaining({ type_pose: 'nu extérieur' })
     );
@@ -769,7 +772,8 @@ describe('calc_pont_thermique - liaison menuiserie / mur', () => {
 
     calc_pont_thermique(pt, '1', logement({ mur, bv: [menuiserie] }));
 
-    expect(tv).toHaveBeenLastCalledWith(
+    expect(tv).toHaveBeenNthCalledWith(
+      2,
       'pont_thermique',
       expect.objectContaining({ type_pose: 'tunnel' })
     );
@@ -1015,5 +1019,175 @@ describe('calc_pont_thermique - plancher sur paroi non déperditive (issue #212)
     calc_pont_thermique(pt, '1', logement({ mur, pb: [plancher] }));
 
     expect(pt.donnee_intermediaire.k).toBe(0.71);
+  });
+});
+
+/**
+ * Reprise de la ligne « menuiserie / mur » exportée par le DPE quand seule la largeur du dormant
+ * diffère de la ligne recalculée (compatibilité bug uniquement).
+ * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.4.5
+ * @see https://github.com/Open3CL/engine/issues/296
+ */
+describe('calc_pont_thermique - ligne DPE reprise si seul le dormant diffère (issue #296)', () => {
+  /** Ligne recalculée : dormant 5 cm. */
+  const ligneRecalculee = {
+    tv_pont_thermique_id: '71',
+    enum_type_liaison_id: '5',
+    isolation_mur: 'Non isolé',
+    type_pose: 'Nu Extérieur',
+    largeur_dormant: '5',
+    k: '0.43'
+  };
+  /** Ligne exportée par le DPE : dormant 10 cm, mêmes autres critères. */
+  const ligneDpe = {
+    ...ligneRecalculee,
+    tv_pont_thermique_id: '72',
+    largeur_dormant: '10',
+    k: '0.29'
+  };
+
+  function cas(k = 0.29) {
+    const mur = [
+      {
+        donnee_entree: {
+          reference: 'M1',
+          enum_type_adjacence_id: '1',
+          enum_materiaux_structure_mur_id: '1',
+          type_isolation: 'non isolé'
+        },
+        donnee_utilisateur: {}
+      }
+    ];
+    const baie = {
+      donnee_entree: {
+        reference: 'B1',
+        type_pose: 'nu extérieur',
+        presence_retour_isolation: 0,
+        largeur_dormant: 5
+      },
+      donnee_utilisateur: {}
+    };
+    const pt = pontThermique(
+      {
+        type_liaison: 'menuiserie / mur',
+        enum_type_liaison_id: '5',
+        reference_1: 'B1',
+        reference_2: 'M1',
+        description: 'menuiserie / mur',
+        tv_pont_thermique_id: '72'
+      },
+      k
+    );
+    return { pt, log: logement({ mur, bv: [baie] }) };
+  }
+
+  /** Mock de la table : recherche par identifiant → ligne DPE, sinon ligne recalculée. */
+  function mockTable(dpe = ligneDpe) {
+    tv.mockImplementation((table, matcher) =>
+      matcher.tv_pont_thermique_id ? dpe : ligneRecalculee
+    );
+  }
+
+  test('cas 2375E2293948T : dormant exporté 5 mais ligne DPE « dormant 10 » avec k exporté : ligne DPE reprise', () => {
+    state.bug = true;
+    mockTable();
+    const { pt, log } = cas();
+
+    calc_pont_thermique(pt, '1', log);
+
+    expect(tv).toHaveBeenCalledWith(
+      'pont_thermique',
+      expect.objectContaining({ largeur_dormant: 5 })
+    );
+    expect(tv).toHaveBeenLastCalledWith('pont_thermique', { tv_pont_thermique_id: '72' });
+    expect(pt.donnee_intermediaire.k).toBe(0.29);
+    expect(pt.donnee_entree.tv_pont_thermique_id).toBe(72);
+    expect(warnSpy).toHaveBeenCalled();
+  });
+
+  test('sans compatibilité bug : ligne recalculée conservée (règle normative), table non relue', () => {
+    mockTable();
+    const { pt, log } = cas();
+
+    calc_pont_thermique(pt, '1', log);
+
+    expect(tv).toHaveBeenCalledTimes(1);
+    expect(pt.donnee_intermediaire.k).toBe(0.43);
+    expect(pt.donnee_entree.tv_pont_thermique_id).toBe(71);
+  });
+
+  test('compatibilité bug mais k exporté différent du k de la ligne DPE : ligne recalculée conservée', () => {
+    state.bug = true;
+    mockTable();
+    const { pt, log } = cas(0.43);
+
+    calc_pont_thermique(pt, '1', log);
+
+    expect(pt.donnee_intermediaire.k).toBe(0.43);
+    expect(pt.donnee_entree.tv_pont_thermique_id).toBe(71);
+  });
+
+  test('compatibilité bug, liaison autre que menuiserie / mur : aucune relecture de la ligne DPE', () => {
+    state.bug = true;
+    tv.mockReturnValue({ k: '0.5', tv_pont_thermique_id: '10' });
+    const pt = pontThermique(
+      {
+        type_liaison: 'refend / mur',
+        reference_1: 'M1',
+        description: 'refend',
+        tv_pont_thermique_id: '72'
+      },
+      0.29
+    );
+
+    calc_pont_thermique(pt, '1', logement());
+
+    expect(tv).toHaveBeenCalledTimes(1);
+    expect(pt.donnee_intermediaire.k).toBe(0.5);
+  });
+
+  describe('ligneDpeSiSeulDormantDiffere', () => {
+    test('ligne DPE ne différant que par le dormant et k identique : ligne DPE retournée', () => {
+      tv.mockReturnValue(ligneDpe);
+
+      expect(ligneDpeSiSeulDormantDiffere(ligneRecalculee, 72, { k: 0.29 })).toBe(ligneDpe);
+      expect(tv).toHaveBeenCalledWith('pont_thermique', { tv_pont_thermique_id: 72 });
+    });
+
+    test('aucune ligne recalculée : rien n’est repris', () => {
+      expect(ligneDpeSiSeulDormantDiffere(undefined, 72, { k: 0.29 })).toBeUndefined();
+      expect(tv).not.toHaveBeenCalled();
+    });
+
+    test.each([
+      ['tv_pont_thermique_id absent', undefined, { k: 0.29 }],
+      ['tv_pont_thermique_id nul', null, { k: 0.29 }],
+      ['k exporté absent', 72, {}],
+      ['données intermédiaires absentes', 72, undefined]
+    ])('%s : ligne recalculée conservée sans relire la table', (_, id, di) => {
+      expect(ligneDpeSiSeulDormantDiffere(ligneRecalculee, id, di)).toBe(ligneRecalculee);
+      expect(tv).not.toHaveBeenCalled();
+    });
+
+    test.each([
+      ['ligne DPE introuvable', undefined],
+      [
+        'identifiant retourné différent (correspondance partielle)',
+        { ...ligneDpe, tv_pont_thermique_id: '720' }
+      ],
+      ['type de liaison différent', { ...ligneDpe, enum_type_liaison_id: '1' }],
+      ['largeur de dormant absente', { ...ligneDpe, largeur_dormant: undefined }],
+      ['même largeur de dormant', { ...ligneDpe, largeur_dormant: '5' }],
+      ['isolation du mur différente', { ...ligneDpe, isolation_mur: 'ITI' }],
+      ['type de pose différent', { ...ligneDpe, type_pose: 'Tunnel' }],
+      ['retour d’isolation différent', { ...ligneDpe, presence_retour_isolation: '1' }],
+      ['k de la ligne DPE différent du k exporté', { ...ligneDpe, k: '0.25' }]
+    ])('%s : ligne recalculée conservée', (_, dpe) => {
+      tv.mockReturnValue(dpe);
+
+      expect(ligneDpeSiSeulDormantDiffere(ligneRecalculee, '72', { k: '0.29' })).toBe(
+        ligneRecalculee
+      );
+    });
   });
 });
