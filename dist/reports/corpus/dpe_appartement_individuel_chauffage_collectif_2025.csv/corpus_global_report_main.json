@@ -4,8 +4,8 @@
   "nbValidDpe": 10000,
   "nbInvalidDpeVersion": 0,
   "nbExcludedDpe": 0,
-  "nbAllChecksBelowThreshold": 9328,
-  "successRatio": "93.28 %",
+  "nbAllChecksBelowThreshold": 9364,
+  "successRatio": "93.64 %",
   "dpeRunFailed": [],
   "checks": {
     "deperdition_mur": { "nbBelowThreshold": 9912, "mandatory": false, "successRatio": "99.12 %" },
@@ -50,9 +50,9 @@
     "conso_ecs": { "nbBelowThreshold": 9727, "mandatory": true, "successRatio": "97.27 %" },
     "conso_ch": { "nbBelowThreshold": 9624, "mandatory": true, "successRatio": "96.24 %" },
     "conso_auxiliaire_distribution_ch": {
-      "nbBelowThreshold": 9697,
+      "nbBelowThreshold": 9852,
       "mandatory": false,
-      "successRatio": "96.97 %"
+      "successRatio": "98.52 %"
     },
     "conso_auxiliaire_distribution_ecs": {
       "nbBelowThreshold": 9876,
@@ -74,31 +74,31 @@
       "mandatory": false,
       "successRatio": "97.97 %"
     },
-    "ep_conso_5_usages": { "nbBelowThreshold": 9543, "mandatory": true, "successRatio": "95.43 %" },
+    "ep_conso_5_usages": { "nbBelowThreshold": 9579, "mandatory": true, "successRatio": "95.79 %" },
     "ep_conso_5_usages_m2": {
-      "nbBelowThreshold": 9541,
+      "nbBelowThreshold": 9579,
       "mandatory": true,
-      "successRatio": "95.41 %"
+      "successRatio": "95.79 %"
     },
     "emission_ges_5_usages": {
-      "nbBelowThreshold": 9556,
+      "nbBelowThreshold": 9582,
       "mandatory": true,
-      "successRatio": "95.56 %"
+      "successRatio": "95.82 %"
     },
     "emission_ges_5_usages_m2": {
-      "nbBelowThreshold": 9524,
+      "nbBelowThreshold": 9543,
       "mandatory": true,
-      "successRatio": "95.24 %"
+      "successRatio": "95.43 %"
     }
   },
   "performance": {
     "count": 10000,
-    "mean": 4.513,
-    "median": 4.138,
-    "min": 1.586,
-    "max": 31.396,
-    "p95": 7.327,
-    "p99": 9.532,
-    "totalMs": 45129.282
+    "mean": 6.12,
+    "median": 5.8,
+    "min": 1.859,
+    "max": 62.038,
+    "p95": 9.634,
+    "p99": 14.984,
+    "totalMs": 61195.826
   }
 }
