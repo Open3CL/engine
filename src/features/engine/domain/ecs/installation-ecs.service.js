@@ -1,5 +1,6 @@
 import { GenerateurEcsService } from './generateur-ecs.service.js';
 import { inject } from 'dioma';
+import { isStockageEcsVolumeChauffe } from '../../../../11_stockage_ecs_volume_chauffe.js';
 
 /**
  * Calcul des besoins et pertes des installations ECS
@@ -142,11 +143,8 @@ export class InstallationEcsService {
     if (installationIndividuelle) {
       installationEcs.donnee_utilisateur.QgwRecuperable =
         installationEcs.generateur_ecs_collection?.generateur_ecs
-          .filter(
-            (generateurEcs) =>
-              parseInt(generateurEcs.donnee_entree.position_volume_chauffe_stockage) === 1 ||
-              (generateurEcs.donnee_entree.position_volume_chauffe_stockage === undefined &&
-                parseInt(generateurEcs.donnee_entree.position_volume_chauffe) === 1)
+          .filter((generateurEcs) =>
+            isStockageEcsVolumeChauffe(generateurEcs.donnee_entree, installationEcsDE)
           )
           .reduce((acc, generateurEcs) => {
             return acc + generateurEcs.donnee_utilisateur.Qgw;

@@ -9,6 +9,7 @@ import {
 import { calc_ai_j, calc_as_j } from './6.1_apport_gratuit.js';
 import { calc_sse_j } from './6.2_surface_sud_equivalente.js';
 import { bug_for_bug_compat, mois_liste } from './utils.js';
+import { isStockageEcsVolumeChauffe } from './11_stockage_ecs_volume_chauffe.js';
 
 export default function calc_besoin_ch(
   ilpa,
@@ -67,10 +68,7 @@ export default function calc_besoin_ch(
     } else {
       Qgw = gen_ecs.reduce((acc, gen_ecs) => {
         // Pas de récupération de stockage si le ballon est hors volume chauffé
-        if (
-          gen_ecs.donnee_entree.position_volume_chauffe_stockage === 0 ||
-          gen_ecs.donnee_entree.position_volume_chauffe === 0
-        ) {
+        if (!isStockageEcsVolumeChauffe(gen_ecs.donnee_entree, instal_ecs.donnee_entree)) {
           return acc;
         }
 
