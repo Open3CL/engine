@@ -61,7 +61,8 @@ const {
   isImmeuble,
   generateursPrincipauxCascade,
   ratioDimensionnement,
-  reseauCirculateurUnique
+  reseauCirculateurUnique,
+  isEmetteurAppointIndividuel
 } = await import('./9_chauffage.js');
 const { requestInput, tv, tvColumnIDs } = await import('./utils.js');
 const { calc_emetteur_ch } = await import('./9_emetteur_ch.js');
@@ -286,6 +287,51 @@ describe('calc_chauffage - rdim de l’installation transmis au générateur', (
     expect(
       ch.generateur_chauffage_collection.generateur_chauffage[0].donnee_entree.rdim_reconstitue
     ).toBe(true);
+  });
+});
+
+describe('isEmetteurAppointIndividuel (issue #292)', () => {
+  test.each([
+    ['4', '10', 0, false],
+    ['4', '10', 1, true],
+    ['4', '10', 3, true],
+    [4, 10, 1, true],
+    ['4', '11', 1, false],
+    ['4', '3', 1, false],
+    ['2', '10', 1, false],
+    ['1', '10', 1, false]
+  ])('type installation %s, cfg %s, rang %s → %s', (ti, cfg, idx, attendu) => {
+    expect(
+      isEmetteurAppointIndividuel(
+        { enum_type_installation_id: ti, enum_cfg_installation_ch_id: cfg },
+        idx
+      )
+    ).toBe(attendu);
+  });
+});
+
+describe('calc_chauffage - émetteurs d’une installation base + appoint (issue #292)', () => {
+  test('type 4 / cfg 10 : seul l’émetteur de rang ≥ 1 est traité comme appoint individuel', () => {
+    const ch = installation([generateur(), generateur()], [emetteur('1'), emetteur('1')], {
+      enum_type_installation_id: '4',
+      enum_cfg_installation_ch_id: '10'
+    });
+    appel(ch);
+
+    const appels = vi.mocked(calc_emetteur_ch).mock.calls;
+    expect(appels).toHaveLength(2);
+    expect(appels[0][4]).toBe(false);
+    expect(appels[1][4]).toBe(true);
+  });
+
+  test('autre configuration : aucun émetteur d’appoint individuel', () => {
+    const ch = installation([generateur()], [emetteur('1'), emetteur('1')], {
+      enum_type_installation_id: '4',
+      enum_cfg_installation_ch_id: '11'
+    });
+    appel(ch);
+
+    expect(vi.mocked(calc_emetteur_ch).mock.calls.map((c) => c[4])).toEqual([false, false]);
   });
 });
 
