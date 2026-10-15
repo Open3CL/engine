@@ -68,7 +68,8 @@ const {
   type_generateur_ch,
   checkForGeneratorType,
   calc_generateur_ch,
-  hasConsoForAuxDistribution
+  hasConsoForAuxDistribution,
+  hasEmetteurAerauliqueLie
 } = await import('./9_generateur_ch.js');
 const { requestInput, requestInputID, tv, tvColumnIDs } = await import('./utils.js');
 const { conso_aux_distribution_ch, conso_aux_gen } = await import('./15_conso_aux.js');
@@ -414,6 +415,47 @@ describe('hasConsoForAuxDistribution - éligibilité aux auxiliaires de distribu
 });
 
 /**
+ * 15.2 Réseau aéraulique (émetteur 5) rattaché au générateur : auxiliaires de distribution calculés
+ * quel que soit le générateur, comme le moteur de référence (#291).
+ * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §15.2
+ */
+describe('hasEmetteurAerauliqueLie - réseau aéraulique rattaché au générateur', () => {
+  const em = (ed, lien) => ({
+    donnee_entree: {
+      enum_type_emission_distribution_id: ed,
+      enum_lien_generateur_emetteur_id: lien
+    }
+  });
+
+  test('émetteur 5 seul : rattaché au générateur quel que soit le lien', () => {
+    expect(
+      hasEmetteurAerauliqueLie([em('5', '2')], { enum_lien_generateur_emetteur_id: '1' })
+    ).toBe(true);
+  });
+
+  test('identifiant numérique ou chaîne : même règle', () => {
+    expect(hasEmetteurAerauliqueLie([em(5)], {})).toBe(true);
+  });
+
+  test('émetteur 5 parmi plusieurs : rattaché si même lien générateur/émetteur', () => {
+    const de = { enum_lien_generateur_emetteur_id: '1' };
+    expect(hasEmetteurAerauliqueLie([em('1', '2'), em('5', '1')], de)).toBe(true);
+  });
+
+  test('émetteur 5 relié à un autre générateur : non rattaché', () => {
+    const de = { enum_lien_generateur_emetteur_id: '1' };
+    expect(hasEmetteurAerauliqueLie([em('1', '1'), em('5', '2')], de)).toBe(false);
+  });
+
+  test('aucun émetteur aéraulique ou liste absente : faux', () => {
+    expect(hasEmetteurAerauliqueLie([em('1'), em('3')], {})).toBe(false);
+    expect(hasEmetteurAerauliqueLie([em('4')], {})).toBe(false);
+    expect(hasEmetteurAerauliqueLie([], {})).toBe(false);
+    expect(hasEmetteurAerauliqueLie(undefined, {})).toBe(false);
+  });
+});
+
+/**
  * calc_generateur_ch : aiguillage du rendement puis délégations.
  */
 describe('calc_generateur_ch - orchestration du calcul générateur', () => {
@@ -559,6 +601,33 @@ describe('calc_generateur_ch - orchestration du calcul générateur', () => {
     vi.mocked(tv).mockReturnValue({ rg: '0.9', tv_rendement_generation_id: '1' });
     const gen = generateur({ enum_type_generateur_ch_id: '100' });
     appel(gen, [emetteur('1')]);
+    expect(conso_aux_distribution_ch).not.toHaveBeenCalled();
+  });
+
+  /**
+   * PAC air/air (non éligible par son type) reliée à un réseau aéraulique : auxiliaires calculés (#291).
+   * @see https://github.com/Open3CL/engine/issues/291
+   */
+  test('PAC air/air sur réseau aéraulique (émetteur 5) : conso_aux_distribution_ch appelé', () => {
+    const gen = generateur({ enum_type_generateur_ch_id: '3' }, { isPacGenerator: true });
+    const em = { donnee_entree: { enum_type_emission_distribution_id: '5' } };
+    appel(gen, [em]);
+    expect(conso_aux_distribution_ch).toHaveBeenCalledWith(
+      [em],
+      gen.donnee_entree,
+      gen.donnee_intermediaire,
+      gen.donnee_utilisateur,
+      100,
+      1,
+      1,
+      0,
+      150
+    );
+  });
+
+  test('PAC air/air sur émetteur non aéraulique : conso_aux_distribution_ch ignoré', () => {
+    const gen = generateur({ enum_type_generateur_ch_id: '3' }, { isPacGenerator: true });
+    appel(gen, [{ donnee_entree: { enum_type_emission_distribution_id: '1' } }]);
     expect(conso_aux_distribution_ch).not.toHaveBeenCalled();
   });
 
