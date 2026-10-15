@@ -37,7 +37,32 @@ vi.mock('./tv.js', () => ({
       { tv_umur0_id: '144', enum_materiaux_structure_mur_id: '26', epaisseur_structure: '10' },
       { tv_umur0_id: '145', enum_materiaux_structure_mur_id: '26', epaisseur_structure: '15' },
       { tv_umur0_id: '146', enum_materiaux_structure_mur_id: '26', epaisseur_structure: '20' },
-      { tv_umur0_id: '151', enum_materiaux_structure_mur_id: '26', epaisseur_structure: '≥ 45' }
+      { tv_umur0_id: '151', enum_materiaux_structure_mur_id: '26', epaisseur_structure: '≥ 45' },
+      // Béton banché (13) avec valeurs d'Umur0, pour l'interpolation (issue #295)
+      {
+        tv_umur0_id: '80',
+        enum_materiaux_structure_mur_id: '13',
+        epaisseur_structure: '35',
+        umur0: '2.2'
+      },
+      {
+        tv_umur0_id: '79',
+        enum_materiaux_structure_mur_id: '13',
+        epaisseur_structure: '30',
+        umur0: '2.4'
+      },
+      {
+        tv_umur0_id: '81',
+        enum_materiaux_structure_mur_id: '13',
+        epaisseur_structure: '≥ 45',
+        umur0: '1.9'
+      },
+      {
+        tv_umur0_id: '82',
+        enum_materiaux_structure_mur_id: '13',
+        epaisseur_structure: 'non numérique',
+        umur0: '9'
+      }
     ]
   }
 }));
@@ -54,7 +79,12 @@ vi.mock('./utils.js', () => ({
   }
 }));
 
-const { default: calc_mur, epaisseurStructureTable } = await import('./3.2.1_mur.js');
+const {
+  default: calc_mur,
+  epaisseurStructureTable,
+  umur0Interpole,
+  MATERIAUX_PAROI_ANCIENNE
+} = await import('./3.2.1_mur.js');
 const { tv, getThicknessFromDescription } = await import('./utils.js');
 
 /** Table `umur0` figée : U0 forfaitaire de la paroi nue. */
@@ -1004,5 +1034,245 @@ describe('epaisseurStructureTable - épaisseur hors table (issue #138)', () => {
     });
     // L'épaisseur saisie n'est pas modifiée dans les données d'entrée
     expect(mur.donnee_entree.epaisseur_structure).toBe(16);
+  });
+});
+
+/**
+ * Correctifs de compatibilité (bug_for_bug) sur les murs.
+ * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.2.1
+ * @see https://github.com/Open3CL/engine/issues/295
+ */
+describe('issue #295 - enduit isolant sur paroi ancienne (MUR1)', () => {
+  /** Umur0 table (mock) = 2 ; Umur0 avec enduit = 1 / (1/2 + 0,7). */
+  const UMUR0_ENDUIT = 0.8333333333333334;
+
+  /**
+   * @param materiau {string}
+   * @param donnee_intermediaire {object}
+   */
+  const murAvecEnduit = (materiau, donnee_intermediaire) => ({
+    donnee_entree: {
+      methode_saisie_u: 'non isolé',
+      methode_saisie_u0:
+        'déterminé selon le matériau et épaisseur à partir de la table de valeur forfaitaire',
+      enum_materiaux_structure_mur_id: materiau,
+      epaisseur_structure: 30,
+      enum_type_doublage_id: '2',
+      enduit_isolant_paroi_ancienne: 1,
+      description: 'mur'
+    },
+    donnee_intermediaire
+  });
+
+  beforeEach(() => {
+    bugForBugCompat = true;
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  test.each([['2'], ['8'], ['9']])(
+    "matériau ancien %s : Umur0 exporté avant enduit mais Umur avec enduit => l'enduit est appliqué",
+    (materiau) => {
+      // Cas 2495E2914184U : umur0 exporté = 2 (avant enduit), umur exporté = Umur0 avec enduit
+      const mur = murAvecEnduit(materiau, { umur0: 2, umur: UMUR0_ENDUIT });
+
+      calc_mur(mur, 'h1a', '1', '0');
+
+      expect(mur.donnee_intermediaire.umur0).toBeCloseTo(UMUR0_ENDUIT, 9);
+      expect(mur.donnee_intermediaire.umur).toBeCloseTo(UMUR0_ENDUIT, 9);
+    }
+  );
+
+  test("matériau ancien : Umur du DPE sans enduit => l'Umur0 d'origine est conservé", () => {
+    const mur = murAvecEnduit('2', { umur0: 2, umur: 2 });
+
+    calc_mur(mur, 'h1a', '1', '0');
+
+    expect(mur.donnee_intermediaire.umur0).toBe(2);
+  });
+
+  test.each([['1'], ['12'], ['13']])(
+    "matériau %s (paroi non ancienne) : la correspondance de l'Umur avec enduit n'est pas retenue",
+    (materiau) => {
+      const mur = murAvecEnduit(materiau, { umur0: 2, umur: UMUR0_ENDUIT });
+
+      calc_mur(mur, 'h1a', '1', '0');
+
+      expect(mur.donnee_intermediaire.umur0).toBe(2);
+    }
+  );
+
+  test('hors bug_for_bug : l’enduit est toujours appliqué', () => {
+    bugForBugCompat = false;
+    const mur = murAvecEnduit('13', { umur0: 2, umur: 2 });
+
+    calc_mur(mur, 'h1a', '1', '0');
+
+    expect(mur.donnee_intermediaire.umur0).toBeCloseTo(UMUR0_ENDUIT, 9);
+  });
+
+  test('liste des matériaux de paroi ancienne (pierres, terre, colombage, brique ancienne)', () => {
+    expect(MATERIAUX_PAROI_ANCIENNE).toEqual([2, 3, 4, 5, 6, 7, 8, 9, 21]);
+    // inconnu, blocs de béton creux et béton banché ne sont pas des parois anciennes
+    [1, 12, 13].forEach((materiau) => expect(MATERIAUX_PAROI_ANCIENNE).not.toContain(materiau));
+  });
+});
+
+describe('issue #295 - interpolation de Umur0 entre deux épaisseurs (MUR2)', () => {
+  test.each([
+    { epaisseur: 32, attendu: 2.32, cas: '32 cm entre 30 (2,4) et 35 (2,2)' },
+    { epaisseur: '33', attendu: 2.28, cas: 'épaisseur fournie en chaîne' },
+    { epaisseur: 40, attendu: 2.05, cas: '40 cm entre 35 (2,2) et « ≥ 45 » (1,9)' }
+  ])('umur0Interpole : $cas', ({ epaisseur, attendu }) => {
+    expect(umur0Interpole('13', epaisseur)).toBeCloseTo(attendu, 9);
+  });
+
+  test.each([
+    { materiau: '13', epaisseur: 30, cas: 'épaisseur égale à une colonne' },
+    { materiau: '13', epaisseur: 25, cas: 'sous la première colonne' },
+    { materiau: '13', epaisseur: 50, cas: 'au-delà de la dernière colonne' },
+    { materiau: '13', epaisseur: 'abc', cas: 'épaisseur non numérique' },
+    { materiau: '13', epaisseur: undefined, cas: 'épaisseur absente' },
+    { materiau: '99', epaisseur: 32, cas: 'matériau absent de la table' }
+  ])('umur0Interpole : pas d’interpolation ($cas)', ({ materiau, epaisseur }) => {
+    expect(umur0Interpole(materiau, epaisseur)).toBeUndefined();
+  });
+
+  /**
+   * @param epaisseur {number}
+   * @param donnee_intermediaire {object|undefined}
+   */
+  const murBetonBanche = (epaisseur, donnee_intermediaire) => ({
+    donnee_entree: {
+      methode_saisie_u: 'non isolé',
+      methode_saisie_u0:
+        'déterminé selon le matériau et épaisseur à partir de la table de valeur forfaitaire',
+      enum_materiaux_structure_mur_id: '13',
+      epaisseur_structure: epaisseur,
+      enum_type_doublage_id: '2',
+      description: 'mur en béton banché'
+    },
+    donnee_intermediaire
+  });
+
+  beforeEach(() => {
+    // La table (mockée) renvoie la colonne 30 cm du béton banché
+    tv.mockImplementation((table) => {
+      if (table === 'umur0') return { umur0: '2.4', tv_umur0_id: '79' };
+      return null;
+    });
+  });
+
+  test("bug_for_bug : Umur0 du DPE égal à l'interpolation => valeur interpolée retenue", () => {
+    bugForBugCompat = true;
+    // Cas 2463E3034751T : Umur0 interpolé entre deux colonnes
+    const mur = murBetonBanche(32, { umur0: 2.318 });
+
+    calc_mur(mur, 'h1a', '1', '0');
+
+    expect(tv).toHaveBeenCalledWith('umur0', {
+      enum_materiaux_structure_mur_id: '13',
+      epaisseur_structure: 30
+    });
+    expect(mur.donnee_intermediaire.umur0).toBeCloseTo(2.32, 9);
+  });
+
+  test.each([
+    { bug: true, avant: { umur0: 2.4 }, cas: 'Umur0 du DPE égal à la colonne de la table' },
+    { bug: true, avant: { umur0: 2.326 }, cas: 'écart à l’interpolation ≥ 0,006' },
+    { bug: true, avant: undefined, cas: 'pas d’Umur0 dans le DPE' },
+    { bug: false, avant: { umur0: 2.32 }, cas: 'hors bug_for_bug' }
+  ])('valeur de la table conservée : $cas', ({ bug, avant }) => {
+    bugForBugCompat = bug;
+
+    const mur = murBetonBanche(32, avant);
+    calc_mur(mur, 'h1a', '1', '0');
+
+    expect(mur.donnee_intermediaire.umur0).toBe(2.4);
+  });
+
+  test('bug_for_bug : interpolation confondue avec la valeur de la table => table conservée', () => {
+    bugForBugCompat = true;
+    tv.mockImplementation((table) => {
+      if (table === 'umur0') return { umur0: '2.3205', tv_umur0_id: '79' };
+      return null;
+    });
+
+    const mur = murBetonBanche(32, { umur0: 2.32 });
+    calc_mur(mur, 'h1a', '1', '0');
+
+    expect(mur.donnee_intermediaire.umur0).toBe(2.3205);
+  });
+
+  test('bug_for_bug : épaisseur égale à une colonne => table conservée', () => {
+    bugForBugCompat = true;
+
+    const mur = murBetonBanche(30, { umur0: 2.4 });
+    calc_mur(mur, 'h1a', '1', '0');
+
+    expect(mur.donnee_intermediaire.umur0).toBe(2.4);
+  });
+});
+
+describe('issue #295 - doublage et isolation ITE/ITI pour les DPE < 2.4 (MUR3)', () => {
+  /** Umur0 avec doublage type 5 : 1 / (1/2 + 0,21). */
+  const UMUR0_AVEC_DOUBLAGE = 1.4084507042253522;
+
+  /**
+   * @param enum_type_isolation_id {string}
+   * @param donnee_intermediaire {object|undefined}
+   */
+  const murIsoleAvecDoublage = (enum_type_isolation_id, donnee_intermediaire) => ({
+    donnee_entree: {
+      methode_saisie_u: 'epaisseur isolation saisie justifiée par mesure ou observation',
+      methode_saisie_u0:
+        'déterminé selon le matériau et épaisseur à partir de la table de valeur forfaitaire',
+      enum_materiaux_structure_mur_id: '5',
+      epaisseur_structure: 30,
+      epaisseur_isolation: 10,
+      enum_type_doublage_id: '5',
+      enum_type_isolation_id
+    },
+    donnee_intermediaire
+  });
+
+  test.each([['3'], ['4'], ['6'], ['7'], ['8']])(
+    'bug_for_bug, v2.2, isolation %s : Umur0 du DPE = paroi nue => doublage non appliqué',
+    (typeIsolation) => {
+      bugForBugCompat = true;
+      // Cas 2375E0900891Q : Umur0 exporté = min(2,5 ; Umur0 nu)
+      const mur = murIsoleAvecDoublage(typeIsolation, { umur0: 2 });
+
+      calc_mur(mur, 'h1a', '1', '0', 2.2);
+
+      expect(mur.donnee_intermediaire.umur0).toBe(2);
+    }
+  );
+
+  test.each([
+    {
+      bug: true,
+      iso: '3',
+      avant: { umur0: UMUR0_AVEC_DOUBLAGE },
+      cas: 'Umur0 du DPE avec doublage'
+    },
+    { bug: true, iso: '3', avant: undefined, cas: 'pas d’Umur0 dans le DPE' },
+    { bug: true, iso: '2', avant: { umur0: 2 }, cas: 'mur sans isolation ITE/ITI' },
+    { bug: false, iso: '3', avant: { umur0: 2 }, cas: 'hors bug_for_bug' }
+  ])('v2.2 : doublage appliqué ($cas)', ({ bug, iso, avant }) => {
+    bugForBugCompat = bug;
+
+    const mur = murIsoleAvecDoublage(iso, avant);
+    calc_mur(mur, 'h1a', '1', '0', 2.2);
+
+    expect(mur.donnee_intermediaire.umur0).toBeCloseTo(UMUR0_AVEC_DOUBLAGE, 9);
+  });
+
+  test("bug_for_bug, v2.4 : comportement inchangé (doublage non cumulé à l'ITI)", () => {
+    bugForBugCompat = true;
+
+    const mur = murIsoleAvecDoublage('3', { umur0: UMUR0_AVEC_DOUBLAGE });
+    calc_mur(mur, 'h1a', '1', '0', 2.4);
+
+    expect(mur.donnee_intermediaire.umur0).toBe(2);
   });
 });
