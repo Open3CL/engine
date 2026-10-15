@@ -17,6 +17,18 @@ function tv_debits_ventilation(di, de, du) {
   }
 }
 
+/**
+ * Vrai si le DPE comporte au moins une menuiserie (baie ou porte) et qu'aucune n'exporte
+ * le champ `presence_joint` (issue #294).
+ */
+export function presenceJointNonRenseignee(porte_list, bv_list) {
+  const menuiseries = (porte_list || []).concat(bv_list || []);
+  return (
+    menuiseries.length > 0 &&
+    menuiseries.every((m) => [undefined, null, ''].includes(m.donnee_entree?.presence_joint))
+  );
+}
+
 function tv_q4pa_conv(di, de, cg, mur_list, ph_list, porte_list, bv_list) {
   const surfaces = mur_list.concat(ph_list);
   const surface_isolee = surfaces.reduce((acc, s) => {
@@ -82,14 +94,23 @@ function tv_q4pa_conv(di, de, cg, mur_list, ph_list, porte_list, bv_list) {
       if (rowQ4paConv.isolation_surfaces !== isolation_surfaces) {
         console.error(
           `Calcul de hperm pour la ventilation ${de.description}. Le DPE considère isolation_surfaces = ${rowQ4paConv.isolation_surfaces} 
-          alors que ce devrait être isolation_surfaces = ${isolation_surfaces}. La valeur du DPE isolation_surfaces = ${rowQ4paConv.isolation_surfaces} est utilisée.`
+          alors que ce devrait être isolation_surfaces = ${isolation_surfaces}. La valeur recalculée isolation_surfaces = ${isolation_surfaces} est utilisée.`
         );
       }
 
-      if (rowQ4paConv.presence_joints_menuiserie !== pjt) {
+      /**
+       * Issue #294 : aucune menuiserie n'exporte `presence_joint`. Aucune donnée ne contredit alors
+       * la ligne q4pa_conv retenue par le logiciel (ex. ligne 12 « avant 1948 avec joints », 2,5) :
+       * on reprend sa valeur `presence_joints_menuiserie` au lieu de considérer les menuiseries
+       * sans joint.
+       * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §4
+       */
+      if (presenceJointNonRenseignee(porte_list, bv_list)) {
+        pjt = rowQ4paConv.presence_joints_menuiserie === '1' ? '1' : '0';
+      } else if (rowQ4paConv.presence_joints_menuiserie !== pjt) {
         console.error(
           `Calcul de hperm pour la ventilation ${de.description}. Le DPE considère presence_joints_menuiserie = ${rowQ4paConv.presence_joints_menuiserie} 
-          alors que ce devrait être presence_joints_menuiserie = ${pjt}. La valeur du DPE presence_joints_menuiserie = ${rowQ4paConv.presence_joints_menuiserie} est utilisée.`
+          alors que ce devrait être presence_joints_menuiserie = ${pjt}. La valeur recalculée presence_joints_menuiserie = ${pjt} est utilisée.`
         );
       }
     }
