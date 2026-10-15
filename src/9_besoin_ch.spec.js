@@ -313,7 +313,7 @@ describe('calc_besoin_ch - branches complémentaires', () => {
               donnee_intermediaire: { Qgw: 100 }
             },
             {
-              // générateur hors volume chauffé => ignoré
+              // générateur hors volume chauffé mais stockage en volume chauffé => compté (#293)
               donnee_entree: { position_volume_chauffe_stockage: 1, position_volume_chauffe: 0 },
               donnee_intermediaire: { Qgw: 100 }
             },
@@ -658,5 +658,62 @@ describe('calc_besoin_ch - immeuble à installations ECS individuelles et collec
     const total = (0.1 * 10 * ((20 / 175) * 3) + 0.212 * 10 * (115 / 175)) * 1000;
     // un seul mois : Qrec_j = Qrec = 0,48 × ΣNref19 / 8760 × total
     expect(ret.pertes_distribution_ecs_recup).toBeCloseTo((0.48 * 100 * total) / 8760, 9);
+  });
+});
+
+describe('calc_besoin_ch - stockage ECS en volume chauffé (#293)', () => {
+  /**
+   * Cas des exemples de l'issue (2301E2484046J, 2322E2765016S) : ballon électrique LICIEL
+   * exporté avec position_volume_chauffe = 0 mais production en volume habitable (rd 1).
+   */
+  test('ballon en volume habitable exporté avec position_volume_chauffe = 0 : pertes récupérées', () => {
+    utilState.bug = false;
+    vi.mocked(calc_ai_j).mockReset().mockReturnValue(5000);
+    vi.mocked(calc_as_j).mockReset().mockReturnValue(2000);
+    vi.mocked(calc_sse_j).mockReset().mockReturnValue(10);
+    vi.mocked(calc_besoin_ecs_j).mockReset().mockReturnValue(10);
+    vi.mocked(calc_Qrec_gen_j).mockReset().mockReturnValue(0);
+    const instal = (rd) => [
+      {
+        donnee_entree: { enum_type_installation_id: '1', tv_rendement_distribution_ecs_id: rd },
+        generateur_ecs_collection: {
+          generateur_ecs: [
+            { donnee_entree: { position_volume_chauffe: 0 }, donnee_intermediaire: { Qgw: 8760 } }
+          ]
+        }
+      }
+    ];
+    const enVolume = calc_besoin_ch(
+      0,
+      0,
+      0,
+      0,
+      100,
+      100,
+      3,
+      instal('1'),
+      [],
+      [],
+      null,
+      'maison',
+      1
+    );
+    const horsVolume = calc_besoin_ch(
+      0,
+      0,
+      0,
+      0,
+      100,
+      100,
+      3,
+      instal('3'),
+      [],
+      [],
+      null,
+      'maison',
+      1
+    );
+    expect(enVolume.pertes_stockage_ecs_recup).toBeGreaterThan(0);
+    expect(horsVolume.pertes_stockage_ecs_recup).toBe(0);
   });
 });
