@@ -30,6 +30,53 @@ function defaultValue(type_liaison, pt_di, de) {
   return pourcentageValeurPontThermique(type_liaison, de, k, pt_di);
 }
 
+/**
+ * Mode bug_for_bug_compat uniquement - pont thermique « menuiserie / mur »
+ *
+ * Certains logiciels (DPEWIN 3.1.x / 5.1.6, moteur 3cl_tribu_1.4.25.1) exportent une largeur de dormant
+ * (ex : 5 cm) sur la menuiserie alors que le tv_pont_thermique_id et le k exportés pour le pont thermique
+ * correspondent à la ligne d'une autre largeur de dormant (ex : 10 cm).
+ * Normativement la ligne recalculée est la bonne (largeur du dormant « arrondie à la valeur la plus proche »),
+ * mais pour rester fidèle au calcul certifié, on reprend la ligne exportée par le DPE si :
+ * - elle ne diffère de la ligne recalculée que par la largeur du dormant
+ *   (même type de liaison, isolation du mur, type de pose et présence de retour d'isolation),
+ * - son k est égal au k exporté dans les données intermédiaires du pont thermique.
+ *
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.4.5 Menuiserie / mur
+ * @see https://github.com/Open3CL/engine/issues/296
+ *
+ * @param row {object|undefined} ligne de la table pont_thermique recalculée
+ * @param tv_id_dpe {string|number|undefined} tv_pont_thermique_id exporté par le DPE
+ * @param pt_di {Donnee_intermediaire} données intermédiaires exportées du pont thermique
+ * @returns {object|undefined} ligne à utiliser pour le pont thermique
+ */
+export function ligneDpeSiSeulDormantDiffere(row, tv_id_dpe, pt_di) {
+  if (!row || isNil(tv_id_dpe) || isNil(pt_di?.k)) {
+    return row;
+  }
+
+  const rowDpe = tv('pont_thermique', { tv_pont_thermique_id: tv_id_dpe });
+
+  if (
+    rowDpe &&
+    String(rowDpe.tv_pont_thermique_id) === String(tv_id_dpe) &&
+    rowDpe.enum_type_liaison_id === row.enum_type_liaison_id &&
+    rowDpe.largeur_dormant &&
+    rowDpe.largeur_dormant !== row.largeur_dormant &&
+    rowDpe.isolation_mur === row.isolation_mur &&
+    rowDpe.type_pose === row.type_pose &&
+    rowDpe.presence_retour_isolation === row.presence_retour_isolation &&
+    Number(rowDpe.k) === Number(pt_di.k)
+  ) {
+    console.warn(
+      `Pont thermique menuiserie / mur : reprise de la ligne tv_pont_thermique_id = ${tv_id_dpe} du DPE (largeur de dormant ${rowDpe.largeur_dormant} au lieu de ${row.largeur_dormant})`
+    );
+    return rowDpe;
+  }
+
+  return row;
+}
+
 function tv_k(pt_di, di, de, du, pc_id, logement) {
   const enveloppe = logement.enveloppe;
 
@@ -41,6 +88,7 @@ function tv_k(pt_di, di, de, du, pc_id, logement) {
   const porte_list = enveloppe.porte_collection.porte || [];
 
   const type_liaison = requestInput(de, du, 'type_liaison');
+  const tv_id_dpe = de.tv_pont_thermique_id;
 
   if (!de.reference_1) {
     console.warn(`BUG: pas de reference pour le pont thermique ${de.description}...`);
@@ -418,7 +466,12 @@ function tv_k(pt_di, di, de, du, pc_id, logement) {
     }
   }
 
-  const row = tv('pont_thermique', matcher);
+  let row = tv('pont_thermique', matcher);
+
+  if (bug_for_bug_compat && type_liaison === 'menuiserie / mur') {
+    row = ligneDpeSiSeulDormantDiffere(row, tv_id_dpe, pt_di);
+  }
+
   if (row) {
     di.k = Number(row.k);
     de.tv_pont_thermique_id = Number(row.tv_pont_thermique_id);
