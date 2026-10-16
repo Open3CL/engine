@@ -330,7 +330,18 @@ export function calcul_3cl(inputDpe, options) {
 
   const bfr = apport_et_besoin.besoin_fr;
   const bfr_dep = apport_et_besoin.besoin_fr_depensier;
-  clim.forEach((clim) => calc_clim(clim, bfr, bfr_dep, zc_id, ShChauffageAndEcs));
+  /**
+   * DPE appartement généré à partir de l'immeuble : besoin et conso de froid calculés à l'échelle de
+   * l'installation (immeuble), puis ramenés au logement au prorata Sh_logement / SH_immeuble, comme le
+   * chauffage et l'ECS (Tribu `Calcul_installation_froid.cs` l.62-64, `Calcul_batiment.cs`
+   * l.1114-1138).
+   * @see https://github.com/Open3CL/engine/issues/303
+   */
+  const prorataFroid =
+    dpeGenereImmeuble && Number(ShChauffageAndEcs) > Number(Sh) && Number(Sh) > 0
+      ? Number(Sh) / Number(ShChauffageAndEcs)
+      : 1;
+  clim.forEach((clim) => calc_clim(clim, bfr, bfr_dep, zc_id, ShChauffageAndEcs, prorataFroid));
 
   /**
    * La consommation ECS est obtenu pour certains types de DPE par virtualisation des générateurs collectifs en générateurs individuels virtuels

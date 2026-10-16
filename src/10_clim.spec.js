@@ -105,6 +105,32 @@ describe('calc_clim - consommation de climatisation', () => {
     expect(c.donnee_intermediaire.eer).toBe(3);
   });
 
+  /**
+   * DPE appartement généré à partir de l'immeuble : la part du logement est transmise via
+   * donnee_utilisateur, les données intermédiaires restant à l'échelle de l'installation.
+   * @see https://github.com/Open3CL/engine/issues/303
+   */
+  test('prorata logement : mémorisé, données intermédiaires à l’échelle de l’installation', () => {
+    tv.mockReturnValue({ tv_seer_id: '5', eer: 3 });
+    const c = clim({ surface_clim: 100, enum_methode_saisie_carac_sys_id: '1' });
+
+    calc_clim(c, 1000, 1500, '1', 100, 0.25);
+
+    expect(c.donnee_utilisateur.prorata_logement).toBe(0.25);
+    // inchangé par le prorata : 0.9 * 1000 / 3
+    expect(c.donnee_intermediaire.besoin_fr).toBeCloseTo(1000, 9);
+    expect(c.donnee_intermediaire.conso_fr).toBeCloseTo(300, 9);
+  });
+
+  test('prorata logement absent : 1 par défaut', () => {
+    tv.mockReturnValue({ tv_seer_id: '5', eer: 3 });
+    const c = clim({ surface_clim: 100, enum_methode_saisie_carac_sys_id: '1' });
+
+    calc_clim(c, 1000, 1500, '1', 100);
+
+    expect(c.donnee_utilisateur.prorata_logement).toBe(1);
+  });
+
   test('aucune ligne forfaitaire trouvée : EER indéfini, conso non finie', () => {
     tv.mockReturnValue(null);
     const c = clim({ surface_clim: 50, enum_methode_saisie_carac_sys_id: '1' });

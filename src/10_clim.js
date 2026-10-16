@@ -14,10 +14,22 @@ function tv_seer(di, de, du, zc_id) {
   }
 }
 
-export default function calc_clim(clim, bfr, bfr_dep, zc_id, Sh) {
+/**
+ * @param clim {object} climatisation
+ * @param bfr {number} besoin de froid du bâtiment
+ * @param bfr_dep {number} besoin de froid dépensier du bâtiment
+ * @param zc_id {string} zone climatique
+ * @param Sh {number} surface de référence du calcul (SH immeuble pour un DPE généré depuis l'immeuble)
+ * @param prorataLogement {number} part du logement dans la consommation de froid de l'installation
+ * (Sh_logement / SH_immeuble pour un DPE appartement généré à partir de l'immeuble, 1 sinon). Les
+ * données intermédiaires restent à l'échelle de l'installation, comme dans le DPE de référence ;
+ * le prorata n'est appliqué qu'à l'agrégation des consommations du logement (conso.js).
+ * @see https://github.com/Open3CL/engine/issues/303
+ */
+export default function calc_clim(clim, bfr, bfr_dep, zc_id, Sh, prorataLogement = 1) {
   const de = clim.donnee_entree;
   const di = clim.donnee_intermediaire || {};
-  const du = {};
+  const du = { prorata_logement: prorataLogement };
 
   const rs = de.surface_clim / Sh;
   di.besoin_fr = bfr * rs;

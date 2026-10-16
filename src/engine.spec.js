@@ -776,6 +776,38 @@ describe('calcul_3cl - surfaces immeuble / appartement et prorata', () => {
     // Auxiliaires ECS : Sh = surface logement, ramenée à l'immeuble dans le calcul.
     expect(conso_aux_distribution_ecs.mock.calls[0][3]).toBe(80);
     expect(conso_aux_distribution_ecs.mock.calls[0][4]).toBe(200);
+    // Froid : pas un DPE généré depuis l'immeuble, conso de froid non proratisée (#303).
+    expect(calc_clim.mock.calls[0][4]).toBe(200);
+    expect(calc_clim.mock.calls[0][5]).toBe(1);
+  });
+
+  /**
+   * @see https://github.com/Open3CL/engine/issues/303
+   */
+  test.each(['10', '11', '12', '13', '33', '34', '38', '39', '40'])(
+    "DPE appartement généré à partir de l'immeuble (map %s) : conso de froid proratisée Sh / SH",
+    (mapId) => {
+      enums.methode_application_dpe_log = { [mapId]: 'dpe appartement généré immeuble' };
+      const dpe = makeDpe();
+      dpe.logement.caracteristique_generale.enum_methode_application_dpe_log_id = mapId;
+
+      calcul_3cl(dpe, { sanitize: false });
+
+      // Besoin calculé sur SH immeuble (200), part du logement = 80 / 200.
+      expect(calc_clim.mock.calls[0][4]).toBe(200);
+      expect(calc_clim.mock.calls[0][5]).toBeCloseTo(0.4, 9);
+    }
+  );
+
+  test("DPE généré depuis l'immeuble avec SH immeuble ≤ Sh logement : prorata de froid neutre", () => {
+    enums.methode_application_dpe_log = { 10: 'dpe appartement généré immeuble' };
+    const dpe = makeDpe();
+    dpe.logement.caracteristique_generale.enum_methode_application_dpe_log_id = '10';
+    dpe.logement.caracteristique_generale.surface_habitable_immeuble = 80;
+
+    calcul_3cl(dpe, { sanitize: false });
+
+    expect(calc_clim.mock.calls[0][5]).toBe(1);
   });
 
   test('appartement : rapport SH immeuble / SH logement transmis au calcul du coût', () => {

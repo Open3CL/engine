@@ -983,6 +983,16 @@ function getChauffageConso(gen_ch, field, coef, prorataChauffage, prefix, facteu
   }, 0);
 }
 
+/**
+ * Part du logement dans la consommation de froid d'une installation (1 par défaut), positionnée par
+ * calc_clim pour les DPE appartement générés à partir de l'immeuble (issue #303).
+ * @param fr {object} climatisation
+ * @return {number}
+ */
+export function prorataFroidLogement(fr) {
+  return fr.donnee_utilisateur?.prorata_logement ?? 1;
+}
+
 function calc_conso_pond(
   Sh,
   zc_id,
@@ -1086,13 +1096,15 @@ function calc_conso_pond(
   ret.fr = fr_list.reduce((acc, fr) => {
     const typeEnergie = getTypeEnergie(fr.donnee_entree, 'fr');
     const conso =
-      fr.donnee_intermediaire.conso_fr * (typeEnergie === 'électricité fr' ? fAc('fr') : 1);
+      fr.donnee_intermediaire.conso_fr *
+      prorataFroidLogement(fr) *
+      (typeEnergie === 'électricité fr' ? fAc('fr') : 1);
 
     return acc + getConso(coef, typeEnergie, conso);
   }, 0);
 
   ret.fr_depensier = fr_list.reduce((acc, fr) => {
-    const conso = fr.donnee_intermediaire.conso_fr_depensier;
+    const conso = fr.donnee_intermediaire.conso_fr_depensier * prorataFroidLogement(fr);
     const typeEnergie = getTypeEnergie(fr.donnee_entree, 'fr');
 
     return acc + getConso(coef, typeEnergie, conso);
