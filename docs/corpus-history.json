@@ -4319,7 +4319,6 @@
     {
       "version": "1.8.67",
       "date": "2026-10-16",
-      "pending": true,
       "results": {
         "corpus_dpe.csv": {
           "below": 4855,

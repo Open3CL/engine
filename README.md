@@ -375,7 +375,7 @@ Ces résultats sont **générés automatiquement** à la fin de `npm run test:co
 
 <!-- CORPUS:START -->
 
-> **Version `1.8.67`** · à publier · branche `main` · généré le 2026-10-16
+> **Version `1.8.67`** · branche `main` · généré le 2026-10-16
 > Seuil de tolérance **5%**
 
 <table>
@@ -408,24 +408,24 @@ Ces résultats sont **générés automatiquement** à la fin de `npm run test:co
 
 <table>
 <tr>
-<td align="center"><strong>6,06 ms</strong><br/><sub>moyenne</sub></td>
-<td align="center"><strong>5,38 ms</strong><br/><sub>médiane</sub></td>
-<td align="center"><strong>0,13 ms</strong><br/><sub>min</sub></td>
-<td align="center"><strong>674,0 ms</strong><br/><sub>max</sub></td>
+<td align="center"><strong>5,51 ms</strong><br/><sub>moyenne</sub></td>
+<td align="center"><strong>4,86 ms</strong><br/><sub>médiane</sub></td>
+<td align="center"><strong>0,12 ms</strong><br/><sub>min</sub></td>
+<td align="center"><strong>681,1 ms</strong><br/><sub>max</sub></td>
 </tr>
 </table>
 
 | Corpus                                         | Moyenne | Médiane |     Min |      Max |     p95 |     p99 |
 | :--------------------------------------------- | ------: | ------: | ------: | -------: | ------: | ------: |
-| **Généraliste**                                | 5,38 ms | 4,93 ms | 0,21 ms |  37,4 ms | 9,67 ms | 13,5 ms |
-| **Appartement · chauffage individuel (2025)**  | 4,98 ms | 4,68 ms | 1,66 ms |  44,5 ms | 8,15 ms | 10,5 ms |
-| **Appartement · chauffage collectif (2025)**   | 5,37 ms | 5,20 ms | 1,64 ms |  45,1 ms | 8,45 ms | 11,9 ms |
-| **Logement individuel (2025)**                 | 5,30 ms | 4,74 ms | 1,68 ms |  37,2 ms | 9,87 ms | 13,1 ms |
-| **Maison individuelle (2025)**                 | 6,10 ms | 5,50 ms | 2,01 ms |  35,5 ms | 11,0 ms | 14,5 ms |
-| **Immeuble · chauffage collectif**             | 6,93 ms | 6,25 ms | 0,13 ms | 142,7 ms | 12,7 ms | 20,7 ms |
-| **Immeuble · chauffage individuel**            | 8,15 ms | 6,92 ms | 0,20 ms | 113,4 ms | 16,5 ms | 26,4 ms |
-| **Immeuble · chauffage mixte**                 | 5,95 ms | 4,78 ms | 0,18 ms | 674,0 ms | 12,9 ms | 21,4 ms |
-| **Individuel généré depuis l'immeuble (2026)** | 6,39 ms | 5,43 ms | 1,81 ms |  60,4 ms | 12,1 ms | 19,3 ms |
+| **Généraliste**                                | 4,99 ms | 4,52 ms | 0,22 ms |  30,9 ms | 9,03 ms | 12,7 ms |
+| **Appartement · chauffage individuel (2025)**  | 3,90 ms | 3,54 ms | 1,62 ms |  32,9 ms | 6,69 ms | 8,40 ms |
+| **Appartement · chauffage collectif (2025)**   | 4,33 ms | 3,88 ms | 1,53 ms |  40,3 ms | 7,10 ms | 9,37 ms |
+| **Logement individuel (2025)**                 | 5,66 ms | 5,17 ms | 1,65 ms |  49,0 ms | 10,4 ms | 13,8 ms |
+| **Maison individuelle (2025)**                 | 6,09 ms | 5,50 ms | 1,92 ms |  36,0 ms | 10,8 ms | 14,1 ms |
+| **Immeuble · chauffage collectif**             | 6,12 ms | 5,47 ms | 0,13 ms | 119,0 ms | 11,0 ms | 18,7 ms |
+| **Immeuble · chauffage individuel**            | 6,83 ms | 5,88 ms | 0,12 ms | 129,6 ms | 13,9 ms | 20,9 ms |
+| **Immeuble · chauffage mixte**                 | 5,36 ms | 4,38 ms | 0,19 ms | 681,1 ms | 11,1 ms | 18,4 ms |
+| **Individuel généré depuis l'immeuble (2026)** | 6,29 ms | 5,43 ms | 1,86 ms |  60,7 ms | 12,0 ms | 19,6 ms |
 
 <sub>La moyenne est tirée vers le haut par les DPE collectifs, dont le coût atteint plusieurs
 dizaines de fois la médiane : c’est la médiane qui décrit le cas courant, et p95/p99 le cas
