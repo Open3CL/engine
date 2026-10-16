@@ -40,6 +40,11 @@
       "mandatory": false,
       "successRatio": "98.42 %"
     },
+    "surface_sud_equivalente": {
+      "nbBelowThreshold": 9597,
+      "mandatory": false,
+      "successRatio": "98.54 %"
+    },
     "besoin_ecs": { "nbBelowThreshold": 9734, "mandatory": false, "successRatio": "99.95 %" },
     "besoin_ch": { "nbBelowThreshold": 9398, "mandatory": false, "successRatio": "96.50 %" },
     "conso_ecs": { "nbBelowThreshold": 9215, "mandatory": true, "successRatio": "94.62 %" },
@@ -84,21 +89,16 @@
       "nbBelowThreshold": 8971,
       "mandatory": true,
       "successRatio": "92.11 %"
-    },
-    "surface_sud_equivalente": {
-      "nbBelowThreshold": 9597,
-      "mandatory": false,
-      "successRatio": "98.54 %"
     }
   },
   "performance": {
     "count": 9736,
-    "mean": 9.733,
-    "median": 8.4,
-    "min": 0.161,
-    "max": 193.398,
-    "p95": 17.871,
-    "p99": 29.173,
-    "totalMs": 94757.45
+    "mean": 12.031,
+    "median": 9.62,
+    "min": 0.206,
+    "max": 197.477,
+    "p95": 25.178,
+    "p99": 42.876,
+    "totalMs": 117136.205
   }
 }

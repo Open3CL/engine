@@ -82,7 +82,6 @@ Neuf corpus, **10 000 DPE chacun**, situés dans [`test/corpus/files`](../test/c
 
 | Fichier                                                    | Contenu                                               |
 | :--------------------------------------------------------- | :---------------------------------------------------- |
-| `corpus_dpe.csv`                                           | Corpus généraliste, tous types de DPE confondus       |
 | `dpe_logement_individuel_2025.csv`                         | DPE de logements individuels réalisés en 2025         |
 | `dpe_maison_individuelle_2025.csv`                         | DPE de maisons individuelles réalisés en 2025         |
 | `dpe_maison_individuelle_2026.csv`                         | DPE de maisons individuelles réalisés en 2026         |
@@ -101,7 +100,7 @@ Neuf corpus, **10 000 DPE chacun**, situés dans [`test/corpus/files`](../test/c
 # Tous les corpus + mise à jour automatique des résultats dans le README
 npm run test:corpus:all
 
-# Le corpus par défaut (test/corpus/files/corpus_dpe.csv)
+# Tous les corpus de test/corpus/files, sans mise à jour du README
 npm run test:corpus
 
 # Un corpus précis
@@ -119,7 +118,7 @@ npm run test:corpus:all+database
 
 | Argument                  | Description                                                                                                    |
 | :------------------------ | :------------------------------------------------------------------------------------------------------------- |
-| `corpus-file-path=<path>` | Chemin relatif du fichier de corpus. Défaut : `test/corpus/files/corpus_dpe.csv`                               |
+| `corpus-file-path=<path>` | Chemin relatif du fichier de corpus. Défaut : tous les fichiers de `test/corpus/files`                         |
 | `dpes-folder-path=<path>` | Dossier de cache des DPE. Un DPE déjà présent n'est pas retéléchargé. Peut être remplacé par `DPE_FOLDER_PATH` |
 | `dpes-code=<code>`        | N'exécute qu'un seul DPE, identifié par son numéro                                                             |
 | `no-dpe-pos=<n>`          | Position de la colonne du numéro de DPE dans le CSV d'entrée (défaut : 0)                                      |
@@ -295,7 +294,7 @@ modifié au squash...), rien n'est réécrit et un avertissement est affiché da
 1. **Isoler le DPE** dans le rapport interactif, ou directement dans le CSV détaillé :
 
    ```sh
-   grep "^2263E1261479X," dist/reports/corpus/corpus_dpe.csv/corpus_detailed_report_main.csv
+   grep "^2263E1261479X," dist/reports/corpus/dpe_maison_individuelle_2026.csv/corpus_detailed_report_main.csv
    ```
 
 2. **Le rejouer seul**, avec les logs :

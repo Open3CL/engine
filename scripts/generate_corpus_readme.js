@@ -58,9 +58,6 @@ const HISTORY_DETAILED_SECTIONS = 5;
 /** Largeur de la barre de progression en caractères. */
 const BAR_WIDTH = 20;
 
-/** Corpus affiché en premier : c'est le corpus généraliste de référence. */
-const MAIN_CORPUS = 'corpus_dpe.csv';
-
 /** Libellés lisibles des corpus. */
 const CORPUS_LABELS = {
   'dpe_maison_individuelle_2025.csv': 'Maison individuelle (2025)',
@@ -170,11 +167,7 @@ function collectResults(branch) {
       };
     })
     .filter(Boolean)
-    .sort((a, b) => {
-      if (a.corpus === MAIN_CORPUS) return -1;
-      if (b.corpus === MAIN_CORPUS) return 1;
-      return b.ratio - a.ratio;
-    });
+    .sort((a, b) => b.ratio - a.ratio);
 }
 
 // ----------------------------------------------------------------------------
@@ -421,11 +414,7 @@ function historyRows(entry) {
       };
     })
     .filter(Boolean)
-    .sort((a, b) => {
-      if (a.corpus === MAIN_CORPUS) return -1;
-      if (b.corpus === MAIN_CORPUS) return 1;
-      return b.ratio - a.ratio;
-    });
+    .sort((a, b) => b.ratio - a.ratio);
 }
 
 /**

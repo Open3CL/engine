@@ -299,7 +299,7 @@ détail des propriétés en écart s'affiche, avec la valeur attendue, la valeur
 Le CSV détaillé donne, pour chaque grandeur, `_input` (le DPE publié), `_output` (Open3CL) et `_diff` (l'écart en %) :
 
 ```sh
-grep "^2263E1261479X," dist/reports/corpus/corpus_dpe.csv/corpus_detailed_report_main.csv
+grep "^2263E1261479X," dist/reports/corpus/dpe_maison_individuelle_2026.csv/corpus_detailed_report_main.csv
 ```
 
 Lisez les écarts **dans l'ordre de la chaîne de calcul** — enveloppe, besoins, systèmes, consommations. Le premier
@@ -319,7 +319,7 @@ nominal.
 ### 5. Mesurer l'impact sur le corpus
 
 ```sh
-npm run test:corpus -- corpus-file-path=corpus_dpe.csv
+npm run test:corpus -- corpus-file-path=dpe_maison_individuelle_2026.csv
 npm run reports:preview
 ```
 
@@ -330,7 +330,7 @@ casse des cas auparavant conformes mérite d'être examiné, et mentionné dans 
 
 - Le numéro du DPE de référence.
 - La règle de la méthode appliquée, avec la section de l'arrêté.
-- L'impact corpus : `corpus_dpe.csv : 4 591 → 4 612 (+21)`.
+- L'impact corpus : `dpe_maison_individuelle_2026.csv : 9 041 → 9 062 (+21)`.
 
 ---
 

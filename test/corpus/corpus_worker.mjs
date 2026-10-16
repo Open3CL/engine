@@ -264,10 +264,10 @@ const downloadDpeFromAdeme = (dpeCode) => {
       }
     }).then(async (resp) => {
       if (resp.status !== 200) {
-        /** @type {{error: string}} **/
+        /** @type {{message: string}} **/
         const errorPayload = await resp.json();
         throw new Error(
-          `Could not retrieve DPE: ${dpeCode}, code: ${resp.status}, error: ${errorPayload.error}`
+          `Could not retrieve DPE: ${dpeCode}, code: ${resp.status}, reason: ${errorPayload.message}`
         );
       }
       return resp.text();

@@ -23,6 +23,12 @@ import { commitsOf, releaseTypeOf, versionTags } from './corpus_version.js';
 /** Rapport global d'un corpus sur `main`. */
 const GLOBAL_REPORT = 'corpus_global_report_main.json';
 
+/**
+ * Corpus supprimés : leurs rapports restent dans les anciennes releases, mais ne doivent plus
+ * apparaître dans l'historique ni dans la courbe.
+ */
+const REMOVED_CORPORA = ['corpus_dpe.csv'];
+
 /** Emplacement des rapports dans l'arbre git. */
 const REPORTS_PATH = 'dist/reports/corpus';
 
@@ -128,6 +134,7 @@ function readReports(ref, root, reportName = GLOBAL_REPORT) {
   let threshold;
 
   for (const { corpus, read } of files) {
+    if (REMOVED_CORPORA.includes(corpus)) continue;
     let report;
     try {
       report = JSON.parse(read());

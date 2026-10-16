@@ -94,6 +94,5 @@ Deux architectures cohabitent (migration progressive) :
 - `src/output.js` est un fichier **mort/cassé** (identifiant orphelin `filecontent`, lève une
   `ReferenceError` à l'import ; présent dans `.eslintignore`). À nettoyer.
 - La suite globale `vitest run src/` comporte des specs **préexistants** en échec, liés à des
-  données/assets manquants dans l'environnement (ex. `test/corpus/corpus_dpe.csv` pour
-  `csv-parser.store.spec.js`, plusieurs `features/**/*.service.spec.js`). Ne pas les confondre avec
+  données/assets manquants dans l'environnement (ex. plusieurs `features/**/*.service.spec.js`). Ne pas les confondre avec
   les régressions introduites par une contribution : vérifier l'état avant/après.
