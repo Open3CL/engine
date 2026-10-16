@@ -22,7 +22,8 @@ vi.mock('./5_conso_ventilation.js', () => ({
 const {
   default: calc_ventilation,
   calc_hperm,
-  presenceJointNonRenseignee
+  presenceJointNonRenseignee,
+  isLigneQ4paMemePeriode
 } = await import('./4_ventilation.js');
 const { tv } = await import('./utils.js');
 const { default: calc_pvent } = await import('./5_conso_ventilation.js');
@@ -480,6 +481,86 @@ describe('calc_ventilation - compatibilité bug_for_bug_compat activée', () => 
       errorSpy.mockRestore();
     });
   });
+
+  /**
+   * Ligne q4pa_conv du DPE dont le critère d'isolation contredit les parois (2287E1201982M :
+   * ligne 10 « avant 1948, surfaces isolées » alors que toutes les parois sont non isolées).
+   */
+  describe('isolation_surfaces incohérent avec la ligne du DPE', () => {
+    const murNonIsole = [
+      {
+        donnee_intermediaire: { b: 1 },
+        donnee_entree: { enum_type_isolation_id: '2', surface_paroi_opaque: 100 }
+      }
+    ];
+    const baieSansJoint = [{ donnee_entree: { surface_totale_baie: 10, presence_joint: 0 } }];
+    const vtLigne = (id) => ({
+      donnee_entree: { enum_type_ventilation_id: '1', tv_q4pa_conv_id: id, description: 'v' }
+    });
+    const ROW_10 = {
+      q4pa_conv: '2',
+      tv_q4pa_conv_id: '10',
+      enum_periode_construction_id: '1',
+      isolation_surfaces: '1'
+    };
+
+    test('ligne de la même période : isolation et joints de la ligne du DPE repris', async () => {
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const { calc_ventilation_bug, tvBug } = await chargerAvecBug(ROW_10);
+
+      calc_ventilation_bug(vtLigne(10), CG, 'th', 80, 100, murNonIsole, [], [], baieSansJoint);
+
+      expect(tvBug).toHaveBeenLastCalledWith(
+        'q4pa_conv',
+        expect.objectContaining({ isolation_surfaces: '1', presence_joints_menuiserie: '0' })
+      );
+      expect(errorSpy).toHaveBeenCalledWith(
+        expect.stringContaining('La ligne q4pa_conv 10 du DPE est conservée')
+      );
+      // les joints de la ligne reprise concordent : pas de second message
+      expect(errorSpy).toHaveBeenCalledTimes(1);
+      errorSpy.mockRestore();
+    });
+
+    test('ligne 12 (non isolé, avec joints) reprise en entier, malgré des baies sans joint', async () => {
+      const { calc_ventilation_bug, tvBug } = await chargerAvecBug({
+        q4pa_conv: '2.5',
+        tv_q4pa_conv_id: '12',
+        enum_periode_construction_id: '1',
+        isolation_surfaces: '0',
+        presence_joints_menuiserie: '1'
+      });
+      vi.spyOn(console, 'error').mockImplementation(() => {});
+      const { murs } = surfacesIsolantes();
+
+      calc_ventilation_bug(vtLigne(12), CG, 'th', 80, 100, murs, [], [], baieSansJoint);
+
+      expect(tvBug).toHaveBeenLastCalledWith(
+        'q4pa_conv',
+        expect.objectContaining({ isolation_surfaces: '0', presence_joints_menuiserie: '1' })
+      );
+    });
+
+    test('ligne d’une autre période : la valeur recalculée est conservée', async () => {
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const { calc_ventilation_bug, tvBug } = await chargerAvecBug({
+        ...ROW_10,
+        tv_q4pa_conv_id: '11',
+        enum_periode_construction_id: '2'
+      });
+
+      calc_ventilation_bug(vtLigne(11), CG, 'th', 80, 100, murNonIsole, [], [], baieSansJoint);
+
+      expect(tvBug).toHaveBeenLastCalledWith(
+        'q4pa_conv',
+        expect.objectContaining({ isolation_surfaces: '0' })
+      );
+      expect(errorSpy).toHaveBeenCalledWith(
+        expect.stringContaining('La valeur recalculée isolation_surfaces = 0 est utilisée')
+      );
+      errorSpy.mockRestore();
+    });
+  });
 });
 
 describe('presenceJointNonRenseignee', () => {
@@ -504,5 +585,30 @@ describe('presenceJointNonRenseignee', () => {
         [{ donnee_entree: {} }]
       )
     ).toBe(false);
+  });
+});
+
+describe('isLigneQ4paMemePeriode', () => {
+  test('période contenue dans une liste « a|b|c » : vrai', () => {
+    expect(
+      isLigneQ4paMemePeriode(
+        { enum_periode_construction_id: '3|4|5' },
+        { enum_periode_construction_id: 4 }
+      )
+    ).toBe(true);
+  });
+
+  test('période différente : faux', () => {
+    expect(
+      isLigneQ4paMemePeriode(
+        { enum_periode_construction_id: '2' },
+        { enum_periode_construction_id: '1' }
+      )
+    ).toBe(false);
+  });
+
+  test('ligne sans période (ou absente) : faux', () => {
+    expect(isLigneQ4paMemePeriode({}, { enum_periode_construction_id: '1' })).toBe(false);
+    expect(isLigneQ4paMemePeriode(null, { enum_periode_construction_id: '1' })).toBe(false);
   });
 });
