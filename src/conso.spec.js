@@ -71,7 +71,8 @@ const {
   ARRETES_RESEAU_CHALEUR,
   COEF_GES_AUTRES_RESEAUX_CHALEUR,
   indexArreteReseauChaleur,
-  getContenuCo2ReseauChaleur
+  getContenuCo2ReseauChaleur,
+  prorataFroidLogement
 } = await import('./conso.js');
 const { tv } = await import('./utils.js');
 
@@ -296,6 +297,49 @@ describe('calc_conso - agrégation des consommations', () => {
       9
     );
     expect(net.cout.cout_eclairage).toBeCloseTo(brut.cout.cout_eclairage, 9);
+  });
+
+  /**
+   * DPE appartement généré à partir de l'immeuble : conso de froid ramenée au logement par le
+   * prorata mémorisé dans donnee_utilisateur.prorata_logement.
+   * @see https://github.com/Open3CL/engine/issues/303
+   */
+  test('froid : conso et conso dépensière proratisées au logement', () => {
+    const fr = (du) => [
+      {
+        donnee_entree: { enum_type_energie_id: '1' },
+        donnee_intermediaire: { conso_fr: 400, conso_fr_depensier: 1000 },
+        donnee_utilisateur: du
+      }
+    ];
+    const plein = calc_conso(100, 1, 1, [], [], [], fr(undefined), 1, 1, DATE_DPE, coef_ep);
+    const lot = calc_conso(
+      100,
+      1,
+      1,
+      [],
+      [],
+      [],
+      fr({ prorata_logement: 0.25 }),
+      1,
+      1,
+      DATE_DPE,
+      coef_ep
+    );
+
+    expect(plein.ef_conso.conso_fr).toBeCloseTo(400, 9);
+    expect(lot.ef_conso.conso_fr).toBeCloseTo(100, 9);
+    expect(lot.ef_conso.conso_fr_depensier).toBeCloseTo(250, 9);
+    expect(lot.emission_ges.emission_ges_fr).toBeCloseTo(
+      plein.emission_ges.emission_ges_fr * 0.25,
+      9
+    );
+  });
+
+  test('prorataFroidLogement : valeur mémorisée, 1 par défaut', () => {
+    expect(prorataFroidLogement({ donnee_utilisateur: { prorata_logement: 0.3 } })).toBe(0.3);
+    expect(prorataFroidLogement({ donnee_utilisateur: {} })).toBe(1);
+    expect(prorataFroidLogement({})).toBe(1);
   });
 
   test('autoconsommation PV : froid électrique minoré, froid non électrique non minoré', () => {
