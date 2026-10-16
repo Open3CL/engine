@@ -304,12 +304,15 @@ function calc_umur0(di, de, du, versionDpe) {
 
   // Certaines descriptions contiennent des informations sur le type de doublage
   if (bug_for_bug_compat && (type_doublage === 1 || type_doublage === 2)) {
-    if (de.description.toLowerCase().indexOf('doublage connu (plâtre, brique') !== -1) {
-      type_doublage = 5;
-    } else if (de.description.toLowerCase().indexOf('doublage indéterminé avec lame') !== -1) {
-      type_doublage = 4;
-    } else if (de.description.toLowerCase().indexOf('doublage indéterminé ou lame') !== -1) {
-      type_doublage = 3;
+    const description = de.description?.toLowerCase();
+    if (description) {
+      if (description.toLowerCase().indexOf('doublage connu (plâtre, brique') !== -1) {
+        type_doublage = 5;
+      } else if (description.toLowerCase().indexOf('doublage indéterminé avec lame') !== -1) {
+        type_doublage = 4;
+      } else if (description.toLowerCase().indexOf('doublage indéterminé ou lame') !== -1) {
+        type_doublage = 3;
+      }
     }
   }
 

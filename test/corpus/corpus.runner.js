@@ -74,7 +74,6 @@ export class CorpusRunner {
     });
     this.#piscina = new Piscina({
       filename: resolve(process.cwd(), `${import.meta.dirname}/corpus_worker.mjs`),
-      maxQueue: 'auto',
       maxThreads: process.env.MAX_WORKER_THREADS
         ? Number(process.env.MAX_WORKER_THREADS)
         : undefined
@@ -270,6 +269,7 @@ export class CorpusRunner {
               })
               .catch((error) => {
                 console.error(error);
+                return [];
               });
           })
         );

@@ -95,6 +95,15 @@ describe('DpeSanitizerService - transformation des valeurs', () => {
     expect(valueTransform(generateur, 'generateur_ecs')).toEqual([generateur]);
   });
 
+  test.each(COLLECTIONS.map((path) => path.split('.').pop()))(
+    'encapsule dans un tableau un nœud %s unique (collection à un seul élément)',
+    (key) => {
+      const valueTransform = getValueTransform();
+      const node = { donnee_entree: { description: 'unique' } };
+      expect(valueTransform(node, key)).toEqual([node]);
+    }
+  );
+
   test('ne ré-encapsule pas un nœud déjà sous forme de tableau', () => {
     const valueTransform = getValueTransform();
     const deja = [{ id: 1 }];

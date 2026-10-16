@@ -63,9 +63,9 @@ const MAIN_CORPUS = 'corpus_dpe.csv';
 
 /** Libellés lisibles des corpus. */
 const CORPUS_LABELS = {
-  'corpus_dpe.csv': 'Généraliste',
-  'dpe_logement_individuel_2025.csv': 'Logement individuel (2025)',
   'dpe_maison_individuelle_2025.csv': 'Maison individuelle (2025)',
+  dpe_maison_individuelle_2026: 'Maison individuelle (2026)',
+  'dpe_logement_individuel_2025.csv': 'Logement individuel (2025)',
   'dpe_appartement_individuel_chauffage_individuel_2025.csv':
     'Appartement · chauffage individuel (2025)',
   'dpe_appartement_individuel_chauffage_collectif_2025.csv':

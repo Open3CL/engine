@@ -13,6 +13,7 @@ import {
   setLoggerOn
 } from './corpus_utils.js';
 import { UploadDpeToObjectStorage } from './upload-dpe-to-object-storage.js';
+import { parseJsonWithDuplicateKeys } from './parse-json-duplicate-keys.js';
 
 const DIFF_VALUE_THRESHOLD = 5;
 
@@ -229,6 +230,23 @@ const waitFor = (milliseconds) => {
  * @param dpeCode {string}
  * @return {Promise<string>}
  */
+/**
+ * Les appels ADEME restent séquentiels (par worker) pour respecter DOWNLOAD_DPE_WAIT,
+ * même quand plusieurs DPE du chunk sont téléchargés en parallèle.
+ * @type {Promise<unknown>}
+ */
+let ademeQueue = Promise.resolve();
+
+/**
+ * @param dpeCode {string}
+ * @return {Promise<string>}
+ */
+const downloadDpeFromAdemeThrottled = (dpeCode) => {
+  const download = ademeQueue.then(() => downloadDpeFromAdeme(dpeCode));
+  ademeQueue = download.catch(() => {});
+  return download;
+};
+
 const downloadDpeFromAdeme = (dpeCode) => {
   if (!process.env.ADEME_API_CLIENT_ID) {
     throw new Error('Environment variable ADEME_API_CLIENT_ID not set');
@@ -237,17 +255,14 @@ const downloadDpeFromAdeme = (dpeCode) => {
     throw new Error('Environment variable ADEME_API_CLIENT_SECRET not set');
   }
   return waitFor(process.env.DOWNLOAD_DPE_WAIT || 1000).then(() => {
-    return fetch(
-      `https://prd-x-ademe-externe-api.de-c1.eu1.cloudhub.io/api/v1/pub/dpe/${dpeCode}`,
-      {
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json',
-          client_id: process.env.ADEME_API_CLIENT_ID,
-          client_secret: process.env.ADEME_API_CLIENT_SECRET
-        }
+    return fetch(`https://api-externe.ademe.fr/api/v1/pub/dpe/${dpeCode}`, {
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        client_id: process.env.ADEME_API_CLIENT_ID,
+        client_secret: process.env.ADEME_API_CLIENT_SECRET
       }
-    ).then(async (resp) => {
+    }).then(async (resp) => {
       if (resp.status !== 200) {
         /** @type {{error: string}} **/
         const errorPayload = await resp.json();
@@ -265,15 +280,20 @@ const downloadDpe = async (dpeCode, dpeFilePath) => {
   let dpeFileContent = await dpeStorageClient.getFile(dpeCode);
   if (!dpeFileContent) {
     // Then try to download from ademe
-    dpeFileContent = await downloadDpeFromAdeme(dpeCode);
+    dpeFileContent = await downloadDpeFromAdemeThrottled(dpeCode);
 
-    // Then write the downloaded file into object storage
-    return waitFor(process.env.DOWNLOAD_DPE_WAIT || 1000)
-      .then(() => dpeStorageClient.writeFile(dpeCode, dpeFileContent))
-      .then(() => dpeFileContent);
+    // Then write the downloaded file into object storage (no need to wait for it)
+    dpeStorageClient.writeFile(dpeCode, dpeFileContent);
   }
 
-  writeFileSync(dpeFilePath, JSON.parse(dpeFileContent).dpe, { encoding: 'utf8' });
+  // Cache locally so the next runs read from disk instead of the network.
+  // Les clés dupliquées de l'API ADEME sont normalisées en tableaux avant écriture.
+  try {
+    dpeFileContent = JSON.stringify(parseJsonWithDuplicateKeys(dpeFileContent));
+    writeFileSync(dpeFilePath, dpeFileContent, { encoding: 'utf8' });
+  } catch (error) {
+    console.error(`Http response is not a valid dpe json format for ${dpeCode}`, error.message);
+  }
   return dpeFileContent;
 };
 
@@ -292,6 +312,56 @@ const readOrDownloadDpe = async (dpeCode, dpesFilePath) => {
 };
 
 /**
+ * Nombre de DPE d'un chunk lus / téléchargés en parallèle dans un même worker.
+ * Le calcul moteur reste synchrone : le parallélisme porte sur les I/O (disque, object storage).
+ */
+const DPE_CONCURRENCY = Number(process.env.DPE_CONCURRENCY) || 20;
+
+/**
+ * @param data {{dpeCode: string}}
+ * @param dpesToExclude {string[]}
+ * @param dpesFilePath {string}
+ * @return {Promise<any[]>}
+ */
+const processDpe = async (data, dpesToExclude, dpesFilePath) => {
+  const dpeOutputs = [];
+  try {
+    /** @type {string} **/
+    const dpeJsonContent = await readOrDownloadDpe(data.dpeCode, dpesFilePath).then((result) => {
+      parentPort.postMessage({ action: 'fileProcessed' });
+      return result;
+    });
+
+    /**
+     * Les fichiers issus de l'API ADEME répètent la clé de chaque élément d'une collection :
+     * JSON.parse n'en garderait que le dernier.
+     * @type {FullDpe}
+     */
+    let dpe = parseJsonWithDuplicateKeys(dpeJsonContent);
+    if (dpe.dpe) {
+      dpe = dpe.dpe;
+    }
+    if (dpe.administratif.enum_version_id !== '1.1') {
+      parentPort.postMessage({ action: 'incrementTotalReport' });
+
+      if (dpesToExclude.includes(dpe.numero_dpe)) {
+        parentPort.postMessage({ action: 'incrementExcludedDpe' });
+        console.log(`Exclusion du DPE ${dpe.numero_dpe}.`);
+      } else {
+        runEngineAndVerifyOutput(dpe, dpeOutputs);
+      }
+    } else {
+      parentPort.postMessage({ action: 'incrementInvalidDpeVersion' });
+    }
+  } catch (ex) {
+    console.error(ex);
+    parentPort.postMessage({ action: 'decrementTotalReport' });
+    dpeOutputs.push([data.dpeCode, 'true']);
+  }
+  return dpeOutputs;
+};
+
+/**
  *
  * @param chunk {{dpeCode: string}[]}
  * @param dpesToExclude {string[]}
@@ -299,35 +369,18 @@ const readOrDownloadDpe = async (dpeCode, dpesFilePath) => {
  * @return {Promise<any[]>}
  */
 export default async function ({ chunk, dpesToExclude, dpesFilePath = [] }) {
-  const dpeOutputs = [];
+  // Résultats indexés par position pour conserver l'ordre du chunk dans le rapport
+  /** @type {any[][]} **/
+  const results = new Array(chunk.length);
+  let next = 0;
 
-  for (const data of chunk) {
-    try {
-      /** @type {string} **/
-      const dpeJsonContent = await readOrDownloadDpe(data.dpeCode, dpesFilePath).then((result) => {
-        parentPort.postMessage({ action: 'fileProcessed' });
-        return result;
-      });
-
-      /** @type {FullDpe} **/
-      const dpe = JSON.parse(dpeJsonContent);
-      if (dpe.administratif.enum_version_id !== '1.1') {
-        parentPort.postMessage({ action: 'incrementTotalReport' });
-
-        if (dpesToExclude.includes(dpe.numero_dpe)) {
-          parentPort.postMessage({ action: 'incrementExcludedDpe' });
-          console.log(`Exclusion du DPE ${dpe.numero_dpe}.`);
-        } else {
-          runEngineAndVerifyOutput(dpe, dpeOutputs);
-        }
-      } else {
-        parentPort.postMessage({ action: 'incrementInvalidDpeVersion' });
-      }
-    } catch (ex) {
-      console.error(ex);
-      parentPort.postMessage({ action: 'decrementTotalReport' });
-      dpeOutputs.push([data.dpeCode, 'true']);
+  const lanes = Array.from({ length: Math.min(DPE_CONCURRENCY, chunk.length) }, async () => {
+    while (next < chunk.length) {
+      const index = next++;
+      results[index] = await processDpe(chunk[index], dpesToExclude, dpesFilePath);
     }
-  }
-  return dpeOutputs;
+  });
+  await Promise.all(lanes);
+
+  return results.flat();
 }

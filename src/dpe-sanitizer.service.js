@@ -2,6 +2,14 @@ import { ObjectUtil } from './core/util/infrastructure/object-util.js';
 import { set, has } from 'lodash-es';
 
 const nodesToMap = [
+  'mur',
+  'plancher_bas',
+  'plancher_haut',
+  'baie_vitree',
+  'porte',
+  'pont_thermique',
+  'ventilation',
+  'climatisation',
   'installation_ecs',
   'generateur_ecs',
   'installation_chauffage',
