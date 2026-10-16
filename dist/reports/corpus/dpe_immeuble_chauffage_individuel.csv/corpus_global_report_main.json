@@ -9,11 +9,6 @@
   "dpeRunFailed": [],
   "checks": {
     "deperdition_mur": { "nbBelowThreshold": 9875, "mandatory": false, "successRatio": "99.51 %" },
-    "deperdition_baie_vitree": {
-      "nbBelowThreshold": 9865,
-      "mandatory": false,
-      "successRatio": "99.41 %"
-    },
     "deperdition_plancher_bas": {
       "nbBelowThreshold": 9462,
       "mandatory": false,
@@ -39,11 +34,6 @@
       "nbBelowThreshold": 9741,
       "mandatory": false,
       "successRatio": "98.16 %"
-    },
-    "surface_sud_equivalente": {
-      "nbBelowThreshold": 9791,
-      "mandatory": false,
-      "successRatio": "98.66 %"
     },
     "besoin_ecs": { "nbBelowThreshold": 9919, "mandatory": false, "successRatio": "99.95 %" },
     "besoin_ch": { "nbBelowThreshold": 9474, "mandatory": false, "successRatio": "95.47 %" },
@@ -89,16 +79,26 @@
       "nbBelowThreshold": 8928,
       "mandatory": true,
       "successRatio": "89.96 %"
+    },
+    "deperdition_baie_vitree": {
+      "nbBelowThreshold": 9865,
+      "mandatory": false,
+      "successRatio": "99.41 %"
+    },
+    "surface_sud_equivalente": {
+      "nbBelowThreshold": 9791,
+      "mandatory": false,
+      "successRatio": "98.66 %"
     }
   },
   "performance": {
     "count": 9923,
-    "mean": 11.684,
-    "median": 9.926,
-    "min": 0.19,
-    "max": 256.066,
-    "p95": 23.333,
-    "p99": 38.621,
-    "totalMs": 115935.864
+    "mean": 12.698,
+    "median": 10.41,
+    "min": 0.184,
+    "max": 260.29,
+    "p95": 26.762,
+    "p99": 44.533,
+    "totalMs": 126005.15
   }
 }

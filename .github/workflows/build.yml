@@ -206,11 +206,8 @@ jobs:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     steps:
-      # GitHub Pages sert désormais la visualisation 3D Open3CL/open3cl-3d, et non
-      # plus le rapport de corpus. Le rapport reste généré et versionné dans ce dépôt
-      # (scripts reports:*, test:corpus, dist/reports/corpus) : il n'est simplement
-      # plus publié sur Pages. Les liens directs vers /reports/corpus ne sont donc
-      # plus servis par le site.
+      # GitHub Pages sert la visualisation 3D Open3CL/open3cl-3d à la racine, et le
+      # rapport de corpus de ce dépôt (dist/reports/corpus) sous /reports/corpus/.
       - name: Checkout de la visualisation 3D (Open3CL/open3cl-3d)
         uses: actions/checkout@v7
         with:
@@ -227,6 +224,20 @@ jobs:
       # package-lock.json (dernière publiée sur npm), pas celle de ce commit.
       - name: Build de la visualisation 3D
         run: npm run build
+      # `main` plutôt que le commit déclencheur : le commit de release, poussé par
+      # semantic-release, contient les résultats de corpus marqués publiés.
+      - name: Checkout du rapport de corpus (engine)
+        uses: actions/checkout@v7
+        with:
+          ref: main
+          path: .engine
+          sparse-checkout: dist/reports/corpus
+          persist-credentials: false
+      - name: Ajouter le rapport de corpus au site (/reports/corpus)
+        run: |
+          test -f .engine/dist/reports/corpus/index.html
+          mkdir -p dist/reports
+          cp -r .engine/dist/reports/corpus dist/reports/corpus
       - name: Setup Pages
         uses: actions/configure-pages@v6
       - name: Upload artifact

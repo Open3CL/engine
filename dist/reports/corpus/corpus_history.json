@@ -4355,6 +4355,10 @@
         "dpe_maison_individuelle_2025.csv": {
           "below": 8992,
           "total": 9771
+        },
+        "dpe_maison_individuelle_2026.csv": {
+          "below": 9041,
+          "total": 10000
         }
       }
     }

@@ -85,6 +85,7 @@ Neuf corpus, **10 000 DPE chacun**, situés dans [`test/corpus/files`](../test/c
 | `corpus_dpe.csv`                                           | Corpus généraliste, tous types de DPE confondus       |
 | `dpe_logement_individuel_2025.csv`                         | DPE de logements individuels réalisés en 2025         |
 | `dpe_maison_individuelle_2025.csv`                         | DPE de maisons individuelles réalisés en 2025         |
+| `dpe_maison_individuelle_2026.csv`                         | DPE de maisons individuelles réalisés en 2026         |
 | `dpe_appartement_individuel_chauffage_individuel_2025.csv` | Appartements avec chauffage individuel, 2025          |
 | `dpe_appartement_individuel_chauffage_collectif_2025.csv`  | Appartements avec chauffage collectif, 2025           |
 | `dpe_immeuble_chauffage_individuel.csv`                    | DPE à l'immeuble, logements à chauffage individuel    |
