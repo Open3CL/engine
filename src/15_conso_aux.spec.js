@@ -389,6 +389,73 @@ describe('conso_aux_distribution_ch - auxiliaires de distribution', () => {
     );
   });
 
+  /**
+   * La longueur du réseau le plus défavorisé (Lem) est exposée sous le nom lb dans la donnée
+   * intermédiaire de chaque émetteur desservi par le circulateur.
+   * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §15.2.1
+   */
+  test('longueur du réseau lb exposée dans la donnée intermédiaire des émetteurs', () => {
+    const em = [
+      {
+        donnee_entree: {
+          enum_type_emission_distribution_id: '10',
+          enum_temp_distribution_ch_id: '3'
+        },
+        donnee_intermediaire: { rendement_emission: 0.95 }
+      }
+    ];
+    conso_aux_distribution_ch(em, {}, {}, {}, 100, 1, 1, '0', 100000);
+    // Lem = 5 × Fcot × (Niv + (Sh / Niv)^0,5) = 5 × 0,802 × (1 + 10) = 44,11 m
+    expect(em[0].donnee_intermediaire.lb).toBeCloseTo(44.11, 9);
+    // les autres données intermédiaires de l'émetteur sont conservées
+    expect(em[0].donnee_intermediaire.rendement_emission).toBe(0.95);
+  });
+
+  test('lb : plancher chauffant sur 2 niveaux, donnée intermédiaire absente créée', () => {
+    const em = [
+      {
+        donnee_entree: {
+          enum_type_emission_distribution_id: '6',
+          enum_temp_distribution_ch_id: '3'
+        }
+      }
+    ];
+    conso_aux_distribution_ch(em, { nombre_niveau_installation_ch: 2 }, {}, {}, 200, 1, 1, '0', 1);
+    // Lem = 5 × 0,156 × (2 + (200 / 2)^0,5) = 9,36 m
+    expect(em[0].donnee_intermediaire.lb).toBeCloseTo(9.36, 9);
+  });
+
+  test('lb : seuls les émetteurs reliés au générateur reçoivent la longueur du réseau', () => {
+    const plancher = {
+      donnee_entree: {
+        enum_type_emission_distribution_id: '6',
+        enum_temp_distribution_ch_id: '3',
+        enum_lien_generateur_emetteur_id: '1'
+      }
+    };
+    const convecteur = {
+      donnee_entree: {
+        enum_type_emission_distribution_id: '1',
+        enum_temp_distribution_ch_id: '3',
+        enum_lien_generateur_emetteur_id: '2'
+      }
+    };
+    conso_aux_distribution_ch(
+      [plancher, convecteur],
+      { enum_lien_generateur_emetteur_id: '1' },
+      {},
+      {},
+      100,
+      1,
+      1,
+      '0',
+      100000
+    );
+    // Lem = 5 × 0,156 × (1 + 10) = 8,58 m
+    expect(plancher.donnee_intermediaire.lb).toBeCloseTo(8.58, 9);
+    expect(convecteur.donnee_intermediaire).toBeUndefined();
+  });
+
   test('aucun émetteur relié au générateur : tous les émetteurs sont conservés', () => {
     const em = (lien) => ({
       donnee_entree: {
@@ -774,6 +841,40 @@ describe("conso_aux_distribution_ecs - auxiliaires de distribution d'ECS", () =>
     );
     // valeur de référence de régression (Pcirb ≈ 549 W pendant les heures de puisage)
     expect(di.conso_auxiliaire_distribution_ecs).toBeCloseTo(2.4208575056559525, 9);
+  });
+
+  test('réseau bouclé : longueur de bouclage lb exposée dans la donnée intermédiaire', () => {
+    const di = {};
+    conso_aux_distribution_ecs(
+      {},
+      {
+        enum_type_installation_id: '2',
+        enum_bouclage_reseau_ecs_id: '2',
+        surface_habitable: 50,
+        nombre_niveau_installation_ecs: 4
+      },
+      di,
+      50,
+      1600,
+      1,
+      1,
+      30
+    );
+    // Sh = 1600 m² (échelle immeuble) : Lb = 4 × (1600 / 4)^0,5 + 6 × (4 − 0,5) = 80 + 21 = 101 m
+    expect(di.lb).toBeCloseTo(101, 9);
+  });
+
+  test.each([
+    [
+      'installation individuelle',
+      { enum_type_installation_id: '1', enum_bouclage_reseau_ecs_id: '2' }
+    ],
+    ['réseau non bouclé', { enum_type_installation_id: '2', enum_bouclage_reseau_ecs_id: '1' }],
+    ['réseau avec traçage', { enum_type_installation_id: '2', enum_bouclage_reseau_ecs_id: '3' }]
+  ])('%s : pas de longueur de bouclage lb', (_libelle, de) => {
+    const di = { besoin_ecs: 1000 };
+    conso_aux_distribution_ecs({}, de, di, 50, 2000, 1, 1, 30);
+    expect(di.lb).toBeUndefined();
   });
 
   test('plus de niveaux desservis : bouclage plus court, donc consommation plus faible', () => {
