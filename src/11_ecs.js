@@ -58,11 +58,12 @@ function tv_rendement_distribution_ecs(di, de, du, pvc) {
  * Calcul installation par installation pour les réseaux collectifs bouclés ou avec traçage.
  *
  * @param {object} de - donnee_entree de l'installation ECS
+ * @param {object} di - donnee_intermediaire de l'installation ECS (reçoit la longueur de bouclage lb)
  * @param {number} surfaceImmeuble - surface habitable totale de l'immeuble (m²)
  * @param {object} becsParMois - besoin ECS mensuel de l'immeuble {Janvier: X, Février: X, ...} [kWh]
  * @returns {number} conso_auxiliaire_distribution_ecs_installation [Wh]
  */
-function calc_auxiliaire_distribution_ecs_immeuble(de, surfaceImmeuble, becsParMois) {
+function calc_auxiliaire_distribution_ecs_immeuble(de, di, surfaceImmeuble, becsParMois) {
   const type_installation = enums.type_installation[de.enum_type_installation_id];
 
   // Seulement pour les installations collectives
@@ -95,6 +96,7 @@ function calc_auxiliaire_distribution_ecs_immeuble(de, surfaceImmeuble, becsParM
     // Étape 3 : Calcul de Lb pour l'installation i
     // Lb = 1.2 × (1.1 × Sh_inst/nombre_niveaux + 4 × nombre_niveaux)
     const Lb = 1.2 * (1.1 * (Sh_inst / Niv_inst) + 4 * Niv_inst);
+    di.lb = Lb;
 
     // Étape 4 : DeltaPb = 0.2 × Lb + 10
     const DeltaPb = 0.2 * Lb + 10;
@@ -287,6 +289,7 @@ export default function calc_ecs(
   if (th === 'immeuble' && becsParMois && Object.keys(becsParMois).length > 0) {
     const conso_aux_wh = calc_auxiliaire_distribution_ecs_immeuble(
       de,
+      di,
       surfaceImmeuble,
       becsParMois
     );

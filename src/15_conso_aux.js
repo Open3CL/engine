@@ -283,6 +283,12 @@ function getPuissanceCirculateur(em_ch, de, di, du, surfaceHabitable, GV, Tbase)
   // Calcul de la longueur du réseau le plus défavorisé
   const Lem = 5 * Fcot * (nbNiveauChauffage + (surfaceInstallation / nbNiveauChauffage) ** 0.5);
 
+  // Exposition de la longueur du réseau (lb) dans les données intermédiaires des émetteurs desservis
+  em_ch.forEach((em) => {
+    em.donnee_intermediaire = em.donnee_intermediaire || {};
+    em.donnee_intermediaire.lb = Lem;
+  });
+
   // Pertes de charge du réseau (kPa)
   const deltaPemnom = 0.15 * Lem + deltaPem;
 
@@ -412,6 +418,7 @@ export function conso_aux_distribution_ecs(
   // Pour l'appartement, on utilise la surface à l'échelle de l'immeuble
   const Sh = (Sh_install / Sh_logement) * Sh_immeuble_ratio;
   const Lb = 4 * Math.pow(Sh / Niv_inst_ecs, 0.5) + 6 * (Niv_inst_ecs - 0.5);
+  di.lb = Lb;
 
   // Etape 4: DeltaPb (kPa) - perte de charge dans le bouclage
   const DeltaPb = 0.2 * Lb + 10;

@@ -734,4 +734,36 @@ describe('calc_ecs - auxiliaires de distribution ECS (immeuble)', () => {
 
     expect(sansNiveau).toBe(avecUnNiveau);
   });
+
+  /** Calcule l'ECS d'un immeuble et retourne la donnée intermédiaire de l'installation. */
+  function donneeIntermediaireImmeuble(deExtra) {
+    const ecs = makeEcs({ tv_rendement_distribution_ecs_id: '5', ...deExtra });
+    calc_ecs({}, ecs, 100, 200, 1, 'ca1', 'h1a', 'immeuble', false, 400, null, false, {
+      Janvier: 10000
+    });
+    return ecs.donnee_intermediaire;
+  }
+
+  test('réseau bouclé : longueur de bouclage lb exposée dans la donnée intermédiaire', () => {
+    const di = donneeIntermediaireImmeuble({
+      enum_type_installation_id: '2',
+      enum_bouclage_reseau_ecs_id: '2',
+      surface_habitable: 100,
+      nombre_niveau_installation_ecs: '2'
+    });
+
+    // Lb = 1,2 × (1,1 × 100 / 2 + 4 × 2) = 75,6 m
+    expect(di.lb).toBeCloseTo(75.6, 9);
+  });
+
+  test.each([
+    ['réseau avec traçage', { enum_type_installation_id: '2', enum_bouclage_reseau_ecs_id: '3' }],
+    [
+      'réseau collectif non bouclé',
+      { enum_type_installation_id: '2', enum_bouclage_reseau_ecs_id: '1' }
+    ],
+    ['installation individuelle', { enum_type_installation_id: '1' }]
+  ])('%s : pas de longueur de bouclage lb', (_libelle, de) => {
+    expect(donneeIntermediaireImmeuble(de).lb).toBeUndefined();
+  });
 });
