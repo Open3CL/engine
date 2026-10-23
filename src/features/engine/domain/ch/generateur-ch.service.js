@@ -1,6 +1,6 @@
 import { inject } from 'dioma';
 import { ChTvStore } from '../../../dpe/infrastructure/ch/chTv.store.js';
-import { excel_to_js_exec } from '../../../../utils.js';
+import { dpe_original, excel_to_js_exec } from '../../../../utils.js';
 import { TvStore } from '../../../dpe/infrastructure/tv.store.js';
 import { EmetteurChService } from './emetteur-ch.service.js';
 import { TypeGenerateur } from '../../../dpe/domain/models/type-generateur.model.js';
@@ -76,6 +76,18 @@ export class GenerateurChService {
       };
 
       if (generateurChauffage.donnee_utilisateur.combustion) {
+        /**
+         * DPE modifié (option isOriginal = false) : en valeurs forfaitaires, la puissance nominale
+         * des données intermédiaires est celle du générateur d'origine : elle est réestimée. Une
+         * puissance saisie (méthodes 2 à 5) est conservée.
+         */
+        if (
+          !dpe_original &&
+          ![2, 3, 4, 5].includes(parseInt(generateurChauffageDE.enum_methode_saisie_carac_sys_id))
+        ) {
+          delete generateurChauffageDI.pn;
+        }
+
         // Calcul de la puissance nominale si non définie
         if (!generateurChauffageDI.pn) {
           generateurChauffage.donnee_intermediaire.pn = this.pn(

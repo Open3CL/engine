@@ -240,6 +240,17 @@ export function tv_temp_fonc_30_100(di, de, du, em_ch, ac) {
     );
   }
 
+  /**
+   * DPE modifié (option isOriginal = false) : les températures de fonctionnement des données
+   * intermédiaires sont celles du générateur d'origine. Elles ne servent pas de valeur initiale du
+   * maximum sur les émetteurs : seules les tables sont utilisées. Des valeurs saisies (méthode 5)
+   * sont conservées.
+   */
+  if (!dpe_original && parseInt(de.enum_methode_saisie_carac_sys_id) !== 5) {
+    delete di.temp_fonc_30;
+    delete di.temp_fonc_100;
+  }
+
   for (const em of em_ch) {
     const em_ch_de = em.donnee_entree;
     const em_ch_du = em.donnee_utilisateur;

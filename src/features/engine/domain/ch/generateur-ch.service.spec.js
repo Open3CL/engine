@@ -3,6 +3,7 @@ import { GenerateurChService } from './generateur-ch.service.js';
 import { EmetteurChService } from './emetteur-ch.service.js';
 import { ChTvStore } from '../../../dpe/infrastructure/ch/chTv.store.js';
 import { TvStore } from '../../../dpe/infrastructure/tv.store.js';
+import { set_dpe_original } from '../../../../utils.js';
 
 /** @type {GenerateurChService} **/
 let service;
@@ -227,5 +228,49 @@ describe('Puissance nominale estimée : Pdim et table Pdim → Pn (issue #271)',
     service.execute(ctx, logement, inst);
     expect(service.pn).toHaveBeenCalledWith(ctx, logement, inst, gen);
     expect(gen.donnee_intermediaire.pn).toBe(24000);
+  });
+
+  describe('pn des données intermédiaires du DPE', () => {
+    const generateurAvecPn = (methode) => ({
+      donnee_entree: {
+        enum_type_generateur_ch_id: '97',
+        enum_lien_generateur_emetteur_id: 1,
+        enum_methode_saisie_carac_sys_id: methode
+      },
+      donnee_intermediaire: { pn: 210000 }
+    });
+    const installationAvec = (gen) => ({
+      donnee_entree: { enum_type_installation_id: 2 },
+      generateur_chauffage_collection: { generateur_chauffage: [gen] }
+    });
+
+    beforeEach(() => {
+      vi.spyOn(service, 'pn').mockReturnValue(64206);
+      vi.spyOn(service, 'caracteristiques').mockReturnValue({});
+      return () => set_dpe_original(true);
+    });
+
+    test('DPE d’origine : pn forfaitaire du DPE reprise', () => {
+      const gen = generateurAvecPn('1');
+      service.execute(ctx, logementAvecEcs([]), installationAvec(gen));
+      expect(service.pn).not.toHaveBeenCalled();
+      expect(gen.donnee_intermediaire.pn).toBe(210000);
+    });
+
+    test('DPE modifié (isOriginal = false) : pn forfaitaire du DPE non reprise, réestimée', () => {
+      set_dpe_original(false);
+      const gen = generateurAvecPn('1');
+      service.execute(ctx, logementAvecEcs([]), installationAvec(gen));
+      expect(service.pn).toHaveBeenCalled();
+      expect(gen.donnee_intermediaire.pn).toBe(64206);
+    });
+
+    test('DPE modifié (isOriginal = false) : pn saisie (méthode 2) conservée', () => {
+      set_dpe_original(false);
+      const gen = generateurAvecPn('2');
+      service.execute(ctx, logementAvecEcs([]), installationAvec(gen));
+      expect(service.pn).not.toHaveBeenCalled();
+      expect(gen.donnee_intermediaire.pn).toBe(210000);
+    });
   });
 });

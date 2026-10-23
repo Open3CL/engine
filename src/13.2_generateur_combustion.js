@@ -51,6 +51,12 @@ function evaluateFormula(formulaOrValue, pn, E, F) {
 }
 
 /**
+ * Méthodes de saisie des caractéristiques (enum_methode_saisie_carac_sys_id) pour lesquelles la
+ * puissance nominale pn est saisie (plaque signalétique ou documentation technique).
+ */
+export const METHODES_SAISIE_PN = [2, 3, 4, 5];
+
+/**
  * Puissance nominale maximale (W) retenue dans la formule Qp0 = Pn × (E + F × log Pn) / 100 des
  * chaudières gaz standard et basse température installées après 2015.
  */
@@ -335,6 +341,16 @@ export function tv_generateur_combustion(
       Utilisation de tv_generateur_combustion_id pour récupération des informations techniques du générateur.
     `);
   } else {
+    /**
+     * DPE modifié (option isOriginal = false) : en valeurs forfaitaires, la puissance nominale des
+     * données intermédiaires est celle retenue par le logiciel d'origine pour le générateur
+     * d'origine. Elle n'est pas reprise et est réestimée par la méthode (§13.2.2.4). Une puissance
+     * saisie (méthodes 2 à 5 : plaque signalétique ou documentation technique) est conservée.
+     */
+    if (!dpe_original && !METHODES_SAISIE_PN.includes(methodeSaisie)) {
+      delete di.pn;
+    }
+
     // Calcul de la puissance nominale si non définie
     if (!di.pn) {
       di.pn = pnEstimeeGenerateur(dpe, de, type, pnEstimee(GV, tbase, ratioSurface), optionsPn);

@@ -1178,7 +1178,7 @@ describe('tv_generateur_combustion - convention de puissance d’un générateur
     );
   });
 
-  test('DPE modifié (isOriginal = false) : pas de détection, pn saisi conservé comme Pe', () => {
+  test('DPE modifié (isOriginal = false) : pas de détection, pn saisi (méthode 2) conservé comme Pe', () => {
     state.bug = true;
     state.dpeOriginal = false;
     tv.mockReturnValue({ ...ROW_PN });
@@ -1188,9 +1188,39 @@ describe('tv_generateur_combustion - convention de puissance d’un générateur
       ratio_virtualisation: 0.1,
       presence_ventouse: 0
     };
-    tv_generateur_combustion({}, di, de, 'ch', 200, -9, 1);
+    tv_generateur_combustion({}, di, de, 'ch', 200, -9, 2);
     expect(conventionPuissanceNominale).not.toHaveBeenCalled();
     expect(di.pn).toBe(23000);
+  });
+
+  test('DPE modifié (isOriginal = false) : pn forfaitaire (méthode 1) du DPE non reprise, réestimée', () => {
+    state.bug = true;
+    state.dpeOriginal = false;
+    tv.mockReturnValue({ ...ROW_PN });
+    const di = { pn: 210000, rpn: 0.93, qp0: 2100 };
+    const de = {
+      enum_type_generateur_ch_id: '89',
+      enum_type_installation_id: '2',
+      ratio_virtualisation: 0.1,
+      presence_ventouse: 0
+    };
+    tv_generateur_combustion({}, di, de, 'ch', 200, -9, 1);
+    expect(conventionPuissanceNominale).not.toHaveBeenCalled();
+    // Installation collective : Pch = 1,2 × GV × (19 − Tbase) / 0,95³ -- valeur de référence
+    expect(di.pn).toBeCloseTo(7837.877241580406, 9);
+  });
+
+  test('DPE d’origine : pn forfaitaire (méthode 1) du DPE reprise', () => {
+    tv.mockReturnValue({ ...ROW_PN });
+    const di = { pn: 210000 };
+    const de = {
+      enum_type_generateur_ch_id: '89',
+      enum_type_installation_id: '2',
+      ratio_virtualisation: 0.1,
+      presence_ventouse: 0
+    };
+    tv_generateur_combustion({}, di, de, 'ch', 200, -9, 1);
+    expect(di.pn).toBe(210000);
   });
 
   test('formule rpn fournie (4e hypothèse) : ligne sélectionnée sur Pn collectif, rpn en fraction', () => {
