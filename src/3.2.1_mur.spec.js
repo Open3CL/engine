@@ -11,6 +11,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
  * - `bug_for_bug_compat` : exposé via un getter afin de pouvoir le basculer par test.
  */
 let bugForBugCompat = false;
+let dpeOriginal = true;
 
 vi.mock('./enums.js', () => ({
   default: {
@@ -76,7 +77,8 @@ vi.mock('./utils.js', () => ({
   getThicknessFromDescription: vi.fn(() => 0),
   get bug_for_bug_compat() {
     return bugForBugCompat;
-  }
+  },
+  reprise_saisies_dpe: () => bugForBugCompat && dpeOriginal
 }));
 
 const {
@@ -94,6 +96,7 @@ const ROW_UMUR = { umur: '0.5', tv_umur_id: '6' };
 
 beforeEach(() => {
   bugForBugCompat = false;
+  dpeOriginal = true;
   tv.mockReset();
   getThicknessFromDescription.mockReset();
   getThicknessFromDescription.mockReturnValue(0);
@@ -1190,6 +1193,16 @@ describe('issue #295 - interpolation de Umur0 entre deux épaisseurs (MUR2)', ()
     expect(mur.donnee_intermediaire.umur0).toBe(2.4);
   });
 
+  test('DPE modifié (isOriginal = false) : Umur0 interpolé du DPE non repris, valeur de la table', () => {
+    bugForBugCompat = true;
+    dpeOriginal = false;
+    const mur = murBetonBanche(32, { umur0: 2.318 });
+
+    calc_mur(mur, 'h1a', '1', '0');
+
+    expect(mur.donnee_intermediaire.umur0).toBe(2.4);
+  });
+
   test('bug_for_bug : interpolation confondue avec la valeur de la table => table conservée', () => {
     bugForBugCompat = true;
     tv.mockImplementation((table) => {
@@ -1262,6 +1275,16 @@ describe('issue #295 - doublage et isolation ITE/ITI pour les DPE < 2.4 (MUR3)',
     bugForBugCompat = bug;
 
     const mur = murIsoleAvecDoublage(iso, avant);
+    calc_mur(mur, 'h1a', '1', '0', 2.2);
+
+    expect(mur.donnee_intermediaire.umur0).toBeCloseTo(UMUR0_AVEC_DOUBLAGE, 9);
+  });
+
+  test('DPE modifié (isOriginal = false), v2.2 : Umur0 du DPE ignoré, doublage appliqué', () => {
+    bugForBugCompat = true;
+    dpeOriginal = false;
+
+    const mur = murIsoleAvecDoublage('3', { umur0: 2 });
     calc_mur(mur, 'h1a', '1', '0', 2.2);
 
     expect(mur.donnee_intermediaire.umur0).toBeCloseTo(UMUR0_AVEC_DOUBLAGE, 9);

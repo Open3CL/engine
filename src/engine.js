@@ -24,6 +24,7 @@ import {
   containsAnySubstring,
   isEffetJoule,
   set_bug_for_bug_compat,
+  set_dpe_original,
   use_enum_as_string,
   useEnumAsString,
   xmlParser
@@ -58,7 +59,7 @@ export function getVersion() {
 /**
  * Run the engine with a full dpe xml content
  * @param dpeXmlContent {string} A full dpe xml content
- * @param options {{sanitize: boolean}?}
+ * @param options {{sanitize?: boolean, isOriginal?: boolean}?} cf. calcul_3cl
  * @return {FullDpe}
  */
 export function calcul_3cl_xml(dpeXmlContent, options) {
@@ -70,12 +71,17 @@ export function calcul_3cl_xml(dpeXmlContent, options) {
 /**
  * Run the engine with a javascript plain object dpe
  * @param inputDpe {FullDpe} A full plain object dpe
- * @param options {{sanitize: boolean}?}
+ * @param options {{sanitize?: boolean, isOriginal?: boolean}?}
+ * - sanitize : nettoyage du DPE avant calcul (true par défaut si options est absent)
+ * - isOriginal : false si le DPE a été modifié (ex. scénario de rénovation) ; les valeurs
+ *   choisies par le logiciel d'origine (tv_*_id, donnee_intermediaire, fiches techniques) ne sont
+ *   alors pas reprises par les correctifs bug_for_bug_compat concernés. true par défaut.
  * @return {FullDpe}
  */
 export function calcul_3cl(inputDpe, options) {
   set_bug_for_bug_compat();
   if (!options) options = { sanitize: true };
+  set_dpe_original(options.isOriginal !== false);
   let dpe;
   if (options.sanitize) {
     dpe = dpeSanitizerService.execute(inputDpe);

@@ -6,7 +6,8 @@ vi.mock('../../../../../utils.js', async (importOriginal) => ({
   ...(await importOriginal()),
   get bug_for_bug_compat() {
     return state.bug;
-  }
+  },
+  reprise_saisies_dpe: () => state.bug && state.dpeOriginal !== false
 }));
 
 const { DeperditionVentilationService } = await import('./deperdition-ventilation.service.js');
@@ -32,6 +33,7 @@ describe('DeperditionVentilationService.q4paConv', () => {
     };
     service = new DeperditionVentilationService(tvStore);
     state.bug = false;
+    state.dpeOriginal = true;
   });
 
   test('Q4Pa mesuré saisi : utilisé directement', () => {
@@ -67,6 +69,17 @@ describe('DeperditionVentilationService.q4paConv', () => {
 
       expect(tvStore.getQ4paConvById).toHaveBeenCalledWith(12);
       expect(tvStore.getQ4paConv).toHaveBeenCalledWith('1', 'APPARTEMENT', '0', '1');
+    });
+
+    test('bug_for_bug_compat sur un DPE modifié (isOriginal = false) : joints non repris', () => {
+      state.bug = true;
+      state.dpeOriginal = false;
+      tvStore.getQ4paConvById.mockReturnValue({ presence_joints_menuiserie: '1' });
+
+      service.q4paConv({ tv_q4pa_conv_id: 12 }, ctx, 0, 100, 0, 10, true);
+
+      expect(tvStore.getQ4paConvById).not.toHaveBeenCalled();
+      expect(tvStore.getQ4paConv).toHaveBeenCalledWith('1', 'APPARTEMENT', '0', undefined);
     });
 
     test('bug_for_bug_compat mais presence_joint renseigné : pas de reprise', () => {

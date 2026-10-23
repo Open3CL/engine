@@ -5,6 +5,7 @@ import {
   requestInputID,
   getKeyByValue,
   bug_for_bug_compat,
+  reprise_saisies_dpe,
   getThicknessFromDescription
 } from './utils.js';
 import b from './3.1_b.js';
@@ -203,11 +204,12 @@ function tv_umur0(di, de, du) {
     /**
      * Certains logiciels interpolent Umur0 entre les deux colonnes d'épaisseur qui encadrent
      * l'épaisseur saisie (ex : 2,28 pour un béton banché de 32 cm, entre 30 et 35 cm).
-     * Si l'Umur0 du DPE correspond à cette interpolation (tolérance empirique de 0,006), on la reprend.
+     * Si l'Umur0 du DPE correspond à cette interpolation (tolérance empirique de 0,006), on la reprend
+     * (sauf sur un DPE modifié, option isOriginal = false).
      * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.2.1.2
      * @see https://github.com/Open3CL/engine/issues/295
      */
-    if (bug_for_bug_compat && du.umur0_avant !== undefined) {
+    if (reprise_saisies_dpe() && du.umur0_avant !== undefined) {
       const umur0Interp = umur0Interpole(
         de.enum_materiaux_structure_mur_id,
         matcher.epaisseur_structure
@@ -329,12 +331,12 @@ function calc_umur0(di, de, du, versionDpe) {
   /**
    * DPE antérieurs à la version 2.4 : certains logiciels n'y cumulent déjà pas le doublage avec une
    * isolation ITE/ITI. Si l'Umur0 du DPE vaut min(2,5 ; Umur0 de la paroi nue), le doublage n'a pas
-   * été appliqué : on ne l'applique pas non plus.
+   * été appliqué : on ne l'applique pas non plus (sauf sur un DPE modifié, option isOriginal = false).
    * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.2.1
    * @see https://github.com/Open3CL/engine/issues/295
    */
   if (
-    bug_for_bug_compat &&
+    reprise_saisies_dpe() &&
     !hasIteOrIti &&
     isolationIteOuIti &&
     umur0_avant !== undefined &&

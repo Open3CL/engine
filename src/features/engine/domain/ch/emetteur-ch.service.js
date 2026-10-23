@@ -1,6 +1,6 @@
 import { ChTvStore } from '../../../dpe/infrastructure/ch/chTv.store.js';
 import { inject } from 'dioma';
-import { bug_for_bug_compat } from '../../../../utils.js';
+import { reprise_saisies_dpe } from '../../../../utils.js';
 import { logger } from '../../../../core/util/logger/log-service.js';
 
 /**
@@ -92,8 +92,10 @@ export class EmetteurChService {
    * - plusieurs : celle de l'année de construction si elle en fait partie, sinon la plus récente ;
    * - aucune : undefined (repli sur l'année de construction).
    *
-   * Aucune déduction si le mode bug_for_bug_compat est désactivé, si l'une des deux températures
-   * du DPE est absente ou non numérique, ou si tous les émetteurs ont une période saisie.
+   * Aucune déduction si le mode bug_for_bug_compat est désactivé, si le DPE a été modifié (option
+   * isOriginal = false : les températures stockées ne décrivent plus l'installation), si l'une des
+   * deux températures du DPE est absente ou non numérique, ou si tous les émetteurs ont une période
+   * saisie.
    *
    * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.1.5
    *
@@ -111,7 +113,7 @@ export class EmetteurChService {
     temperaturesDpe
   ) {
     if (
-      !bug_for_bug_compat ||
+      !reprise_saisies_dpe() ||
       !estNumerique(temperaturesDpe?.temp_fonc_30) ||
       !estNumerique(temperaturesDpe?.temp_fonc_100)
     ) {
