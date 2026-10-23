@@ -35,6 +35,8 @@ vi.mock('./tv.js', () => ({
 const {
   xmlParser,
   set_bug_for_bug_compat,
+  set_dpe_original,
+  reprise_saisies_dpe,
   useEnumAsString,
   set_use_enum_as_string,
   set_tv_match_optimized_version,
@@ -169,6 +171,23 @@ describe('Utils unit tests', () => {
     test('set_bug_for_bug_compat active le drapeau', () => {
       set_bug_for_bug_compat();
       expect(utils.bug_for_bug_compat).toBe(true);
+    });
+
+    test('set_dpe_original : DPE d’origine par défaut, false pour un DPE modifié', () => {
+      expect(utils.dpe_original).toBe(true);
+      set_dpe_original(false);
+      expect(utils.dpe_original).toBe(false);
+      set_dpe_original();
+      expect(utils.dpe_original).toBe(true);
+    });
+
+    test('reprise_saisies_dpe : vraie seulement en bug_for_bug_compat sur le DPE d’origine', () => {
+      set_bug_for_bug_compat();
+      set_dpe_original(true);
+      expect(reprise_saisies_dpe()).toBe(true);
+      set_dpe_original(false);
+      expect(reprise_saisies_dpe()).toBe(false);
+      set_dpe_original(true);
     });
 
     test('set_use_enum_as_string active le drapeau', () => {

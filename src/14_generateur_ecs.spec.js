@@ -40,6 +40,10 @@ vi.mock('./utils.js', () => ({
   get bug_for_bug_compat() {
     return state.bug;
   },
+  get dpe_original() {
+    return state.dpeOriginal !== false;
+  },
+  reprise_saisies_dpe: () => state.bug && state.dpeOriginal !== false,
   getVolumeStockageFromDescription: vi.fn(),
   requestInput: vi.fn((de, du, field) => de[field]),
   requestInputID: vi.fn((de, du, field) => de[`enum_${field}_id`]),
@@ -234,6 +238,7 @@ describe('calc_gen_ecs - consommation par générateur', () => {
     vi.mocked(getVolumeStockageFromDescription).mockReset();
     vi.mocked(getFicheTechnique).mockReset();
     state.bug = false;
+    state.dpeOriginal = true;
 
     ecs_di = { besoin_ecs: 100, besoin_ecs_depensier: 150, rendement_distribution: 0.9 };
     ecs_de = { enum_type_installation_id: '1' };
@@ -704,6 +709,27 @@ describe('calc_gen_ecs - consommation par générateur', () => {
     }
   );
 
+  test('DPE modifié (isOriginal = false), pas de fiche : pveilleuse du DPE d’origine ignorée, pveil = 0', () => {
+    state.dpeOriginal = false;
+    vi.mocked(tvColumnIDs).mockImplementation((table) =>
+      table === 'generateur_combustion' ? ['chaud'] : []
+    );
+    vi.mocked(tv_generateur_combustion).mockImplementation((dpe, di) => {
+      di.rpn = 0.9;
+      di.qp0 = 100;
+      di.pn = 20000;
+      di.pveil = 0.02;
+      di.pveilleuse = 1;
+    });
+    const g = gen({
+      type_energie: 'gaz',
+      enum_type_generateur_ecs_id: 'chaud',
+      enum_methode_saisie_carac_sys_id: '1'
+    });
+    calc_gen_ecs({}, g, ecs_di, ecs_de, 0, '1', '1', 'maison');
+    expect(g.donnee_intermediaire.pveil).toBe(0);
+  });
+
   test('chaudière combustion avec stockage (Qgw > 0) : rendement génération + stockage', () => {
     vi.mocked(tvColumnIDs).mockImplementation((table) =>
       table === 'generateur_combustion' ? ['chaud'] : []
@@ -959,6 +985,26 @@ describe('calc_gen_ecs - consommation par générateur', () => {
       warnSpy.mockRestore();
     }
   );
+
+  test('DPE modifié (isOriginal = false) : type 72 avec 0.9 saisi -> 0.75 (méthode), pas de reprise', () => {
+    state.bug = true;
+    state.dpeOriginal = false;
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    ecs_de.reseau_distribution_isole = 1;
+    const g = {
+      donnee_entree: {
+        usage_generateur: 'ecs',
+        type_stockage_ecs: "abscence de stockage d'ecs (production instantanée)",
+        volume_stockage: 0,
+        type_energie: 'réseau de chauffage urbain',
+        enum_type_generateur_ecs_id: '72'
+      },
+      donnee_intermediaire: { rendement_generation_stockage: 0.9 }
+    };
+    calc_gen_ecs({}, g, ecs_di, ecs_de, 0, '1', '1', 'immeuble');
+
+    expect(g.donnee_intermediaire.rendement_generation_stockage).toBe(0.75);
+  });
 
   test('sans bug_for_bug_compat : type 72 avec 0.9 saisi -> 0.75 (méthode)', () => {
     ecs_de.reseau_distribution_isole = 1;

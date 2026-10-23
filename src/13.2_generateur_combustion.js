@@ -1,4 +1,4 @@
-import { bug_for_bug_compat, convertExpression, tv, tvColumnLines } from './utils.js';
+import { bug_for_bug_compat, convertExpression, dpe_original, tv, tvColumnLines } from './utils.js';
 import enums from './enums.js';
 import { updateGenerateurBouilleurs } from './13.2_generateur_combustion_bouilleur.js';
 import {
@@ -406,8 +406,10 @@ export function tv_generateur_combustion(
    * virtualisée Pe = a × Pn (convention 3CL) ou la puissance du générateur collectif Pn selon les
    * logiciels (issue #124). La convention réellement utilisée est déduite des valeurs
    * intermédiaires (rpn, qp0) présentes dans le DPE.
+   * Pas de détection sur un DPE modifié (option isOriginal = false) : les valeurs intermédiaires
+   * du DPE d'origine ne décrivent plus forcément le générateur.
    */
-  if (selectionLigne) {
+  if (selectionLigne && dpe_original) {
     const ligneOuDefaut = (pn, ratio) => selectionLigne(pn, ratio) || row;
     const caracteristiques = (pn, ratio) =>
       caracteristiquesGenerateurCombustion(
@@ -562,7 +564,12 @@ export function presenceVeilleuse(dpe, de, type) {
  * @param type {'ch' | 'ecs'}
  */
 function addInfosFromFichesTechniques(dpe, de, type) {
-  const veilleuse = presenceVeilleuse(dpe, de, type);
+  /**
+   * Sur un DPE modifié (option isOriginal = false), la fiche technique décrit le générateur
+   * d'origine : la description d'un générateur remplacé peut avoir été conservée, la présence de
+   * veilleuse n'y est donc pas lue (issue #39).
+   */
+  const veilleuse = dpe_original ? presenceVeilleuse(dpe, de, type) : undefined;
   if (veilleuse !== undefined) {
     de.presence_veilleuse = veilleuse;
   }

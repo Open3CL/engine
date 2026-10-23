@@ -11,7 +11,8 @@ vi.mock('../../../../utils.js', async (importOriginal) => ({
   ...(await importOriginal()),
   get bug_for_bug_compat() {
     return state.bug;
-  }
+  },
+  reprise_saisies_dpe: () => state.bug && state.dpeOriginal !== false
 }));
 
 vi.mock('../../../../core/util/logger/log-service.js', () => ({
@@ -139,6 +140,7 @@ describe('Déduction de la période des émetteurs depuis les données du DPE (i
 
   beforeEach(() => {
     state.bug = true;
+    state.dpeOriginal = true;
     vi.mocked(logger.info).mockReset();
     vi.mocked(logger.warn).mockReset();
     chTvStore = new ChTvStore();
@@ -165,6 +167,17 @@ describe('Déduction de la période des émetteurs depuis les données du DPE (i
     expect(
       service.temperatureFonctionnement(ctx, generateurDE, [emetteur(3)], periode)
     ).toStrictEqual({ temp_fonc_30: 38, temp_fonc_100: 80 });
+  });
+
+  test('T1 bis : DPE modifié (isOriginal = false) -> aucune déduction (année de construction)', () => {
+    state.dpeOriginal = false;
+    const ctx = { anneeConstruction: 1900 };
+    const periode = service.periodeInstallationEmetteurDeduite(ctx, generateurDE, [emetteur(3)], {
+      temp_fonc_30: 32,
+      temp_fonc_100: 60
+    });
+    expect(periode).toBeUndefined();
+    expect(chTvStore.temperatureFonctionnement).not.toHaveBeenCalled();
   });
 
   test('T2 bug_for_bug_compat : DPE 32/60, construction 1900 -> période « après 2000 » (3)', () => {

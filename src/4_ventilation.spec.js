@@ -12,7 +12,8 @@ vi.mock('./utils.js', () => ({
   tv: vi.fn(),
   requestInput: (de, du, field) => de[field],
   requestInputID: (de, du, field) => de[`enum_${field}_id`],
-  bug_for_bug_compat: false
+  bug_for_bug_compat: false,
+  reprise_saisies_dpe: () => false
 }));
 
 vi.mock('./5_conso_ventilation.js', () => ({
@@ -303,7 +304,7 @@ describe('calc_ventilation - compatibilité bug_for_bug_compat activée', () => 
    * Recharge le module avec `bug_for_bug_compat = true`. Le double de `tv` renvoie une ligne
    * `q4pa_conv` distincte selon que le matcher cible l'identifiant déjà saisi ou le matcher complet.
    */
-  async function chargerAvecBug(rowParId) {
+  async function chargerAvecBug(rowParId, dpeOriginal = true) {
     vi.resetModules();
     const tvBug = vi.fn((table, matcher) => {
       if (table === 'debits_ventilation') return { ...ROW_DEBITS };
@@ -317,7 +318,8 @@ describe('calc_ventilation - compatibilité bug_for_bug_compat activée', () => 
       tv: tvBug,
       requestInput: (de, du, field) => de[field],
       requestInputID: (de, du, field) => de[`enum_${field}_id`],
-      bug_for_bug_compat: true
+      bug_for_bug_compat: true,
+      reprise_saisies_dpe: () => dpeOriginal
     }));
     vi.doMock('./5_conso_ventilation.js', () => ({ default: vi.fn() }));
     const { default: calc_ventilation_bug } = await import('./4_ventilation.js');
@@ -560,6 +562,52 @@ describe('calc_ventilation - compatibilité bug_for_bug_compat activée', () => 
       );
       errorSpy.mockRestore();
     });
+
+    test('DPE modifié (isOriginal = false) : ligne de la même période non reprise, valeur recalculée', async () => {
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const { calc_ventilation_bug, tvBug } = await chargerAvecBug(ROW_10, false);
+
+      calc_ventilation_bug(vtLigne(10), CG, 'th', 80, 100, murNonIsole, [], [], baieSansJoint);
+
+      expect(tvBug).toHaveBeenLastCalledWith(
+        'q4pa_conv',
+        expect.objectContaining({ isolation_surfaces: '0', presence_joints_menuiserie: '0' })
+      );
+      expect(errorSpy).toHaveBeenCalledWith(
+        expect.stringContaining('La valeur recalculée isolation_surfaces = 0 est utilisée')
+      );
+      errorSpy.mockRestore();
+    });
+  });
+
+  test('DPE modifié (isOriginal = false), presence_joint non exporté : joints du DPE non repris (issue #294)', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const { calc_ventilation_bug, tvBug } = await chargerAvecBug(
+      {
+        q4pa_conv: '2.5',
+        tv_q4pa_conv_id: '12',
+        isolation_surfaces: '0',
+        presence_joints_menuiserie: '1'
+      },
+      false
+    );
+    const murNonIsole = [
+      {
+        donnee_intermediaire: { b: 1 },
+        donnee_entree: { enum_type_isolation_id: '2', surface_paroi_opaque: 100 }
+      }
+    ];
+    const baies = [{ donnee_entree: { surface_totale_baie: 10 } }];
+    const vt = {
+      donnee_entree: { enum_type_ventilation_id: '1', tv_q4pa_conv_id: 12, description: 'v' }
+    };
+
+    calc_ventilation_bug(vt, CG, 'th', 80, 100, murNonIsole, [], [], baies);
+
+    expect(tvBug).toHaveBeenLastCalledWith(
+      'q4pa_conv',
+      expect.objectContaining({ isolation_surfaces: '0', presence_joints_menuiserie: '0' })
+    );
   });
 });
 

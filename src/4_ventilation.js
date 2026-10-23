@@ -1,4 +1,10 @@
-import { tv, requestInputID, requestInput, bug_for_bug_compat } from './utils.js';
+import {
+  tv,
+  requestInputID,
+  requestInput,
+  bug_for_bug_compat,
+  reprise_saisies_dpe
+} from './utils.js';
 import calc_pvent from './5_conso_ventilation.js';
 
 function tv_debits_ventilation(di, de, du) {
@@ -108,10 +114,12 @@ function tv_q4pa_conv(di, de, cg, mur_list, ph_list, porte_list, bv_list) {
        * 1948, surfaces isolées », 2, alors que toutes les parois sont non isolées → ligne 1, 4,6).
        * Si la ligne saisie correspond à la période de construction du DPE, on la reprend en entier
        * (isolation et joints) pour reproduire le calcul du logiciel.
+       * Pas de reprise sur un DPE modifié (option isOriginal = false) : la ligne choisie par le
+       * logiciel d'origine ne décrit plus forcément les parois (ex. murs isolés par un scénario).
        * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §4
        */
       if (rowQ4paConv.isolation_surfaces !== isolation_surfaces) {
-        if (isLigneQ4paMemePeriode(rowQ4paConv, cg)) {
+        if (reprise_saisies_dpe() && isLigneQ4paMemePeriode(rowQ4paConv, cg)) {
           console.error(
             `Calcul de hperm pour la ventilation ${de.description}. Le DPE considère isolation_surfaces = ${rowQ4paConv.isolation_surfaces} \n          alors que ce devrait être isolation_surfaces = ${isolation_surfaces}. La ligne q4pa_conv ${de.tv_q4pa_conv_id} du DPE est conservée.`
           );
@@ -130,9 +138,14 @@ function tv_q4pa_conv(di, de, cg, mur_list, ph_list, porte_list, bv_list) {
        * la ligne q4pa_conv retenue par le logiciel (ex. ligne 12 « avant 1948 avec joints », 2,5) :
        * on reprend sa valeur `presence_joints_menuiserie` au lieu de considérer les menuiseries
        * sans joint.
+       * Pas de reprise sur un DPE modifié (option isOriginal = false).
        * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §4
        */
-      if (!ligneDpeReprise && presenceJointNonRenseignee(porte_list, bv_list)) {
+      if (
+        !ligneDpeReprise &&
+        reprise_saisies_dpe() &&
+        presenceJointNonRenseignee(porte_list, bv_list)
+      ) {
         pjt = rowQ4paConv.presence_joints_menuiserie === '1' ? '1' : '0';
       } else if (!ligneDpeReprise && rowQ4paConv.presence_joints_menuiserie !== pjt) {
         console.error(

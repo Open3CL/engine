@@ -40,6 +40,29 @@ export function set_bug_for_bug_compat() {
   bug_for_bug_compat = true;
 }
 
+/**
+ * Indique si le DPE calculé est le DPE d'origine, tel qu'exporté par le logiciel de saisie
+ * (option `isOriginal` de calcul_3cl, vrai par défaut).
+ *
+ * Faux pour un DPE modifié (ex. scénario de rénovation) : les valeurs choisies par le logiciel
+ * d'origine (tv_*_id, donnee_intermediaire, fiches techniques) ne décrivent plus forcément les
+ * éléments modifiés et ne doivent pas être reprises.
+ */
+export let dpe_original = true;
+export function set_dpe_original(value = true) {
+  dpe_original = value !== false;
+}
+
+/**
+ * Vrai si les saisies du logiciel d'origine (tv_*_id, donnee_intermediaire, fiches techniques)
+ * peuvent être reprises pour reproduire son calcul : mode bug_for_bug_compat et DPE d'origine
+ * (option `isOriginal` différente de false).
+ * @returns {boolean}
+ */
+export function reprise_saisies_dpe() {
+  return bug_for_bug_compat && dpe_original;
+}
+
 export function useEnumAsString(jsonObj) {
   for (const key in jsonObj) {
     if (jsonObj.hasOwnProperty(key)) {

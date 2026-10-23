@@ -1,5 +1,12 @@
 import enums from './enums.js';
-import { bug_for_bug_compat, requestInput, requestInputID, tv } from './utils.js';
+import {
+  bug_for_bug_compat,
+  dpe_original,
+  reprise_saisies_dpe,
+  requestInput,
+  requestInputID,
+  tv
+} from './utils.js';
 
 const coef_pond = {
   0.05: 0.1,
@@ -175,8 +182,9 @@ export function periodeEmetteursDeduiteDuDpe(tempFonc30Dpe, tempFonc100Dpe, de, 
 
 /**
  * Indique si la déduction de la période des émetteurs à partir des données intermédiaires du DPE
- * doit être tentée : mode bug_for_bug_compat, au moins un émetteur (avec réseau de distribution)
- * sans période saisie, et temp_fonc_30 ET temp_fonc_100 d'origine présentes et numériques.
+ * doit être tentée : mode bug_for_bug_compat sur le DPE d'origine (pas de reprise si l'option
+ * isOriginal vaut false), au moins un émetteur (avec réseau de distribution) sans période saisie,
+ * et temp_fonc_30 ET temp_fonc_100 d'origine présentes et numériques.
  *
  * @param tempFonc30Dpe {*} temp_fonc_30 d'origine du DPE
  * @param tempFonc100Dpe {*} temp_fonc_100 d'origine du DPE
@@ -184,7 +192,7 @@ export function periodeEmetteursDeduiteDuDpe(tempFonc30Dpe, tempFonc100Dpe, de, 
  * @return {boolean}
  */
 export function deductionPeriodeEmetteursActive(tempFonc30Dpe, tempFonc100Dpe, em_ch) {
-  if (!bug_for_bug_compat) return false;
+  if (!reprise_saisies_dpe()) return false;
   if (!estNumerique(tempFonc30Dpe) || !estNumerique(tempFonc100Dpe)) return false;
   return em_ch.some(
     (em) =>
@@ -380,11 +388,15 @@ export function calc_generateur_combustion_ch(dpe, di, de, du) {
   /**
    * La puissance de la veilleuse n'est à prendre en compte que si une veilleuse est présente.
    * Présence lue dans la fiche technique du générateur (de.presence_veilleuse, cf.
-   * presenceVeilleuse()) ; à défaut, déduite de la valeur intermédiaire pveilleuse du DPE.
+   * presenceVeilleuse()) ; à défaut, déduite de la valeur intermédiaire pveilleuse du DPE
+   * d'origine (pas sur un DPE modifié, option isOriginal = false : absence de veilleuse).
    * Tribu : DPE.Core/Calcul_generateur.cs, Pveil1 = 0 si Is_veilleuse != oui.
    * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.4
    */
-  if (de.presence_veilleuse === 0 || (de.presence_veilleuse !== 1 && !di.pveilleuse)) {
+  if (
+    de.presence_veilleuse === 0 ||
+    (de.presence_veilleuse !== 1 && (!dpe_original || !di.pveilleuse))
+  ) {
     di.pveil = 0;
   }
 

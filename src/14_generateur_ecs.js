@@ -1,6 +1,8 @@
 import enums from './enums.js';
 import {
   bug_for_bug_compat,
+  dpe_original,
+  reprise_saisies_dpe,
   getVolumeStockageFromDescription,
   requestInput,
   requestInputID,
@@ -407,7 +409,8 @@ export default function calc_gen_ecs(dpe, gen_ecs, ecs_di, ecs_de, GV, ca_id, zc
     const rgSaisi = di.rendement_generation_stockage;
     let rgReseau = rgrsReseauUrbain(de, ecs_de);
 
-    if (bug_for_bug_compat && isRgsReseauChaleurSaisiRepris(rgSaisi, rgReseau)) {
+    // Pas de reprise du rendement saisi sur un DPE modifié (option isOriginal = false)
+    if (reprise_saisies_dpe() && isRgsReseauChaleurSaisiRepris(rgSaisi, rgReseau)) {
       console.warn(
         `Correction rendement_generation_stockage pour le générateur ECS ${de.description} (${rgSaisi} saisi au lieu de ${rgReseau})`
       );
@@ -442,11 +445,15 @@ export default function calc_gen_ecs(dpe, gen_ecs, ecs_di, ecs_de, GV, ca_id, zc
     /**
      * La puissance de la veilleuse n'est à prendre en compte que si une veilleuse est présente.
      * Présence lue dans la fiche technique du générateur (de.presence_veilleuse, cf.
-     * presenceVeilleuse()) ; à défaut, déduite de la valeur intermédiaire pveilleuse du DPE.
+     * presenceVeilleuse()) ; à défaut, déduite de la valeur intermédiaire pveilleuse du DPE
+     * d'origine (pas sur un DPE modifié, option isOriginal = false : absence de veilleuse).
      * Tribu : DPE.Core/Calcul_generateur.cs, Pveil1 = 0 si Is_veilleuse != oui.
      * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §14.1
      */
-    if (de.presence_veilleuse === 0 || (de.presence_veilleuse !== 1 && !di.pveilleuse)) {
+    if (
+      de.presence_veilleuse === 0 ||
+      (de.presence_veilleuse !== 1 && (!dpe_original || !di.pveilleuse))
+    ) {
       di.pveil = 0;
     }
 

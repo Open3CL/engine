@@ -21,6 +21,7 @@ let useEnumAsStringFlag = false;
 
 vi.mock('./utils.js', () => ({
   set_bug_for_bug_compat: vi.fn(),
+  set_dpe_original: vi.fn(),
   add_references: vi.fn(),
   get bug_for_bug_compat() {
     return bugForBugCompat;
@@ -104,6 +105,7 @@ const {
   collectionCanBeEmpty,
   containsAnySubstring,
   isEffetJoule,
+  set_dpe_original,
   useEnumAsString,
   xmlParser
 } = await import('./utils.js');
@@ -308,6 +310,22 @@ describe('calcul_3cl - garde-fous précoces', () => {
 
     expect(sanitizeExecute).toHaveBeenCalledWith(dpe);
     expect(res).toBeNull();
+    errSpy.mockRestore();
+  });
+
+  test.each([
+    ['options absentes', undefined, true],
+    ['isOriginal absent', { sanitize: false }, true],
+    ['isOriginal = true', { sanitize: false, isOriginal: true }, true],
+    ['isOriginal = false (DPE modifié)', { sanitize: false, isOriginal: false }, false]
+  ])('option isOriginal transmise au drapeau dpe_original : %s', (_, options, attendu) => {
+    vi.mocked(set_dpe_original).mockClear();
+    const dpe = { administratif: { enum_modele_dpe_id: '99' } };
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    calcul_3cl(dpe, options);
+
+    expect(set_dpe_original).toHaveBeenCalledWith(attendu);
     errSpy.mockRestore();
   });
 

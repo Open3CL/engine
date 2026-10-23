@@ -39,6 +39,10 @@ vi.mock('./utils.js', () => ({
   get bug_for_bug_compat() {
     return state.bug;
   },
+  get dpe_original() {
+    return state.dpeOriginal !== false;
+  },
+  reprise_saisies_dpe: () => state.bug && state.dpeOriginal !== false,
   tv: vi.fn(),
   requestInput: vi.fn((de, du, field) => de[field]),
   requestInputID: vi.fn((de, du, field) => de[`enum_${field}_id`])
@@ -59,6 +63,7 @@ const { tv } = await import('./utils.js');
 beforeEach(() => {
   vi.mocked(tv).mockReset();
   state.bug = false;
+  state.dpeOriginal = true;
 });
 
 // valeurs de référence de régression (générateur à air chaud, pn 20 kW, qp0 200 % de Pn)
@@ -323,6 +328,17 @@ describe('tv_temp_fonc_30_100 - période des émetteurs absente (issue #220)', (
         "période d'installation des émetteurs déduite des données intermédiaires du DPE : après 2000"
       )
     );
+  });
+
+  test('T2 DPE modifié (isOriginal = false) : aucune déduction, période de l’année de construction (38/80)', () => {
+    state.bug = true;
+    state.dpeOriginal = false;
+    const di = { temp_fonc_30: 32, temp_fonc_100: 60 };
+    const de = genCondensation();
+    tv_temp_fonc_30_100(di, de, {}, [emetteur('3')], 1900);
+    expect(di.temp_fonc_30).toBe(38);
+    expect(di.temp_fonc_100).toBe(80);
+    expect(warnSpy).not.toHaveBeenCalled();
   });
 
   test('T2 bis bug_for_bug_compat : valeurs du DPE sous forme de chaînes acceptées', () => {
@@ -892,6 +908,13 @@ describe('calc_generateur_combustion_ch - rendement de génération', () => {
     test('fiche « non » avec pveilleuse exportée : Pveil annulé', () => {
       const d = di({ pveilleuse: 150 });
       calc_generateur_combustion_ch({}, d, de({ presence_veilleuse: 0 }), { cdimref: 3 });
+      expect(d.pveil).toBe(0);
+    });
+
+    test('DPE modifié (isOriginal = false), pas de fiche : pveilleuse du DPE d’origine ignorée, Pveil annulé', () => {
+      state.dpeOriginal = false;
+      const d = di({ pveilleuse: 150 });
+      calc_generateur_combustion_ch({}, d, de(), { cdimref: 3 });
       expect(d.pveil).toBe(0);
     });
 

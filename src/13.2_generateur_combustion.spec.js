@@ -18,6 +18,9 @@ vi.mock('./utils.js', () => ({
   get bug_for_bug_compat() {
     return state.bug;
   },
+  get dpe_original() {
+    return state.dpeOriginal !== false;
+  },
   tv: vi.fn(),
   tvColumnLines: vi.fn(() => []),
   convertExpression: vi.fn((x) => x)
@@ -108,6 +111,7 @@ beforeEach(() => {
     convention: 'individualisee'
   }));
   state.bug = false;
+  state.dpeOriginal = true;
 });
 
 const ROW_DEFAUT = {
@@ -949,6 +953,21 @@ describe('updateGenerateurCombustion - orchestration des substitutions', () => {
     expect(de.presenceVentilateur).toBeUndefined();
   });
 
+  test('DPE modifié (isOriginal = false) : fiche veilleuse non lue, presence_veilleuse non renseigné', () => {
+    state.dpeOriginal = false;
+    getFicheTechnique.mockReturnValue(null);
+    const dpe = dpeFiches([
+      '8',
+      [
+        ['Type générateur', 'Chauffe-eau gaz'],
+        ["Présence d'une veilleuse", 'oui']
+      ]
+    ]);
+    const de = { description: 'Chauffe-eau gaz' };
+    updateGenerateurCombustion(dpe, de, 'ecs');
+    expect(de).not.toHaveProperty('presence_veilleuse');
+  });
+
   test('fiche veilleuse absente : presence_veilleuse non renseigné', () => {
     getFicheTechnique.mockReturnValue(null);
     const de = { description: 'gen' };
@@ -1157,6 +1176,21 @@ describe('tv_generateur_combustion - convention de puissance d’un générateur
       true,
       expect.any(Function)
     );
+  });
+
+  test('DPE modifié (isOriginal = false) : pas de détection, pn saisi conservé comme Pe', () => {
+    state.bug = true;
+    state.dpeOriginal = false;
+    tv.mockReturnValue({ ...ROW_PN });
+    const di = { pn: 23000, rpn: 0.87, qp0: 0.276 };
+    const de = {
+      enum_type_generateur_ch_id: '89',
+      ratio_virtualisation: 0.1,
+      presence_ventouse: 0
+    };
+    tv_generateur_combustion({}, di, de, 'ch', 200, -9, 1);
+    expect(conventionPuissanceNominale).not.toHaveBeenCalled();
+    expect(di.pn).toBe(23000);
   });
 
   test('formule rpn fournie (4e hypothèse) : ligne sélectionnée sur Pn collectif, rpn en fraction', () => {

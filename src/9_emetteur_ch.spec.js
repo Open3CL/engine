@@ -7,7 +7,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
  *
  * `bug_for_bug_compat` est exposé via un getter afin de pouvoir basculer sa valeur par test.
  */
-const utilsState = vi.hoisted(() => ({ bugForBugCompat: false }));
+const utilsState = vi.hoisted(() => ({ bugForBugCompat: false, dpeOriginal: true }));
 
 const mockTvsStore = vi.hoisted(() => ({
   getRendementDistributionCh: vi.fn(),
@@ -19,7 +19,11 @@ vi.mock('./utils.js', () => ({
   tv: vi.fn(),
   get bug_for_bug_compat() {
     return utilsState.bugForBugCompat;
-  }
+  },
+  get dpe_original() {
+    return utilsState.dpeOriginal;
+  },
+  reprise_saisies_dpe: () => utilsState.bugForBugCompat && utilsState.dpeOriginal
 }));
 
 vi.mock('./core/tv/infrastructure/tvs.store.js', () => ({
@@ -35,6 +39,7 @@ beforeEach(() => {
   mockTvsStore.getRendementDistributionChById.mockReset();
   vi.mocked(tv).mockReset();
   utilsState.bugForBugCompat = false;
+  utilsState.dpeOriginal = true;
   vi.spyOn(console, 'error').mockImplementation(() => {});
 });
 
@@ -103,6 +108,24 @@ describe('tv_rendement_distribution_ch - rendement de distribution CH', () => {
     expect(mockTvsStore.getRendementDistributionChById).toHaveBeenCalledWith(6);
     expect(em.donnee_intermediaire.rendement_distribution).toBeCloseTo(0.91, 10);
     expect(em.donnee_entree.tv_rendement_distribution_ch_id).toBe(6);
+  });
+
+  test('type_emission=41 sur un DPE modifié (isOriginal = false) : id du DPE non repris, méthode', () => {
+    utilsState.dpeOriginal = false;
+    const em = emetteur({
+      typeEmissionDistributionId: '41',
+      tvRendementDistributionChId: 6
+    });
+    mockTvsStore.getRendementDistributionCh.mockReturnValue({
+      rd: '0.85',
+      tv_rendement_distribution_ch_id: '7'
+    });
+
+    calc_emetteur_ch(em, {}, '1', '1');
+
+    expect(mockTvsStore.getRendementDistributionChById).not.toHaveBeenCalled();
+    expect(em.donnee_intermediaire.rendement_distribution).toBeCloseTo(0.85, 10);
+    expect(em.donnee_entree.tv_rendement_distribution_ch_id).toBe(7);
   });
 
   test('type_emission=41 SANS tv_rendement_distribution_ch_id : utilise getRendementDistributionCh', () => {
@@ -376,6 +399,24 @@ describe('tv_intermittence - intermittence', () => {
     expect(em.donnee_entree.tv_intermittence_id).toBe(11);
   });
 
+  test('DPE modifié (isOriginal = false) sans fiche : tv_intermittence_id du DPE non lu, comptage Absence', () => {
+    utilsState.bugForBugCompat = true;
+    utilsState.dpeOriginal = false;
+    const em = emetteurIntermittence(10);
+    mockTv({
+      intermittence: intermittenceRow({
+        lookup: { comptage_individuel: 'Présence de comptage' },
+        result: { i0: '0.9', tv_intermittence_id: '12' }
+      })
+    });
+
+    calc_emetteur_ch(em, { enum_type_installation_id: '2' }, '1', '1');
+
+    const matchers = tvMatchers('intermittence');
+    expect(matchers).toHaveLength(1);
+    expect(matchers[0].comptage_individuel).toBe('Absence');
+  });
+
   test.each([
     ['ligne sans comptage_individuel', {}],
     ['aucune ligne', undefined]
@@ -521,6 +562,13 @@ describe('isIntermittenceCollectiveSaisie', () => {
 
     expect(isIntermittenceCollectiveSaisie({ tv_intermittence_id: 7 })).toBe(attendu);
     expect(tvMatchers('intermittence')).toEqual([{ tv_intermittence_id: 7 }]);
+  });
+
+  test('DPE modifié (isOriginal = false) : toujours faux, sans lecture de table', () => {
+    utilsState.bugForBugCompat = true;
+    utilsState.dpeOriginal = false;
+    expect(isIntermittenceCollectiveSaisie({ tv_intermittence_id: 158 })).toBe(false);
+    expect(tv).not.toHaveBeenCalled();
   });
 
   test('ligne saisie introuvable : faux', () => {

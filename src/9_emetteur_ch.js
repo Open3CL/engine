@@ -1,4 +1,4 @@
-import { bug_for_bug_compat, tv } from './utils.js';
+import { dpe_original, reprise_saisies_dpe, tv } from './utils.js';
 import { TvsStore } from './core/tv/infrastructure/tvs.store.js';
 
 const tvsStore = new TvsStore();
@@ -15,7 +15,12 @@ function tv_rendement_distribution_ch(di, de) {
 
   // Pour les 'Autres équipements' (id=41), si le DPE original a déjà un tv_rendement_distribution_ch_id,
   // on conserve cette valeur plutôt que de prendre la première ligne de la table (bug).
-  if (de.enum_type_emission_distribution_id === '41' && de.tv_rendement_distribution_ch_id) {
+  // Pas de reprise sur un DPE modifié (option isOriginal = false).
+  if (
+    dpe_original &&
+    de.enum_type_emission_distribution_id === '41' &&
+    de.tv_rendement_distribution_ch_id
+  ) {
     row = tvsStore.getRendementDistributionChById(de.tv_rendement_distribution_ch_id);
   }
 
@@ -68,11 +73,12 @@ function tv_rendement_regulation(di, de) {
 /**
  * En bug_for_bug_compat, indique si l'intermittence saisie par le logiciel (tv_intermittence_id)
  * correspond à une ligne de la table réservée aux installations collectives.
+ * Toujours faux sur un DPE modifié (option isOriginal = false).
  * @param {object} de donnee_entree de l'émetteur
  * @returns {boolean}
  */
 export function isIntermittenceCollectiveSaisie(de) {
-  if (!bug_for_bug_compat || !de.tv_intermittence_id) return false;
+  if (!reprise_saisies_dpe() || !de.tv_intermittence_id) return false;
   const row = tv('intermittence', { tv_intermittence_id: de.tv_intermittence_id }, de);
   if (!row || !row.enum_type_installation_id) return false;
   return !row.enum_type_installation_id.split('|').includes('1');
@@ -89,8 +95,9 @@ function tv_intermittence(di, de, inst_ch_de, map_id, inertie_id, isAppointIndiv
       ficheTechniqueValue &&
       (Number.parseInt(ficheTechniqueValue) === 1 || ficheTechniqueValue.toLowerCase() === 'oui');
   } else {
-    if (bug_for_bug_compat) {
+    if (reprise_saisies_dpe()) {
       // Si info inconnue, on se base sur tv_intermittence_id pour récupérer cette info
+      // (pas de reprise sur un DPE modifié, option isOriginal = false)
       const inertie = {
         tv_intermittence_id: de.tv_intermittence_id
       };
