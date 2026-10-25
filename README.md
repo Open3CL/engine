@@ -294,45 +294,42 @@ La structure attendue est celle du **XML DPE de l'ADEME**, converti en JSON. Les
 
 Pour rester conforme aux DPE publiés par l'ADEME, le moteur **reprend certaines valeurs déjà présentes dans le DPE
 d'entrée** au lieu de les recalculer : quelques identifiants de lignes de tables (`tv_*_id`), quelques données
-intermédiaires et les fiches techniques.
+intermédiaires et des fiches techniques.
 
 Pour simuler des travaux, l'appelant modifie les `donnee_entree` d'un DPE puis relance `calcul_3cl`. Il doit alors
-**supprimer ces valeurs sur les éléments touchés par les travaux**, sinon le moteur réutilise celles de l'état avant
-travaux. Les autres `tv_*_id` et `donnee_intermediaire` sont toujours recalculés : inutile de les supprimer.
+**supprimer les seules valeurs ci-dessous**, sinon le moteur réutilise celles de l'état avant travaux. Tous les autres
+`tv_*_id` et `donnee_intermediaire` sont recalculés à partir des `donnee_entree` : inutile de les supprimer.
 
 ```javascript
 const avant = calcul_3cl(structuredClone(dpe)); // état initial : aucune purge
 const apres = calcul_3cl(appliquerTravauxEtPurger(structuredClone(dpe))); // voir le tableau ci-dessous
 ```
 
-> Ne purger que les éléments listés pour les travaux réalisés. Purger un élément non modifié change son résultat et
-> l'écarte de l'étiquette ADEME.
+> Ne purger que pour les travaux réalisés. Purger un élément non concerné change son résultat et l'écarte de
+> l'étiquette ADEME.
 
-| Travaux                                                  | Élément                                        | À supprimer dans `donnee_entree`                                          | À supprimer dans `donnee_intermediaire`                                          | À renseigner         |
-| :------------------------------------------------------- | :--------------------------------------------- | :------------------------------------------------------------------------ | :------------------------------------------------------------------------------- | :------------------- |
-| Isolation d'un mur                                       | Mur isolé                                      | `tv_umur_id`                                                              | –                                                                                | –                    |
-|                                                          | Ventilation _(même non modifiée)_              | `tv_q4pa_conv_id`                                                         | –                                                                                | –                    |
-|                                                          | Ponts thermiques reliés au mur                 | `tv_pont_thermique_id`                                                    | `k`                                                                              | –                    |
-| Isolation d'un plancher haut ou bas                      | Plancher isolé                                 | `tv_uph_id` ou `tv_upb_id`                                                | –                                                                                | –                    |
-|                                                          | Ventilation _(même non modifiée)_              | `tv_q4pa_conv_id`                                                         | –                                                                                | –                    |
-|                                                          | Ponts thermiques reliés au plancher            | `tv_pont_thermique_id`                                                    | `k`                                                                              | –                    |
-| Remplacement de fenêtres ou de portes                    | Menuiserie remplacée                           | –                                                                         | –                                                                                | `presence_joint`     |
-|                                                          | Ventilation _(même non modifiée)_              | `tv_q4pa_conv_id`                                                         | –                                                                                | –                    |
-|                                                          | Ponts thermiques menuiserie / mur              | `tv_pont_thermique_id`                                                    | `k`                                                                              | –                    |
-| Remplacement du générateur de chauffage à combustion     | Générateur                                     | `tv_generateur_combustion_id`                                             | `pn`, `rpn`, `rpint`, `qp0`, `pveilleuse`, `temp_fonc_30`, `temp_fonc_100`       | `presence_veilleuse` |
-| Remplacement par une pompe à chaleur ou autre générateur | Générateur                                     | `tv_generateur_combustion_id`, `tv_scop_id`, `tv_rendement_generation_id` | `scop`, `cop`, `rg`, `rg_dep`, `pn`, `pveilleuse`                                | –                    |
-| Émetteurs, distribution ou régulation                    | Émetteur                                       | `tv_rendement_distribution_ch_id`, `tv_intermittence_id`                  | –                                                                                | –                    |
-|                                                          | Générateur associé _(même non modifié)_        | –                                                                         | `temp_fonc_30`, `temp_fonc_100`                                                  | –                    |
-| Remplacement du générateur ECS ou du ballon              | Générateur ECS                                 | `tv_generateur_combustion_id`, `tv_scop_id`, `tv_pertes_stockage_id`      | `pn`, `rpn`, `qp0`, `pveilleuse`, `rendement_generation_stockage`, `scop`, `cop` | `presence_veilleuse` |
-|                                                          | Installation ECS _(si la distribution change)_ | `tv_rendement_distribution_ecs_id`                                        | –                                                                                | –                    |
-| Remplacement de la climatisation                         | Générateur de froid                            | –                                                                         | `eer`                                                                            | –                    |
+| Travaux                                                                 | Élément                                              | À supprimer                                                                                                              | À renseigner         |
+| :---------------------------------------------------------------------- | :--------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------- | :------------------- |
+| Isolation de murs ou de planchers                                       | Ventilation _(même non modifiée)_                    | `donnee_entree.tv_q4pa_conv_id`                                                                                          | –                    |
+| Remplacement de fenêtres ou de portes                                   | Menuiserie remplacée                                 | –                                                                                                                        | `presence_joint`     |
+|                                                                         | Ventilation _(même non modifiée)_                    | `donnee_entree.tv_q4pa_conv_id`                                                                                          | –                    |
+| Passage d'un chauffage par effet Joule à un autre système, ou l'inverse | Murs, planchers hauts et bas _(même non modifiés)_   | `donnee_entree.tv_umur_id`, `tv_uph_id`, `tv_upb_id`                                                                     | –                    |
+| Remplacement d'un générateur à combustion (chauffage ou ECS)            | Générateur                                           | `donnee_intermediaire.pn`, `rpn`, `rpint`, `qp0`, `pveilleuse`, `temp_fonc_30`, `temp_fonc_100`                          | `presence_veilleuse` |
+| Remplacement d'un générateur ECS raccordé à un réseau de chaleur        | Générateur ECS                                       | `donnee_intermediaire.rendement_generation_stockage`                                                                     | –                    |
+| Émetteurs ou régulation modifiés                                        | Émetteur                                             | `donnee_entree.tv_intermittence_id` ; `tv_rendement_distribution_ch_id` si l'émetteur est de type « autres équipements » | –                    |
+|                                                                         | Générateur à combustion associé _(même non modifié)_ | `donnee_intermediaire.temp_fonc_30`, `temp_fonc_100`                                                                     | –                    |
+| Distribution ECS modifiée                                               | Installation ECS                                     | `donnee_entree.tv_rendement_distribution_ecs_id`                                                                         | –                    |
 
-Fiches techniques : elles sont rattachées au DPE, pas à un élément, et le moteur y lit notamment l'année
-d'installation, la pose murale et la veilleuse d'un générateur, ou la présence de joints d'une menuiserie. Si l'élément
-remplacé garde sa `description`, supprimer les sous-fiches correspondantes (catégorie 7 pour le chauffage, 8 pour l'ECS,
-4 pour les menuiseries) ou donner une nouvelle `description` à l'élément.
+Pompes à chaleur et climatisation : `scop`, `cop` et `eer` ne sont relus que si la méthode de saisie
+(`enum_methode_saisie_carac_sys_id`) indique des caractéristiques saisies. Pour un nouvel équipement, choisir la méthode
+forfaitaire ou renseigner ses propres valeurs.
 
-À conserver, même sur un élément modifié : `tv_umur0_id`, `tv_coef_reduction_deperdition_id`, `tv_coef_masque_*`,
+Fiches techniques : elles sont rattachées au DPE, pas à un élément. Le moteur y retrouve la veilleuse et la pose murale
+d'un générateur **par sa `description`** : si l'élément remplacé garde la même description, supprimer ces sous-fiches
+(catégorie 7 pour le chauffage, 8 pour l'ECS) ou changer la description. Si le comptage individuel change, supprimer
+aussi la sous-fiche « présence comptage » (catégorie 7).
+
+À ne jamais supprimer : `tv_umur0_id`, `tv_coef_reduction_deperdition_id`, `tv_coef_masque_*`,
 `tv_coef_transparence_ets_id` et, dans `donnee_utilisateur`, `umur0_avant`, `umur_avant`, `tv_umur0_id_avant`. Ils
 décrivent la structure, le local adjacent ou les masques, que les travaux ne changent pas.
 
