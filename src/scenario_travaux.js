@@ -1,4 +1,5 @@
 import { isEffetJoule, tv } from './utils.js';
+import { presenceJointNonRenseignee } from './4_ventilation.js';
 
 /**
  * Scénario de travaux : purge ciblée des valeurs reprises du DPE d'origine.
@@ -94,7 +95,11 @@ export function parseElementsModifies(elementsModifies) {
     const type = separateur > 0 ? texte.slice(0, separateur) : '';
     const reference = separateur > 0 ? texte.slice(separateur + 1) : '';
 
-    if (!TYPES_ELEMENTS[type] || !reference) {
+    /**
+     * Référence vide acceptée (`'<type>:'`) : certains logiciels n'exportent aucune référence
+     * (ex. générateur unique). Elle désigne les éléments de ce type sans référence.
+     */
+    if (!TYPES_ELEMENTS[type]) {
       console.warn(
         `elementsModifies : identifiant '${identifiant}' non reconnu (format attendu '<type>:<reference>', types : ${Object.keys(TYPES_ELEMENTS).join(', ')})`
       );
@@ -123,9 +128,11 @@ export function trouverElements(logement, parType) {
     const candidats = TYPES_ELEMENTS[type](logement);
     const trouves = [];
     for (const reference of references) {
-      const correspondances = candidats.filter(
-        (element) => String(element?.donnee_entree?.reference) === reference
-      );
+      const correspondances = candidats.filter((element, index) => {
+        const ref = element?.donnee_entree?.reference;
+        if (!ref && TYPES_ENVELOPPE.includes(type) && reference === `${type}_${index}`) return true;
+        return String(ref) === reference || (reference === '' && ref === undefined);
+      });
       if (correspondances.length === 0) {
         console.warn(`elementsModifies : aucun élément '${type}' de référence '${reference}'`);
       } else if (correspondances.length > 1) {
@@ -268,6 +275,45 @@ export function purgerLignesEffetJoule(logement, effetJoule) {
 }
 
 /**
+ * Purge de la ligne q4pa_conv (`tv_q4pa_conv_id`) d'une ventilation après modification de
+ * l'enveloppe ou de la ventilation, sans perdre les critères de la ligne d'origine qui décrivent
+ * des éléments non modifiés :
+ *
+ * - seules des menuiseries sont modifiées et la ligne d'origine est une ligne « surfaces isolées »
+ *   (lignes sans critère joints) : la ligne est conservée. Changer des menuiseries ne change pas
+ *   l'isolation des parois retenue par le logiciel d'origine, et la purger ferait recalculer
+ *   `isolation_surfaces` (parfois incohérent dans le DPE) puis dégrader q4pa_conv (ex. 2 → 4,6) ;
+ * - sinon la ligne est purgée. Si la ligne d'origine porte `presence_joints_menuiserie = 1` et
+ *   qu'aucune menuiserie non modifiée n'exporte `presence_joint`, le moteur reprenait ce critère de
+ *   la ligne (cf. presenceJointNonRenseignee, issue #294) : `presence_joint = 1` est reporté sur
+ *   ces menuiseries, sinon elles seraient considérées sans joint (ex. 2,5 → 4,6).
+ *
+ * @param logement {Logement}
+ * @param elements {Map<string, object[]>} éléments modifiés par type
+ * @param ventilation {Ventilation}
+ * @param seulesMenuiseries {boolean} seules des baies ou portes sont déclarées modifiées
+ */
+function purgerQ4paConv(logement, elements, ventilation, seulesMenuiseries) {
+  const id = ventilation.donnee_entree.tv_q4pa_conv_id;
+  const row = id ? tv('q4pa_conv', { tv_q4pa_conv_id: id }) : null;
+  if (seulesMenuiseries && row?.isolation_surfaces === '1') return;
+
+  const modifiees = new Set([
+    ...(elements.get('baie_vitree') ?? []),
+    ...(elements.get('porte') ?? [])
+  ]);
+  const nonModifiees = TYPES_ELEMENTS.baie_vitree(logement)
+    .concat(TYPES_ELEMENTS.porte(logement))
+    .filter((menuiserie) => !modifiees.has(menuiserie));
+  if (row?.presence_joints_menuiserie === '1' && presenceJointNonRenseignee(nonModifiees, [])) {
+    nonModifiees.forEach((menuiserie) => {
+      menuiserie.donnee_entree.presence_joint = 1;
+    });
+  }
+  delete ventilation.donnee_entree.tv_q4pa_conv_id;
+}
+
+/**
  * Applique au DPE (déjà assaini) la purge des valeurs reprises pour les éléments déclarés
  * modifiés et les éléments qui en dépendent :
  *
@@ -311,8 +357,11 @@ export function appliquerElementsModifies(dpe, elementsModifies) {
     });
   }
   if (enveloppeModifiee || elements.get('ventilation')?.length) {
+    const seulesMenuiseries =
+      !elements.get('ventilation')?.length &&
+      !['mur', 'plancher_bas', 'plancher_haut'].some((type) => elements.get(type)?.length);
     TYPES_ELEMENTS.ventilation(logement).forEach((ventilation) =>
-      supprimer(de(ventilation), ['tv_q4pa_conv_id'])
+      purgerQ4paConv(logement, elements, ventilation, seulesMenuiseries)
     );
   }
 

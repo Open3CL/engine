@@ -283,7 +283,14 @@ const apres = calcul_3cl(dpeApresTravaux, {
 | `installation_ecs`                                             | `tv_rendement_distribution_ecs_id`                                                                                                                                                                                                                                                            |
 
 Sans l'option, ou avec une liste vide, le calcul est strictement identique. Une référence inconnue ou portée par
-plusieurs éléments est signalée par un `console.warn`.
+plusieurs éléments est signalée par un `console.warn`. Une paroi ou menuiserie exportée sans référence est désignée
+par la référence générée par le moteur (`mur_<index>`, `baie_vitree_<index>`… position dans sa collection) ; une
+référence vide (`'generateur_chauffage:'`) désigne les éléments exportés sans référence.
+
+Ligne `q4pa_conv` : si seules des baies ou portes sont modifiées et que la ligne d'origine est une ligne « surfaces
+isolées », elle est conservée (l'isolation des parois n'a pas changé). Si la ligne d'origine retient des menuiseries
+avec joints et qu'aucune menuiserie non modifiée n'exporte `presence_joint`, `presence_joint = 1` leur est reporté
+avant la purge.
 
 <details>
 <summary><strong>Exemple d'objet JSON d'entrée (partiel)</strong></summary>

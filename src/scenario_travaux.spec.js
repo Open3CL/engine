@@ -185,10 +185,16 @@ describe('parseElementsModifies', () => {
   });
 
   test('avertit et ignore les identifiants mal formés ou de type inconnu', () => {
-    const res = parseElementsModifies(['toiture:x', 'mur:', ':m1', 'm1', 42]);
+    const res = parseElementsModifies(['toiture:x', ':m1', 'm1', 42]);
     expect(res.size).toBe(0);
-    expect(warn).toHaveBeenCalledTimes(5);
+    expect(warn).toHaveBeenCalledTimes(4);
     expect(warn.mock.calls[0][0]).toContain("identifiant 'toiture:x' non reconnu");
+  });
+
+  test('accepte une référence vide (élément exporté sans référence)', () => {
+    const res = parseElementsModifies(['generateur_chauffage:']);
+    expect([...res.get('generateur_chauffage')]).toEqual(['']);
+    expect(warn).not.toHaveBeenCalled();
   });
 
   test("avertit et ignore l'option si ce n'est pas un tableau", () => {
@@ -254,6 +260,50 @@ describe('trouverElements', () => {
     const res = trouverElements(logement, new Map([['mur', new Set(['x'])]]));
     expect(res.get('mur')).toHaveLength(2);
     expect(warn.mock.calls[0][0]).toContain("2 éléments 'mur' partagent la référence 'x'");
+  });
+
+  test('référence vide : retient les éléments sans référence', () => {
+    const logement = {
+      enveloppe: {
+        mur_collection: {
+          mur: [
+            { donnee_entree: { reference: '' } },
+            { donnee_entree: { reference: 'm1' } },
+            { donnee_entree: {} }
+          ]
+        }
+      }
+    };
+    const res = trouverElements(logement, new Map([['mur', new Set([''])]]));
+    const murs = logement.enveloppe.mur_collection.mur;
+    expect(res.get('mur')).toEqual([murs[0], murs[2]]);
+    // référence absente : également retrouvée par 'undefined' (String(undefined))
+    expect(
+      trouverElements(logement, new Map([['mur', new Set(['undefined'])]])).get('mur')
+    ).toEqual([murs[2]]);
+  });
+
+  test('paroi ou menuiserie sans référence : retrouvée par la référence générée <type>_<index>', () => {
+    const logement = {
+      enveloppe: {
+        mur_collection: { mur: [{ donnee_entree: { reference: 'M' } }, { donnee_entree: {} }] }
+      },
+      ventilation_collection: { ventilation: [{ donnee_entree: {} }] }
+    };
+    const murs = logement.enveloppe.mur_collection.mur;
+    expect(trouverElements(logement, new Map([['mur', new Set(['mur_1'])]])).get('mur')).toEqual([
+      murs[1]
+    ]);
+    // référence renseignée : la référence générée ne s'applique pas
+    expect(trouverElements(logement, new Map([['mur', new Set(['mur_0'])]])).get('mur')).toEqual(
+      []
+    );
+    // hors enveloppe : pas de référence générée
+    expect(
+      trouverElements(logement, new Map([['ventilation', new Set(['ventilation_0'])]])).get(
+        'ventilation'
+      )
+    ).toEqual([]);
   });
 });
 
@@ -477,6 +527,70 @@ describe('appliquerElementsModifies', () => {
     dpe2.logement.enveloppe.porte_collection.porte[0].donnee_entree.presence_joint = '';
     appliquerElementsModifies(dpe2, ['porte:p1']);
     expect(warn).toHaveBeenCalledTimes(1);
+  });
+
+  test('seules des menuiseries remplacées, ligne q4pa_conv « surfaces isolées » : ligne conservée', () => {
+    vi.mocked(tv).mockReturnValue({ tv_q4pa_conv_id: '10', isolation_surfaces: '1' });
+    const dpe = makeDpe();
+    appliquerElementsModifies(dpe, ['porte:p1']);
+    expect(tv).toHaveBeenCalledWith('q4pa_conv', { tv_q4pa_conv_id: 1 });
+    expect(dpe.logement.ventilation_collection.ventilation[0].donnee_entree.tv_q4pa_conv_id).toBe(
+      1
+    );
+
+    // une paroi opaque modifiée en même temps : la ligne est purgée
+    const dpe2 = makeDpe();
+    appliquerElementsModifies(dpe2, ['porte:p1', 'mur:m1']);
+    expect(
+      dpe2.logement.ventilation_collection.ventilation[0].donnee_entree.tv_q4pa_conv_id
+    ).toBeUndefined();
+
+    // ventilation modifiée : la ligne est purgée
+    const dpe3 = makeDpe();
+    appliquerElementsModifies(dpe3, ['porte:p1', 'ventilation:v1']);
+    expect(
+      dpe3.logement.ventilation_collection.ventilation[0].donnee_entree.tv_q4pa_conv_id
+    ).toBeUndefined();
+  });
+
+  test('ligne q4pa_conv « avec joints » et menuiseries non modifiées sans presence_joint : joints reportés', () => {
+    vi.mocked(tv).mockReturnValue({
+      tv_q4pa_conv_id: '12',
+      isolation_surfaces: '0',
+      presence_joints_menuiserie: '1'
+    });
+    const dpe = makeDpe();
+    dpe.logement.enveloppe.porte_collection.porte[0].donnee_entree.presence_joint = 1;
+    appliquerElementsModifies(dpe, ['porte:p1']);
+    expect(
+      dpe.logement.ventilation_collection.ventilation[0].donnee_entree.tv_q4pa_conv_id
+    ).toBeUndefined();
+    expect(
+      dpe.logement.enveloppe.baie_vitree_collection.baie_vitree[0].donnee_entree.presence_joint
+    ).toBe(1);
+
+    // une menuiserie non modifiée renseigne presence_joint : rien n'est reporté
+    const dpe2 = makeDpe();
+    appliquerElementsModifies(dpe2, ['mur:m1']);
+    expect(
+      dpe2.logement.enveloppe.baie_vitree_collection.baie_vitree[0].donnee_entree.presence_joint
+    ).toBeUndefined();
+  });
+
+  test('ligne q4pa_conv sans critère joints : presence_joint non reporté', () => {
+    vi.mocked(tv).mockReturnValue({ tv_q4pa_conv_id: '1', isolation_surfaces: '0' });
+    const dpe = makeDpe();
+    appliquerElementsModifies(dpe, ['porte:p1']);
+    expect(
+      dpe.logement.enveloppe.baie_vitree_collection.baie_vitree[0].donnee_entree.presence_joint
+    ).toBeUndefined();
+
+    // ventilation sans tv_q4pa_conv_id : pas de recherche de ligne
+    vi.mocked(tv).mockClear();
+    const dpe2 = makeDpe();
+    delete dpe2.logement.ventilation_collection.ventilation[0].donnee_entree.tv_q4pa_conv_id;
+    appliquerElementsModifies(dpe2, ['mur:m1']);
+    expect(tv).not.toHaveBeenCalledWith('q4pa_conv', expect.anything());
   });
 
   test('référence inconnue seule : avertissement et DPE inchangé', () => {
