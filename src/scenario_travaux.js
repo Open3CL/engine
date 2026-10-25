@@ -205,30 +205,66 @@ export function purgerFichesTechniquesGenerateur(dpe, description, categorie) {
   }
 }
 
+/** Parois dont les lignes tv_umur / tv_upb / tv_uph portent un statut effet Joule. */
+const PAROIS_EFFET_JOULE = [
+  ['umur', 'mur'],
+  ['upb', 'plancher_bas'],
+  ['uph', 'plancher_haut']
+];
+
 /**
- * Statut effet Joule retenu par le DPE d'origine, lu dans les lignes tv_umur / tv_upb / tv_uph
- * reprises des parois (première ligne trouvée). Le moteur relit ce statut dans ces lignes
- * (cf. tv_umur dans 3.2.1_mur.js) : après un passage effet Joule ↔ autre système, elles doivent
- * être recalculées.
+ * Statut effet Joule du logement avant travaux, quand il peut être déduit.
+ *
+ * Le type d'origine d'un générateur modifié n'est plus connu (l'appelant l'a remplacé), mais ses
+ * identifiants repris le trahissent : `tv_generateur_combustion_id` (générateur à combustion) ou
+ * `tv_scop_id` (pompe à chaleur) désignent un générateur sans effet Joule. Si tous les générateurs
+ * modifiés sont dans ce cas, le statut est recalculé comme le fait le moteur (isEffetJoule) avec
+ * ces générateurs non Joule.
  *
  * @param logement {Logement}
- * @returns {string|undefined} '0' | '1' ou undefined si aucune ligne reprise
+ * @param generateursModifies {object[]}
+ * @returns {string|undefined} '0' | '1', ou undefined si le type d'origine n'est pas déductible
  */
-export function effetJouleDpeOrigine(logement) {
-  const parois = [
-    ['umur', TYPES_ELEMENTS.mur(logement)],
-    ['upb', TYPES_ELEMENTS.plancher_bas(logement)],
-    ['uph', TYPES_ELEMENTS.plancher_haut(logement)]
-  ];
-  for (const [table, elements] of parois) {
-    for (const element of elements) {
-      const id = element.donnee_entree?.[`tv_${table}_id`];
+export function effetJouleAvantTravaux(logement, generateursModifies) {
+  const nonJoule = (generateur) =>
+    Boolean(generateur.donnee_entree?.tv_generateur_combustion_id) ||
+    Boolean(generateur.donnee_entree?.tv_scop_id);
+  if (!generateursModifies.every(nonJoule)) return undefined;
+
+  const modifies = new Set(generateursModifies);
+  const installations = installationsChauffage(logement).map((installation) => ({
+    ...installation,
+    generateur_chauffage_collection: {
+      generateur_chauffage: liste(
+        installation.generateur_chauffage_collection?.generateur_chauffage
+      ).map((generateur) =>
+        modifies.has(generateur)
+          ? { donnee_entree: { enum_type_generateur_ch_id: 'non_joule' } }
+          : generateur
+      )
+    }
+  }));
+  return isEffetJoule(installations);
+}
+
+/**
+ * Supprime les `tv_umur_id`, `tv_upb_id`, `tv_uph_id` repris dont la ligne porte un statut effet
+ * Joule différent de `effetJoule`. Le moteur relit ce statut dans la ligne reprise (cf. tv_umur
+ * dans 3.2.1_mur.js) : sans purge, il garderait celui d'avant travaux.
+ *
+ * @param logement {Logement}
+ * @param effetJoule {string} statut effet Joule après travaux ('0' | '1')
+ */
+export function purgerLignesEffetJoule(logement, effetJoule) {
+  for (const [table, type] of PAROIS_EFFET_JOULE) {
+    const cle = `tv_${table}_id`;
+    for (const paroi of TYPES_ELEMENTS[type](logement)) {
+      const id = paroi.donnee_entree?.[cle];
       if (!id) continue;
-      const row = tv(table, { [`tv_${table}_id`]: id });
-      if (row?.effet_joule !== undefined) return String(row.effet_joule);
+      const row = tv(table, { [cle]: id });
+      if (row && String(row.effet_joule) !== effetJoule) delete paroi.donnee_entree[cle];
     }
   }
-  return undefined;
 }
 
 /**
@@ -241,8 +277,8 @@ export function effetJouleDpeOrigine(logement) {
  *   repris, ils décrivent la structure) ;
  * - ventilation : `tv_q4pa_conv_id` ;
  * - générateur de chauffage : caractéristiques de combustion, sous-fiches techniques (cat. 7) ;
- *   si le statut effet Joule du logement change, `tv_umur_id`, `tv_upb_id`, `tv_uph_id` de
- *   toutes les parois ;
+ *   si le statut effet Joule du logement change (ou n'est pas déductible), `tv_umur_id`,
+ *   `tv_upb_id`, `tv_uph_id` des parois dont la ligne porte l'ancien statut ;
  * - émetteur : `tv_intermittence_id`, `tv_rendement_distribution_ch_id` (type 41 « autres
  *   équipements »), temp_fonc_30/100 des générateurs de son installation ;
  * - générateur ECS : caractéristiques de combustion, `rendement_generation_stockage`,
@@ -287,13 +323,14 @@ export function appliquerElementsModifies(dpe, elementsModifies) {
     purgerFichesTechniquesGenerateur(dpe, de(generateur).description, '7');
   });
   if (generateursCh.length) {
-    const avant = effetJouleDpeOrigine(logement);
+    /**
+     * Passage effet Joule <-> autre système : lignes de parois au statut obsolète purgées. Si
+     * le statut d'avant travaux est connu et inchangé, rien n'est purgé, même si le logiciel
+     * d'origine avait retenu des lignes incohérentes avec le chauffage (conformité conservée).
+     */
+    const avant = effetJouleAvantTravaux(logement, generateursCh);
     const apres = isEffetJoule(installationsChauffage(logement));
-    if (avant !== undefined && avant !== apres) {
-      TYPES_ELEMENTS.mur(logement).forEach((mur) => supprimer(de(mur), ['tv_umur_id']));
-      TYPES_ELEMENTS.plancher_bas(logement).forEach((pb) => supprimer(de(pb), ['tv_upb_id']));
-      TYPES_ELEMENTS.plancher_haut(logement).forEach((ph) => supprimer(de(ph), ['tv_uph_id']));
-    }
+    if (avant !== apres) purgerLignesEffetJoule(logement, apres);
   }
 
   // Émetteurs : intermittence, distribution et générateurs associés

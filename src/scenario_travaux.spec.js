@@ -18,7 +18,8 @@ const {
   purgerCaracteristiquesCombustion,
   purgerTemperaturesFonctionnement,
   purgerFichesTechniquesGenerateur,
-  effetJouleDpeOrigine,
+  purgerLignesEffetJoule,
+  effetJouleAvantTravaux,
   appliquerElementsModifies
 } = await import('./scenario_travaux.js');
 const { tv, isEffetJoule } = await import('./utils.js');
@@ -365,26 +366,65 @@ describe('purgerFichesTechniquesGenerateur', () => {
   });
 });
 
-describe('effetJouleDpeOrigine', () => {
-  test('lit effet_joule dans la première ligne tv_umur reprise', () => {
-    vi.mocked(tv).mockReturnValue({ effet_joule: '1' });
+describe('purgerLignesEffetJoule', () => {
+  test('purge les seules lignes tv_umur / tv_upb / tv_uph au statut différent', () => {
+    vi.mocked(tv).mockImplementation((table, matcher) => {
+      if (table === 'umur') return { effet_joule: matcher.tv_umur_id === 1 ? '1' : '0' };
+      if (table === 'upb') return { effet_joule: 1 };
+      return undefined;
+    });
     const { logement } = makeDpe();
-    expect(effetJouleDpeOrigine(logement)).toBe('1');
-    expect(tv).toHaveBeenCalledWith('umur', { tv_umur_id: 1 });
-  });
-
-  test('à défaut de mur repris, lit tv_upb puis tv_uph', () => {
-    vi.mocked(tv).mockImplementation((table) => (table === 'uph' ? { effet_joule: 0 } : undefined));
-    const { logement } = makeDpe();
-    logement.enveloppe.mur_collection.mur.forEach((m) => delete m.donnee_entree.tv_umur_id);
-    expect(effetJouleDpeOrigine(logement)).toBe('0');
-    expect(tv).toHaveBeenCalledWith('upb', { tv_upb_id: 3 });
+    logement.enveloppe.mur_collection.mur.push({ donnee_entree: { reference: 'm3' } });
+    purgerLignesEffetJoule(logement, '0');
+    const env = logement.enveloppe;
+    expect(env.mur_collection.mur.map((m) => m.donnee_entree.tv_umur_id)).toEqual([
+      undefined,
+      2,
+      undefined
+    ]);
+    expect(env.mur_collection.mur[0].donnee_entree.tv_umur0_id).toBe(7);
+    // effet_joule numérique comparé en chaîne
+    expect(env.plancher_bas_collection.plancher_bas[0].donnee_entree.tv_upb_id).toBeUndefined();
+    // ligne introuvable : conservée
+    expect(env.plancher_haut_collection.plancher_haut[0].donnee_entree.tv_uph_id).toBe(4);
     expect(tv).toHaveBeenCalledWith('uph', { tv_uph_id: 4 });
   });
+});
 
-  test('aucune ligne reprise : statut inconnu', () => {
-    expect(effetJouleDpeOrigine({ enveloppe: { mur_collection: { mur: [{}] } } })).toBeUndefined();
+describe('effetJouleAvantTravaux', () => {
+  test('générateurs modifiés à combustion ou PAC (identifiants repris) : statut recalculé sans eux', () => {
+    vi.mocked(isEffetJoule).mockReturnValue('0');
+    const { logement } = makeDpe();
+    const [g1, g2] = TYPES_ELEMENTS.generateur_chauffage(logement);
+    g1.donnee_entree.tv_generateur_combustion_id = 12;
+    expect(effetJouleAvantTravaux(logement, [g1])).toBe('0');
+    // les lignes tv_umur ne sont pas consultées
     expect(tv).not.toHaveBeenCalled();
+    const [installations] = vi.mocked(isEffetJoule).mock.calls[0];
+    const generateurs = installations.map(
+      (i) => i.generateur_chauffage_collection.generateur_chauffage[0]
+    );
+    expect(generateurs[0].donnee_entree.enum_type_generateur_ch_id).toBe('non_joule');
+    expect(generateurs[1]).toBe(g2);
+
+    g2.donnee_entree.tv_scop_id = 3;
+    effetJouleAvantTravaux(logement, [g2]);
+    expect(isEffetJoule).toHaveBeenCalledTimes(2);
+  });
+
+  test('installation sans générateurs : tolérée', () => {
+    vi.mocked(isEffetJoule).mockReturnValue('0');
+    const { logement } = makeDpe();
+    logement.installation_chauffage_collection.installation_chauffage.push({});
+    const g1 = TYPES_ELEMENTS.generateur_chauffage(logement)[0];
+    g1.donnee_entree.tv_generateur_combustion_id = 12;
+    expect(effetJouleAvantTravaux(logement, [g1])).toBe('0');
+  });
+
+  test('type d’origine non déductible : statut inconnu', () => {
+    const { logement } = makeDpe();
+    expect(effetJouleAvantTravaux(logement, [{ donnee_entree: {} }])).toBeUndefined();
+    expect(isEffetJoule).not.toHaveBeenCalled();
   });
 });
 
@@ -473,7 +513,7 @@ describe('appliquerElementsModifies', () => {
     );
   });
 
-  test('passage effet Joule → autre système : purge tv_umur_id, tv_upb_id, tv_uph_id de toutes les parois', () => {
+  test('passage effet Joule → autre système : purge tv_umur_id, tv_upb_id, tv_uph_id au statut Joule', () => {
     vi.mocked(tv).mockReturnValue({ effet_joule: '1' });
     vi.mocked(isEffetJoule).mockReturnValue('0');
     const dpe = makeDpe();
@@ -491,12 +531,27 @@ describe('appliquerElementsModifies', () => {
     );
   });
 
-  test('statut effet Joule d’origine inconnu : parois conservées', () => {
-    vi.mocked(tv).mockReturnValue(undefined);
+  test('chaudière remplacée alors que les lignes tv_umur portent effet_joule = 1 : parois conservées', () => {
+    // logiciel d'origine incohérent : la chaudière (identifiant de combustion repris) n'était pas à effet Joule
+    vi.mocked(tv).mockReturnValue({ effet_joule: '1' });
+    vi.mocked(isEffetJoule).mockReturnValue('0');
+    const dpe = makeDpe();
+    const g1 = TYPES_ELEMENTS.generateur_chauffage(dpe.logement)[0];
+    g1.donnee_entree.tv_generateur_combustion_id = 12;
+    appliquerElementsModifies(dpe, ['generateur_chauffage:g1']);
+    expect(dpe.logement.enveloppe.mur_collection.mur[0].donnee_entree.tv_umur_id).toBe(1);
+  });
+
+  test('statut d’origine inconnu : seules les lignes au statut différent de l’après travaux sont purgées', () => {
+    vi.mocked(tv).mockReturnValue({ effet_joule: '1' });
     vi.mocked(isEffetJoule).mockReturnValue('1');
     const dpe = makeDpe();
     appliquerElementsModifies(dpe, ['generateur_chauffage:g2']);
     expect(dpe.logement.enveloppe.mur_collection.mur[0].donnee_entree.tv_umur_id).toBe(1);
+    vi.mocked(isEffetJoule).mockReturnValue('0');
+    const dpe2 = makeDpe();
+    appliquerElementsModifies(dpe2, ['generateur_chauffage:g2']);
+    expect(dpe2.logement.enveloppe.mur_collection.mur[0].donnee_entree.tv_umur_id).toBeUndefined();
   });
 
   test('émetteur modifié : intermittence, distribution (type 41) et temp_fonc des générateurs de son installation', () => {
