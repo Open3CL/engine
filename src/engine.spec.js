@@ -88,6 +88,11 @@ vi.mock('./16.2_production_enr.js', () => ({
   ratioProrataPvLogement: (...args) => ratioProrataPvLogement(...args)
 }));
 
+vi.mock('./scenario_travaux.js', () => ({
+  aDesElementsModifies: vi.fn(() => false),
+  appliquerElementsModifies: vi.fn()
+}));
+
 // Le service de sanitisation est instancié au chargement puis appelé : `execute`
 // renvoie l'entrée telle quelle.
 const sanitizeExecute = vi.fn((dpe) => dpe);
@@ -118,6 +123,7 @@ const { conso_aux_distribution_ecs } = await import('./15_conso_aux.js');
 const calc_confort_ete = (await import('./2021_04_13_confort_ete.js')).default;
 const calc_qualite_isolation = (await import('./2021_04_13_qualite_isolation.js')).default;
 const getFicheTechnique = (await import('./ficheTechnique.js')).default;
+const { aDesElementsModifies, appliquerElementsModifies } = await import('./scenario_travaux.js');
 const { reconstituerRdimDpeGenereImmeuble } = await import('./17.2_rdim_dpe_genere_immeuble.js');
 const { reconstituerRdimEcsIndividuelleUnique } =
   await import('./11_rdim_ecs_individuelle_unique.js');
@@ -145,6 +151,7 @@ beforeEach(() => {
   vi.mocked(collectionCanBeEmpty).mockReturnValue(true);
   vi.mocked(isEffetJoule).mockReturnValue(false);
   vi.mocked(getFicheTechnique).mockReturnValue(undefined);
+  vi.mocked(aDesElementsModifies).mockReturnValue(false);
   vi.mocked(containsAnySubstring).mockReturnValue(false);
   vi.mocked(calc_deperdition).mockReturnValue({ deperdition_enveloppe: 300 });
   vi.mocked(calculateInertie).mockReturnValue({ enum_classe_inertie_id: '3' });
@@ -362,6 +369,31 @@ describe('calcul_3cl - garde-fous précoces', () => {
     expect(calcul_3cl(dpe, { sanitize: false })).toBeNull();
     expect(collectionCanBeEmpty).toHaveBeenCalledWith(dpe.logement, 'plancher_bas', 1);
     errSpy.mockRestore();
+  });
+});
+
+describe('calcul_3cl - option elementsModifies (scénario de travaux)', () => {
+  test('sans éléments modifiés, le DPE assaini est calculé tel quel, sans purge', () => {
+    vi.mocked(aDesElementsModifies).mockReturnValue(false);
+    const dpe = makeDpe();
+    const res = calcul_3cl(dpe, { sanitize: true, elementsModifies: [] });
+    expect(aDesElementsModifies).toHaveBeenCalledWith([]);
+    expect(appliquerElementsModifies).not.toHaveBeenCalled();
+    expect(res).toBe(dpe);
+  });
+
+  test('avec éléments modifiés, la purge porte sur un clone du DPE assaini', () => {
+    vi.mocked(aDesElementsModifies).mockReturnValue(true);
+    const dpe = makeDpe();
+    const elementsModifies = ['mur:m1'];
+    const res = calcul_3cl(dpe, { sanitize: true, elementsModifies });
+    expect(appliquerElementsModifies).toHaveBeenCalledTimes(1);
+    const [dpePurge, liste] = vi.mocked(appliquerElementsModifies).mock.calls[0];
+    expect(liste).toBe(elementsModifies);
+    // le DPE purgé est une copie : l'objet de l'appelant n'est pas celui purgé ni renvoyé
+    expect(dpePurge).not.toBe(dpe);
+    expect(res).toBe(dpePurge);
+    expect(dpe.logement.sortie).toBeUndefined();
   });
 });
 

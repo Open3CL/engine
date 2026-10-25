@@ -32,6 +32,7 @@ import { Inertie } from './7_inertie.js';
 import getFicheTechnique from './ficheTechnique.js';
 import { ProductionENR, ratioProrataPvLogement } from './16.2_production_enr.js';
 import DpeSanitizerService from './dpe-sanitizer.service.js';
+import { aDesElementsModifies, appliquerElementsModifies } from './scenario_travaux.js';
 import { reconstituerRdimDpeGenereImmeuble } from './17.2_rdim_dpe_genere_immeuble.js';
 import { reconstituerRdimEcsIndividuelleUnique } from './11_rdim_ecs_individuelle_unique.js';
 
@@ -70,7 +71,8 @@ export function calcul_3cl_xml(dpeXmlContent, options) {
 /**
  * Run the engine with a javascript plain object dpe
  * @param inputDpe {FullDpe} A full plain object dpe
- * @param options {{sanitize: boolean}?}
+ * @param options {{sanitize: boolean, elementsModifies?: string[]}?} `elementsModifies` : éléments
+ * modifiés d'un scénario de travaux, au format '<type>:<reference>' (cf. scenario_travaux.js)
  * @return {FullDpe}
  */
 export function calcul_3cl(inputDpe, options) {
@@ -84,6 +86,15 @@ export function calcul_3cl(inputDpe, options) {
     if (use_enum_as_string) {
       useEnumAsString(inputDpe);
     }
+  }
+  /**
+   * Scénario de travaux : purge des valeurs reprises du DPE d'origine sur les seuls éléments
+   * déclarés modifiés (cf. scenario_travaux.js). Sans l'option ou avec une liste vide, le calcul
+   * est inchangé. Le DPE est cloné : l'objet de l'appelant n'est pas modifié par la purge.
+   */
+  if (aDesElementsModifies(options.elementsModifies)) {
+    dpe = structuredClone(dpe);
+    appliquerElementsModifies(dpe, options.elementsModifies);
   }
   const modele = enums.modele_dpe[dpe.administratif.enum_modele_dpe_id];
   const dateDpe = dpe.administratif.date_etablissement_dpe;

@@ -253,9 +253,37 @@ const d = calcul_3cl_xml(xmlString);
 const e = calcul_3cl_xml(xmlString, { sanitize: false });
 ```
 
-| Option     | Défaut | Effet                                                                                                  |
-| :--------- | :----- | :----------------------------------------------------------------------------------------------------- |
-| `sanitize` | `true` | Normalise et corrige les incohérences du DPE d'entrée avant calcul. Désactivez-le pour un calcul brut. |
+| Option             | Défaut | Effet                                                                                                              |
+| :----------------- | :----- | :----------------------------------------------------------------------------------------------------------------- |
+| `sanitize`         | `true` | Normalise et corrige les incohérences du DPE d'entrée avant calcul. Désactivez-le pour un calcul brut.             |
+| `elementsModifies` | –      | Scénario de travaux : éléments modifiés dont les valeurs reprises du DPE d'origine sont purgées (voir ci-dessous). |
+
+#### Scénario de travaux : `elementsModifies`
+
+Pour rester conforme aux DPE de l'ADEME, le moteur reprend certaines valeurs du DPE d'entrée (`tv_*_id`, données
+intermédiaires, fiches techniques). Après des travaux, ces valeurs décrivent l'état initial. L'appelant déclare les
+éléments modifiés, au format `'<type>:<donnee_entree.reference>'` ; le moteur ne purge que ces éléments et ceux qui en
+dépendent, sur une copie du DPE.
+
+```javascript
+const avant = calcul_3cl(structuredClone(dpe));
+const apres = calcul_3cl(dpeApresTravaux, {
+  sanitize: true,
+  elementsModifies: ['mur:mur_0', 'generateur_chauffage:gen_1']
+});
+```
+
+| Type                                                           | Valeurs purgées                                                                                                                                                                                                                                                                               |
+| :------------------------------------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `mur`, `plancher_bas`, `plancher_haut`, `baie_vitree`, `porte` | `tv_q4pa_conv_id` de la ventilation (renseigner `presence_joint` sur les menuiseries remplacées)                                                                                                                                                                                              |
+| `ventilation`                                                  | `tv_q4pa_conv_id`                                                                                                                                                                                                                                                                             |
+| `generateur_chauffage`                                         | `pn`, `rpn`, `rpint`, `qp0`, `temp_fonc_30/100` non saisis (selon `enum_methode_saisie_carac_sys_id`), `pveilleuse`, sous-fiches techniques du générateur ; `tv_umur_id`, `tv_upb_id`, `tv_uph_id` de toutes les parois si le logement passe de l'effet Joule à un autre système ou l'inverse |
+| `emetteur_chauffage`                                           | `tv_intermittence_id`, `tv_rendement_distribution_ch_id` (« autres équipements »), `temp_fonc_30/100` des générateurs de l'installation                                                                                                                                                       |
+| `generateur_ecs`                                               | comme un générateur de chauffage, plus `rendement_generation_stockage`                                                                                                                                                                                                                        |
+| `installation_ecs`                                             | `tv_rendement_distribution_ecs_id`                                                                                                                                                                                                                                                            |
+
+Sans l'option, ou avec une liste vide, le calcul est strictement identique. Une référence inconnue ou portée par
+plusieurs éléments est signalée par un `console.warn`.
 
 <details>
 <summary><strong>Exemple d'objet JSON d'entrée (partiel)</strong></summary>
