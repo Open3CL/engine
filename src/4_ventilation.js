@@ -38,6 +38,16 @@ export function isLigneQ4paMemePeriode(rowQ4paConv, cg) {
     .includes(String(cg.enum_periode_construction_id));
 }
 
+/**
+ * Vrai si la ligne de la table `q4pa_conv` considère les surfaces isolées (`isolation_surfaces` = 1)
+ * alors que le recalcul à partir des parois les donne non isolées (`isolation_surfaces` = 0).
+ */
+export function isLigneQ4paSurfacesIsolees(rowQ4paConv, isolationSurfacesRecalculee) {
+  return (
+    String(rowQ4paConv.isolation_surfaces) === '1' && String(isolationSurfacesRecalculee) === '0'
+  );
+}
+
 function tv_q4pa_conv(di, de, cg, mur_list, ph_list, porte_list, bv_list) {
   const surfaces = mur_list.concat(ph_list);
   const surface_isolee = surfaces.reduce((acc, s) => {
@@ -108,10 +118,18 @@ function tv_q4pa_conv(di, de, cg, mur_list, ph_list, porte_list, bv_list) {
        * 1948, surfaces isolées », 2, alors que toutes les parois sont non isolées → ligne 1, 4,6).
        * Si la ligne saisie correspond à la période de construction du DPE, on la reprend en entier
        * (isolation et joints) pour reproduire le calcul du logiciel.
+       *
+       * Sens unique : la reprise ne s'applique que si la ligne indique des surfaces isolées alors que
+       * le recalcul les donne non isolées. Dans le sens inverse (ligne « non isolées », recalcul
+       * « isolées »), le DPE a pu être modifié par l'appelant (scénario d'isolation des parois) :
+       * la valeur recalculée est utilisée.
        * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §4
        */
       if (rowQ4paConv.isolation_surfaces !== isolation_surfaces) {
-        if (isLigneQ4paMemePeriode(rowQ4paConv, cg)) {
+        if (
+          isLigneQ4paSurfacesIsolees(rowQ4paConv, isolation_surfaces) &&
+          isLigneQ4paMemePeriode(rowQ4paConv, cg)
+        ) {
           console.error(
             `Calcul de hperm pour la ventilation ${de.description}. Le DPE considère isolation_surfaces = ${rowQ4paConv.isolation_surfaces} \n          alors que ce devrait être isolation_surfaces = ${isolation_surfaces}. La ligne q4pa_conv ${de.tv_q4pa_conv_id} du DPE est conservée.`
           );
