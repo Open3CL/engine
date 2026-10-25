@@ -1,5 +1,19 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
-import { DeperditionPontThermiqueService } from './deperdition-pont-thermique.service.js';
+
+/**
+ * `bug_for_bug_compat` est exposé via un accesseur adossé à un état hoisté afin de pouvoir
+ * l'activer dans certains tests (issue #296), tout en restant désactivé par défaut.
+ */
+const state = vi.hoisted(() => ({ bug: false }));
+
+vi.mock('../../../../../utils.js', async (importOriginal) => ({
+  ...(await importOriginal()),
+  get bug_for_bug_compat() {
+    return state.bug;
+  }
+}));
+
+const { DeperditionPontThermiqueService } = await import('./deperdition-pont-thermique.service.js');
 
 /**
  * Tests unitaires isolés de `DeperditionPontThermiqueService` (nouvelle architecture).
@@ -24,8 +38,11 @@ beforeEach(() => {
     getKForPlancher: vi.fn(() => 0.71),
     getKForMur: vi.fn(() => 0.82),
     getKForMenuiserie: vi.fn(() => 0.3),
-    getKForMurById: vi.fn(() => 0.5)
+    getKForMurById: vi.fn(() => 0.5),
+    getForMenuiserie: vi.fn(),
+    getById: vi.fn()
   };
+  state.bug = false;
   murService = { typeIsolation: vi.fn(() => 3) };
   plancherHautService = { typeIsolation: vi.fn(() => 4) };
   plancherBasService = { typeIsolation: vi.fn(() => 4) };
@@ -121,5 +138,150 @@ describe('DeperditionPontThermiqueService - adjacence du plancher (issue #212)',
 
   test('mur sur circulation (14) : k = 0 quelle que soit l’adjacence du plancher', () => {
     expect(service.execute(ctx, enveloppe('1', '14'), pontThermique('1')).k).toBe(0);
+  });
+});
+
+/**
+ * Reprise de la ligne « menuiserie / mur » exportée par le DPE quand seule la largeur du dormant
+ * diffère de la ligne recalculée (compatibilité bug uniquement).
+ * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.4.5
+ * @see https://github.com/Open3CL/engine/issues/296
+ */
+describe('DeperditionPontThermiqueService - ligne DPE reprise si seul le dormant diffère (issue #296)', () => {
+  /** Ligne recalculée : dormant 5 cm. */
+  const ligneRecalculee = {
+    tv_pont_thermique_id: '71',
+    enum_type_liaison_id: '5',
+    isolation_mur: 'Non isolé',
+    enum_type_pose_id: '1',
+    type_pose: 'Nu Extérieur',
+    largeur_dormant: '5',
+    k: '0.43'
+  };
+  /** Ligne exportée par le DPE : dormant 10 cm, mêmes autres critères. */
+  const ligneDpe = {
+    ...ligneRecalculee,
+    tv_pont_thermique_id: '72',
+    largeur_dormant: '10',
+    k: '0.29'
+  };
+
+  function enveloppeMenuiserie() {
+    return {
+      mur_collection: {
+        mur: [
+          {
+            donnee_entree: {
+              reference: 'M1',
+              enum_type_adjacence_id: '1',
+              enum_materiaux_structure_mur_id: '1'
+            }
+          }
+        ]
+      },
+      baie_vitree_collection: {
+        baie_vitree: [
+          {
+            donnee_entree: {
+              reference: 'B1',
+              enum_type_vitrage_id: '2',
+              enum_type_pose_id: '1',
+              largeur_dormant: 5
+            }
+          }
+        ]
+      }
+    };
+  }
+
+  function ptMenuiserie() {
+    return {
+      enum_methode_saisie_pont_thermique_id: '1',
+      enum_type_liaison_id: '5',
+      reference_1: 'B1',
+      reference_2: 'M1',
+      description: 'menuiserie / mur',
+      tv_pont_thermique_id: 72
+    };
+  }
+
+  beforeEach(() => {
+    murService.typeIsolation.mockReturnValue(2);
+    tvStore.getKForMenuiserie.mockReturnValue(0.43);
+    tvStore.getForMenuiserie.mockReturnValue(ligneRecalculee);
+    tvStore.getById.mockReturnValue(ligneDpe);
+  });
+
+  test('cas 2375E2293948T : dormant exporté 5 mais ligne DPE « dormant 10 » avec k exporté : ligne DPE reprise', () => {
+    state.bug = true;
+
+    const di = service.execute(ctx, enveloppeMenuiserie(), ptMenuiserie(), 0.29);
+
+    expect(tvStore.getForMenuiserie).toHaveBeenCalledWith(5, expect.anything(), 1, undefined, 5);
+    expect(tvStore.getById).toHaveBeenCalledWith(72);
+    expect(di.k).toBe(0.29);
+  });
+
+  test('sans compatibilité bug : ligne recalculée conservée (règle normative), table non relue', () => {
+    const di = service.execute(ctx, enveloppeMenuiserie(), ptMenuiserie(), 0.29);
+
+    expect(di.k).toBe(0.43);
+    expect(tvStore.getForMenuiserie).not.toHaveBeenCalled();
+    expect(tvStore.getById).not.toHaveBeenCalled();
+  });
+
+  test('compatibilité bug mais k exporté différent du k de la ligne DPE : ligne recalculée conservée', () => {
+    state.bug = true;
+
+    expect(service.execute(ctx, enveloppeMenuiserie(), ptMenuiserie(), 0.43).k).toBe(0.43);
+  });
+
+  test('compatibilité bug sans k exporté : ligne recalculée conservée', () => {
+    state.bug = true;
+
+    expect(service.execute(ctx, enveloppeMenuiserie(), ptMenuiserie()).k).toBe(0.43);
+    expect(tvStore.getById).not.toHaveBeenCalled();
+  });
+
+  test('compatibilité bug, aucune ligne recalculée : pas de reprise (repli habituel)', () => {
+    state.bug = true;
+    tvStore.getKForMenuiserie.mockReturnValue(undefined);
+
+    const di = service.execute(ctx, enveloppeMenuiserie(), ptMenuiserie(), 0.29);
+
+    expect(tvStore.getById).not.toHaveBeenCalled();
+    expect(di.k).toBe(0.5); // valeur par défaut via tv_pont_thermique_id
+  });
+
+  describe('ligneDpeSiSeulDormantDiffere', () => {
+    test('ligne DPE ne différant que par le dormant et k identique : ligne DPE retournée', () => {
+      expect(service.ligneDpeSiSeulDormantDiffere(ligneRecalculee, '72', '0.29')).toBe(ligneDpe);
+    });
+
+    test.each([
+      ['aucune ligne recalculée', undefined, 72, 0.29],
+      ['tv_pont_thermique_id absent', ligneRecalculee, undefined, 0.29],
+      ['tv_pont_thermique_id nul', ligneRecalculee, null, 0.29],
+      ['k exporté absent', ligneRecalculee, 72, undefined],
+      ['k exporté nul', ligneRecalculee, 72, null]
+    ])('%s : aucune reprise, table non relue', (_, ligne, id, k) => {
+      expect(service.ligneDpeSiSeulDormantDiffere(ligne, id, k)).toBeUndefined();
+      expect(tvStore.getById).not.toHaveBeenCalled();
+    });
+
+    test.each([
+      ['ligne DPE introuvable', undefined],
+      ['type de liaison différent', { ...ligneDpe, enum_type_liaison_id: '1' }],
+      ['largeur de dormant absente', { ...ligneDpe, largeur_dormant: undefined }],
+      ['même largeur de dormant', { ...ligneDpe, largeur_dormant: '5' }],
+      ['isolation du mur différente', { ...ligneDpe, isolation_mur: 'ITI' }],
+      ['type de pose différent', { ...ligneDpe, enum_type_pose_id: '3' }],
+      ['retour d’isolation différent', { ...ligneDpe, presence_retour_isolation: '1' }],
+      ['k de la ligne DPE différent du k exporté', { ...ligneDpe, k: '0.25' }]
+    ])('%s : aucune reprise', (_, dpe) => {
+      tvStore.getById.mockReturnValue(dpe);
+
+      expect(service.ligneDpeSiSeulDormantDiffere(ligneRecalculee, 72, 0.29)).toBeUndefined();
+    });
   });
 });
