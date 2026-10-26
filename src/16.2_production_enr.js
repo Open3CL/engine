@@ -1,7 +1,24 @@
 import enums from './enums.js';
-import { mois_liste, tv } from './utils.js';
+import { bug_for_bug_compat, mois_liste, tv } from './utils.js';
 import tvs from './tv.js';
 import { DEFAULT_COEFF_EP } from './conso.js';
+
+/**
+ * Nombre de fois où le moteur de référence compte la production de l'installation PV de rang
+ * `rang` (0 = première) parmi `nbInstallations` installations valides.
+ *
+ * Tribu `Calcul_batiment.cs` l.1376-1386 (`Calcul_ProdPV`) : `Ppv1 += Ppv_mensuel[m] / 1000` est
+ * placé dans la boucle sur les installations alors que `Ppv_mensuel[m]` est un cumul ; la
+ * production de l'installation i est donc comptée N − i fois. Pour une seule installation, le
+ * résultat est conforme à la méthode (poids 1). Appliqué uniquement en `bug_for_bug_compat`.
+ *
+ * @param rang {number} rang de l'installation parmi les installations valides (0-based)
+ * @param nbInstallations {number} nombre d'installations valides
+ * @returns {number}
+ */
+export function poidsCumulTribuPv(rang, nbInstallations) {
+  return nbInstallations - rang;
+}
 
 /**
  * Méthodes d'application « appartement chauffage individuel ECS individuel » : l'installation PV
@@ -469,15 +486,24 @@ export class ProductionENR {
       panneaux_pv_collection = [panneaux_pv_collection];
     }
 
-    return panneaux_pv_collection.reduce((acc, panneaux_pv) => {
-      const row = tv('coef_orientation_pv', {
+    const lignes = panneaux_pv_collection.map((panneaux_pv) =>
+      tv('coef_orientation_pv', {
         enum_orientation_pv_id: panneaux_pv.enum_orientation_pv_id,
         enum_inclinaison_pv_id: panneaux_pv.enum_inclinaison_pv_id
-      });
+      })
+    );
+    const nbInstallations = lignes.filter(Boolean).length;
+    let rang = 0;
+
+    return panneaux_pv_collection.reduce((acc, panneaux_pv, index) => {
+      const row = lignes[index];
 
       if (!row) {
         return acc;
       }
+
+      const poids = bug_for_bug_compat ? poidsCumulTribuPv(rang, nbInstallations) : 1;
+      rang++;
 
       /**
        * Coefficient de pondération prenant en compte l’altération par rapport à l’orientation optimale (30° auSud)
@@ -512,7 +538,7 @@ export class ProductionENR {
       for (const mois of mois_liste) {
         // Ensoleillement en kWh/m² pour le mois
         const Epv = ePvValues[mois][zc];
-        acc += k * Scapteur * r * Epv * C;
+        acc += k * Scapteur * r * Epv * C * poids;
       }
 
       return acc;
