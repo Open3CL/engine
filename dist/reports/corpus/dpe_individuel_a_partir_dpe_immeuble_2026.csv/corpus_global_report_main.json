@@ -34,7 +34,7 @@
       "mandatory": false,
       "successRatio": "99.82 %"
     },
-    "hperm": { "nbBelowThreshold": 9727, "mandatory": false, "successRatio": "99.07 %" },
+    "hperm": { "nbBelowThreshold": 9763, "mandatory": false, "successRatio": "99.44 %" },
     "deperdition_pont_thermique": {
       "nbBelowThreshold": 8945,
       "mandatory": false,
@@ -47,16 +47,6 @@
     },
     "besoin_ecs": { "nbBelowThreshold": 9268, "mandatory": false, "successRatio": "94.40 %" },
     "besoin_ch": { "nbBelowThreshold": 8927, "mandatory": false, "successRatio": "90.92 %" },
-    "conso_auxiliaire_distribution_ecs": {
-      "nbBelowThreshold": 7480,
-      "mandatory": false,
-      "successRatio": "76.19 %"
-    },
-    "conso_auxiliaire_ventilation": {
-      "nbBelowThreshold": 6594,
-      "mandatory": false,
-      "successRatio": "67.16 %"
-    },
     "conso_ecs": { "nbBelowThreshold": 7542, "mandatory": true, "successRatio": "76.82 %" },
     "conso_ch": { "nbBelowThreshold": 7316, "mandatory": true, "successRatio": "74.52 %" },
     "conso_auxiliaire_distribution_ch": {
@@ -74,6 +64,11 @@
       "mandatory": false,
       "successRatio": "79.12 %"
     },
+    "conso_auxiliaire_ventilation": {
+      "nbBelowThreshold": 6594,
+      "mandatory": false,
+      "successRatio": "67.16 %"
+    },
     "ep_conso_5_usages": { "nbBelowThreshold": 6623, "mandatory": true, "successRatio": "67.46 %" },
     "ep_conso_5_usages_m2": {
       "nbBelowThreshold": 6610,
@@ -89,16 +84,21 @@
       "nbBelowThreshold": 6637,
       "mandatory": true,
       "successRatio": "67.60 %"
+    },
+    "conso_auxiliaire_distribution_ecs": {
+      "nbBelowThreshold": 7480,
+      "mandatory": false,
+      "successRatio": "76.19 %"
     }
   },
   "performance": {
     "count": 9811,
-    "mean": 10.82,
-    "median": 9.27,
-    "min": 2.417,
-    "max": 114.48,
-    "p95": 20.307,
-    "p99": 34.218,
-    "totalMs": 106150.469
+    "mean": 7.816,
+    "median": 6.617,
+    "min": 1.803,
+    "max": 94.805,
+    "p95": 14.846,
+    "p99": 24.218,
+    "totalMs": 76683.209
   }
 }
