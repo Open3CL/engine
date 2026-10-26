@@ -23,7 +23,8 @@ const {
   default: calc_ventilation,
   calc_hperm,
   presenceJointNonRenseignee,
-  isLigneQ4paMemePeriode
+  isLigneQ4paMemePeriode,
+  isLigneQ4paSurfacesIsolees
 } = await import('./4_ventilation.js');
 const { tv } = await import('./utils.js');
 const { default: calc_pvent } = await import('./5_conso_ventilation.js');
@@ -522,23 +523,86 @@ describe('calc_ventilation - compatibilité bug_for_bug_compat activée', () => 
       errorSpy.mockRestore();
     });
 
-    test('ligne 12 (non isolé, avec joints) reprise en entier, malgré des baies sans joint', async () => {
+    test('ligne isolée de la même période, joints absents de la ligne : joints « 0 » repris', async () => {
+      const { calc_ventilation_bug, tvBug } = await chargerAvecBug(ROW_10);
+      vi.spyOn(console, 'error').mockImplementation(() => {});
+      const baieAvecJoint = [{ donnee_entree: { surface_totale_baie: 10, presence_joint: 1 } }];
+
+      calc_ventilation_bug(vtLigne(10), CG, 'th', 80, 100, murNonIsole, [], [], baieAvecJoint);
+
+      // la ligne reprise prime sur les joints recalculés ('1')
+      expect(tvBug).toHaveBeenLastCalledWith(
+        'q4pa_conv',
+        expect.objectContaining({ isolation_surfaces: '1', presence_joints_menuiserie: '0' })
+      );
+    });
+
+    test('ligne isolée de la même période avec joints : joints « 1 » repris malgré des baies sans joint', async () => {
       const { calc_ventilation_bug, tvBug } = await chargerAvecBug({
+        ...ROW_10,
+        tv_q4pa_conv_id: '11',
+        presence_joints_menuiserie: '1'
+      });
+      vi.spyOn(console, 'error').mockImplementation(() => {});
+
+      calc_ventilation_bug(vtLigne(11), CG, 'th', 80, 100, murNonIsole, [], [], baieSansJoint);
+
+      expect(tvBug).toHaveBeenLastCalledWith(
+        'q4pa_conv',
+        expect.objectContaining({ isolation_surfaces: '1', presence_joints_menuiserie: '1' })
+      );
+    });
+
+    /**
+     * Sens unique : ligne « non isolées » alors que les parois sont isolées (cas d'un scénario de
+     * rénovation où l'appelant isole les murs du DPE). La ligne n'est pas reprise : l'isolation et
+     * les joints sont recalculés comme avant #312.
+     */
+    describe('ligne non isolée alors que les parois sont isolées (sens inverse)', () => {
+      const ROW_12 = {
         q4pa_conv: '2.5',
         tv_q4pa_conv_id: '12',
         enum_periode_construction_id: '1',
         isolation_surfaces: '0',
         presence_joints_menuiserie: '1'
+      };
+
+      test('isolation recalculée utilisée et écart des joints signalé', async () => {
+        const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+        const { calc_ventilation_bug, tvBug } = await chargerAvecBug(ROW_12);
+        const { murs } = surfacesIsolantes();
+
+        calc_ventilation_bug(vtLigne(12), CG, 'th', 80, 100, murs, [], [], baieSansJoint);
+
+        expect(tvBug).toHaveBeenLastCalledWith(
+          'q4pa_conv',
+          expect.objectContaining({ isolation_surfaces: '1', presence_joints_menuiserie: '0' })
+        );
+        expect(errorSpy).toHaveBeenCalledWith(
+          expect.stringContaining('La valeur recalculée isolation_surfaces = 1 est utilisée')
+        );
+        expect(errorSpy).toHaveBeenCalledWith(
+          expect.stringContaining(
+            'La valeur recalculée presence_joints_menuiserie = 0 est utilisée'
+          )
+        );
+        expect(errorSpy).not.toHaveBeenCalledWith(expect.stringContaining('est conservée'));
+        errorSpy.mockRestore();
       });
-      vi.spyOn(console, 'error').mockImplementation(() => {});
-      const { murs } = surfacesIsolantes();
 
-      calc_ventilation_bug(vtLigne(12), CG, 'th', 80, 100, murs, [], [], baieSansJoint);
+      test('presence_joint non exporté : seuls les joints de la ligne du DPE sont repris', async () => {
+        vi.spyOn(console, 'error').mockImplementation(() => {});
+        const { calc_ventilation_bug, tvBug } = await chargerAvecBug(ROW_12);
+        const { murs } = surfacesIsolantes();
+        const baies = [{ donnee_entree: { surface_totale_baie: 10 } }];
 
-      expect(tvBug).toHaveBeenLastCalledWith(
-        'q4pa_conv',
-        expect.objectContaining({ isolation_surfaces: '0', presence_joints_menuiserie: '1' })
-      );
+        calc_ventilation_bug(vtLigne(12), CG, 'th', 80, 100, murs, [], [], baies);
+
+        expect(tvBug).toHaveBeenLastCalledWith(
+          'q4pa_conv',
+          expect.objectContaining({ isolation_surfaces: '1', presence_joints_menuiserie: '1' })
+        );
+      });
     });
 
     test('ligne d’une autre période : la valeur recalculée est conservée', async () => {
@@ -610,5 +674,21 @@ describe('isLigneQ4paMemePeriode', () => {
   test('ligne sans période (ou absente) : faux', () => {
     expect(isLigneQ4paMemePeriode({}, { enum_periode_construction_id: '1' })).toBe(false);
     expect(isLigneQ4paMemePeriode(null, { enum_periode_construction_id: '1' })).toBe(false);
+  });
+});
+
+describe('isLigneQ4paSurfacesIsolees', () => {
+  test('ligne « surfaces isolées » et recalcul « non isolées » : vrai', () => {
+    expect(isLigneQ4paSurfacesIsolees({ isolation_surfaces: '1' }, '0')).toBe(true);
+    expect(isLigneQ4paSurfacesIsolees({ isolation_surfaces: 1 }, 0)).toBe(true);
+  });
+
+  test('ligne « non isolées » et recalcul « isolées » : faux (sens inverse)', () => {
+    expect(isLigneQ4paSurfacesIsolees({ isolation_surfaces: '0' }, '1')).toBe(false);
+  });
+
+  test('valeurs concordantes ou ligne sans critère : faux', () => {
+    expect(isLigneQ4paSurfacesIsolees({ isolation_surfaces: '1' }, '1')).toBe(false);
+    expect(isLigneQ4paSurfacesIsolees({}, '0')).toBe(false);
   });
 });

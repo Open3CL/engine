@@ -27,4 +27,32 @@ describe('q4pa_conv repris de la ligne du DPE - issue #312', () => {
       0
     );
   });
+
+  /**
+   * Sens unique : le DPE 2469E2650374G retient la ligne q4pa_conv 1 « avant 1948, surfaces non
+   * isolées » (4,6). Un scénario de rénovation isole tous ses murs puis recalcule le DPE modifié :
+   * la ligne du DPE (non isolée) contredit alors les parois isolées et ne doit pas être reprise.
+   */
+  test('2469E2650374G murs isolés : la ligne non isolée du DPE n’est pas reprise', () => {
+    set_bug_for_bug_compat();
+    set_tv_match_optimized_version();
+    /** @type {FullDpe} */
+    const input = getAdemeFileJson('2469E2650374G');
+    const ventIn = [input.logement.ventilation_collection.ventilation].flat()[0];
+    expect(Number(ventIn.donnee_entree.tv_q4pa_conv_id)).toBe(1);
+
+    const scenario = structuredClone(input);
+    for (const mur of [scenario.logement.enveloppe.mur_collection.mur].flat()) {
+      Object.assign(mur.donnee_entree, {
+        enum_type_isolation_id: '3',
+        enum_methode_saisie_u_id: '9',
+        umur_saisi: 0.25
+      });
+    }
+    const output = calcul_3cl(scenario);
+
+    const ventOut = [output.logement.ventilation_collection.ventilation].flat()[0];
+    expect(ventOut.donnee_intermediaire.q4pa_conv).toBe(2);
+    expect(output.logement.sortie.ep_conso.classe_bilan_dpe).toBe('E');
+  });
 });
