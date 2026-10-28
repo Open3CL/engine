@@ -17,37 +17,6 @@ function tv_debits_ventilation(di, de, du) {
   }
 }
 
-/**
- * Vrai si le DPE comporte au moins une menuiserie (baie ou porte) et qu'aucune n'exporte
- * le champ `presence_joint` (issue #294).
- */
-export function presenceJointNonRenseignee(porte_list, bv_list) {
-  const menuiseries = (porte_list || []).concat(bv_list || []);
-  return (
-    menuiseries.length > 0 &&
-    menuiseries.every((m) => [undefined, null, ''].includes(m.donnee_entree?.presence_joint))
-  );
-}
-
-/**
- * Vrai si la ligne de la table `q4pa_conv` couvre la période de construction du DPE.
- */
-export function isLigneQ4paMemePeriode(rowQ4paConv, cg) {
-  return String(rowQ4paConv?.enum_periode_construction_id ?? '')
-    .split('|')
-    .includes(String(cg.enum_periode_construction_id));
-}
-
-/**
- * Vrai si la ligne de la table `q4pa_conv` considère les surfaces isolées (`isolation_surfaces` = 1)
- * alors que le recalcul à partir des parois les donne non isolées (`isolation_surfaces` = 0).
- */
-export function isLigneQ4paSurfacesIsolees(rowQ4paConv, isolationSurfacesRecalculee) {
-  return (
-    String(rowQ4paConv.isolation_surfaces) === '1' && String(isolationSurfacesRecalculee) === '0'
-  );
-}
-
 function tv_q4pa_conv(di, de, cg, mur_list, ph_list, porte_list, bv_list) {
   const surfaces = mur_list.concat(ph_list);
   const surface_isolee = surfaces.reduce((acc, s) => {
@@ -79,7 +48,7 @@ function tv_q4pa_conv(di, de, cg, mur_list, ph_list, porte_list, bv_list) {
       return acc + s.donnee_entree.surface_paroi_opaque;
     } else return acc;
   }, 0);
-  let isolation_surfaces = surface_isolee > surface_non_isolee ? '1' : '0';
+  const isolation_surfaces = surface_isolee > surface_non_isolee ? '1' : '0';
 
   // presence joints menuiserie
   let surface_bv_avec_joint = bv_list.reduce((acc, bv) => {
@@ -110,49 +79,20 @@ function tv_q4pa_conv(di, de, cg, mur_list, ph_list, porte_list, bv_list) {
     });
 
     if (rowQ4paConv) {
-      let ligneDpeReprise = false;
       /**
-       * Le moteur de référence reçoit Q4Pa_conv en entrée : c'est le logiciel de saisie qui choisit
-       * la ligne de la table. Certains logiciels (LICIEL notamment) retiennent une ligne dont le
-       * critère `isolation_surfaces` contredit l'isolation déclarée des parois (ex. ligne 10 « avant
-       * 1948, surfaces isolées », 2, alors que toutes les parois sont non isolées → ligne 1, 4,6).
-       * Si la ligne saisie correspond à la période de construction du DPE, on la reprend en entier
-       * (isolation et joints) pour reproduire le calcul du logiciel.
-       *
-       * Sens unique : la reprise ne s'applique que si la ligne indique des surfaces isolées alors que
-       * le recalcul les donne non isolées. Dans le sens inverse (ligne « non isolées », recalcul
-       * « isolées »), le DPE a pu être modifié par l'appelant (scénario d'isolation des parois) :
-       * la valeur recalculée est utilisée.
+       * La ligne q4pa_conv retenue par le logiciel de saisie n'est jamais reprise : q4pa_conv est
+       * toujours recalculé à partir des données d'entrée (isolation des parois, joints des
+       * menuiseries). Une ligne contradictoire est seulement signalée.
        * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §4
        */
       if (rowQ4paConv.isolation_surfaces !== isolation_surfaces) {
-        if (
-          isLigneQ4paSurfacesIsolees(rowQ4paConv, isolation_surfaces) &&
-          isLigneQ4paMemePeriode(rowQ4paConv, cg)
-        ) {
-          console.error(
-            `Calcul de hperm pour la ventilation ${de.description}. Le DPE considère isolation_surfaces = ${rowQ4paConv.isolation_surfaces} \n          alors que ce devrait être isolation_surfaces = ${isolation_surfaces}. La ligne q4pa_conv ${de.tv_q4pa_conv_id} du DPE est conservée.`
-          );
-          isolation_surfaces = rowQ4paConv.isolation_surfaces;
-          pjt = rowQ4paConv.presence_joints_menuiserie === '1' ? '1' : '0';
-          ligneDpeReprise = true;
-        } else {
-          console.error(
-            `Calcul de hperm pour la ventilation ${de.description}. Le DPE considère isolation_surfaces = ${rowQ4paConv.isolation_surfaces} \n          alors que ce devrait être isolation_surfaces = ${isolation_surfaces}. La valeur recalculée isolation_surfaces = ${isolation_surfaces} est utilisée.`
-          );
-        }
+        console.error(
+          `Calcul de hperm pour la ventilation ${de.description}. Le DPE considère isolation_surfaces = ${rowQ4paConv.isolation_surfaces} 
+          alors que ce devrait être isolation_surfaces = ${isolation_surfaces}. La valeur recalculée isolation_surfaces = ${isolation_surfaces} est utilisée.`
+        );
       }
 
-      /**
-       * Issue #294 : aucune menuiserie n'exporte `presence_joint`. Aucune donnée ne contredit alors
-       * la ligne q4pa_conv retenue par le logiciel (ex. ligne 12 « avant 1948 avec joints », 2,5) :
-       * on reprend sa valeur `presence_joints_menuiserie` au lieu de considérer les menuiseries
-       * sans joint.
-       * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §4
-       */
-      if (!ligneDpeReprise && presenceJointNonRenseignee(porte_list, bv_list)) {
-        pjt = rowQ4paConv.presence_joints_menuiserie === '1' ? '1' : '0';
-      } else if (!ligneDpeReprise && rowQ4paConv.presence_joints_menuiserie !== pjt) {
+      if (rowQ4paConv.presence_joints_menuiserie !== pjt) {
         console.error(
           `Calcul de hperm pour la ventilation ${de.description}. Le DPE considère presence_joints_menuiserie = ${rowQ4paConv.presence_joints_menuiserie} 
           alors que ce devrait être presence_joints_menuiserie = ${pjt}. La valeur recalculée presence_joints_menuiserie = ${pjt} est utilisée.`

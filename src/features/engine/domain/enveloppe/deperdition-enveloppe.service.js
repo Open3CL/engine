@@ -305,31 +305,12 @@ export class DeperditionEnveloppeService {
         this.#surfaceIsolee,
         this.#surfaceNonIsolee,
         this.#surfaceMenuiserieAvecJoint,
-        this.#surfaceMenuiserieSansJoint,
-        this.#presenceJointNonRenseignee(logement.enveloppe)
+        this.#surfaceMenuiserieSansJoint
       );
       deperditions.hvent += ventilation.donnee_intermediaire.hvent;
       deperditions.hperm += ventilation.donnee_intermediaire.hperm;
     });
 
     return deperditions;
-  }
-
-  /**
-   * Vrai si le logement comporte au moins une menuiserie (baie ou porte) et qu'aucune n'exporte
-   * le champ presence_joint (issue #294).
-   *
-   * @param enveloppe {Enveloppe}
-   * @return {boolean}
-   */
-  #presenceJointNonRenseignee(enveloppe) {
-    const menuiseries = [
-      ...(enveloppe?.porte_collection?.porte || []),
-      ...(enveloppe?.baie_vitree_collection?.baie_vitree || [])
-    ];
-    return (
-      menuiseries.length > 0 &&
-      menuiseries.every((m) => [undefined, null, ''].includes(m.donnee_entree?.presence_joint))
-    );
   }
 }

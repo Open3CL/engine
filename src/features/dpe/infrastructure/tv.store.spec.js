@@ -607,17 +607,6 @@ describe('Lecture des tables de valeurs', () => {
       const ug = tvStore.getQ4paConv('2', TypeHabitation.MAISON, '0', '1');
       expect(ug).toBeUndefined();
     });
-
-    test('lecture par identifiant (issue #294)', () => {
-      expect(tvStore.getQ4paConvById(12)).toMatchObject({
-        q4pa_conv: '2.5',
-        presence_joints_menuiserie: '1'
-      });
-      expect(tvStore.getQ4paConvById('1')).toMatchObject({ q4pa_conv: '4.6' });
-      expect(tvStore.getQ4paConvById(undefined)).toBeUndefined();
-      expect(tvStore.getQ4paConvById(null)).toBeUndefined();
-      expect(tvStore.getQ4paConvById(999)).toBeUndefined();
-    });
   });
 
   test('lecture des valeurs de tempBase', () => {
