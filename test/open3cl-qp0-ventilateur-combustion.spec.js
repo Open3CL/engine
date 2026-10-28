@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test } from 'vitest';
-import { getAdemeFileJson } from './test-helpers.js';
+import { getAdemeFileJson, CORPUS_ANALYSIS_OPTIONS } from './test-helpers.js';
 import { calcul_3cl } from '../src/index.js';
 import { set_bug_for_bug_compat } from '../src/utils.js';
 
@@ -25,7 +25,7 @@ describe('Qp0 selon le ventilateur de combustion - issue #35', () => {
     /** @type {FullDpe} */
     const input = getAdemeFileJson('2459E3195669T');
     /** @type {FullDpe} */
-    const output = calcul_3cl(structuredClone(input));
+    const output = calcul_3cl(structuredClone(input), CORPUS_ANALYSIS_OPTIONS);
 
     const chaudiere = (dpe) =>
       [dpe.logement.installation_chauffage_collection.installation_chauffage]

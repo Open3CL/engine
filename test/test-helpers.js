@@ -55,3 +55,13 @@ export function getResultFile(ademeId) {
   const data = fs.readFileSync(dpeResultFile, { encoding: 'utf8', flag: 'r' });
   return JSON.parse(data);
 }
+
+/**
+ * Options de `calcul_3cl` pour l'analyse du corpus ADEME : DPE nettoyé (comportement par défaut) et
+ * reprise des valeurs choisies par le logiciel de saisie (`compat_for_corpus_analysis`), afin de
+ * reproduire les résultats des DPE.
+ */
+export const CORPUS_ANALYSIS_OPTIONS = Object.freeze({
+  sanitize: true,
+  compat_for_corpus_analysis: true
+});

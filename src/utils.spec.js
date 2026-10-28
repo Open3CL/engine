@@ -35,6 +35,7 @@ vi.mock('./tv.js', () => ({
 const {
   xmlParser,
   set_bug_for_bug_compat,
+  set_compat_for_corpus_analysis,
   useEnumAsString,
   set_use_enum_as_string,
   set_tv_match_optimized_version,
@@ -169,6 +170,20 @@ describe('Utils unit tests', () => {
     test('set_bug_for_bug_compat active le drapeau', () => {
       set_bug_for_bug_compat();
       expect(utils.bug_for_bug_compat).toBe(true);
+    });
+
+    test('compat_for_corpus_analysis : désactivé par défaut, seul true l’active', () => {
+      expect(utils.compat_for_corpus_analysis).toBe(false);
+      set_compat_for_corpus_analysis(true);
+      expect(utils.compat_for_corpus_analysis).toBe(true);
+      set_compat_for_corpus_analysis();
+      expect(utils.compat_for_corpus_analysis).toBe(false);
+      set_compat_for_corpus_analysis(true);
+      set_compat_for_corpus_analysis('true');
+      expect(utils.compat_for_corpus_analysis).toBe(false);
+      set_compat_for_corpus_analysis(true);
+      set_compat_for_corpus_analysis(false);
+      expect(utils.compat_for_corpus_analysis).toBe(false);
     });
 
     test('set_use_enum_as_string active le drapeau', () => {

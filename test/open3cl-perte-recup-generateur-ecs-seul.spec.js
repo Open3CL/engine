@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test } from 'vitest';
-import { getAdemeFileJson } from './test-helpers.js';
+import { getAdemeFileJson, CORPUS_ANALYSIS_OPTIONS } from './test-helpers.js';
 import { calcul_3cl } from '../src/index.js';
 import { set_bug_for_bug_compat } from '../src/utils.js';
 
@@ -24,7 +24,7 @@ describe('Pertes récupérées d’un générateur ECS seul - issue #153', () =>
     /** @type {FullDpe} */
     const input = getAdemeFileJson('2630E0016701S');
     /** @type {FullDpe} */
-    const output = calcul_3cl(structuredClone(input));
+    const output = calcul_3cl(structuredClone(input), CORPUS_ANALYSIS_OPTIONS);
 
     const abIn = input.logement.sortie.apport_et_besoin;
     const abOut = output.logement.sortie.apport_et_besoin;

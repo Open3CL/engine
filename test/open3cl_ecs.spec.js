@@ -1,5 +1,5 @@
 import { calcul_3cl } from '../src/engine.js';
-import { getAdemeFileJsonOrDownload } from './test-helpers.js';
+import { getAdemeFileJsonOrDownload, CORPUS_ANALYSIS_OPTIONS } from './test-helpers.js';
 import { set_bug_for_bug_compat } from '../src/utils.js';
 import { describe, expect, test } from 'vitest';
 
@@ -11,7 +11,7 @@ describe('Ecs unit tests', () => {
       let input = await getAdemeFileJsonOrDownload(dpeCode);
 
       /** @type {FullDpe} **/
-      let output = calcul_3cl(structuredClone(input));
+      let output = calcul_3cl(structuredClone(input), CORPUS_ANALYSIS_OPTIONS);
 
       expect(input.logement.sortie.ep_conso.ep_conso_ecs).toBeCloseTo(
         output.logement.sortie.ep_conso.ep_conso_ecs,

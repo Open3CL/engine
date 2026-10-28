@@ -251,11 +251,18 @@ const c = calcul_3cl(dpeData, { sanitize: false });
 // Depuis un XML ADEME
 const d = calcul_3cl_xml(xmlString);
 const e = calcul_3cl_xml(xmlString, { sanitize: false });
+
+// Analyse du corpus ADEME uniquement : reproduire les choix du logiciel de saisie
+const f = calcul_3cl(dpeData, { sanitize: true, compat_for_corpus_analysis: true });
 ```
 
-| Option     | Défaut | Effet                                                                                                  |
-| :--------- | :----- | :----------------------------------------------------------------------------------------------------- |
-| `sanitize` | `true` | Normalise et corrige les incohérences du DPE d'entrée avant calcul. Désactivez-le pour un calcul brut. |
+| Option                       | Défaut  | Effet                                                                                                                                                                                                                                                                                                                                        |
+| :--------------------------- | :------ | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `sanitize`                   | `true`  | Normalise et corrige les incohérences du DPE d'entrée avant calcul. Désactivez-le pour un calcul brut.                                                                                                                                                                                                                                       |
+| `compat_for_corpus_analysis` | `false` | Reprend la ligne `q4pa_conv` choisie par le logiciel de saisie même si elle contredit l'isolation des parois ou les joints déclarés, pour reproduire les DPE du corpus ADEME. À n'utiliser que pour l'analyse de corpus. Désactivé, le moteur recalcule `q4pa_conv` selon la méthode (contrôle de cohérence d'un DPE, scénarios de travaux). |
+
+> Dès qu'un objet `options` est passé, `sanitize` vaut `false` s'il n'est pas précisé : indiquez
+> `sanitize: true` avec `compat_for_corpus_analysis`.
 
 <details>
 <summary><strong>Exemple d'objet JSON d'entrée (partiel)</strong></summary>

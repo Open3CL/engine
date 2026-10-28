@@ -1,5 +1,5 @@
 import { calcul_3cl } from '../src/engine.js';
-import { getAdemeFileJsonOrDownload } from './test-helpers.js';
+import { getAdemeFileJsonOrDownload, CORPUS_ANALYSIS_OPTIONS } from './test-helpers.js';
 import { set_bug_for_bug_compat } from '../src/utils.js';
 import { describe, expect, test } from 'vitest';
 
@@ -19,7 +19,7 @@ describe('Conso auxiliaire distribution ECS - Cas immeuble (issue #157)', () => 
   test('DPE immeuble bouclé (2592E0278308W) : conso auxiliaire distribution ECS ≈ 400.53 kWh', async () => {
     set_bug_for_bug_compat();
     const input = await getAdemeFileJsonOrDownload('2592E0278308W');
-    const output = calcul_3cl(structuredClone(input));
+    const output = calcul_3cl(structuredClone(input), CORPUS_ANALYSIS_OPTIONS);
 
     // La conso totale de l'auxiliaire de distribution ECS pour l'immeuble
     // est la somme des deux installations (400.5335739 kWh)
@@ -47,7 +47,7 @@ describe('Conso auxiliaire distribution ECS - Cas immeuble (issue #157)', () => 
   test('DPE immeuble traçage (2231E1326114Q) : conso auxiliaire distribution ECS ≈ 2504.61 kWh', async () => {
     set_bug_for_bug_compat();
     const input = await getAdemeFileJsonOrDownload('2231E1326114Q');
-    const output = calcul_3cl(structuredClone(input));
+    const output = calcul_3cl(structuredClone(input), CORPUS_ANALYSIS_OPTIONS);
 
     const ef_conso = output.logement.sortie.ef_conso;
     expect(ef_conso.conso_auxiliaire_distribution_ecs).toBeCloseTo(2504.61, 0);
@@ -67,7 +67,7 @@ describe('Conso auxiliaire distribution ECS - Cas immeuble (issue #157)', () => 
     set_bug_for_bug_compat();
     const input = await getAdemeFileJsonOrDownload('2321E0998807O');
     // Ce DPE a enum_bouclage=2 (bouclé), on vérifie juste que la valeur est > 0
-    const output = calcul_3cl(structuredClone(input));
+    const output = calcul_3cl(structuredClone(input), CORPUS_ANALYSIS_OPTIONS);
     const ecs_list = output.logement.installation_ecs_collection.installation_ecs;
     const bouclage = ecs_list[0]?.donnee_entree?.enum_bouclage_reseau_ecs_id;
     if (String(bouclage) === '1') {

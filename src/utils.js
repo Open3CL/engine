@@ -40,6 +40,29 @@ export function set_bug_for_bug_compat() {
   bug_for_bug_compat = true;
 }
 
+/**
+ * Compatibilité réservée à l'analyse du corpus ADEME.
+ *
+ * Activée, le moteur reprend certaines valeurs choisies par le logiciel de saisie même
+ * lorsqu'elles contredisent les données d'entrée (ex. ligne `tv_q4pa_conv_id` incohérente avec
+ * l'isolation des parois ou les joints des menuiseries, issues #312 et #294), dans le seul but de
+ * reproduire les résultats des DPE du corpus.
+ *
+ * Ne jamais l'activer pour contrôler la cohérence d'un DPE ni pour calculer des scénarios de
+ * travaux : l'erreur du logiciel de saisie serait alors masquée ou propagée.
+ *
+ * Positionnée à chaque appel de `calcul_3cl` à partir de l'option du même nom.
+ * @type {boolean}
+ */
+export let compat_for_corpus_analysis = false;
+
+/**
+ * @param value {boolean} `true` uniquement pour l'analyse du corpus ADEME
+ */
+export function set_compat_for_corpus_analysis(value = false) {
+  compat_for_corpus_analysis = value === true;
+}
+
 export function useEnumAsString(jsonObj) {
   for (const key in jsonObj) {
     if (jsonObj.hasOwnProperty(key)) {

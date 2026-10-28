@@ -125,7 +125,9 @@ const runEngineAndVerifyOutput = (inputDpe, dpeOutputs) => {
      */
     const dpeToCompute = structuredClone(inputDpe);
     const startTime = hrtime.bigint();
-    outputDpe = calcul_3cl(dpeToCompute);
+    // Analyse du corpus ADEME : reprise des valeurs choisies par le logiciel de saisie (ligne
+    // q4pa_conv) pour reproduire les résultats des DPE.
+    outputDpe = calcul_3cl(dpeToCompute, { sanitize: true, compat_for_corpus_analysis: true });
     parentPort.postMessage({
       action: 'addDpeElapsedTime',
       elapsedMs: Number(hrtime.bigint() - startTime) / 1e6

@@ -1,5 +1,5 @@
 import { calcul_3cl } from '../src/engine.js';
-import { getAdemeFileJson } from './test-helpers.js';
+import { getAdemeFileJson, CORPUS_ANALYSIS_OPTIONS } from './test-helpers.js';
 import {
   set_bug_for_bug_compat,
   set_tv_match_optimized_version,
@@ -34,7 +34,7 @@ describe("Période d'installation des émetteurs déduite des temp_fonc du DPE (
 
   test('2459E0028946S (4.1.1, construction 1920, chaudière hybride) : 32/60 (« après 2000 ») au lieu de 38/80', () => {
     const input = getAdemeFileJson('2459E0028946S');
-    const output = calcul_3cl(structuredClone(input));
+    const output = calcul_3cl(structuredClone(input), CORPUS_ANALYSIS_OPTIONS);
 
     const diDpe = generateursChauffage(input)[0].donnee_intermediaire;
     const generateur = generateursChauffage(output)[0];
@@ -56,7 +56,7 @@ describe("Période d'installation des émetteurs déduite des temp_fonc du DPE (
 
   test('2287E0373232M (LICIEL, construction 1947, chaudière fioul) : 52,5/70 au lieu de 55,5/80', () => {
     const input = getAdemeFileJson('2287E0373232M');
-    const output = calcul_3cl(structuredClone(input));
+    const output = calcul_3cl(structuredClone(input), CORPUS_ANALYSIS_OPTIONS);
 
     const diDpe = generateursChauffage(input)[0].donnee_intermediaire;
     const generateur = generateursChauffage(output)[0];
