@@ -12,7 +12,8 @@ const dpeSanitizerService = new DpeSanitizerService();
 const cleanedDpe = dpeSanitizerService.execute(input);
 
 const start_time = hrtime.bigint();
-for (let i = 0; i < 200; i++) calcul_3cl(structuredClone(cleanedDpe), { sanitize: false });
+for (let i = 0; i < 200; i++)
+  calcul_3cl(structuredClone(cleanedDpe), { sanitize: false, compat_for_corpus_analysis: true });
 const end_time = hrtime.bigint();
 
 console.log(`Completed in ${(end_time - start_time) / 1000000n} milliseconds`);

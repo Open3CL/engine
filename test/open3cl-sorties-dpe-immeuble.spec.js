@@ -1,5 +1,9 @@
 import { describe, expect, test } from 'vitest';
-import { getAdemeFileJson, getAdemeFileJsonOrDownload } from './test-helpers.js';
+import {
+  getAdemeFileJson,
+  getAdemeFileJsonOrDownload,
+  CORPUS_ANALYSIS_OPTIONS
+} from './test-helpers.js';
 import { calcul_3cl } from '../src/index.js';
 import { expect_or } from './utils.js';
 
@@ -26,7 +30,7 @@ describe('DPE immeuble unit tests', () => {
       const input = getAdemeFileJson(dpe);
 
       /** @type {FullDpe} **/
-      const output = calcul_3cl(structuredClone(input));
+      const output = calcul_3cl(structuredClone(input), CORPUS_ANALYSIS_OPTIONS);
 
       const diffBch =
         (Math.abs(
@@ -71,7 +75,7 @@ describe('DPE immeuble unit tests', () => {
       let input = getAdemeFileJson(code);
 
       /** @type {FullDpe} **/
-      let output = calcul_3cl(structuredClone(input));
+      let output = calcul_3cl(structuredClone(input), CORPUS_ANALYSIS_OPTIONS);
 
       const inputEcsRecup = input.logement.sortie.apport_et_besoin.pertes_distribution_ecs_recup;
       const outputEcsRecup = output.logement.sortie.apport_et_besoin.pertes_distribution_ecs_recup;
@@ -92,7 +96,7 @@ describe('DPE immeuble unit tests', () => {
           .generateur_chauffage_collection.generateur_chauffage[0];
 
       /** @type {FullDpe} **/
-      let output = calcul_3cl(structuredClone(input));
+      let output = calcul_3cl(structuredClone(input), CORPUS_ANALYSIS_OPTIONS);
       const outputGenerateurChauffage =
         output.logement.installation_chauffage_collection.installation_chauffage[0]
           .generateur_chauffage_collection.generateur_chauffage[0];
@@ -108,7 +112,7 @@ describe('DPE immeuble unit tests', () => {
     let input = await getAdemeFileJsonOrDownload('2474E3798234X');
 
     /** @type {FullDpe} **/
-    let output = calcul_3cl(structuredClone(input));
+    let output = calcul_3cl(structuredClone(input), CORPUS_ANALYSIS_OPTIONS);
 
     expect(input.logement.sortie.ep_conso.ep_conso_5_usages_m2).toBeCloseTo(
       output.logement.sortie.ep_conso.ep_conso_5_usages_m2
@@ -120,7 +124,7 @@ describe('DPE immeuble unit tests', () => {
     let input = await getAdemeFileJsonOrDownload('2313E0178624T');
 
     /** @type {FullDpe} **/
-    let output = calcul_3cl(structuredClone(input));
+    let output = calcul_3cl(structuredClone(input), CORPUS_ANALYSIS_OPTIONS);
 
     const inputGenerateurChauffage =
       input.logement.installation_ecs_collection.installation_ecs[0].generateur_ecs_collection
@@ -138,7 +142,7 @@ describe('DPE immeuble unit tests', () => {
     let input = await getAdemeFileJsonOrDownload('2574E3388253L');
 
     /** @type {FullDpe} **/
-    let output = calcul_3cl(structuredClone(input));
+    let output = calcul_3cl(structuredClone(input), CORPUS_ANALYSIS_OPTIONS);
 
     const inputGenerateurChauffage =
       input.logement.installation_chauffage_collection.installation_chauffage[0]

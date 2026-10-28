@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { getAdemeFileJson } from './test-helpers.js';
+import { getAdemeFileJson, CORPUS_ANALYSIS_OPTIONS } from './test-helpers.js';
 import { calcul_3cl } from '../src/index.js';
 import { set_bug_for_bug_compat, set_tv_match_optimized_version } from '../src/utils.js';
 
@@ -7,16 +7,18 @@ import { set_bug_for_bug_compat, set_tv_match_optimized_version } from '../src/u
  * Non-régression https://github.com/Open3CL/engine/issues/312
  *
  * Le DPE 2287E1201982M (LICIEL) retient la ligne q4pa_conv 10 « avant 1948, surfaces isolées »
- * (q4pa_conv = 2) alors que toutes ses parois sont non isolées (ligne 1 : 4,6). En mode
- * bug_for_bug_compat, la ligne du DPE est reprise : q4pa_conv, hperm et conso_ch sont ceux du DPE.
+ * (q4pa_conv = 2) alors que toutes ses parois sont non isolées (ligne 1 : 4,6).
+ * - option `compat_for_corpus_analysis` : la ligne du DPE est reprise, q4pa_conv, hperm et conso_ch
+ *   sont ceux du DPE (analyse du corpus ADEME) ;
+ * - par défaut : q4pa_conv est recalculé selon la méthode (contrôle de cohérence du DPE).
  */
-describe('q4pa_conv repris de la ligne du DPE - issue #312', () => {
-  test('2287E1201982M : q4pa_conv, hperm et conso_ch identiques au DPE', () => {
+describe('q4pa_conv et ligne tv_q4pa_conv_id du DPE - issue #312', () => {
+  test('2287E1201982M avec compat_for_corpus_analysis : q4pa_conv, hperm et conso_ch identiques au DPE', () => {
     set_bug_for_bug_compat();
     set_tv_match_optimized_version();
     /** @type {FullDpe} */
     const input = getAdemeFileJson('2287E1201982M');
-    const output = calcul_3cl(structuredClone(input));
+    const output = calcul_3cl(structuredClone(input), CORPUS_ANALYSIS_OPTIONS);
 
     const ventIn = input.logement.ventilation_collection.ventilation[0].donnee_intermediaire;
     const ventOut = output.logement.ventilation_collection.ventilation[0].donnee_intermediaire;
@@ -28,10 +30,33 @@ describe('q4pa_conv repris de la ligne du DPE - issue #312', () => {
     );
   });
 
+  test('2287E1201982M par défaut : q4pa_conv recalculé selon la méthode (parois non isolées)', () => {
+    set_bug_for_bug_compat();
+    set_tv_match_optimized_version();
+    /** @type {FullDpe} */
+    const input = getAdemeFileJson('2287E1201982M');
+    const output = calcul_3cl(structuredClone(input));
+
+    const ventOut = output.logement.ventilation_collection.ventilation[0].donnee_intermediaire;
+    expect(ventOut.q4pa_conv).toBe(4.6);
+  });
+
+  test('l’option n’est pas conservée d’un appel à l’autre', () => {
+    set_bug_for_bug_compat();
+    set_tv_match_optimized_version();
+    /** @type {FullDpe} */
+    const input = getAdemeFileJson('2287E1201982M');
+    calcul_3cl(structuredClone(input), CORPUS_ANALYSIS_OPTIONS);
+    const output = calcul_3cl(structuredClone(input), { sanitize: true });
+
+    const ventOut = output.logement.ventilation_collection.ventilation[0].donnee_intermediaire;
+    expect(ventOut.q4pa_conv).toBe(4.6);
+  });
+
   /**
-   * Sens unique : le DPE 2469E2650374G retient la ligne q4pa_conv 1 « avant 1948, surfaces non
-   * isolées » (4,6). Un scénario de rénovation isole tous ses murs puis recalcule le DPE modifié :
-   * la ligne du DPE (non isolée) contredit alors les parois isolées et ne doit pas être reprise.
+   * Le DPE 2469E2650374G retient la ligne q4pa_conv 1 « avant 1948, surfaces non isolées » (4,6).
+   * Un scénario de rénovation (calcul par défaut) isole tous ses murs puis recalcule le DPE
+   * modifié : la ligne du DPE contredit alors les parois isolées et n'est pas reprise.
    */
   test('2469E2650374G murs isolés : la ligne non isolée du DPE n’est pas reprise', () => {
     set_bug_for_bug_compat();

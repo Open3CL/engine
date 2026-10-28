@@ -4,7 +4,8 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
  * Dépendances mockées pour isoler le module de ventilation :
  * - `tv` : accès aux tables `debits_ventilation` / `q4pa_conv`, on contrôle les lignes ;
  * - `requestInput` / `requestInputID` : passe-plats vers les données d'entrée ;
- * - `bug_for_bug_compat` : désactivé pour isoler le comportement nominal ;
+ * - `bug_for_bug_compat` / `compat_for_corpus_analysis` : désactivés pour isoler le comportement
+ *   nominal ;
  * - `calc_pvent` (5_conso_ventilation.js) : espion, la conso de ventilation est testée ailleurs.
  */
 vi.mock('./utils.js', () => ({
@@ -12,7 +13,8 @@ vi.mock('./utils.js', () => ({
   tv: vi.fn(),
   requestInput: (de, du, field) => de[field],
   requestInputID: (de, du, field) => de[`enum_${field}_id`],
-  bug_for_bug_compat: false
+  bug_for_bug_compat: false,
+  compat_for_corpus_analysis: false
 }));
 
 vi.mock('./5_conso_ventilation.js', () => ({
@@ -301,10 +303,12 @@ describe('calc_ventilation - orchestration', () => {
  */
 describe('calc_ventilation - compatibilité bug_for_bug_compat activée', () => {
   /**
-   * Recharge le module avec `bug_for_bug_compat = true`. Le double de `tv` renvoie une ligne
-   * `q4pa_conv` distincte selon que le matcher cible l'identifiant déjà saisi ou le matcher complet.
+   * Recharge le module avec `bug_for_bug_compat = true` et `compat_for_corpus_analysis` (vrai par
+   * défaut : reprise de la ligne du DPE pour l'analyse de corpus). Le double de `tv` renvoie une
+   * ligne `q4pa_conv` distincte selon que le matcher cible l'identifiant déjà saisi ou le matcher
+   * complet.
    */
-  async function chargerAvecBug(rowParId) {
+  async function chargerAvecBug(rowParId, compat = true) {
     vi.resetModules();
     const tvBug = vi.fn((table, matcher) => {
       if (table === 'debits_ventilation') return { ...ROW_DEBITS };
@@ -318,7 +322,8 @@ describe('calc_ventilation - compatibilité bug_for_bug_compat activée', () => 
       tv: tvBug,
       requestInput: (de, du, field) => de[field],
       requestInputID: (de, du, field) => de[`enum_${field}_id`],
-      bug_for_bug_compat: true
+      bug_for_bug_compat: true,
+      compat_for_corpus_analysis: compat
     }));
     vi.doMock('./5_conso_ventilation.js', () => ({ default: vi.fn() }));
     const { default: calc_ventilation_bug } = await import('./4_ventilation.js');
@@ -621,6 +626,78 @@ describe('calc_ventilation - compatibilité bug_for_bug_compat activée', () => 
       );
       expect(errorSpy).toHaveBeenCalledWith(
         expect.stringContaining('La valeur recalculée isolation_surfaces = 0 est utilisée')
+      );
+      errorSpy.mockRestore();
+    });
+  });
+
+  /**
+   * Sans l'option `compat_for_corpus_analysis` (comportement par défaut) : la ligne q4pa_conv du DPE
+   * n'est jamais reprise, q4pa_conv est recalculé selon la méthode. Les écarts sont seulement
+   * signalés (contrôle de cohérence d'un DPE, scénarios de travaux).
+   */
+  describe('sans compat_for_corpus_analysis : ligne du DPE jamais reprise', () => {
+    const murNonIsole = [
+      {
+        donnee_intermediaire: { b: 1 },
+        donnee_entree: { enum_type_isolation_id: '2', surface_paroi_opaque: 100 }
+      }
+    ];
+    const vtLigne = (id) => ({
+      donnee_entree: { enum_type_ventilation_id: '1', tv_q4pa_conv_id: id, description: 'v' }
+    });
+
+    test('ligne « surfaces isolées » de la même période (#312) : isolation et joints recalculés', async () => {
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const { calc_ventilation_bug, tvBug } = await chargerAvecBug(
+        {
+          q4pa_conv: '2',
+          tv_q4pa_conv_id: '11',
+          enum_periode_construction_id: '1',
+          isolation_surfaces: '1',
+          presence_joints_menuiserie: '1'
+        },
+        false
+      );
+      const baieSansJoint = [{ donnee_entree: { surface_totale_baie: 10, presence_joint: 0 } }];
+
+      calc_ventilation_bug(vtLigne(11), CG, 'th', 80, 100, murNonIsole, [], [], baieSansJoint);
+
+      expect(tvBug).toHaveBeenLastCalledWith(
+        'q4pa_conv',
+        expect.objectContaining({ isolation_surfaces: '0', presence_joints_menuiserie: '0' })
+      );
+      expect(errorSpy).toHaveBeenCalledWith(
+        expect.stringContaining('La valeur recalculée isolation_surfaces = 0 est utilisée')
+      );
+      expect(errorSpy).toHaveBeenCalledWith(
+        expect.stringContaining('La valeur recalculée presence_joints_menuiserie = 0 est utilisée')
+      );
+      expect(errorSpy).not.toHaveBeenCalledWith(expect.stringContaining('est conservée'));
+      errorSpy.mockRestore();
+    });
+
+    test('presence_joint non exporté (#294) : joints recalculés à « 0 » et écart signalé', async () => {
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const { calc_ventilation_bug, tvBug } = await chargerAvecBug(
+        {
+          q4pa_conv: '2.5',
+          tv_q4pa_conv_id: '12',
+          isolation_surfaces: '0',
+          presence_joints_menuiserie: '1'
+        },
+        false
+      );
+      const baies = [{ donnee_entree: { surface_totale_baie: 10 } }];
+
+      calc_ventilation_bug(vtLigne(12), CG, 'th', 80, 100, murNonIsole, [], [], baies);
+
+      expect(tvBug).toHaveBeenLastCalledWith(
+        'q4pa_conv',
+        expect.objectContaining({ isolation_surfaces: '0', presence_joints_menuiserie: '0' })
+      );
+      expect(errorSpy).toHaveBeenCalledWith(
+        expect.stringContaining('La valeur recalculée presence_joints_menuiserie = 0 est utilisée')
       );
       errorSpy.mockRestore();
     });

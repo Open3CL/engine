@@ -24,6 +24,7 @@ import {
   containsAnySubstring,
   isEffetJoule,
   set_bug_for_bug_compat,
+  set_compat_for_corpus_analysis,
   use_enum_as_string,
   useEnumAsString,
   xmlParser
@@ -58,7 +59,7 @@ export function getVersion() {
 /**
  * Run the engine with a full dpe xml content
  * @param dpeXmlContent {string} A full dpe xml content
- * @param options {{sanitize: boolean}?}
+ * @param options {{sanitize?: boolean, compat_for_corpus_analysis?: boolean}?} voir `calcul_3cl`
  * @return {FullDpe}
  */
 export function calcul_3cl_xml(dpeXmlContent, options) {
@@ -70,12 +71,18 @@ export function calcul_3cl_xml(dpeXmlContent, options) {
 /**
  * Run the engine with a javascript plain object dpe
  * @param inputDpe {FullDpe} A full plain object dpe
- * @param options {{sanitize: boolean}?}
+ * @param options {{sanitize?: boolean, compat_for_corpus_analysis?: boolean}?}
+ * - `sanitize` (défaut `true` si `options` est absent) : nettoyage du DPE d'entrée ;
+ * - `compat_for_corpus_analysis` (défaut `false`) : reprend les valeurs choisies par le logiciel de
+ *   saisie qui contredisent les données d'entrée (ligne q4pa_conv, issues #312 et #294), pour
+ *   reproduire les DPE du corpus ADEME. À réserver à l'analyse de corpus : jamais pour le contrôle
+ *   d'un DPE ni pour les scénarios de travaux.
  * @return {FullDpe}
  */
 export function calcul_3cl(inputDpe, options) {
   set_bug_for_bug_compat();
   if (!options) options = { sanitize: true };
+  set_compat_for_corpus_analysis(options.compat_for_corpus_analysis === true);
   let dpe;
   if (options.sanitize) {
     dpe = dpeSanitizerService.execute(inputDpe);

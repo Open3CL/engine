@@ -1,5 +1,5 @@
 import { calcul_3cl } from '../src/engine.js';
-import { getAdemeFileJson } from './test-helpers.js';
+import { getAdemeFileJson, CORPUS_ANALYSIS_OPTIONS } from './test-helpers.js';
 import {
   set_bug_for_bug_compat,
   set_tv_match_optimized_version,
@@ -38,7 +38,7 @@ describe('Chaudière collective : puissance nominale saisie selon les logiciels 
 
   test('2595E3549425E (LICIEL) : pn saisi en Pe, convention 3CL conservée et conso conforme', () => {
     const input = getAdemeFileJson('2595E3549425E');
-    const output = calcul_3cl(structuredClone(input));
+    const output = calcul_3cl(structuredClone(input), CORPUS_ANALYSIS_OPTIONS);
 
     const generateursDpe = generateursChauffage(input);
     const generateursCalcules = generateursChauffage(output);
@@ -67,7 +67,7 @@ describe('Chaudière collective : puissance nominale saisie selon les logiciels 
 
   test('2592E2935275X (WinDpe) : pn saisi ni en Pe ni en Pn, puissance recalculée depuis rpn', () => {
     const input = getAdemeFileJson('2592E2935275X');
-    const output = calcul_3cl(structuredClone(input));
+    const output = calcul_3cl(structuredClone(input), CORPUS_ANALYSIS_OPTIONS);
 
     /**
      * rpn du DPE = 0,938426 = (91 + log10(Pn)) / 100 -> Pn(collectif) = 696 kW, soit
@@ -123,7 +123,7 @@ describe('Chaudière collective : puissance nominale saisie selon les logiciels 
     [...generateursChauffage(corrige), ...generateursEcs(corrige)].forEach((generateur) => {
       generateur.donnee_intermediaire.pn = pe;
     });
-    const output = calcul_3cl(corrige);
+    const output = calcul_3cl(corrige, CORPUS_ANALYSIS_OPTIONS);
 
     const diDpe = generateursChauffage(input)[0].donnee_intermediaire;
     const di = generateursChauffage(output)[0].donnee_intermediaire;

@@ -1,5 +1,5 @@
 import { calcul_3cl } from '../src/engine.js';
-import { getAdemeFileJsonOrDownload } from './test-helpers.js';
+import { getAdemeFileJsonOrDownload, CORPUS_ANALYSIS_OPTIONS } from './test-helpers.js';
 import { set_bug_for_bug_compat } from '../src/utils.js';
 import { describe, expect, test } from 'vitest';
 
@@ -9,7 +9,7 @@ describe('Murs unit tests', () => {
     let input = await getAdemeFileJsonOrDownload('2593E3377930D');
 
     /** @type {FullDpe} **/
-    let output = calcul_3cl(structuredClone(input));
+    let output = calcul_3cl(structuredClone(input), CORPUS_ANALYSIS_OPTIONS);
 
     expect(input.logement.enveloppe.mur_collection.mur[0].donnee_intermediaire.umur0).toBe(
       output.logement.enveloppe.mur_collection.mur[0].donnee_intermediaire.umur0

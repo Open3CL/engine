@@ -1,11 +1,14 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-/** `bug_for_bug_compat` (utils.js) piloté par le test. */
-const state = vi.hoisted(() => ({ bug: false }));
+/** `bug_for_bug_compat` et `compat_for_corpus_analysis` (utils.js) pilotés par le test. */
+const state = vi.hoisted(() => ({ bug: false, compat: false }));
 vi.mock('../../../../../utils.js', async (importOriginal) => ({
   ...(await importOriginal()),
   get bug_for_bug_compat() {
     return state.bug;
+  },
+  get compat_for_corpus_analysis() {
+    return state.compat;
   }
 }));
 
@@ -32,6 +35,7 @@ describe('DeperditionVentilationService.q4paConv', () => {
     };
     service = new DeperditionVentilationService(tvStore);
     state.bug = false;
+    state.compat = false;
   });
 
   test('Q4Pa mesuré saisi : utilisé directement', () => {
@@ -52,6 +56,7 @@ describe('DeperditionVentilationService.q4paConv', () => {
   describe('presence_joint non exporté (issue #294)', () => {
     test('hors bug_for_bug_compat : la ligne du DPE est ignorée', () => {
       state.bug = false;
+      state.compat = true;
       tvStore.getQ4paConvById.mockReturnValue({ presence_joints_menuiserie: '1' });
 
       service.q4paConv({ tv_q4pa_conv_id: 12 }, ctx, 0, 100, 0, 10, true);
@@ -59,8 +64,20 @@ describe('DeperditionVentilationService.q4paConv', () => {
       expect(tvStore.getQ4paConv).toHaveBeenCalledWith('1', 'APPARTEMENT', '0', undefined);
     });
 
-    test('bug_for_bug_compat et ligne DPE « avec joints » : joints repris', () => {
+    test('par défaut (sans compat_for_corpus_analysis) : la ligne du DPE est ignorée', () => {
       state.bug = true;
+      state.compat = false;
+      tvStore.getQ4paConvById.mockReturnValue({ presence_joints_menuiserie: '1' });
+
+      service.q4paConv({ tv_q4pa_conv_id: 12 }, ctx, 0, 100, 0, 10, true);
+
+      expect(tvStore.getQ4paConvById).not.toHaveBeenCalled();
+      expect(tvStore.getQ4paConv).toHaveBeenCalledWith('1', 'APPARTEMENT', '0', undefined);
+    });
+
+    test('compat_for_corpus_analysis et ligne DPE « avec joints » : joints repris', () => {
+      state.bug = true;
+      state.compat = true;
       tvStore.getQ4paConvById.mockReturnValue({ presence_joints_menuiserie: '1' });
 
       service.q4paConv({ tv_q4pa_conv_id: 12 }, ctx, 0, 100, 0, 10, true);
@@ -69,8 +86,9 @@ describe('DeperditionVentilationService.q4paConv', () => {
       expect(tvStore.getQ4paConv).toHaveBeenCalledWith('1', 'APPARTEMENT', '0', '1');
     });
 
-    test('bug_for_bug_compat mais presence_joint renseigné : pas de reprise', () => {
+    test('compat_for_corpus_analysis mais presence_joint renseigné : pas de reprise', () => {
       state.bug = true;
+      state.compat = true;
       tvStore.getQ4paConvById.mockReturnValue({ presence_joints_menuiserie: '1' });
 
       service.q4paConv({ tv_q4pa_conv_id: 12 }, ctx, 0, 100, 0, 10, false);
@@ -78,8 +96,9 @@ describe('DeperditionVentilationService.q4paConv', () => {
       expect(tvStore.getQ4paConv).toHaveBeenCalledWith('1', 'APPARTEMENT', '0', undefined);
     });
 
-    test('bug_for_bug_compat et ligne DPE sans joints : pas de reprise', () => {
+    test('compat_for_corpus_analysis et ligne DPE sans joints : pas de reprise', () => {
       state.bug = true;
+      state.compat = true;
       tvStore.getQ4paConvById.mockReturnValue({ presence_joints_menuiserie: '' });
 
       service.q4paConv({ tv_q4pa_conv_id: 1 }, ctx, 0, 100, 0, 10, true);
@@ -89,6 +108,7 @@ describe('DeperditionVentilationService.q4paConv', () => {
 
     test('surfaces majoritairement isolées : le critère des joints ne s’applique pas', () => {
       state.bug = true;
+      state.compat = true;
       tvStore.getQ4paConvById.mockReturnValue({ presence_joints_menuiserie: '1' });
 
       service.q4paConv({ tv_q4pa_conv_id: 12 }, ctx, 100, 0, 0, 10, true);

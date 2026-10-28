@@ -1,4 +1,10 @@
-import { tv, requestInputID, requestInput, bug_for_bug_compat } from './utils.js';
+import {
+  tv,
+  requestInputID,
+  requestInput,
+  bug_for_bug_compat,
+  compat_for_corpus_analysis
+} from './utils.js';
 import calc_pvent from './5_conso_ventilation.js';
 
 function tv_debits_ventilation(di, de, du) {
@@ -119,6 +125,11 @@ function tv_q4pa_conv(di, de, cg, mur_list, ph_list, porte_list, bv_list) {
        * Si la ligne saisie correspond à la période de construction du DPE, on la reprend en entier
        * (isolation et joints) pour reproduire le calcul du logiciel.
        *
+       * Cette reprise n'est faite qu'avec l'option `compat_for_corpus_analysis` (analyse du corpus
+       * ADEME). Par défaut, la ligne contradictoire est seulement signalée et q4pa_conv est
+       * recalculé selon la méthode : un contrôle de cohérence du DPE doit détecter l'erreur et un
+       * scénario de travaux ne doit pas la propager.
+       *
        * Sens unique : la reprise ne s'applique que si la ligne indique des surfaces isolées alors que
        * le recalcul les donne non isolées. Dans le sens inverse (ligne « non isolées », recalcul
        * « isolées »), le DPE a pu être modifié par l'appelant (scénario d'isolation des parois) :
@@ -127,6 +138,7 @@ function tv_q4pa_conv(di, de, cg, mur_list, ph_list, porte_list, bv_list) {
        */
       if (rowQ4paConv.isolation_surfaces !== isolation_surfaces) {
         if (
+          compat_for_corpus_analysis &&
           isLigneQ4paSurfacesIsolees(rowQ4paConv, isolation_surfaces) &&
           isLigneQ4paMemePeriode(rowQ4paConv, cg)
         ) {
@@ -147,10 +159,14 @@ function tv_q4pa_conv(di, de, cg, mur_list, ph_list, porte_list, bv_list) {
        * Issue #294 : aucune menuiserie n'exporte `presence_joint`. Aucune donnée ne contredit alors
        * la ligne q4pa_conv retenue par le logiciel (ex. ligne 12 « avant 1948 avec joints », 2,5) :
        * on reprend sa valeur `presence_joints_menuiserie` au lieu de considérer les menuiseries
-       * sans joint.
+       * sans joint. Uniquement avec l'option `compat_for_corpus_analysis`.
        * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §4
        */
-      if (!ligneDpeReprise && presenceJointNonRenseignee(porte_list, bv_list)) {
+      if (
+        compat_for_corpus_analysis &&
+        !ligneDpeReprise &&
+        presenceJointNonRenseignee(porte_list, bv_list)
+      ) {
         pjt = rowQ4paConv.presence_joints_menuiserie === '1' ? '1' : '0';
       } else if (!ligneDpeReprise && rowQ4paConv.presence_joints_menuiserie !== pjt) {
         console.error(

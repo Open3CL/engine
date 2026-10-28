@@ -1,11 +1,11 @@
 import { describe, expect, test } from 'vitest';
-import { getAdemeFileJsonOrDownload } from './test-helpers.js';
+import { getAdemeFileJsonOrDownload, CORPUS_ANALYSIS_OPTIONS } from './test-helpers.js';
 import { calcul_3cl } from '../src/index.js';
 
 describe('Open3cl misc unit tests', () => {
   test('should calculate primary conso with coeff 1.7 (since janvier 2027) for dpe: 2369E2791083C', async () => {
     const inputDpe = await getAdemeFileJsonOrDownload('2369E2791083C');
-    const outputDpe = calcul_3cl(structuredClone(inputDpe));
+    const outputDpe = calcul_3cl(structuredClone(inputDpe), CORPUS_ANALYSIS_OPTIONS);
     expect(outputDpe.logement.sortie.ep_conso.coeff_1_7_classe_bilan_dpe).toBe('F');
     expect(outputDpe.logement.sortie.ep_conso.classe_bilan_dpe).toBe('F');
     expect(outputDpe.logement.sortie.ep_conso.classe_bilan_dpe_2027).toBe('F');
@@ -25,7 +25,7 @@ describe('Open3cl misc unit tests', () => {
 
   test('should calculate primary conso with coeff 1.7 (since janvier 2027) for dpe: 2513E1166911W', async () => {
     const inputDpe = await getAdemeFileJsonOrDownload('2513E1166911W');
-    const outputDpe = calcul_3cl(structuredClone(inputDpe));
+    const outputDpe = calcul_3cl(structuredClone(inputDpe), CORPUS_ANALYSIS_OPTIONS);
     expect(outputDpe.logement.sortie.ep_conso.coeff_1_7_classe_bilan_dpe).toBe('B');
     expect(outputDpe.logement.sortie.ep_conso.classe_bilan_dpe).toBe('B');
     expect(outputDpe.logement.sortie.ep_conso.classe_bilan_dpe_2027).toBe('B');
@@ -45,7 +45,7 @@ describe('Open3cl misc unit tests', () => {
 
   test('should calculate primary conso with coeff 1.7 (since janvier 2027) for dpe: 2528E1249844E', async () => {
     const inputDpe = await getAdemeFileJsonOrDownload('2528E1249844E');
-    const outputDpe = calcul_3cl(structuredClone(inputDpe));
+    const outputDpe = calcul_3cl(structuredClone(inputDpe), CORPUS_ANALYSIS_OPTIONS);
     expect(outputDpe.logement.sortie.ep_conso.coeff_1_7_classe_bilan_dpe).toBe('A');
     expect(outputDpe.logement.sortie.ep_conso.classe_bilan_dpe).toBe('A');
     expect(outputDpe.logement.sortie.ep_conso.classe_bilan_dpe_2027).toBe('A');
@@ -65,7 +65,7 @@ describe('Open3cl misc unit tests', () => {
 
   test('should calculate primary conso with coeff 1.7 (since janvier 2027) for dpe: 2464E1799476F', async () => {
     const inputDpe = await getAdemeFileJsonOrDownload('2464E1799476F');
-    const outputDpe = calcul_3cl(structuredClone(inputDpe));
+    const outputDpe = calcul_3cl(structuredClone(inputDpe), CORPUS_ANALYSIS_OPTIONS);
     expect(outputDpe.logement.sortie.ep_conso.coeff_1_7_ep_conso_5_usages).toBeCloseTo(
       33669.79,
       0.5

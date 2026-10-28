@@ -21,6 +21,7 @@ let useEnumAsStringFlag = false;
 
 vi.mock('./utils.js', () => ({
   set_bug_for_bug_compat: vi.fn(),
+  set_compat_for_corpus_analysis: vi.fn(),
   add_references: vi.fn(),
   get bug_for_bug_compat() {
     return bugForBugCompat;
@@ -104,6 +105,7 @@ const {
   collectionCanBeEmpty,
   containsAnySubstring,
   isEffetJoule,
+  set_compat_for_corpus_analysis,
   useEnumAsString,
   xmlParser
 } = await import('./utils.js');
@@ -362,6 +364,52 @@ describe('calcul_3cl - garde-fous précoces', () => {
     expect(calcul_3cl(dpe, { sanitize: false })).toBeNull();
     expect(collectionCanBeEmpty).toHaveBeenCalledWith(dpe.logement, 'plancher_bas', 1);
     errSpy.mockRestore();
+  });
+});
+
+/**
+ * Option `compat_for_corpus_analysis` : reprise des valeurs du logiciel de saisie (ligne q4pa_conv)
+ * réservée à l'analyse du corpus ADEME. Désactivée par défaut et repositionnée à chaque appel.
+ */
+describe('calcul_3cl - option compat_for_corpus_analysis', () => {
+  const dpeNonSupporte = () => ({ administratif: { enum_modele_dpe_id: '99' } });
+
+  beforeEach(() => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  test('sans options : désactivée', () => {
+    calcul_3cl(dpeNonSupporte());
+    expect(set_compat_for_corpus_analysis).toHaveBeenCalledExactlyOnceWith(false);
+  });
+
+  test('options sans le champ : désactivée', () => {
+    calcul_3cl(dpeNonSupporte(), { sanitize: false });
+    expect(set_compat_for_corpus_analysis).toHaveBeenCalledExactlyOnceWith(false);
+  });
+
+  test('valeur non booléenne « truthy » : désactivée (seul true active la reprise)', () => {
+    calcul_3cl(dpeNonSupporte(), { sanitize: false, compat_for_corpus_analysis: 'true' });
+    expect(set_compat_for_corpus_analysis).toHaveBeenCalledExactlyOnceWith(false);
+  });
+
+  test('true : activée, sans changer la sanitisation demandée', () => {
+    const dpe = dpeNonSupporte();
+    calcul_3cl(dpe, { sanitize: true, compat_for_corpus_analysis: true });
+    expect(set_compat_for_corpus_analysis).toHaveBeenCalledExactlyOnceWith(true);
+    expect(sanitizeExecute).toHaveBeenCalledWith(dpe);
+  });
+
+  test('repositionnée à chaque appel : un appel par défaut après un appel activé la désactive', () => {
+    calcul_3cl(dpeNonSupporte(), { sanitize: false, compat_for_corpus_analysis: true });
+    calcul_3cl(dpeNonSupporte());
+    expect(vi.mocked(set_compat_for_corpus_analysis).mock.calls).toEqual([[true], [false]]);
+  });
+
+  test('calcul_3cl_xml transmet l’option', () => {
+    vi.mocked(xmlParser.parse).mockReturnValue({ dpe: dpeNonSupporte() });
+    calcul_3cl_xml('<dpe/>', { sanitize: false, compat_for_corpus_analysis: true });
+    expect(set_compat_for_corpus_analysis).toHaveBeenCalledExactlyOnceWith(true);
   });
 });
 

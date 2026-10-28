@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { getAdemeFileJson } from './test-helpers.js';
+import { getAdemeFileJson, CORPUS_ANALYSIS_OPTIONS } from './test-helpers.js';
 import { calcul_3cl } from '../src/index.js';
 
 /**
@@ -18,7 +18,7 @@ describe('ECS RCU isolé / non isolé - issue #150', () => {
   test('rendement_generation_stockage doit être proche entre DPE entrée et DPE sortie pour 2694E0480609U', () => {
     /** @type {FullDpe} */
     const input = getAdemeFileJson('2694E0480609U');
-    const output = calcul_3cl(structuredClone(input));
+    const output = calcul_3cl(structuredClone(input), CORPUS_ANALYSIS_OPTIONS);
 
     expect(
       input.logement.installation_ecs_collection.installation_ecs[0].generateur_ecs_collection

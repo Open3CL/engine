@@ -1,7 +1,7 @@
 import { DeperditionService } from '../deperdition.service.js';
 
 import { logger } from '../../../../../core/util/logger/log-service.js';
-import { bug_for_bug_compat } from '../../../../../utils.js';
+import { bug_for_bug_compat, compat_for_corpus_analysis } from '../../../../../utils.js';
 import { TypeHabitation } from '../../../../dpe/domain/models/type-habitation.model.js';
 import { TypeVentilation } from '../../../../dpe/domain/models/type-ventilation.model.js';
 
@@ -100,12 +100,14 @@ export class DeperditionVentilationService extends DeperditionService {
           presenceJointsMenuiserie = '1';
         } else if (
           bug_for_bug_compat &&
+          compat_for_corpus_analysis &&
           presenceJointNonRenseignee &&
           this.tvStore.getQ4paConvById(ventilationDE.tv_q4pa_conv_id)
             ?.presence_joints_menuiserie === '1'
         ) {
           // Issue #294 : aucune menuiserie n'exporte presence_joint, rien ne contredit la ligne
-          // q4pa_conv « avant 1948 avec joints » retenue par le DPE => on la reprend.
+          // q4pa_conv « avant 1948 avec joints » retenue par le DPE => on la reprend, uniquement
+          // pour l'analyse du corpus ADEME (option compat_for_corpus_analysis).
           presenceJointsMenuiserie = '1';
         }
       }

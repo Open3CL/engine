@@ -1,3 +1,4 @@
+import { CORPUS_ANALYSIS_OPTIONS } from '../test-helpers.js';
 import { describe, expect, test } from 'vitest';
 import fs from 'node:fs';
 import { calcul_3cl, get_conso_coeff_1_7_2027 } from '../../src/index.js';
@@ -23,7 +24,7 @@ describe('Open3cl CEP 1.7 (janvier 2027) unit tests', () => {
     const inputDpe = loadFixture(fixtures[0].replace('.json', ''));
     expect(inputDpe).not.toBeNull();
 
-    const outputDpe = calcul_3cl(structuredClone(inputDpe));
+    const outputDpe = calcul_3cl(structuredClone(inputDpe), CORPUS_ANALYSIS_OPTIONS);
 
     expect(outputDpe.logement.sortie.ep_conso.ep_conso_5_usages_2027).toBeDefined();
     expect(outputDpe.logement.sortie.ep_conso.ep_conso_5_usages_2027_m2).toBeDefined();
@@ -40,7 +41,7 @@ describe('Open3cl CEP 1.7 (janvier 2027) unit tests', () => {
     for (const file of fixtures.slice(0, 10)) {
       const inputDpe = loadFixture(file.replace('.json', ''));
       if (!inputDpe) continue;
-      const outputDpe = calcul_3cl(structuredClone(inputDpe));
+      const outputDpe = calcul_3cl(structuredClone(inputDpe), CORPUS_ANALYSIS_OPTIONS);
       const ep2026 = outputDpe.logement.sortie.ep_conso.ep_conso_5_usages_2026;
       const ep2027 = outputDpe.logement.sortie.ep_conso.ep_conso_5_usages_2027;
       // 1.7 ≤ 1.9, so 2027 energy consumption must be ≤ 2026
@@ -59,7 +60,7 @@ describe('Open3cl CEP 1.7 (janvier 2027) unit tests', () => {
     for (const file of fixtures) {
       const inputDpe = loadFixture(file.replace('.json', ''));
       if (!inputDpe) continue;
-      const outputDpe = calcul_3cl(structuredClone(inputDpe));
+      const outputDpe = calcul_3cl(structuredClone(inputDpe), CORPUS_ANALYSIS_OPTIONS);
       const ep2026 = outputDpe.logement.sortie.ep_conso.ep_conso_5_usages_2026;
       const ep2027 = outputDpe.logement.sortie.ep_conso.ep_conso_5_usages_2027;
       expect(ep2027).toBeLessThanOrEqual(ep2026 + 0.001);
@@ -76,7 +77,7 @@ describe('Open3cl CEP 1.7 (janvier 2027) unit tests', () => {
     const inputDpe = loadFixture(fixtures[0].replace('.json', ''));
     expect(inputDpe).not.toBeNull();
 
-    const outputDpe = calcul_3cl(structuredClone(inputDpe));
+    const outputDpe = calcul_3cl(structuredClone(inputDpe), CORPUS_ANALYSIS_OPTIONS);
     const result1_7 = get_conso_coeff_1_7_2027(outputDpe);
 
     expect(result1_7.ep_conso_5_usages).toBeDefined();
