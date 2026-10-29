@@ -41,6 +41,20 @@ export function isEmetteurAppointIndividuel(instChDe, idx) {
   );
 }
 
+/**
+ * Longueur par défaut du réseau de l'installation de chauffage (m), même formule que la
+ * longueur de bouclage de l'installation ECS :
+ * Lb = 4 × (Sh / Niv)^0,5 + 6 × (Niv − 0,5)
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §15.2.3
+ * @param {number} surfaceInstallation surface chauffée par l'installation (m²)
+ * @param {number} nombreNiveau nombre de niveaux desservis par l'installation
+ * @returns {number}
+ */
+export function calc_lb_installation_ch(surfaceInstallation, nombreNiveau) {
+  const niv = Number(nombreNiveau) || 1;
+  return 4 * Math.pow(surfaceInstallation / niv, 0.5) + 6 * (niv - 0.5);
+}
+
 export default function calc_chauffage(
   dpe,
   ch,
@@ -67,6 +81,7 @@ export default function calc_chauffage(
 
   di.besoin_ch = bch;
   di.besoin_ch_depensier = bch_dep;
+  di.lb = calc_lb_installation_ch(de.surface_chauffee || Sh, de.nombre_niveau_installation_ch);
 
   const em_ch = ch.emetteur_chauffage_collection.emetteur_chauffage;
   em_ch.forEach((em_ch, idx) => {
