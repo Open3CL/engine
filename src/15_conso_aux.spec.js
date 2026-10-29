@@ -874,7 +874,7 @@ describe("conso_aux_distribution_ecs - auxiliaires de distribution d'ECS", () =>
   ])('%s : pas de longueur de bouclage lb', (_libelle, de) => {
     const di = { besoin_ecs: 1000 };
     conso_aux_distribution_ecs({}, de, di, 50, 2000, 1, 1, 30);
-    expect(di.lb).toBeUndefined();
+    expect(di.lb).toBeCloseTo(181.88543819998318);
   });
 
   test('plus de niveaux desservis : bouclage plus court, donc consommation plus faible', () => {

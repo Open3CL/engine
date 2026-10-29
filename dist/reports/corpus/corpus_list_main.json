@@ -10,5 +10,5 @@
     "dpe_individuel_a_partir_dpe_immeuble_2026.csv",
     "dpe_maison_individuelle_2026.csv"
   ],
-  "branches": ["main"]
+  "branches": ["main", "fix_lb_donnee_intermediaire"]
 }
