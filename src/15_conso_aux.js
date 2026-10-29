@@ -368,6 +368,24 @@ export function conso_aux_distribution_ecs(
 ) {
   const typeInstallation = parseInt(de.enum_type_installation_id);
 
+  const ratioVirtu = parseFloat(de.ratio_virtualisation);
+  let Sh_immeuble_ratio = Sh_immeuble;
+  let Sh_install = de.surface_habitable || Sh_logement;
+  let Niv_inst_ecs = de.nombre_niveau_installation_ecs || 1;
+
+  if (!(Sh_immeuble > Sh_logement) && ratioVirtu > 0 && ratioVirtu < 1) {
+    Sh_immeuble_ratio = Sh_logement / ratioVirtu;
+    Sh_install = Sh_logement;
+    Niv_inst_ecs = nombre_niveau_immeuble || Niv_inst_ecs;
+  }
+
+  // Etape 3: Lb - longueur par défaut du bouclage ECS (m)
+  // Sh est la surface habitable des logements desservis par l'installation d'ECS
+  // Pour l'appartement, on utilise la surface à l'échelle de l'immeuble
+  const Sh = (Sh_install / Sh_logement) * Sh_immeuble_ratio;
+  const Lb = 4 * Math.pow(Sh / Niv_inst_ecs, 0.5) + 6 * (Niv_inst_ecs - 0.5);
+  di.lb = Lb;
+
   if (typeInstallation === 1) {
     di.conso_auxiliaire_distribution_ecs = 0;
     return;
@@ -401,24 +419,6 @@ export function conso_aux_distribution_ecs(
   // CAS 2 - enum_bouclage_reseau_ecs_id = 2 (réseau bouclé)
   const ca = enums.classe_altitude[caId];
   const zc = enums.zone_climatique[zcId];
-
-  const ratioVirtu = parseFloat(de.ratio_virtualisation);
-  let Sh_immeuble_ratio = Sh_immeuble;
-  let Sh_install = de.surface_habitable || Sh_logement;
-  let Niv_inst_ecs = de.nombre_niveau_installation_ecs || 1;
-
-  if (!(Sh_immeuble > Sh_logement) && ratioVirtu > 0 && ratioVirtu < 1) {
-    Sh_immeuble_ratio = Sh_logement / ratioVirtu;
-    Sh_install = Sh_logement;
-    Niv_inst_ecs = nombre_niveau_immeuble || Niv_inst_ecs;
-  }
-
-  // Etape 3: Lb - longueur par défaut du bouclage ECS (m)
-  // Sh est la surface habitable des logements desservis par l'installation d'ECS
-  // Pour l'appartement, on utilise la surface à l'échelle de l'immeuble
-  const Sh = (Sh_install / Sh_logement) * Sh_immeuble_ratio;
-  const Lb = 4 * Math.pow(Sh / Niv_inst_ecs, 0.5) + 6 * (Niv_inst_ecs - 0.5);
-  di.lb = Lb;
 
   // Etape 4: DeltaPb (kPa) - perte de charge dans le bouclage
   const DeltaPb = 0.2 * Lb + 10;

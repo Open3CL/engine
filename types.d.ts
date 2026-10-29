@@ -256,6 +256,7 @@ interface Donnee_intermediaire {
   qp0?: number;
   pn?: number;
   k?: number;
+  lb?: number;
 }
 interface Plancher_bas_collection {
   plancher_bas: PlancherBasItem[];
