@@ -62,7 +62,8 @@ const {
   generateursPrincipauxCascade,
   ratioDimensionnement,
   reseauCirculateurUnique,
-  isEmetteurAppointIndividuel
+  isEmetteurAppointIndividuel,
+  calc_lb_installation_ch
 } = await import('./9_chauffage.js');
 const { requestInput, tv, tvColumnIDs } = await import('./utils.js');
 const { calc_emetteur_ch } = await import('./9_emetteur_ch.js');
@@ -185,6 +186,8 @@ describe('calc_chauffage - cas nominal (1 générateur, 1 émetteur)', () => {
     expect(ch.donnee_intermediaire).toStrictEqual({
       besoin_ch: 1000,
       besoin_ch_depensier: 1200,
+      // 4 × (100 / 1)^0,5 + 6 × (1 − 0,5) = 43
+      lb: 43,
       conso_ch: 100,
       conso_ch_depensier: 120
     });
@@ -234,6 +237,53 @@ describe('calc_chauffage - cas nominal (1 générateur, 1 émetteur)', () => {
     appel(ch, { bch: 800 });
     // 6e argument de calc_generateur_ch = bch * prorata (= 800 * 1)
     expect(vi.mocked(calc_generateur_ch).mock.calls[0][5]).toBe(800);
+  });
+});
+
+/**
+ * Longueur du réseau de l'installation de chauffage, même formule que la longueur de
+ * bouclage ECS : Lb = 4 × (Sh / Niv)^0,5 + 6 × (Niv − 0,5)
+ * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §15.2.3
+ */
+describe('calc_lb_installation_ch - longueur du réseau de chauffage', () => {
+  test.each([
+    ['1 niveau, 100 m²', 100, 1, 43],
+    ['1 niveau, 50 m²', 50, 1, 31.284271247461902],
+    ['3 niveaux, 100 m²', 100, 3, 38.09401076758503]
+  ])('%s', (_libelle, surface, niveaux, attendu) => {
+    // valeurs de référence de régression
+    expect(calc_lb_installation_ch(surface, niveaux)).toBeCloseTo(attendu, 9);
+  });
+
+  test.each([undefined, 0, null])('nombre de niveaux %s : repli sur 1 niveau', (niveaux) => {
+    expect(calc_lb_installation_ch(100, niveaux)).toBe(43);
+  });
+
+  test('nombre de niveaux saisi en chaîne', () => {
+    expect(calc_lb_installation_ch(100, '3')).toBeCloseTo(38.09401076758503, 9);
+  });
+});
+
+describe('calc_chauffage - longueur lb dans la donnée intermédiaire de l’installation', () => {
+  test('surface chauffée et nombre de niveaux de l’installation utilisés', () => {
+    const ch = installation([generateur()], [emetteur('1')], {
+      surface_chauffee: 100,
+      nombre_niveau_installation_ch: 3
+    });
+    appel(ch, { Sh: 500 });
+    expect(ch.donnee_intermediaire.lb).toBeCloseTo(38.09401076758503, 9);
+  });
+
+  test('surface chauffée absente : repli sur la surface habitable Sh', () => {
+    const ch = installation([generateur()], [emetteur('1')], { surface_chauffee: 0 });
+    appel(ch, { Sh: 50 });
+    expect(ch.donnee_intermediaire.lb).toBeCloseTo(31.284271247461902, 9);
+  });
+
+  test('aucun impact sur le besoin transmis au générateur', () => {
+    const ch = installation([generateur()], [emetteur('1')], { nombre_niveau_installation_ch: 3 });
+    appel(ch);
+    expect(vi.mocked(calc_generateur_ch).mock.calls[0][5]).toBe(1000);
   });
 });
 
