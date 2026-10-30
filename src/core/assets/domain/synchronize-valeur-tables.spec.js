@@ -99,4 +99,47 @@ describe('SynchronizeValeurTables unit tests', () => {
       expect(contenu).toContain('valeurs-ue-completees');
     });
   });
+  test('force isolation_surfaces à "0" uniquement lorsque la valeur est absente dans q4pa_conv', () => {
+    const fileStore = new FileStore();
+    const appConfig = new ApplicationConfig();
+    const synchronizeC1Tables = new SynchronizeC1Tables(fileStore, appConfig);
+    const synchronizeSolicitationTables = new SynchronizeSolicitationsTables(fileStore, appConfig);
+    const synchronizeDpeGesLimitValuesTables = new SynchronizeDpeGesLimitValuesTables(
+      fileStore,
+      appConfig
+    );
+    const addAdditionnalUeValuesTables = new AddAdditionnalUeValuesTables(fileStore, appConfig);
+    const synchronizeValeurTables = new SynchronizeValeurTables(
+      fileStore,
+      appConfig,
+      synchronizeSolicitationTables,
+      synchronizeDpeGesLimitValuesTables,
+      addAdditionnalUeValuesTables,
+      synchronizeC1Tables
+    );
+
+    vi.spyOn(ApplicationConfig.prototype, 'ademeValeurTablesFileUrl', 'get').mockReturnValue(
+      'http://localhost/file.xlsx'
+    );
+    vi.spyOn(ApplicationConfig.prototype, 'assetsOutputFolder', 'get').mockReturnValue(
+      'src/assets'
+    );
+
+    // Le parsing Excel ignore les valeurs à 0 : la 1ʳᵉ ligne n'a pas de isolation_surfaces,
+    // la 2ᵉ en possède déjà une qui doit être conservée.
+    vi.spyOn(fileStore, 'downloadXlsxFileAndConvertToJson').mockResolvedValue({
+      q4pa_conv: [{ q4pa_conv: 'a' }, { q4pa_conv: 'b', isolation_surfaces: 'oui' }]
+    });
+    vi.spyOn(fileStore, 'writeFileToLocalSystem').mockResolvedValue(null);
+    vi.spyOn(synchronizeC1Tables, 'execute').mockResolvedValue({});
+    vi.spyOn(synchronizeSolicitationTables, 'execute').mockResolvedValue({});
+    vi.spyOn(synchronizeDpeGesLimitValuesTables, 'execute').mockResolvedValue({});
+    vi.spyOn(addAdditionnalUeValuesTables, 'execute').mockResolvedValue({});
+
+    return synchronizeValeurTables.execute().then(() => {
+      const contenu = vi.mocked(fileStore.writeFileToLocalSystem).mock.calls[0][1];
+      const tvs = JSON.parse(contenu.match(/tvs = (\{[\s\S]*\});\n export/)[1]);
+      expect(tvs.q4pa_conv.map((l) => l.isolation_surfaces)).toEqual(['0', 'oui']);
+    });
+  });
 });

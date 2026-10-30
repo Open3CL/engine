@@ -28,7 +28,8 @@ vi.mock('./enums.js', () => ({
     type_generateur_ch: {
       89: 'chaudière gaz standard 2001-2015',
       X: 'chaudière fioul',
-      Y: 'chaudière gaz'
+      Y: 'chaudière gaz',
+      Z: 'générateur sans équivalent ECS'
     },
     type_generateur_ecs: {
       50: 'chaudière gaz standard',
@@ -560,6 +561,28 @@ describe('tv_generateur_combustion - génération mixte (checkEcsVsChauffageForM
       expect.objectContaining({ enum_type_generateur_ecs_id: 'B' })
     );
     expect(errSpy).toHaveBeenCalled();
+    errSpy.mockRestore();
+  });
+
+  test('type CH sans équivalent ECS : type de générateur ECS conservé sans message d’alignement', () => {
+    state.bug = true;
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    tv.mockReturnValue({ ...ROW_DEFAUT });
+    const di = { pn: 20000 };
+    // CH mixte 'Z' : aucun type ECS portant le même libellé -> pas d'alignement possible
+    const de = {
+      enum_type_generateur_ecs_id: 'A',
+      enum_usage_generateur_id: '3',
+      tv_generateur_combustion_id: '42',
+      ratio_virtualisation: 1,
+      presence_ventouse: 0
+    };
+    tv_generateur_combustion(dpeAvecChMixte('Z'), di, de, 'ecs', 200, -9, 1);
+    expect(tv).toHaveBeenCalledWith(
+      'generateur_combustion',
+      expect.objectContaining({ enum_type_generateur_ecs_id: 'A' })
+    );
+    expect(errSpy).not.toHaveBeenCalled();
     errSpy.mockRestore();
   });
 

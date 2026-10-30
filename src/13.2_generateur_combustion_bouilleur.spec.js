@@ -58,6 +58,14 @@ describe('updateGenerateurBouilleurs - substitution par une chaudière bois équ
     expect(de.enum_type_generateur_ch_id).toBe(attendu);
   });
 
+  test('année numérique antérieure à 1948 : aucune période correspondante, valeur par défaut conservée', () => {
+    getFicheTechnique.mockReturnValue({ valeur: '1900' });
+    const de = { enum_type_generateur_ch_id: '48' };
+    updateGenerateurBouilleurs({}, de, 'ch');
+    // Aucun seuil atteint : on garde la chaudière bois par défaut 2004-2012 (values[2004])
+    expect(de.enum_type_generateur_ch_id).toBe('58');
+  });
+
   test('type ECS (granulés 115) : utilise la table ECS des chaudières bois', () => {
     getFicheTechnique.mockReturnValue({ valeur: '2016' });
     const de = { enum_type_generateur_ecs_id: '115' };

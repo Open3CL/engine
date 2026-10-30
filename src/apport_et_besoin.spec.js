@@ -22,7 +22,11 @@ vi.mock('./6.2_surface_sud_equivalente.js', () => ({ calc_sse: vi.fn() }));
 vi.mock('./10_besoin_fr.js', () => ({ default: vi.fn() }));
 vi.mock('./11_besoin_ecs.js', () => ({ default: vi.fn() }));
 vi.mock('./6.1_apport_gratuit.js', () => ({ calc_ai: vi.fn(), calc_as: vi.fn() }));
-vi.mock('./11_nadeq.js', () => ({ Nadeq: vi.fn(() => ({ calculateNadeq })) }));
+vi.mock('./11_nadeq.js', () => ({
+  Nadeq: vi.fn(function () {
+    return { calculateNadeq };
+  })
+}));
 
 const { default: calc_apport_et_besoin } = await import('./apport_et_besoin.js');
 const { calc_sse } = await import('./6.2_surface_sud_equivalente.js');

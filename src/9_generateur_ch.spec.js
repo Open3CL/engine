@@ -342,6 +342,17 @@ describe('checkForGeneratorType - classification du générateur', () => {
     expect(de.enum_type_generateur_ch_id).toBe('119');
   });
 
+  test('cas 119 par défaut avec ligne de rendement sans type de générateur : aucune réécriture', () => {
+    vi.mocked(requestInputID).mockReturnValue('119');
+    vi.mocked(tv).mockReturnValue({ enum_type_generateur_ch_id: undefined });
+    const de = { tv_rendement_generation_id: 3, enum_type_generateur_ch_id: '119' };
+    const du = {};
+    checkForGeneratorType({}, de, {}, du);
+    expect(de.enum_type_generateur_ch_id).toBe('119');
+    expect(du.isPacGenerator).toBe(false);
+    expect(du.isCombustionGenerator).toBe(false);
+  });
+
   /**
    * Chaudière fioul par défaut : chaudière standard datant de la construction du bâtiment.
    * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §17.2.1.1

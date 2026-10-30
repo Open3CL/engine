@@ -69,4 +69,29 @@ describe('SynchronizeDpeGesLimitValuesTables unit tests', () => {
       });
     });
   });
+  test('regroupe plusieurs surfaces sous une même classe d’altitude', () => {
+    const fileStore = new FileStore();
+    const appConfig = new ApplicationConfig();
+    const synchronizeDpeGesLimitValuesTables = new SynchronizeDpeGesLimitValuesTables(
+      fileStore,
+      appConfig
+    );
+
+    vi.spyOn(fileStore, 'readLocalOdsFileAndConvertToJson').mockResolvedValue({
+      dpe_class_limit: [
+        { classe_altitude: '400-800m', surface: '10', A: '124' },
+        { classe_altitude: '400-800m', surface: '20', A: '100' }
+      ]
+    });
+    vi.spyOn(ApplicationConfig.prototype, 'solicitationsExtFilePath', 'get').mockReturnValue(
+      'src/file.ods'
+    );
+
+    return synchronizeDpeGesLimitValuesTables.execute().then((output) => {
+      // Le groupe d'altitude n'est créé qu'une fois : la 1ʳᵉ surface n'est pas écrasée
+      expect(output).toStrictEqual({
+        dpe_class_limit: { '400-800m': { 10: { A: 124 }, 20: { A: 100 } } }
+      });
+    });
+  });
 });

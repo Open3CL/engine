@@ -146,6 +146,18 @@ describe('calc_ventilation - orchestration', () => {
     );
   });
 
+  test('surface ventilée égale à Sh : conservée sans application de clé de répartition', () => {
+    const vt = ventilation({
+      surface_ventile: 100,
+      cle_repartition_ventilation: 2,
+      q4pa_conv_saisi: 1.3
+    });
+    calc_ventilation(vt, CG, 'th', 80, 100, [], [], [], []);
+
+    // surface_ventile = Sh = 100 (clé ignorée) => Hvent = 0,34 * 1,2 * 100
+    expect(vt.donnee_intermediaire.hvent).toBeCloseTo(40.8, 9);
+  });
+
   test('surface ventilée différente de Sh sans clé de répartition : divisée par 1', () => {
     // Branche `de.cle_repartition_ventilation || 1` : surface_ventile conservée telle quelle
     const vt = ventilation({ surface_ventile: 50, q4pa_conv_saisi: 1.3 });

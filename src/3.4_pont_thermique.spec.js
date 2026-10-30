@@ -810,6 +810,33 @@ describe('calc_pont_thermique - récupération du mur via la baie vitrée (compa
     expect(errorSpy).toHaveBeenCalled();
   });
 
+  test('hors compatibilité bug : la baie vitrée n’est pas consultée pour retrouver le mur', () => {
+    state.bug = false;
+    tv.mockReturnValue({ k: '0.5', tv_pont_thermique_id: '42' });
+    const mur = [
+      {
+        donnee_entree: { reference: 'M1', enum_type_adjacence_id: '1', type_isolation: 'iti' },
+        donnee_utilisateur: {}
+      }
+    ];
+    // Même configuration que le cas bug_for_bug : reference_paroi = index du mur (0)
+    const bv = [{ donnee_entree: { reference: 'BV1', reference_paroi: '0' } }];
+    const pt = pontThermique({
+      type_liaison: 'refend / mur',
+      reference_1: 'BV1',
+      description: 'refend'
+    });
+
+    calc_pont_thermique(pt, '1', logement({ mur, bv }));
+
+    // Mur non retrouvé via la baie : isolation ITI par défaut, aucun message de récupération
+    expect(tv).toHaveBeenCalledWith('pont_thermique', {
+      enum_type_liaison_id: '12',
+      isolation_mur: '^iti'
+    });
+    expect(errorSpy).not.toHaveBeenCalledWith(expect.stringContaining('Aucun mur trouvé'));
+  });
+
   test('reference_paroi ne correspondant pas à l’index du mur : aucun mur retrouvé (isolation ITI par défaut)', () => {
     state.bug = true;
     tv.mockReturnValue({ k: '0.5', tv_pont_thermique_id: '42' });

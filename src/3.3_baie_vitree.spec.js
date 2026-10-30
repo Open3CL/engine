@@ -234,6 +234,16 @@ describe('tv_uw - coefficient de transmission de la fenêtre', () => {
     expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('Pas de valeur forfaitaire uw'));
   });
 
+  test('Ug exactement tabulé sans ligne uw : uw indéfini et erreur émise', () => {
+    // delta_ug = 0 (bornes identiques) mais aucune ligne uw pour ce Ug
+    rows.uw = null;
+    const bv = baseBv();
+    calc_bv(bv, 1);
+
+    expect(bv.donnee_intermediaire.uw).toBeUndefined();
+    expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('Pas de valeur forfaitaire uw'));
+  });
+
   test('interpolation entre deux Ug tabulés (delta_ug ≠ 0)', () => {
     rows.ug = { ug: '3', tv_ug_id: '5' };
     getRange.mockReturnValue([2.8, 4]);

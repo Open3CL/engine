@@ -23,7 +23,9 @@ vi.mock('./utils.js', () => ({
 }));
 
 vi.mock('./core/tv/infrastructure/tvs.store.js', () => ({
-  TvsStore: vi.fn(() => mockTvsStore)
+  TvsStore: vi.fn(function () {
+    return mockTvsStore;
+  })
 }));
 
 const { rendement_emission, calc_emetteur_ch, isIntermittenceCollectiveSaisie } =

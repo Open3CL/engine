@@ -77,6 +77,15 @@ describe('DpeSanitizerService.execute - collections manquantes', () => {
   });
 });
 
+describe('DpeSanitizerService - transformation des clés', () => {
+  test('conserve les clés inchangées (transformation identité)', () => {
+    vi.mocked(has).mockReturnValue(true);
+    service.execute({});
+    const keyTransform = vi.mocked(ObjectUtil.deepObjectTransform).mock.calls[0][1];
+    expect(keyTransform('generateur_ecs')).toBe('generateur_ecs');
+  });
+});
+
 /**
  * Récupère la fonction de transformation des valeurs passée en 3e argument de
  * `deepObjectTransform` après un appel à `execute`.

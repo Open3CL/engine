@@ -93,6 +93,10 @@ describe('calc_Fj - fraction des besoins de chauffage couverte par les apports',
     expect(lourde).not.toBeCloseTo(legere, 9);
   });
 
+  test('une inertie inconnue ne définit pas alpha : le résultat n’est pas un nombre', () => {
+    expect(calc_Fj(100, 2000, 5000, 1000, 'inconnue')).toBeNaN();
+  });
+
   test('les inerties "très lourde" et "lourde" partagent le même alpha', () => {
     expect(calc_Fj(100, 2000, 5000, 1000, 'très lourde')).toBeCloseTo(
       calc_Fj(100, 2000, 5000, 1000, 'lourde'),

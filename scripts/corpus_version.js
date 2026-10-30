@@ -15,7 +15,7 @@
  */
 
 import { analyzeCommits } from '@semantic-release/commit-analyzer';
-import yaml from 'js-yaml';
+import { load as loadYaml } from 'js-yaml';
 import { execSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
@@ -106,7 +106,7 @@ function analyzerConfig(root) {
   const path = resolve(root, '.releaserc');
   if (existsSync(path)) {
     // `.releaserc` est lu en YAML par semantic-release : c'est un sur-ensemble de sa syntaxe.
-    const { plugins = [] } = yaml.load(readFileSync(path, { encoding: 'utf8' })) || {};
+    const { plugins = [] } = loadYaml(readFileSync(path, { encoding: 'utf8' })) || {};
     const plugin = plugins.find(
       (p) =>
         p === '@semantic-release/commit-analyzer' || p?.[0] === '@semantic-release/commit-analyzer'

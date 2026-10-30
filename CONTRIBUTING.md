@@ -43,11 +43,11 @@ Il n'y a pas que le code.
 
 ### Pré-requis
 
-| Outil       | Version   | Vérifier         |
-| :---------- | :-------- | :--------------- |
-| **Node.js** | ≥ 24.14.1 | `node --version` |
-| **npm**     | ≥ 10      | `npm --version`  |
-| **git**     | —         | `git --version`  |
+| Outil       | Version              | Vérifier         |
+| :---------- | :------------------- | :--------------- |
+| **Node.js** | ≥ 24.22.2 (`.nvmrc`) | `node --version` |
+| **npm**     | ≥ 10                 | `npm --version`  |
+| **git**     | —                    | `git --version`  |
 
 La version utilisée en développement et en intégration continue est fixée dans [`.nvmrc`](.nvmrc) :
 
@@ -212,14 +212,14 @@ historique lisible.
 
 ## Règles de code
 
-| Règle                                                                                 | Vérifiée par                            |
-| :------------------------------------------------------------------------------------ | :-------------------------------------- |
-| Style [JavaScript Standard](https://standardjs.com/), configuré dans `.eslintrc.json` | `npm run qa:lint`                       |
-| Formatage Prettier (`.prettierrc`)                                                    | `npm run qa:format`, hook de pre-commit |
-| Indentation et fins de ligne selon [`.editorconfig`](http://editorconfig.org/)        | votre éditeur                           |
-| Pas de duplication excessive (`.jscpd.json`)                                          | `npm run qa:duplication`                |
-| **Toute correction ou fonctionnalité est couverte par au moins un test**              | la revue                                |
-| Couverture unitaire à **100 %** (statements, branches, functions, lines)              | `npm run test:unit:ci`                  |
+| Règle                                                                          | Vérifiée par                            |
+| :----------------------------------------------------------------------------- | :-------------------------------------- |
+| Règles `eslint:recommended` + Prettier, configurées dans `eslint.config.js`    | `npm run qa:lint`                       |
+| Formatage Prettier (`.prettierrc`)                                             | `npm run qa:format`, hook de pre-commit |
+| Indentation et fins de ligne selon [`.editorconfig`](http://editorconfig.org/) | votre éditeur                           |
+| Pas de duplication excessive (`.jscpd.json`)                                   | `npm run qa:duplication`                |
+| **Toute correction ou fonctionnalité est couverte par au moins un test**       | la revue                                |
+| Couverture unitaire à **100 %** (statements, branches, functions, lines)       | `npm run test:unit:ci`                  |
 
 ### Style attendu
 

@@ -459,12 +459,11 @@ export function tv(filePath, matcher) {
 function tvLookup(filePath, matcher) {
   const list = tvs[filePath];
   const matcher_size = Object.keys(matcher).length;
-  let match_count = 0;
   let max_match_count = 0;
   let match = null;
 
   for (const row of list) {
-    match_count = 0;
+    let match_count = 0;
     for (const key in matcher) {
       if (tvMatchImpl(row, key, matcher)) match_count += 1;
     }

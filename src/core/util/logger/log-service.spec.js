@@ -58,6 +58,17 @@ describe('Service de logs (log-service)', () => {
     expect(console.error).toBe(consoleOrigine.error);
   });
 
+  test('setLoggerOn sans option conserve console.error neutralisé', () => {
+    setLoggerOff(true);
+    const erreurNeutralisee = console.error;
+    setLoggerOn();
+
+    expect(logger.silent).toBe(false);
+    expect(console.log).toBe(consoleOrigine.log);
+    expect(console.error).toBe(erreurNeutralisee);
+    expect(console.error).not.toBe(consoleOrigine.error);
+  });
+
   test('les méthodes console neutralisées sont des fonctions no-op', () => {
     setLoggerOff();
 

@@ -14,7 +14,7 @@ Lu à chaque séance : à respecter et à tenir à jour.
 
 ## Outillage
 
-- **Runner : [vitest](https://vitest.dev/).** `npm test` = `vitest run`. `npm run test:ci` pour la
+- **Runner : [vitest](https://vitest.dev/).** `npm test` = `vitest run`. `npm run test:unit:ci` pour la
   couverture.
 - **Lint : ESLint** (`npm run qa:lint`, `npm run qa:lint:fix`).
 - **Format : Prettier.** Toujours lancer `npx prettier --write <fichiers>` avant de committer.
@@ -92,7 +92,7 @@ Deux architectures cohabitent (migration progressive) :
 ## Points d'attention connus
 
 - `src/output.js` est un fichier **mort/cassé** (identifiant orphelin `filecontent`, lève une
-  `ReferenceError` à l'import ; présent dans `.eslintignore`). À nettoyer.
+  `ReferenceError` à l'import ; ignoré dans `eslint.config.js`). À nettoyer.
 - La suite globale `vitest run src/` comporte des specs **préexistants** en échec, liés à des
   données/assets manquants dans l'environnement (ex. plusieurs `features/**/*.service.spec.js`). Ne pas les confondre avec
   les régressions introduites par une contribution : vérifier l'état avant/après.

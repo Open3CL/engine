@@ -3,12 +3,11 @@ import { AddAdditionnalUeValuesTables } from './add-additionnal-ue-values-tables
 import { UPB_ADDITIONAL_VALUES } from '../../tv/infrastructure/assets/additional-ue-values.js';
 
 /**
- * `execute` n'utilise ni le fileStore ni l'appConfig : on les passe en doubles
- * vides pour isoler la logique d'aplatissement des valeurs Ue additionnelles
- * dans la table `ue`.
+ * Le service n'a aucune dépendance : on vérifie la logique d'aplatissement des
+ * valeurs Ue additionnelles dans la table `ue`.
  */
 describe('AddAdditionnalUeValuesTables', () => {
-  const buildService = () => new AddAdditionnalUeValuesTables({}, {});
+  const buildService = () => new AddAdditionnalUeValuesTables();
 
   test('ajoute toutes les valeurs additionnelles dans la table ue', () => {
     const nbAttendu = UPB_ADDITIONAL_VALUES.reduce((acc, entree) => acc + entree.values.length, 0);

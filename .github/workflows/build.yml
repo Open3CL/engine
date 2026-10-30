@@ -27,7 +27,7 @@ jobs:
     steps:
       - uses: actions/setup-node@v7
         with:
-          node-version: 24.14.1
+          node-version: 24.22.2
 
       - name: Git checkout for source code analysis
         uses: actions/checkout@v7
@@ -81,7 +81,7 @@ jobs:
     steps:
       - uses: actions/setup-node@v7
         with:
-          node-version: 24.14.1
+          node-version: 24.22.2
 
       - name: Vérifier la présence du token autotests-ademe
         env:
@@ -167,7 +167,7 @@ jobs:
     steps:
       - uses: actions/setup-node@v7
         with:
-          node-version: 24.14.1
+          node-version: 24.22.2
 
       - name: Git checkout for source code analysis
         uses: actions/checkout@v7
@@ -217,7 +217,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-node@v7
         with:
-          node-version: 24.14.1
+          node-version: 24.22.2
       - name: Install Dependencies (open3cl-3d)
         run: npm ci
       # La visu est buildée avec la version de @open3cl/engine figée dans son

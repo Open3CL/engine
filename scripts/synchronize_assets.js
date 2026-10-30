@@ -16,7 +16,7 @@ const synchronizeDpeGesLimitValuesTables = new SynchronizeDpeGesLimitValuesTable
   fileStore,
   appConfig
 );
-const addAdditionnalUeValuesTables = new AddAdditionnalUeValuesTables(fileStore, appConfig);
+const addAdditionnalUeValuesTables = new AddAdditionnalUeValuesTables();
 const synchronizeC1Tables = new SynchronizeC1Tables(fileStore, appConfig);
 const synchronizeValeurTables = new SynchronizeValeurTables(
   fileStore,
