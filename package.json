@@ -27,6 +27,7 @@
     "release": "semantic-release",
     "release:dry": "semantic-release --dry-run",
     "prepare": "husky",
+    "types:generate": "node scripts/generate_types_from_xsd.js && prettier --write src/features/dpe/domain/models/dpe-xsd.generated.ts",
     "assets:sync": "node scripts/synchronize_assets.js",
     "version:update": "node scripts/update_version.js",
     "reports:preview": "npm run http-server dist/reports/corpus -o",

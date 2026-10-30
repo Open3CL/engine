@@ -1,26 +1,16 @@
-import { DE } from './dpe.model';
+// Alias des types générés depuis le XSD DPE (voir dpe-xsd.generated.ts). Les extensions propres
+// à Open3CL se déclarent ici (hors fichier généré) pour survivre à la régénération.
+import type {
+  XsdLogementClimatisation,
+  XsdLogementClimatisationDonneeEntree,
+  XsdLogementClimatisationDonneeIntermediaire
+} from './dpe-xsd.generated';
 
-export interface Climatisation {
-  donnee_entree?: ClimatisationDE;
+export interface Climatisation extends Omit<XsdLogementClimatisation, 'donnee_intermediaire'> {
   donnee_intermediaire?: ClimatisationDI;
 }
-
-export interface ClimatisationDE extends DE {
-  tv_seer_id?: number;
-  nombre_logement_echantillon?: number;
-  surface_clim?: number;
-  enum_methode_calcul_conso_id: number;
-  enum_periode_installation_fr_id: number;
-  cle_repartition_clim?: number;
-  enum_type_generateur_fr_id: number;
-  enum_type_energie_id?: number;
-  enum_methode_saisie_carac_sys_id: number;
-  ref_produit_fr?: string;
-}
-
-export interface ClimatisationDI {
-  eer: number;
-  besoin_fr: number;
-  conso_fr: number;
-  conso_fr_depensier: number;
-}
+export type ClimatisationDE = XsdLogementClimatisationDonneeEntree;
+/** + champ calculé Open3CL hors XSD. */
+export type ClimatisationDI = XsdLogementClimatisationDonneeIntermediaire & {
+  besoin_fr_depensier?: number;
+};

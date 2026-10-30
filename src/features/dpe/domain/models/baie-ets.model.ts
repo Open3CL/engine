@@ -1,12 +1,9 @@
-import { DE } from './dpe.model';
+// Alias des types générés depuis le XSD DPE (voir dpe-xsd.generated.ts). Les extensions propres
+// à Open3CL se déclarent ici (hors fichier généré) pour survivre à la régénération.
+import type {
+  XsdLogementEnveloppeEtsBaieEts,
+  XsdLogementEnveloppeEtsBaieEtsDonneeEntree
+} from './dpe-xsd.generated';
 
-export interface BaieEts {
-  donnee_entree?: BaieEtsDE;
-}
-
-export interface BaieEtsDE extends DE {
-  enum_orientation_id?: number;
-  enum_inclinaison_vitrage_id?: number; // ENUM inclinaison_vitrage
-  surface_totale_baie?: number;
-  nb_baie?: number;
-}
+export type BaieEts = XsdLogementEnveloppeEtsBaieEts;
+export type BaieEtsDE = XsdLogementEnveloppeEtsBaieEtsDonneeEntree;
