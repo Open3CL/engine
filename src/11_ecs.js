@@ -96,7 +96,6 @@ function calc_auxiliaire_distribution_ecs_immeuble(de, di, surfaceImmeuble, becs
     // Étape 3 : Calcul de Lb pour l'installation i
     // Lb = 1.2 × (1.1 × Sh_inst/nombre_niveaux + 4 × nombre_niveaux)
     const Lb = 1.2 * (1.1 * (Sh_inst / Niv_inst) + 4 * Niv_inst);
-    di.lb = Lb;
 
     // Étape 4 : DeltaPb = 0.2 × Lb + 10
     const DeltaPb = 0.2 * Lb + 10;
