@@ -54,6 +54,16 @@ describe('Inertie unit tests', () => {
     }
   );
 
+  test('plancher haut non lourd (type 9) isolé par ITE ou non isolé : inertie 0', () => {
+    expect(
+      inertie.calculateInertiePhLourd({ enum_type_isolation_id: 2, enum_type_plancher_haut_id: 9 })
+    ).toBe(0);
+  });
+
+  test('type de plancher haut inconnu avec isolation ITE : considéré lourd, inertie 1', () => {
+    expect(inertie.calculateInertiePhLourd({ enum_type_isolation_id: 4 })).toBe(1);
+  });
+
   test.each([
     [1, 1, 0, 2, 0],
     [1, 1, 0, 3, 0],

@@ -342,6 +342,35 @@ describe('calc_ph - compatibilité bug for bug (récupération depuis tv_uph_id)
     error.mockRestore();
   });
 
+  test('ligne tv_uph_id introuvable : type_toiture et effet_joule calculés conservés', () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    tv.mockImplementation((table, matcher) => {
+      if (table === 'uph0') return { ...ROW_UPH0 };
+      if (table === 'uph' && matcher.tv_uph_id) return undefined;
+      if (table === 'uph') return { ...ROW_UPH };
+      return null;
+    });
+
+    const ph = {
+      donnee_entree: {
+        methode_saisie_u: 'isolation inconnue  (table forfaitaire)',
+        methode_saisie_u0: 'type de paroi inconnu (valeur par défaut)',
+        type_adjacence: 'extérieur',
+        type_plancher_haut: 'terrasse',
+        tv_uph_id: 7,
+        description: 'PH test'
+      }
+    };
+
+    calc_ph(ph, 'h1a', '1', '0');
+
+    // Aucune correction issue du DPE : pas d'avertissement, matcher final en 'terrasse'
+    expect(error).not.toHaveBeenCalled();
+    expect(tv).toHaveBeenCalledWith('uph', expect.objectContaining({ type_toiture: 'terrasse' }));
+    expect(ph.donnee_intermediaire.uph).toBe(0.3);
+    error.mockRestore();
+  });
+
   test('effet_joule du DPE différent : la valeur du DPE est conservée dans le matcher', () => {
     const error = vi.spyOn(console, 'error').mockImplementation(() => {});
     tv.mockImplementation((table, matcher) => {

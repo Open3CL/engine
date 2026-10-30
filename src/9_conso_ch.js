@@ -289,7 +289,7 @@ function calc_ch_base_appoint(
 
     di.conso_ch = 0;
     for (const mois of mois_liste) {
-      let bch_base_j = 0;
+      let bch_base_j;
 
       if (pe > 0) {
         // Nombre d’heures de chauffage sur le mois j

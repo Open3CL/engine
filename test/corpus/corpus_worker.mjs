@@ -132,7 +132,7 @@ const runEngineAndVerifyOutput = (inputDpe, dpeOutputs) => {
       action: 'addDpeElapsedTime',
       elapsedMs: Number(hrtime.bigint() - startTime) / 1e6
     });
-  } catch (error) {
+  } catch {
     parentPort.postMessage({ action: 'addFailedDpe', dpeCode: inputDpe.numero_dpe });
   }
 

@@ -173,6 +173,27 @@ describe('tv_temp_fonc_30_100 - températures de fonctionnement', () => {
     expect(di.temp_fonc_100).toBe(75);
   });
 
+  test('une température à 100 % plus basse issue d’un second émetteur ne remplace pas la valeur retenue', () => {
+    tv.mockImplementation((table, matcher) => {
+      if (table !== 'temp_fonc_100') return null;
+      // Le premier émetteur renvoie 75, le second 60 (plus basse)
+      return matcher.enum_temp_distribution_ch_id === '3'
+        ? { tv_temp_fonc_100_id: 'a', temp_fonc_100: '75' }
+        : { tv_temp_fonc_100_id: 'b', temp_fonc_100: '60' };
+    });
+    const di = {};
+    const de = { enum_type_generateur_ch_id: '89' };
+    tv_temp_fonc_30_100(
+      di,
+      de,
+      {},
+      [emetteur(), emetteur({ enum_temp_distribution_ch_id: '4' })],
+      1975
+    );
+    expect(di.temp_fonc_100).toBe(75);
+    expect(de.tv_temp_fonc_100_id).toBe('a');
+  });
+
   test('aucune ligne forfaitaire trouvée : erreurs signalées pour temp_fonc_30 et temp_fonc_100', () => {
     const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     tv.mockReturnValue(null);
@@ -705,6 +726,26 @@ describe('calc_generateur_combustion_ch - rendement de génération', () => {
     // qp0 < 1 -> multiplié par 1000 => 200 (passage kW -> W)
     expect(di.qp0).toBe(200);
     // valeur de référence de régression (chaudière standard, pn = 20000, qp0 corrigé à 200)
+    expect(di.rg).toBeCloseTo(0.8557877790761849, 9);
+    warnSpy.mockRestore();
+  });
+
+  test('bug_for_bug_compat : qp0 déjà exprimé en W (>= 1) conservé sans correction', () => {
+    state.bug = true;
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const di = { pn: 20000, rpn: 0.9, rpint: 0.85, qp0: 200, temp_fonc_30: 40, temp_fonc_100: 70 };
+    const de = {
+      enum_type_generateur_ch_id: '89',
+      enum_type_energie_id: '2',
+      type_energie: 'gaz naturel',
+      presence_regulation_combustion: false,
+      description: 't'
+    };
+    calc_generateur_combustion_ch({}, di, de, { cdimref: 0.8, cdimrefDep: 0.6 });
+    // qp0 >= 1 -> pas de multiplication par 1000, pas d'avertissement
+    expect(di.qp0).toBe(200);
+    expect(warnSpy).not.toHaveBeenCalled();
+    // même résultat que la correction d'un qp0 de 0,2 kW (référence de régression ci-dessus)
     expect(di.rg).toBeCloseTo(0.8557877790761849, 9);
     warnSpy.mockRestore();
   });

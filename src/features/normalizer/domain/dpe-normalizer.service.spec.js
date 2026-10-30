@@ -5,9 +5,11 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 // du comportement réel de `DpePreProcessor` (testé dans son propre spec).
 const preprocessMock = vi.fn();
 vi.mock('../../../preprocessor/index.js', () => ({
-  DpePreProcessor: vi.fn().mockImplementation(() => ({
-    preprocess: preprocessMock
-  }))
+  DpePreProcessor: vi.fn(function () {
+    return {
+      preprocess: preprocessMock
+    };
+  })
 }));
 
 const { DpeNormalizerService } = await import('./dpe-normalizer.service.js');

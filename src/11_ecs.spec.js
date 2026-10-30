@@ -13,7 +13,8 @@ vi.mock('./enums.js', () => ({
     type_installation: {
       1: 'installation individuelle',
       2: 'installation collective',
-      3: 'installation collective multi-bâtiment'
+      3: 'installation collective multi-bâtiment',
+      4: 'installation de type inconnu'
     }
   }
 }));
@@ -564,6 +565,21 @@ describe('calc_ecs - rendement de distribution', () => {
       type_reseau_collectif:
         'Réseau collectif isolé avec traçage ou Réseau collectif isolé sans traçage ni bouclage'
     });
+  });
+
+  test('type d’installation ni individuelle ni collective : aucun critère de configuration', () => {
+    const de = { enum_type_installation_id: '4' };
+    const ecs = makeEcs(de, [
+      {
+        donnee_entree: { position_volume_chauffe: 1 },
+        donnee_intermediaire: { conso_ecs: 0, conso_ecs_depensier: 0 }
+      }
+    ]);
+    calc_ecs({}, ecs, 100, 200, 1, 'ca1', 'h1a', 'maison', false, null, null, false);
+
+    // Le matcher reste vide : ni configuration_logement ni type_reseau_collectif
+    expect(tv).toHaveBeenCalledWith('rendement_distribution_ecs', {});
+    expect(requestInput).not.toHaveBeenCalled();
   });
 
   test('aucune ligne forfaitaire trouvée : rendement de distribution non renseigné', () => {

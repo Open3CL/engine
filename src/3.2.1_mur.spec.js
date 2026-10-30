@@ -226,6 +226,63 @@ describe('calc_mur - calcul de Umur0 par table forfaitaire (tv_umur0)', () => {
     error.mockRestore();
   });
 
+  test('bug_for_bug : épaisseur absente et ligne tv_umur0_id sans épaisseur : matcher inchangé', () => {
+    bugForBugCompat = true;
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    tv.mockImplementation((table, matcher) => {
+      if (table === 'umur0' && matcher.tv_umur0_id) return { tv_umur0_id: '1' };
+      if (table === 'umur0') return { ...ROW_UMUR0 };
+      return null;
+    });
+    const mur = {
+      donnee_entree: {
+        methode_saisie_u: 'non isolé',
+        methode_saisie_u0:
+          'déterminé selon le matériau et épaisseur à partir de la table de valeur forfaitaire',
+        enum_materiaux_structure_mur_id: '5',
+        description: 'mur sans épaisseur',
+        tv_umur0_id: 1,
+        enum_type_doublage_id: '2'
+      }
+    };
+
+    calc_mur(mur, 'h1a', '1', '0');
+
+    // Aucune épaisseur à reprendre : pas d'avertissement et épaisseur nulle conservée
+    expect(error).not.toHaveBeenCalled();
+    expect(tv).toHaveBeenLastCalledWith('umur0', {
+      enum_materiaux_structure_mur_id: '5',
+      epaisseur_structure: 0
+    });
+    error.mockRestore();
+  });
+
+  test('bug_for_bug : ligne tv_umur0_id introuvable : matcher inchangé', () => {
+    bugForBugCompat = true;
+    tv.mockImplementation((table, matcher) => {
+      if (table === 'umur0' && matcher.tv_umur0_id) return undefined;
+      if (table === 'umur0') return { ...ROW_UMUR0 };
+      return null;
+    });
+    const mur = {
+      donnee_entree: {
+        methode_saisie_u: 'non isolé',
+        methode_saisie_u0:
+          'déterminé selon le matériau et épaisseur à partir de la table de valeur forfaitaire',
+        enum_materiaux_structure_mur_id: '5',
+        tv_umur0_id: 1,
+        enum_type_doublage_id: '2'
+      }
+    };
+
+    calc_mur(mur, 'h1a', '1', '0');
+
+    expect(tv).toHaveBeenLastCalledWith('umur0', {
+      enum_materiaux_structure_mur_id: '5',
+      epaisseur_structure: 0
+    });
+  });
+
   test('bug_for_bug : épaisseur > 80 recalculée en la divisant par 10 (valeur en millimètres)', () => {
     bugForBugCompat = true;
     const error = vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -422,6 +479,48 @@ describe('calc_mur - prise en compte du doublage', () => {
       expect(mur.donnee_intermediaire.umur0).toBeCloseTo(attendu, 9);
     }
   );
+
+  test('bug_for_bug : doublage de type 1 sans description : type de doublage inchangé', () => {
+    bugForBugCompat = true;
+    const mur = {
+      donnee_entree: {
+        methode_saisie_u: 'non isolé',
+        methode_saisie_u0:
+          'déterminé selon le matériau et épaisseur à partir de la table de valeur forfaitaire',
+        enum_materiaux_structure_mur_id: '5',
+        epaisseur_structure: 30,
+        enum_type_doublage_id: '1'
+      }
+    };
+
+    calc_mur(mur, 'h1a', '1', '0');
+
+    // Type 1 (pas de doublage) : Umur0 de la table non modifié
+    expect(mur.donnee_intermediaire.umur0).toBe(2);
+  });
+
+  test('bug_for_bug : type de doublage > 2 inconnu (6) : aucune résistance de doublage ajoutée', () => {
+    bugForBugCompat = true;
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const mur = {
+      donnee_entree: {
+        methode_saisie_u: 'non isolé',
+        methode_saisie_u0:
+          'déterminé selon le matériau et épaisseur à partir de la table de valeur forfaitaire',
+        enum_materiaux_structure_mur_id: '5',
+        epaisseur_structure: 30,
+        enum_type_doublage_id: '6'
+      }
+    };
+
+    calc_mur(mur, 'h1a', '1', '0');
+
+    // Le type 6 est hors énumération type_doublage (1 à 5) : aucune résistance de doublage n'est
+    // définie, ni dans le calcul ni dans la vérification de minoration. Comportement actuel figé :
+    // Umur0 devient NaN (donnée d'entrée invalide, non protégée par le moteur).
+    expect(mur.donnee_intermediaire.umur0).toBeNaN();
+    error.mockRestore();
+  });
 
   test('bug_for_bug : DPE minorant Umur0 à 2,5 avant doublage : avertissement (Umur0 avant)', () => {
     bugForBugCompat = true;

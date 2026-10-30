@@ -355,6 +355,26 @@ describe('conso_aux_distribution_ch - auxiliaires de distribution', () => {
     expect(di.conso_auxiliaire_distribution_ch).toBeCloseTo(372.082418731648, 9);
   });
 
+  test('émetteur hors listes (type 1, « autre ») : perte de charge par défaut deltaPem=35, Fcot=0,802', () => {
+    const conso = (type) => {
+      const em = [
+        {
+          donnee_entree: {
+            enum_type_emission_distribution_id: type,
+            enum_temp_distribution_ch_id: '3'
+          }
+        }
+      ];
+      const di = {};
+      conso_aux_distribution_ch(em, {}, di, {}, 100, 1, 1, '0', 100000);
+      return di.conso_auxiliaire_distribution_ch;
+    };
+    // Type 24 (monotube) : deltaPem=30, même Fcot (0,802) -> seul deltaPem diffère
+    expect(conso('1')).toBeGreaterThan(conso('24'));
+    // Type 10 (radiateurs autres) : deltaPem=10
+    expect(conso('24')).toBeGreaterThan(conso('10'));
+  });
+
   /**
    * Seuls les émetteurs reliés au générateur (même enum_lien_generateur_emetteur_id) dimensionnent
    * son circulateur. Autotest CSTB IC5-0-3 : chaudière (lien 1) sur plancher chauffant + convecteurs

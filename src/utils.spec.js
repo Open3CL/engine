@@ -215,6 +215,14 @@ describe('Utils unit tests', () => {
       expect(obj.other).toBe(3);
       expect(obj.nested.enum_c).toBe('7');
     });
+
+    test('ignore les propriétés héritées du prototype', () => {
+      const obj = Object.create({ enum_herite: 5 });
+      obj.enum_propre = 6;
+      useEnumAsString(obj);
+      expect(obj.enum_propre).toBe('6');
+      expect(obj.enum_herite).toBe(5);
+    });
   });
 
   // -------------------------------------------------------------------------------------------
@@ -588,6 +596,14 @@ describe('Utils unit tests', () => {
       expect(obj.skip.remove_me).toBe(3);
       expect(obj.nested.remove_me).toBeUndefined();
       expect(obj.nested.b).toBe(5);
+    });
+
+    test('ignore les propriétés héritées du prototype', () => {
+      const obj = Object.create({ remove_me: 1, herite: { remove_me: 2 } });
+      obj.propre = 1;
+      removeKeyFromJSON(obj, 'remove_me', []);
+      expect(obj.remove_me).toBe(1);
+      expect(obj.herite.remove_me).toBe(2);
     });
   });
 

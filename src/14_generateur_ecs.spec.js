@@ -559,6 +559,23 @@ describe('calc_gen_ecs - consommation par générateur', () => {
     expect(g.donnee_intermediaire.Qgw).toBe(0);
   });
 
+  test('installation collective : volume de la fiche non numérique ignoré, volume saisi conservé', () => {
+    // « ba » (texte avant le premier « l ») n'est pas un nombre -> VsFiche = NaN, rejeté
+    vi.mocked(getFicheTechnique).mockReturnValue({ valeur: 'ballon' });
+    ecs_de.enum_type_installation_id = '2';
+    ecs_de.ratio_virtualisation = 1;
+    const g = gen({
+      type_energie: 'gaz',
+      enum_type_generateur_ecs_id: 'autre',
+      type_stockage_ecs: 'ballon',
+      volume_stockage: 150
+    });
+    calc_gen_ecs({}, g, ecs_di, ecs_de, 0, '1', '1', 'immeuble');
+
+    // Vs = volume saisi (150), identique au cas d'une fiche « 150 L »
+    expect(g.donnee_intermediaire.Qgw).toBeCloseTo(1064620.987190969, 9);
+  });
+
   test('bug_for_bug_compat : volume proratisé recalé sur la description', () => {
     state.bug = true;
     vi.mocked(getVolumeStockageFromDescription).mockReturnValue(100);
@@ -850,6 +867,61 @@ describe('calc_gen_ecs - consommation par générateur', () => {
 
     // Type inchangé (pas de enum_type_generateur_ecs_id dans la ligne)
     expect(g.donnee_entree.enum_type_generateur_ecs_id).toBe('84');
+  });
+
+  test('type 84 combustion : ligne combustion sans type ECS, type 84 conservé', () => {
+    vi.mocked(getChaudiereFioulDefautId).mockReturnValue(undefined);
+    vi.mocked(tv).mockReturnValue({ tv_generateur_combustion_id: '42' });
+    const g = gen({
+      type_energie: 'gaz',
+      enum_type_generateur_ecs_id: '84',
+      tv_generateur_combustion_id: '42',
+      enum_methode_saisie_carac_sys_id: '1'
+    });
+    calc_gen_ecs({}, g, ecs_di, ecs_de, 0, '1', '1', 'maison');
+
+    // Aucune liste de types ECS exploitable dans la ligne : pas de redressement
+    expect(g.donnee_entree.enum_type_generateur_ecs_id).toBe('84');
+  });
+
+  test('type 84 sans combustion ni pompe à chaleur : ni calcul SCOP ni redressement du type', () => {
+    const g = gen({
+      type_energie: 'gaz',
+      enum_type_generateur_ecs_id: '84',
+      enum_methode_saisie_carac_sys_id: '1'
+    });
+    calc_gen_ecs({}, g, ecs_di, ecs_de, 0, '1', '1', 'maison');
+
+    expect(scopOrCop).not.toHaveBeenCalled();
+    expect(tv_generateur_combustion).not.toHaveBeenCalled();
+    expect(g.donnee_entree.enum_type_generateur_ecs_id).toBe('84');
+  });
+
+  test('bug_for_bug_compat : qp0 déjà en W (>= 1) conservé sans correction', () => {
+    state.bug = true;
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    vi.mocked(tvColumnIDs).mockImplementation((table) =>
+      table === 'generateur_combustion' ? ['chaud'] : []
+    );
+    vi.mocked(tv_generateur_combustion).mockImplementation((dpe, di) => {
+      di.rpn = 0.9;
+      di.qp0 = 100;
+      di.pn = 20000;
+      di.pveilleuse = 1;
+      di.pveil = 0;
+    });
+    const g = gen({
+      type_energie: 'gaz',
+      enum_type_generateur_ecs_id: 'chaud',
+      enum_methode_saisie_carac_sys_id: '1'
+    });
+    calc_gen_ecs({}, g, ecs_di, ecs_de, 0, '1', '1', 'maison');
+
+    expect(g.donnee_intermediaire.qp0).toBe(100);
+    expect(warnSpy).not.toHaveBeenCalled();
+    // même rendement que pour un qp0 de 0,1 kW corrigé en 100 W (cf. test de correction)
+    expect(g.donnee_intermediaire.rendement_generation).toBeCloseTo(0.3446955189582535, 9);
+    warnSpy.mockRestore();
   });
 
   test('type 84 pompe à chaleur : déduit via tv_scop_id', () => {

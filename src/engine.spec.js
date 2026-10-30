@@ -83,9 +83,15 @@ vi.mock('./11_rdim_ecs_individuelle_unique.js', () => ({
 const calculateInertie = vi.fn();
 const calculateEnr = vi.fn();
 const ratioProrataPvLogement = vi.fn();
-vi.mock('./7_inertie.js', () => ({ Inertie: vi.fn(() => ({ calculateInertie })) }));
+vi.mock('./7_inertie.js', () => ({
+  Inertie: vi.fn(function () {
+    return { calculateInertie };
+  })
+}));
 vi.mock('./16.2_production_enr.js', () => ({
-  ProductionENR: vi.fn(() => ({ calculateEnr })),
+  ProductionENR: vi.fn(function () {
+    return { calculateEnr };
+  }),
   ratioProrataPvLogement: (...args) => ratioProrataPvLogement(...args)
 }));
 
@@ -93,7 +99,9 @@ vi.mock('./16.2_production_enr.js', () => ({
 // renvoie l'entrée telle quelle.
 const sanitizeExecute = vi.fn((dpe) => dpe);
 vi.mock('./dpe-sanitizer.service.js', () => ({
-  default: vi.fn(() => ({ execute: sanitizeExecute }))
+  default: vi.fn(function () {
+    return { execute: sanitizeExecute };
+  })
 }));
 
 const { getVersion, get_conso_coeff_1_7_2027, get_classe_ges_dpe, calcul_3cl, calcul_3cl_xml } =
@@ -650,6 +658,20 @@ describe('calcul_3cl - collections vidables (poursuite du calcul)', () => {
 });
 
 describe('calcul_3cl - surfaces immeuble / appartement et prorata', () => {
+  test('méthode application inconnue : surface habitable indéterminée transmise à la déperdition', () => {
+    enums.methode_application_dpe_log = { 1: 'méthode farfelue' };
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const dpe = makeDpe();
+
+    calcul_3cl(dpe, { sanitize: false });
+
+    // th null => aucune surface retenue (ni logement ni immeuble)
+    expect(calc_deperdition.mock.calls[0][2]).toBeNull();
+    expect(calc_deperdition.mock.calls[0][5]).toBeUndefined();
+    expect(errSpy).toHaveBeenCalled();
+    errSpy.mockRestore();
+  });
+
   test('immeuble : Sh = surface immeuble ; ECS collective individualisée non divisée', () => {
     enums.methode_application_dpe_log = { 1: 'dpe immeuble collectif' };
     const dpe = makeDpe();
@@ -1339,5 +1361,23 @@ describe('get_conso_coeff_1_7_2027', () => {
     const ep = (0.7 / 0.9) * (30000 - 12000) + 12000;
     expect(res.ep_conso_5_usages_2027).toBeCloseTo(ep, 6);
     expect(classe_bilan_dpe).toHaveBeenCalledWith(Math.floor(ep / 200), 'zc1', 'ca1', 200);
+  });
+
+  test('méthode application inconnue : surface indéterminée, aucune surface ne lui est substituée', () => {
+    enums.methode_application_dpe_log = { 1: 'méthode farfelue' };
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.mocked(classe_bilan_dpe).mockReturnValue('G');
+    const dpe = makeDpe();
+    dpe.logement.sortie = {
+      ep_conso: { ep_conso_5_usages: 10000 },
+      ef_conso: { conso_5_usages: 6000 }
+    };
+
+    get_conso_coeff_1_7_2027(dpe);
+
+    // th null => ni surface logement ni surface immeuble
+    expect(classe_bilan_dpe.mock.calls[0][3]).toBeUndefined();
+    expect(errSpy).toHaveBeenCalled();
+    errSpy.mockRestore();
   });
 });

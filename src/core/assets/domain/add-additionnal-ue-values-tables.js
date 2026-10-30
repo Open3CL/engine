@@ -5,25 +5,6 @@ import { UPB_ADDITIONAL_VALUES } from '../../tv/infrastructure/assets/additional
  */
 export class AddAdditionnalUeValuesTables {
   /**
-   * @type {FileStore}
-   */
-  #fileStore;
-
-  /**
-   * @type {ApplicationConfig}
-   */
-  #appConfig;
-
-  /**
-   * @param fileStore {FileStore}
-   * @param appConfig {ApplicationConfig}
-   */
-  constructor(fileStore, appConfig) {
-    this.#fileStore = fileStore;
-    this.#appConfig = appConfig;
-  }
-
-  /**
    * Ajout de valeurs supplémentaires pour le calcul du facteur Ue pour les déperditions plancher_bas
    * @param tableValues
    * @returns {*}

@@ -1,3 +1,9 @@
 {
-  "path": ["./src/features", "./src/core", "./src/tv"]
+  "path": ["./src/features", "./src/core", "./src/tv"],
+  "ignore": ["**/*.spec.js"],
+  "threshold": 0.1,
+  "reporters": ["console", "html"],
+  "output": "./duplicate",
+  "absolute": true,
+  "gitignore": true
 }

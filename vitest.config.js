@@ -4,8 +4,7 @@ export default defineConfig({
   test: {
     coverage: {
       provider: 'v8',
-      // On ne mesure que le vrai code métier de src/.
-      all: true,
+      // On ne mesure que le vrai code métier de src/ (vitest ≥ 4 : `include` remplace `all`).
       include: ['src/**/*.js'],
       exclude: [
         // Specs eux-mêmes.

@@ -365,4 +365,27 @@ describe('b - calcul du coefficient de réduction des déperditions', () => {
     });
     expect(di.b).toBe(0.7);
   });
+
+  test('adjacence hors liste aiu/aue (type 10 absent, type inconnu) : seul le type est apparié', () => {
+    tv.mockReturnValue({ b: '0.5', tv_coef_reduction_deperdition_id: '7' });
+    const di = {};
+    const de = { enum_type_adjacence_id: '1' };
+    b(di, de, {}, 1);
+    expect(tv).toHaveBeenCalledWith(TABLE, { enum_type_adjacence_id: '1' });
+    expect(di.b).toBe(0.5);
+  });
+
+  test('rapport inférieur à la plus petite borne : seule la borne max est renseignée', () => {
+    tv.mockReturnValue({ b: '0.9', tv_coef_reduction_deperdition_id: '3' });
+    const de = {
+      enum_type_adjacence_id: '8',
+      enum_cfg_isolation_lnc_id: '2',
+      surface_aiu: 1,
+      surface_aue: 10
+    };
+    b({}, de, {}, 1);
+    const matcher = tv.mock.calls[0][1];
+    expect(matcher.aiu_aue_max).toBe('≤ 0,25');
+    expect(matcher.aiu_aue_min).toBeUndefined();
+  });
 });
