@@ -134,3 +134,5 @@ export enum TypeDpe {
   APPARTEMENT = 'APPARTEMENT',
   IMMEUBLE = 'IMMEUBLE'
 }
+
+export type FullDpe = Dpe;

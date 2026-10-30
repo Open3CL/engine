@@ -1,6 +1,6 @@
 {
   "path": ["./src/features", "./src/core", "./src/tv"],
-  "ignore": ["**/*.spec.js"],
+  "ignore": ["**/*.spec.js", "src/features/dpe/domain/models/dpe-xsd.generated.ts"],
   "threshold": 0.1,
   "reporters": ["console", "html"],
   "output": "./duplicate",
