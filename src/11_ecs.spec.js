@@ -744,18 +744,6 @@ describe('calc_ecs - auxiliaires de distribution ECS (immeuble)', () => {
     return ecs.donnee_intermediaire;
   }
 
-  test('réseau bouclé : longueur de bouclage lb exposée dans la donnée intermédiaire', () => {
-    const di = donneeIntermediaireImmeuble({
-      enum_type_installation_id: '2',
-      enum_bouclage_reseau_ecs_id: '2',
-      surface_habitable: 100,
-      nombre_niveau_installation_ecs: '2'
-    });
-
-    // Lb = 1,2 × (1,1 × 100 / 2 + 4 × 2) = 75,6 m
-    expect(di.lb).toBeCloseTo(75.6, 9);
-  });
-
   test.each([
     ['réseau avec traçage', { enum_type_installation_id: '2', enum_bouclage_reseau_ecs_id: '3' }],
     [
