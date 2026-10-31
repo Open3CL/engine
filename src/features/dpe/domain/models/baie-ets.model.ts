@@ -3,7 +3,7 @@
 import type {
   XsdLogementEnveloppeEtsBaieEts,
   XsdLogementEnveloppeEtsBaieEtsDonneeEntree
-} from './dpe-xsd.generated';
+} from './dpe-xsd.generated.js';
 
 export type BaieEts = XsdLogementEnveloppeEtsBaieEts;
 export type BaieEtsDE = XsdLogementEnveloppeEtsBaieEtsDonneeEntree;

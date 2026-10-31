@@ -7,7 +7,7 @@ import type {
   XsdLogementEnveloppePlancherHaut,
   XsdLogementEnveloppePlancherHautDonneeEntree,
   XsdLogementEnveloppePlancherHautDonneeIntermediaire
-} from './dpe-xsd.generated';
+} from './dpe-xsd.generated.js';
 
 export type PlancherBas = XsdLogementEnveloppePlancherBas;
 export type PlancherBasDE = XsdLogementEnveloppePlancherBasDonneeEntree;
