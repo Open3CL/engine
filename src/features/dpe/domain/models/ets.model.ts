@@ -4,7 +4,7 @@ import type {
   XsdLogementEnveloppeEts,
   XsdLogementEnveloppeEtsDonneeEntree,
   XsdLogementEnveloppeEtsDonneeIntermediaire
-} from './dpe-xsd.generated';
+} from './dpe-xsd.generated.js';
 
 export type Ets = XsdLogementEnveloppeEts;
 export type EtsDE = XsdLogementEnveloppeEtsDonneeEntree;

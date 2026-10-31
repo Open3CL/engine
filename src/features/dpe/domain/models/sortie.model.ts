@@ -12,7 +12,7 @@ import type {
   XsdLogementSortieProductionElectricite,
   XsdLogementSortieQualiteIsolation,
   XsdLogementSortieSortieParEnergie
-} from './dpe-xsd.generated';
+} from './dpe-xsd.generated.js';
 
 export interface Sortie extends Omit<XsdLogementSortie, 'ep_conso'> {
   ep_conso: EpConso;

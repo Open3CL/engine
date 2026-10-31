@@ -4,7 +4,7 @@ import { TypeDpe } from '../../../dpe/domain/models/type-habitation.model.js';
 
 describe('Nadeq unit tests', () => {
   /**
-   * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf Page 70
+   * @see Methode_de_calcul_3CL_DPE_2021-338.pdf Page 70
    */
   const service = new NadeqService();
 

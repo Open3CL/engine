@@ -51,7 +51,7 @@ beforeEach(() => {
 
 /**
  * Déperdition par renouvellement d'air dû aux infiltrations (Hperm)
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §4
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §4
  */
 describe('calc_hperm - déperdition par perméabilité', () => {
   test('plusieurs façades exposées (pfe=1) : e=0,07 et f=15', () => {

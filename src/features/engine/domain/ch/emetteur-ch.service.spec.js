@@ -116,7 +116,7 @@ describe('Calcul des caractéristiques des générateurs de chauffage', () => {
  * Issue #220 - période d'installation des émetteurs absente du DPE.
  * Mode strict : année de construction. Mode bug_for_bug_compat : période retrouvée à partir des
  * temp_fonc_30 / temp_fonc_100 d'origine du DPE.
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.1.5
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.1.5
  */
 describe('Déduction de la période des émetteurs depuis les données du DPE (issue #220)', () => {
   /**

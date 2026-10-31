@@ -9,7 +9,7 @@ export class EcsTvStore extends TvStore {
   /**
    * Température moyenne d’eau froide sanitaire sur le mois j (°C).
    * La température d’eau froide est une donnée climatique mensuelle pour chacune des 8 zones climatiques
-   * @see 11.1 Calcul du besoin d’ECS : Tefs
+   * @see Chapitre 11.1 Calcul du besoin d’ECS : Tefs
    *
    * @param classeAltitude {string}
    * @param zoneClimatique {string}
@@ -23,7 +23,7 @@ export class EcsTvStore extends TvStore {
 
   /**
    * Coefficient de perte du ballon de stockage
-   * @see 11.6.2 Pertes des ballons électriques
+   * @see Chapitre 11.6.2 Pertes des ballons électriques
    *
    * @param enumTypeGenerateurEcsId {string}
    * @param volumeStockage {number}

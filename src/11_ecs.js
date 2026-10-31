@@ -1,3 +1,4 @@
+/** @import { InstallationEcsDE } from './features/dpe/domain/models/installation-ecs.model.js' */
 import enums from './enums.js';
 import calc_gen_ecs from './14_generateur_ecs.js';
 import { tv, requestInput, mois_liste, Njj } from './utils.js';
@@ -196,7 +197,7 @@ const TYPES_INSTALLATION_ECS_COLLECTIVE = ['2', '3'];
  * @see Moteur_DPE.dll Calcul_batiment.cs l.583-592 (Becs / Rdim seulement pour une installation
  * individuelle en immeuble ; Becs × Sh_ecs / SH sans Rdim pour une installation collective)
  * @param th {string} type de bâtiment (maison, appartement, immeuble)
- * @param de {Donnee_entree} donnée d'entrée de l'installation ECS
+ * @param de {InstallationEcsDE} donnée d'entrée de l'installation ECS
  * @returns {boolean}
  */
 export function isRdimEcsNeutralise(th, de) {

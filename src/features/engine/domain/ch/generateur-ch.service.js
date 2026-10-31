@@ -1,3 +1,6 @@
+/** @import { Logement } from '../../../dpe/domain/models/dpe.model.js' */
+/** @import { EmetteurChauffage, GenerateurChauffage, GenerateurChauffageDE, GenerateurChauffageDI, InstallationChauffage } from '../../../dpe/domain/models/installation-chauffage.model.js' */
+/** @import { Contexte } from '../models/contexte.model.js' */
 import { inject } from 'dioma';
 import { ChTvStore } from '../../../dpe/infrastructure/ch/chTv.store.js';
 import { excel_to_js_exec } from '../../../../utils.js';
@@ -385,7 +388,7 @@ export class GenerateurChService {
        * retrouvée à partir des temp_fonc_30 / temp_fonc_100 d'origine du DPE (données
        * intermédiaires du générateur, non encore recalculées à ce stade). Sans déduction possible,
        * la règle §13.2.1.5 s'applique (année de construction).
-       * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.1.5
+       * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.1.5
        */
       const periodeDeduite = this.#emetteurChService.periodeInstallationEmetteurDeduite(
         ctx,

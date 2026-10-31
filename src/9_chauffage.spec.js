@@ -176,7 +176,7 @@ beforeEach(() => {
 
 /**
  * 9. Consommation de chauffage — orchestration
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §9
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §9
  */
 describe('calc_chauffage - cas nominal (1 générateur, 1 émetteur)', () => {
   test('agrège les consommations et renseigne les données intermédiaires', () => {
@@ -243,7 +243,7 @@ describe('calc_chauffage - cas nominal (1 générateur, 1 émetteur)', () => {
 /**
  * Longueur du réseau de l'installation de chauffage, même formule que la longueur de
  * bouclage ECS : Lb = 4 × (Sh / Niv)^0,5 + 6 × (Niv − 0,5)
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §15.2.3
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §15.2.3
  */
 describe('calc_lb_installation_ch - longueur du réseau de chauffage', () => {
   test.each([
@@ -442,7 +442,7 @@ describe('calc_chauffage - générateurs à combustion', () => {
   });
 
   /**
-   * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.2.4 (prorata de Pch à la surface desservie)
+   * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.2.4 (prorata de Pch à la surface desservie)
    */
   test('ratio surface chauffée de l’installation / Sh transmis pour la Pn estimée (issue #264)', () => {
     const ch = installation(
@@ -550,7 +550,7 @@ describe('calc_chauffage - générateurs à combustion', () => {
  * dimensionné pour tout le besoin (pas de division par le nombre de générateurs). La consommation
  * est ensuite répartie entre générateurs (division par nbGenWithAuxConsoDistribution).
  * Autotests CSTB IC4-0-2 / IC4-0-21 (cascade de 2 chaudières gaz, Tribu Pcirc = 1321,76 W).
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §15.2.1
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §15.2.1
  */
 describe('calc_chauffage - nombre de générateurs pris en compte pour le circulateur', () => {
   test('installation simple (cfg 1) avec 2 générateurs en cascade : circulateur unique', () => {
@@ -577,7 +577,7 @@ describe('calc_chauffage - nombre de générateurs pris en compte pour le circul
  * PAC (cfg 8) et base + appoint collectif (cfg 10) partagent le réseau ; le circulateur est
  * dimensionné pour tout le besoin, comme en installation simple (cfg 1).
  * Autotests CSTB IC4-0-1 (cfg 6), IC5-0-1 (cfg 8), IC5-0-3 (cfg 10).
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §15.2.1
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §15.2.1
  */
 describe('reseauCirculateurUnique', () => {
   test.each(['1', '6', '8', '10', 6, 8])('configuration %s : circulateur unique', (cfg) => {
@@ -641,7 +641,7 @@ describe('calc_chauffage - prorata entre générateurs', () => {
 
 /**
  * 13.2.1.3 Cascade de deux générateurs à combustion avec priorité
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.1.3
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.1.3
  */
 describe('calc_chauffage - cascade de générateurs à combustion avec priorité', () => {
   /** Deux chaudières (combustion) en cascade sur un seul émetteur. */
@@ -779,7 +779,7 @@ describe('calc_chauffage - initialisation défensive des données du générateu
 
 /**
  * 13.2.1.2 Taux de charge des générateurs à combustion (cdimref)
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.1.2
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.1.2
  */
 describe('tauxChargeForGenerator - taux de charge des générateurs à combustion', () => {
   /** Installation avec un générateur à combustion. */

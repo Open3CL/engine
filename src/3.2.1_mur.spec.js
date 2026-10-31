@@ -106,7 +106,7 @@ beforeEach(() => {
 
 /**
  * 3.2.1 Coefficient de transmission des murs (Umur)
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.2.1
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.2.1
  */
 describe('calc_mur - mur non isolé', () => {
   test('type de paroi inconnu : Umur0 = 2,5 et Umur = min(Umur0 ; 2,5)', () => {
@@ -1077,7 +1077,7 @@ describe('calc_mur - doublage et isolation ITE/ITI (#146)', () => {
  * 3.2.1.2 Calcul des Umur0 : l'épaisseur saisie est ramenée sur une colonne de la table du
  * matériau déclaré, sans jamais basculer vers un autre matériau (issue #138).
  * Convention (la méthode ne précise pas l'arrondi) : colonne la plus proche, égalité => inférieure.
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.2.1.2
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.2.1.2
  */
 describe('epaisseurStructureTable - épaisseur hors table (issue #138)', () => {
   test.each([
@@ -1138,7 +1138,7 @@ describe('epaisseurStructureTable - épaisseur hors table (issue #138)', () => {
 
 /**
  * Correctifs de compatibilité (bug_for_bug) sur les murs.
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.2.1
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.2.1
  * @see https://github.com/Open3CL/engine/issues/295
  */
 describe('issue #295 - enduit isolant sur paroi ancienne (MUR1)', () => {

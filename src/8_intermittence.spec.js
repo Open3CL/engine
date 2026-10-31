@@ -3,7 +3,7 @@ import { describe, expect, test } from 'vitest';
 
 /**
  * 8. Modélisation de l'intermittence
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §8
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §8
  *
  * i = i0 / (1 + 0.1 * (G - 1)) avec G = GV / (Sh * Hsp)
  * (fonction pure, aucune dépendance à mocker).

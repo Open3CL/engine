@@ -4,7 +4,7 @@ import type {
   XsdLogementEnveloppePontThermique,
   XsdLogementEnveloppePontThermiqueDonneeEntree,
   XsdLogementEnveloppePontThermiqueDonneeIntermediaire
-} from './dpe-xsd.generated';
+} from './dpe-xsd.generated.js';
 
 export type PontThermique = XsdLogementEnveloppePontThermique;
 export type PontThermiqueDE = XsdLogementEnveloppePontThermiqueDonneeEntree;

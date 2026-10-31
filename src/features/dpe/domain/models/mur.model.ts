@@ -4,7 +4,7 @@ import type {
   XsdLogementEnveloppeMur,
   XsdLogementEnveloppeMurDonneeEntree,
   XsdLogementEnveloppeMurDonneeIntermediaire
-} from './dpe-xsd.generated';
+} from './dpe-xsd.generated.js';
 
 export type Mur = XsdLogementEnveloppeMur;
 export type MurDE = XsdLogementEnveloppeMurDonneeEntree;

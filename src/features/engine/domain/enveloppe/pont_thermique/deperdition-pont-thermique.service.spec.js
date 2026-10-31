@@ -6,7 +6,7 @@ import { DeperditionPontThermiqueService } from './deperdition-pont-thermique.se
  *
  * Le store des tables de valeurs et les services de déperdition des parois sont remplacés par des
  * doubles de test : seule la logique propre au service (exclusions de ponts thermiques) est vérifiée.
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.4
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.4
  */
 
 let tvStore;

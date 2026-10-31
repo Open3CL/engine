@@ -17,7 +17,7 @@ const {
 
 /**
  * 5. Consommation des auxiliaires de ventilation
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §5, pages 41-42
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §5, pages 41-42
  */
 describe('calc_pvent - consommation des auxiliaires de ventilation', () => {
   let di;

@@ -66,7 +66,7 @@ function emetteur(i0, surface = 100, lien = '1') {
 
 /**
  * 9. Consommations de chauffage (Cch)
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §9
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §9
  */
 describe('conso_ch - configuration par défaut (installation simple)', () => {
   beforeEach(() => {
@@ -467,7 +467,7 @@ describe('conso_ch - installation collective base + appoint', () => {
    * bâtiment) est proratisé à la surface chauffée par l'installation, comme `bch`.
    * Tribu Calcul_installation.cs l.79-86 : bch = Bch1 × S_ratio / Rdim et
    * Bch1_mensuel × S_ratio / Rdim, avec S_ratio = Sh_chauffée × Rdim / Stotal.
-   * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §9.8
+   * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §9.8
    */
   describe('installation desservant une partie de l’immeuble (Sh_installation < Sh)', () => {
     function appelPartiel(pos, { pn = 0, Sh = 200, sInst = 100, bch = 25, rdim = 1 } = {}) {
@@ -645,7 +645,7 @@ describe('conso_ch - installation collective base + appoint', () => {
  * génération (§15.1 : Caux_g = Paux_g × Bch_générateur / Pn).
  * Autotests CSTB APP5-0-5 (relève de PAC, 0,8 / 0,2) et IC4-0-1 (relève d'une chaudière bois,
  * 0,75 / 0,25).
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §9 et §15.1
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §9 et §15.1
  */
 describe('conso_ch - besoin couvert par le générateur', () => {
   beforeEach(() => {

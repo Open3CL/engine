@@ -1,3 +1,4 @@
+/** @import { Logement } from './features/dpe/domain/models/dpe.model.js' */
 export class Nadeq {
   /**
    * Return nadeq for maison or individual logement

@@ -8,7 +8,7 @@ import type {
   XsdLogementEnveloppeBaieVitreeDonneeEntree,
   XsdLogementEnveloppeBaieVitreeDonneeEntreeMasqueLointainNonHomogene,
   XsdLogementEnveloppeBaieVitreeDonneeIntermediaire
-} from './dpe-xsd.generated';
+} from './dpe-xsd.generated.js';
 
 /** + `donnee_utilisateur` Open3CL hors XSD. */
 export type BaieVitree = XsdLogementEnveloppeBaieVitree & {

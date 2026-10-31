@@ -1,4 +1,4 @@
-import { TypeDpe, TypeHabitation } from '../../../dpe/domain/models/dpe.model';
+import { TypeDpe, TypeHabitation } from '../../../dpe/domain/models/dpe.model.js';
 
 export interface Contexte {
   typeHabitation: TypeHabitation;

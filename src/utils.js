@@ -1,3 +1,4 @@
+/** @import { InstallationChauffage } from './features/dpe/domain/models/installation-chauffage.model.js' */
 import enums from './enums.js';
 import tvs from './tv.js';
 import { set } from 'lodash-es';
@@ -612,7 +613,7 @@ export function compareReferences(reference1, reference2) {
  * Vérification si le chauffage est par effet joule
  * 3.2 Calcul des U des parois opaques
  * On considère qu’un logement est chauffé par effet joule lorsque la chaleur est fournie par une résistance électrique.
- * @param instal_ch {InstallationChauffageItem[]}
+ * @param instal_ch {InstallationChauffage[]}
  * @returns {string} 1 if effet joule, 0 otherwise
  */
 export function isEffetJoule(instal_ch) {
@@ -682,8 +683,8 @@ export function containsAnySubstring(mainString, substrings) {
  *
  * @param formulaOrValue {string|number} Formule tableur ou valeur numérique.
  * @param pn {number} Puissance nominale en W.
- * @param E {number} [Coefficient forfaitaire E]
- * @param F {number} [Coefficient forfaitaire F]
+ * @param [E] {number} Coefficient forfaitaire E
+ * @param [F] {number} Coefficient forfaitaire F
  * @returns {number} Résultat de l'évaluation.
  */
 export function excel_to_js_exec(formulaOrValue, pn, E, F) {

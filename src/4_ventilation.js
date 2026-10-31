@@ -134,7 +134,7 @@ function tv_q4pa_conv(di, de, cg, mur_list, ph_list, porte_list, bv_list) {
        * le recalcul les donne non isolées. Dans le sens inverse (ligne « non isolées », recalcul
        * « isolées »), le DPE a pu être modifié par l'appelant (scénario d'isolation des parois) :
        * la valeur recalculée est utilisée.
-       * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §4
+       * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §4
        */
       if (rowQ4paConv.isolation_surfaces !== isolation_surfaces) {
         if (
@@ -160,7 +160,7 @@ function tv_q4pa_conv(di, de, cg, mur_list, ph_list, porte_list, bv_list) {
        * la ligne q4pa_conv retenue par le logiciel (ex. ligne 12 « avant 1948 avec joints », 2,5) :
        * on reprend sa valeur `presence_joints_menuiserie` au lieu de considérer les menuiseries
        * sans joint. Uniquement avec l'option `compat_for_corpus_analysis`.
-       * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §4
+       * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §4
        */
       if (
         compat_for_corpus_analysis &&

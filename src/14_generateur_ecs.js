@@ -1,3 +1,4 @@
+/** @import { GenerateurEcsDI } from './features/dpe/domain/models/installation-ecs.model.js' */
 import enums from './enums.js';
 import {
   bug_for_bug_compat,
@@ -200,7 +201,7 @@ const PVEILLEUSES_EXPORTEES_TRIBU = [10, 0.01];
  * chauffe-eau gaz / GPL instantané 2001-2015, veilleuse de la méthode (100 W) retenue, et
  * pveilleuse exportée par le DPE égale à 10 W ou 0,01 kW.
  * @param typeGenerateurId {string|number} enum_type_generateur_ecs_id
- * @param di {Donnee_intermediaire}
+ * @param di {GenerateurEcsDI}
  * @returns {boolean}
  */
 export function isPveilChauffeEauGazInstantaneTribu(typeGenerateurId, di) {

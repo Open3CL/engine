@@ -1,3 +1,6 @@
+/** @import { Enveloppe, Logement } from '../../../dpe/domain/models/dpe.model.js' */
+/** @import { Deperdition } from '../../../dpe/domain/models/sortie.model.js' */
+/** @import { Contexte } from '../models/contexte.model.js' */
 import { inject } from 'dioma';
 import { DeperditionMurService } from './mur/deperdition-mur.service.js';
 import { DeperditionPorteService } from './porte/deperdition-porte.service.js';

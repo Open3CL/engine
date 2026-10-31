@@ -38,7 +38,7 @@ const { calc_sse_j } = await import('./6.2_surface_sud_equivalente.js');
 
 /**
  * 10. Calcul des besoins de froid (Bfr)
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §10
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §10
  */
 describe('calc_besoin_fr_j - besoin de froid journalier', () => {
   test('retourne 0 lorsque le nombre de jours de référence est nul', () => {

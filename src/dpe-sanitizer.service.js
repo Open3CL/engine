@@ -1,3 +1,4 @@
+/** @import { FullDpe } from './features/dpe/domain/models/dpe.model.js' */
 import { ObjectUtil } from './core/util/infrastructure/object-util.js';
 import { set, has } from 'lodash-es';
 

@@ -59,7 +59,7 @@ fait »). Combiner :
   avec `toBeCloseTo(valeur, 9)` en la **commentant** comme référence de régression.
 - Vérifier aussi la **logique métier propre au fichier** (ex. le _matcher_ construit et passé à
   `tv()`), pas seulement le résultat final.
-- Ajouter un commentaire `@see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §X` quand pertinent.
+- Ajouter un commentaire `@see Methode_de_calcul_3CL_DPE_2021-338.pdf - §X` quand pertinent.
 
 ### Testabilité du code source
 

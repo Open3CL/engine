@@ -1,3 +1,5 @@
+/** @import { Enveloppe, Logement } from '../../../../dpe/domain/models/dpe.model.js' */
+/** @import { Contexte } from '../../models/contexte.model.js' */
 import { inject } from 'dioma';
 import { SurfaceSudEquivalenteService } from '../surface-sud-equivalente.service.js';
 import { mois_liste } from '../../../../../utils.js';
@@ -9,7 +11,7 @@ import { FrTvStore } from '../../../../dpe/infrastructure/froid/frTv.store.js';
  *
  * Methode_de_calcul_3CL_DPE_2021 - Page 42
  * Octobre 2021
- * @see consolide_anne…arrete_du_31_03_2021_relatif_aux_methodes_et_procedures_applicables.pdf
+ * @see consolide_annexe_arrete_du_31_03_2021_relatif_aux_methodes_et_procedures_applicables.pdf
  */
 export class ApportGratuitService {
   /**

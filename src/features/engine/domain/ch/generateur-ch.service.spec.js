@@ -12,7 +12,7 @@ let emetteurChService;
 
 /**
  * Températures de fonctionnement du générateur (délégation au service émetteurs).
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.1.5
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.1.5
  */
 describe('Températures de fonctionnement des générateurs de chauffage', () => {
   const ctx = { anneeConstruction: 1900 };
@@ -82,7 +82,7 @@ describe('Températures de fonctionnement des générateurs de chauffage', () =>
 
 /**
  * Puissance nominale estimée d'un générateur à combustion sans pn.
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.2.4
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.2.4
  */
 describe('Puissance nominale estimée des générateurs de chauffage (issue #264)', () => {
   /** @type {TvStore} */
@@ -132,7 +132,7 @@ describe('Puissance nominale estimée des générateurs de chauffage (issue #264
 /**
  * Puissance nominale estimée par la puissance de dimensionnement : Pdim = max(Pch ; Pecs) puis table
  * Pdim → Pn des chaudières (le calcul de la table est testé dans 13.2_generateur_combustion_pdim.spec.js).
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.2.4
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.2.4
  */
 describe('Puissance nominale estimée : Pdim et table Pdim → Pn (issue #271)', () => {
   /** @type {TvStore} */

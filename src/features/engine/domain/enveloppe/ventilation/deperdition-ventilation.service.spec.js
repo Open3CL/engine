@@ -18,7 +18,7 @@ const { DeperditionVentilationService } = await import('./deperdition-ventilatio
  * Tests unitaires isolés du calcul de Q4Paconv (`DeperditionVentilationService.q4paConv`).
  * Le store des tables de valeurs est remplacé par un double de test.
  *
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §4
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §4
  */
 
 /** @type {DeperditionVentilationService} */

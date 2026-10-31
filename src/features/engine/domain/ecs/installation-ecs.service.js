@@ -1,3 +1,6 @@
+/** @import { Logement } from '../../../dpe/domain/models/dpe.model.js' */
+/** @import { InstallationEcs, InstallationEcsDE } from '../../../dpe/domain/models/installation-ecs.model.js' */
+/** @import { Contexte } from '../models/contexte.model.js' */
 import { GenerateurEcsService } from './generateur-ecs.service.js';
 import { inject } from 'dioma';
 import { isStockageEcsVolumeChauffe } from '../../../../11_stockage_ecs_volume_chauffe.js';

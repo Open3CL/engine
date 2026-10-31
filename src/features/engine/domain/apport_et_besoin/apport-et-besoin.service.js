@@ -1,3 +1,6 @@
+/** @import { Logement } from '../../../dpe/domain/models/dpe.model.js' */
+/** @import { ApportEtBesoin } from '../../../dpe/domain/models/sortie.model.js' */
+/** @import { Contexte } from '../models/contexte.model.js' */
 import { inject } from 'dioma';
 import { BesoinEcsService } from './ecs/besoin-ecs.service.js';
 import { SurfaceSudEquivalenteService } from './surface-sud-equivalente.service.js';

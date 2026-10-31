@@ -4,7 +4,7 @@ import type {
   XsdLogementVentilation,
   XsdLogementVentilationDonneeEntree,
   XsdLogementVentilationDonneeIntermediaire
-} from './dpe-xsd.generated';
+} from './dpe-xsd.generated.js';
 
 export interface Ventilation extends Omit<XsdLogementVentilation, 'donnee_entree'> {
   donnee_entree: VentilationDE;
