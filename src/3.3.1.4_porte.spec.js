@@ -42,7 +42,7 @@ describe('calc_porte - coefficient de transmission des portes', () => {
 
     calc_porte(porte, 1);
 
-    expect(tv).toHaveBeenCalledWith('uporte', { enum_type_porte_id: '3' }, porte.donnee_entree);
+    expect(tv).toHaveBeenCalledWith('uporte', { enum_type_porte_id: '3' });
     expect(porte.donnee_intermediaire.uporte).toBe(2.4);
     expect(porte.donnee_entree.tv_uporte_id).toBe(15);
   });

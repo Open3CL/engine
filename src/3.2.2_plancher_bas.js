@@ -9,7 +9,7 @@ function tv_upb0(di, de, du) {
   const matcher = {
     enum_type_plancher_bas_id: de.enum_type_plancher_bas_id
   };
-  const row = tv('upb0', matcher, de);
+  const row = tv('upb0', matcher);
   if (row) {
     di.upb0 = Number(row.upb0);
     de.tv_upb0_id = Number(row.tv_upb0_id);
@@ -44,7 +44,7 @@ function tv_upb(di, de, du, pc_id, zc, effetJoule) {
     enum_zone_climatique_id: zc,
     effet_joule: effetJoule
   };
-  const row = tv('upb', matcher, de);
+  const row = tv('upb', matcher);
   if (row) {
     di.upb = Number(row.upb);
     de.tv_upb_id = Number(row.tv_upb_id);
@@ -84,6 +84,7 @@ function tv_ue(di, de, du, pc_id) {
   const surfaceUe = de.surface_ue || de.surface_paroi_opaque;
   const perimetreUe = de.perimetre_ue || 0;
 
+  /** @type {Record<string, any>} `2s_p` est d'abord numérique puis devient une regex (chaîne) */
   const matcher = {
     type_adjacence_plancher,
     '2s_p': Math.round((2 * surfaceUe) / perimetreUe)

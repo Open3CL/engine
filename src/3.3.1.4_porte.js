@@ -6,7 +6,7 @@ function tv_uporte(di, de, du) {
   const matcher = {
     enum_type_porte_id: de.enum_type_porte_id
   };
-  const row = tv('uporte', matcher, de);
+  const row = tv('uporte', matcher);
   if (row) {
     di.uporte = Number(row.uporte);
     de.tv_uporte_id = Number(row.tv_uporte_id);

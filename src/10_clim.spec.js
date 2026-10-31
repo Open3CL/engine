@@ -69,14 +69,10 @@ describe('calc_clim - consommation de climatisation', () => {
 
     calc_clim(c, 1000, 1500, '2', 100);
 
-    expect(tv).toHaveBeenCalledWith(
-      'seer',
-      {
-        enum_zone_climatique_id: '2',
-        enum_periode_installation_fr_id: '4'
-      },
-      c.donnee_entree
-    );
+    expect(tv).toHaveBeenCalledWith('seer', {
+      enum_zone_climatique_id: '2',
+      enum_periode_installation_fr_id: '4'
+    });
   });
 
   test.each([['6'], ['7'], ['8']])(

@@ -33,7 +33,7 @@ function tv_scop(di, de, du, zc_id, ed_id, type) {
   };
   matcher[`enum_type_generateur_${type}_id`] = requestInputID(de, du, `type_generateur_${type}`);
   if (ed_id) matcher.enum_type_emission_distribution_id = ed_id;
-  const row = tv('scop', matcher, de);
+  const row = tv('scop', matcher);
   if (row) {
     const scop = row.scop_ou_cop;
     di[scop] = Number(row.scop);
