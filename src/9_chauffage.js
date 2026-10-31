@@ -1,5 +1,5 @@
 /** @import { FullDpe } from './features/dpe/domain/models/dpe.model.js' */
-/** @import { GenerateurChauffage, InstallationChauffage, InstallationChauffageDE } from './features/dpe/domain/models/installation-chauffage.model.js' */
+/** @import { GenerateurChauffage, GenerateurChauffageDU, InstallationChauffage, InstallationChauffageDE } from './features/dpe/domain/models/installation-chauffage.model.js' */
 import { requestInput, Tbase, tv, tvColumnIDs } from './utils.js';
 import { calc_emetteur_ch } from './9_emetteur_ch.js';
 import {
@@ -199,8 +199,11 @@ export default function calc_chauffage(
     );
     /* c8 ignore next 2 -- repli défensif inatteignable : donnee_utilisateur est toujours renseignée
        par la première boucle sur gen_ch ci-dessus */
-    (gen.donnee_utilisateur = gen.donnee_utilisateur || {}).nbGenerateurCascade =
-      reseauCirculateurUnique(de.enum_cfg_installation_ch_id) ? 1 : gen_ch.length;
+    /** @type {GenerateurChauffageDU} */ (
+      gen.donnee_utilisateur = gen.donnee_utilisateur || {}
+    ).nbGenerateurCascade = reseauCirculateurUnique(de.enum_cfg_installation_ch_id)
+      ? 1
+      : gen_ch.length;
 
     calc_generateur_ch(
       dpe,

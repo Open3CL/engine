@@ -15,7 +15,11 @@ export type BaieVitree = XsdLogementEnveloppeBaieVitree & {
   donnee_utilisateur?: Record<string, any>;
 };
 export type BaieVitreeDE = XsdLogementEnveloppeBaieVitreeDonneeEntree;
-export type BaieVitreeDI = XsdLogementEnveloppeBaieVitreeDonneeIntermediaire;
+/** + facteurs d'ensoleillement `fe1` / `fe2` (masques proches / lointains) calculés par le moteur hors XSD. */
+export type BaieVitreeDI = XsdLogementEnveloppeBaieVitreeDonneeIntermediaire & {
+  fe1?: number;
+  fe2?: number;
+};
 export type BaieVitreeDoubleFenetre = XsdLogementEnveloppeBaieVitreeBaieVitreeDoubleFenetre;
 export type BaieVitreeDoubleFenetreDE =
   XsdLogementEnveloppeBaieVitreeBaieVitreeDoubleFenetreDonneeEntree;

@@ -8,8 +8,9 @@
     "moduleResolution": "nodenext",
     "strict": false,
     "skipLibCheck": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "paths": { "dioma": ["./types/dioma.d.ts"] }
   },
-  "include": ["src/**/*", "index.js"],
+  "include": ["src/**/*", "types/**/*", "index.js"],
   "exclude": ["node_modules", "dist", "**/*.spec.js", "src/output.js", "src/enums.js", "src/tv.js"]
 }

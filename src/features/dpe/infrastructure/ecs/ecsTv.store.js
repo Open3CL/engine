@@ -55,7 +55,7 @@ export class EcsTvStore extends TvStore {
 
   /**
    * Récupération des ids des générateurs électriques ECS
-   * @return {[number]}
+   * @return {number[]}
    */
   getElectriqueEcsGenerateurs() {
     return [

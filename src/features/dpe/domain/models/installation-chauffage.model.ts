@@ -27,14 +27,55 @@ export type EmetteurChauffageDI =
   XsdLogementInstallationChauffageEmetteurChauffageDonneeIntermediaire & {
     lb?: number;
   };
-export type GenerateurChauffageDE = XsdLogementInstallationChauffageGenerateurChauffageDonneeEntree;
-export type GenerateurChauffageDI =
-  XsdLogementInstallationChauffageGenerateurChauffageDonneeIntermediaire;
-
-export enum TypeGenerateur {
-  CHAUDIERE = 'CHAUDIERE',
-  OTHER = 'OTHER'
+/** Champs communs aux générateurs (chauffage et ECS) ajoutés par le moteur hors XSD, en entrée. */
+export interface GenerateurDEMoteur {
+  /** Année d'installation (issue de la saisie ou de la fiche technique). */
+  annee_installation?: number | string;
+  /** 1 si le générateur a un ventilateur (chaudières bois). */
+  presenceVentilateur?: number;
+  /** 1 si le générateur est à ventilateur de combustion (renseigné par le moteur, §13.2). */
+  ventilateurCombustion?: number;
+  ratio_virtualisation?: number | null;
+  enum_type_installation_id?: string | null;
+  enum_type_generateur_ecs_id?: string | null;
+  enum_periode_installation_ecs_thermo_id?: string | null;
+  volume_stockage?: number | null;
+  /** Clé de répartition de la consommation ECS (copiée de l'installation par le moteur). */
+  cle_repartition_ecs?: number | null;
+  /** Clé de répartition de la consommation de chauffage (copiée de l'installation par le moteur). */
+  cle_repartition_ch?: number | null;
 }
+
+/** Champs communs aux générateurs (chauffage et ECS) calculés par le moteur hors XSD. */
+export interface GenerateurDIMoteur {
+  /** Rendement de génération (PAC) : scop ou cop. */
+  rg?: number | null;
+  /** Rendement de génération du cas dépensier (PAC). */
+  rg_dep?: number | null;
+  scop?: number | null;
+  cop?: number | null;
+  /** Puissance de la veilleuse (W). */
+  pveil?: number | null;
+}
+
+/** + champs calculés/renseignés par le moteur hors XSD. */
+export type GenerateurChauffageDE =
+  XsdLogementInstallationChauffageGenerateurChauffageDonneeEntree &
+    GenerateurDEMoteur & {
+      /** Nombre d'installations de chauffage de l'immeuble (rdim). */
+      rdim_installation_ch?: number;
+      /** true si `rdim` a été reconstitué pour un DPE à l'immeuble. */
+      rdim_reconstitue?: boolean;
+      /** Nombre de niveaux de l'installation (copié de l'installation par le moteur). */
+      nombre_niveau_installation_ch?: number;
+      /** Surface chauffée par l'installation (copiée de l'installation par le moteur). */
+      surface_chauffee?: number;
+    };
+export type GenerateurChauffageDI =
+  XsdLogementInstallationChauffageGenerateurChauffageDonneeIntermediaire & GenerateurDIMoteur;
+
+/** Type de générateur (défini à l'exécution dans type-generateur.model.js). */
+export type TypeGenerateur = 'CHAUDIERE' | 'OTHER';
 
 /** Donnée utilisateur propre à Open3CL (absente du XSD). */
 export interface GenerateurChauffageDU {
@@ -57,7 +98,12 @@ export interface GenerateurChauffageDU {
   };
 }
 
-export interface GenerateurChauffage extends XsdLogementInstallationChauffageGenerateurChauffage {
+export interface GenerateurChauffage extends Omit<
+  XsdLogementInstallationChauffageGenerateurChauffage,
+  'donnee_entree' | 'donnee_intermediaire'
+> {
+  donnee_entree: GenerateurChauffageDE;
+  donnee_intermediaire?: GenerateurChauffageDI;
   donnee_utilisateur?: GenerateurChauffageDU;
 }
 
