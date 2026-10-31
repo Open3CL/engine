@@ -320,8 +320,8 @@ export default function calc_bv(bv, zc) {
       mlnh.reduce((acc, ml) => acc - calc_omb(ml) / 100, 1)
     );
   }
-  tv_masque_proche(di, de, du);
-  tv_masque_lointain_homogene(di, de, du);
+  tv_masque_proche(di, de);
+  tv_masque_lointain_homogene(di, de);
 
   delete di.deltar;
 

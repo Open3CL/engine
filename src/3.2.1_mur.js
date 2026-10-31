@@ -261,7 +261,7 @@ function tv_umur(di, de, du, pc_id, zc, effetJoule) {
     enum_zone_climatique_id: zc,
     effet_joule: effetJoule
   };
-  const row = tv('umur', matcher, de);
+  const row = tv('umur', matcher);
   if (row) {
     di.umur = Number(row.umur);
     de.tv_umur_id = Number(row.tv_umur_id);

@@ -1,4 +1,5 @@
-/** @import { BaieVitree } from './features/dpe/domain/models/baie-vitree.model.js' */
+/** @import { BaieVitree, BaieVitreeDE, BaieVitreeDI } from './features/dpe/domain/models/baie-vitree.model.js' */
+/** @import { BaieEtsDE } from './features/dpe/domain/models/baie-ets.model.js' */
 /** @import { Ets } from './features/dpe/domain/models/ets.model.js' */
 import enums from './enums.js';
 import tvs from './tv.js';
@@ -159,7 +160,7 @@ function calc_sse_veranda_j(ets, baiesAdjVeranda, zc, mois) {
 /**
  * Calcul de la surface sur équivalente pour la baie vitrée bv pendant le mois $mois
  *
- * @param bv {BaieVitree}
+ * @param bv {{donnee_entree: BaieVitreeDE | BaieEtsDE, donnee_intermediaire?: BaieVitreeDI}} baie vitrée ou baie d'espace tampon solarisé
  * @param zc {string} zone climatique du logement
  * @param mois {string} mois au cours duquel calculer la surface sur équivalente de la baie vitrée
  * @param coeff {number} coefficient à appliquer à cette surface sud
@@ -169,7 +170,7 @@ function getSsd(bv, zc, mois, coeff) {
   const c1 = tvs.c1;
 
   const de = bv.donnee_entree;
-  const di = bv.donnee_intermediaire || {};
+  const di = /** @type {BaieVitreeDI} */ (bv.donnee_intermediaire || {});
 
   const orientation = enums.orientation[de.enum_orientation_id];
   const inclinaison = enums.inclinaison_vitrage[de.enum_inclinaison_vitrage_id ?? 3];

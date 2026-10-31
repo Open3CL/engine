@@ -10,14 +10,14 @@ import { logger } from '../../../../core/util/logger/log-service.js';
 export class ChTvStore extends TvStore {
   /**
    * Récupération des ids des générateurs de chauffage à combustion
-   * @return {[number]}
+   * @return {number[]}
    */
   getCombustionGenerateurs() {
     return this.#getTypeGenerateurChId('generateur_combustion');
   }
   /**
    * Récupération des ids des générateurs de chauffage pompes à chaleur
-   * @return {[number]}
+   * @return {number[]}
    */
   getPacGenerateurs() {
     return this.#getTypeGenerateurChId('scop');

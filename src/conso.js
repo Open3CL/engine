@@ -1,5 +1,5 @@
-/** @import { GenerateurChauffage, GenerateurChauffageDE } from './features/dpe/domain/models/installation-chauffage.model.js' */
-/** @import { GenerateurEcs, GenerateurEcsDE, InstallationEcs } from './features/dpe/domain/models/installation-ecs.model.js' */
+/** @import { GenerateurChauffage, GenerateurChauffageDE, GenerateurChauffageDU } from './features/dpe/domain/models/installation-chauffage.model.js' */
+/** @import { GenerateurEcs, GenerateurEcsDE, GenerateurEcsDU, InstallationEcs } from './features/dpe/domain/models/installation-ecs.model.js' */
 import enums from './enums.js';
 import calc_conso_eclairage from './16_conso_eclairage.js';
 import tvs from './tv.js';
@@ -268,7 +268,7 @@ function coefPourGenerateur(coef, gen) {
  * @returns {number}
  */
 export function appointBijonction(gen, field) {
-  const du = gen.donnee_utilisateur || {};
+  const du = /** @type {GenerateurChauffageDU} */ (gen.donnee_utilisateur || {});
   const appoint =
     field === 'conso_ch_depensier'
       ? du.conso_ch_appoint_bijonction_depensier
@@ -510,8 +510,9 @@ export default function calc_conso(
       value.donnee_entree.enum_methode_calcul_conso_id =
         ch.donnee_entree.enum_methode_calcul_conso_id;
       value.donnee_entree.enum_type_installation_id = ch.donnee_entree.enum_type_installation_id;
-      (value.donnee_utilisateur = value.donnee_utilisateur || {}).coeffEmissionGes =
-        getGesCoeffForGenerateur(value, 'ch', dateDpe, versionLogiciel);
+      /** @type {GenerateurChauffageDU} */ (
+        value.donnee_utilisateur = value.donnee_utilisateur || {}
+      ).coeffEmissionGes = getGesCoeffForGenerateur(value, 'ch', dateDpe, versionLogiciel);
     });
     return acc.concat(generateur_chauffage);
   }, []);
@@ -525,8 +526,9 @@ export default function calc_conso(
       generateur_ecs.forEach((value) => {
         value.donnee_entree.cle_repartition_ecs =
           (ecs.donnee_entree.cle_repartition_ecs || 1) * getRdimEcs(ecs);
-        (value.donnee_utilisateur = value.donnee_utilisateur || {}).coeffEmissionGes =
-          getGesCoeffForGenerateur(value, 'ecs', dateDpe, versionLogiciel);
+        /** @type {GenerateurEcsDU} */ (
+          value.donnee_utilisateur = value.donnee_utilisateur || {}
+        ).coeffEmissionGes = getGesCoeffForGenerateur(value, 'ecs', dateDpe, versionLogiciel);
       });
     }
     return acc.concat(generateur_ecs);
@@ -951,7 +953,7 @@ export function getAuxGenerationEcs(ecs, field, coef, prorataECS, facteurAc = 1)
 /**
  * Calcul de la consommation globale de chauffage
  * @param gen_ch {GenerateurChauffage[]}
- * @param field {string}
+ * @param field {'conso_ch'|'conso_ch_depensier'}
  * @param coef {number}
  * @param prorataChauffage {number}
  * @param prefix {string}

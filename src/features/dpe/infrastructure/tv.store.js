@@ -322,7 +322,7 @@ export class TvStore {
 
   /**
    * Débits de la ventilation
-   * @param typeVentilation {number}
+   * @param typeVentilation {string}
    * @return {object|undefined}
    */
   getDebitsVentilation(typeVentilation) {
