@@ -7,7 +7,7 @@ function tv_uph0(di, de, du) {
   const matcher = {
     enum_type_plancher_haut_id: de.enum_type_plancher_haut_id
   };
-  const row = tv('uph0', matcher, de);
+  const row = tv('uph0', matcher);
   if (row) {
     di.uph0 = Number(row.uph0);
     de.tv_uph0_id = Number(row.tv_uph0_id);

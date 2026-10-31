@@ -55,14 +55,10 @@ describe('scopOrCop - valeur forfaitaire (table scop)', () => {
 
     scopOrCop(di, de, {}, 'h1a', null, 'ch');
 
-    expect(tv).toHaveBeenCalledWith(
-      'scop',
-      {
-        enum_zone_climatique_id: 'h1a',
-        enum_type_generateur_ch_id: '160'
-      },
-      de
-    );
+    expect(tv).toHaveBeenCalledWith('scop', {
+      enum_zone_climatique_id: 'h1a',
+      enum_type_generateur_ch_id: '160'
+    });
     expect(di.scop).toBe(4.2);
     expect(di.rg).toBe(4.2);
     expect(di.rg_dep).toBe(4.2);
@@ -76,15 +72,11 @@ describe('scopOrCop - valeur forfaitaire (table scop)', () => {
 
     scopOrCop(di, de, {}, 'h2b', '5', 'ecs');
 
-    expect(tv).toHaveBeenCalledWith(
-      'scop',
-      {
-        enum_zone_climatique_id: 'h2b',
-        enum_type_generateur_ecs_id: '10',
-        enum_type_emission_distribution_id: '5'
-      },
-      de
-    );
+    expect(tv).toHaveBeenCalledWith('scop', {
+      enum_zone_climatique_id: 'h2b',
+      enum_type_generateur_ecs_id: '10',
+      enum_type_emission_distribution_id: '5'
+    });
     // scop_ou_cop vaut 'cop' : la valeur est stockée sous di.cop
     expect(di.cop).toBe(3.1);
     expect(di.rg).toBe(3.1);
