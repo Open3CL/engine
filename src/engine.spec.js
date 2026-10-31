@@ -75,7 +75,8 @@ vi.mock('./17.2_rdim_dpe_genere_immeuble.js', () => ({
   reconstituerRdimDpeGenereImmeuble: vi.fn()
 }));
 vi.mock('./11_rdim_ecs_individuelle_unique.js', () => ({
-  reconstituerRdimEcsIndividuelleUnique: vi.fn()
+  reconstituerRdimEcsIndividuelleUnique: vi.fn(),
+  reconstituerRdimEcsIndividuellesMultiples: vi.fn()
 }));
 
 // Les instances Inertie / ProductionENR sont créées au chargement du module.
@@ -129,7 +130,7 @@ const calc_confort_ete = (await import('./2021_04_13_confort_ete.js')).default;
 const calc_qualite_isolation = (await import('./2021_04_13_qualite_isolation.js')).default;
 const getFicheTechnique = (await import('./ficheTechnique.js')).default;
 const { reconstituerRdimDpeGenereImmeuble } = await import('./17.2_rdim_dpe_genere_immeuble.js');
-const { reconstituerRdimEcsIndividuelleUnique } =
+const { reconstituerRdimEcsIndividuelleUnique, reconstituerRdimEcsIndividuellesMultiples } =
   await import('./11_rdim_ecs_individuelle_unique.js');
 
 /** Objet conso renvoyé par le mock de `calc_conso` (mêmes réf pour les 3 appels). */
@@ -1321,6 +1322,26 @@ describe('calcul_3cl - rdim de l’installation ECS individuelle unique d’un i
       'maison',
       dpe.logement.installation_ecs_collection.installation_ecs,
       640
+    );
+    expect(calc_ecs).toHaveBeenCalled();
+  });
+});
+
+describe('calcul_3cl - rdim des installations ECS individuelles multiples d’un immeuble', () => {
+  test('reconstitution appelée avec le type de bâtiment, les installations ECS et SH, avant le calcul ECS', () => {
+    const dpe = makeDpe();
+    dpe.logement.caracteristique_generale.surface_habitable_immeuble = 566.16;
+    vi.mocked(reconstituerRdimEcsIndividuellesMultiples).mockImplementationOnce(() => {
+      expect(calc_ecs).not.toHaveBeenCalled();
+      return false;
+    });
+
+    calcul_3cl(dpe, { sanitize: false });
+
+    expect(reconstituerRdimEcsIndividuellesMultiples).toHaveBeenCalledWith(
+      'maison',
+      dpe.logement.installation_ecs_collection.installation_ecs,
+      566.16
     );
     expect(calc_ecs).toHaveBeenCalled();
   });
