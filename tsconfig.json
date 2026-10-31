@@ -11,5 +11,5 @@
     "resolveJsonModule": true
   },
   "include": ["src/**/*", "index.js"],
-  "exclude": ["node_modules", "dist", "**/*.spec.js", "src/output.js"]
+  "exclude": ["node_modules", "dist", "**/*.spec.js", "src/output.js", "src/enums.js", "src/tv.js"]
 }
