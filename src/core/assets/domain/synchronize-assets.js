@@ -1,3 +1,5 @@
+/** @import { SynchronizeEnumTables } from './synchronize-enum-tables.js' */
+/** @import { SynchronizeValeurTables } from './synchronize-valeur-tables.js' */
 export class SynchronizeAssets {
   /**
    * @type {SynchronizeEnumTables}

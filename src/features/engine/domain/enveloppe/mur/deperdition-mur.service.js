@@ -1,3 +1,5 @@
+/** @import { MurDE, MurDI } from '../../../../dpe/domain/models/mur.model.js' */
+/** @import { Contexte } from '../../models/contexte.model.js' */
 import { logger } from '../../../../../core/util/logger/log-service.js';
 import { inject } from 'dioma';
 import { PRECISION } from '../../constants.js';
@@ -10,7 +12,7 @@ import { TvStore } from '../../../../dpe/infrastructure/tv.store.js';
  *
  * Méthode de calcul 3CL-DPE 2021
  * Octobre 2021
- * @see consolide_anne…arrete_du_31_03_2021_relatif_aux_methodes_et_procedures_applicables.pdf
+ * @see consolide_annexe_arrete_du_31_03_2021_relatif_aux_methodes_et_procedures_applicables.pdf
  */
 export class DeperditionMurService extends DeperditionService {
   /**

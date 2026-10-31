@@ -170,7 +170,7 @@ describe('Calcul de la surface sud équivalente (§6.2 / §6.3)', () => {
    * véranda ; Sse = Sse_ext + Σ(v) Sse_veranda_v. Une baie adjacence 10 n'entre que dans la véranda
    * sur laquelle elle donne (reference_lnc = ets.reference).
    * Cas de test fournis par Olivier (thermicien) : C1 sud = 1, est = 0,40, nord = 0,31 ; Fe = 1.
-   * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §6.3
+   * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §6.3
    */
   describe('ssdMois - plusieurs espaces tampons solarisés (issue #101)', () => {
     // Baie extérieure 10 m² sud, Sw = 0,5 => Sse_ext = 5

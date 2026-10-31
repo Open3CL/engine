@@ -61,7 +61,7 @@ beforeEach(() => {
 
 /**
  * 3.2.2 Coefficient de transmission des planchers bas (Upb)
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.2.2
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.2.2
  */
 describe('calc_pb - plancher non isolé (methode 1)', () => {
   test('Upb égal à Upb0 (paroi nue) et adjacence non déperditive => upb_final = upb', () => {
@@ -531,7 +531,7 @@ describe('calc_pb - compatibilité bug for bug (forçage de la méthode de saisi
 
 /**
  * Calcul de la déperdition Ue vers un plancher bas sur terre-plein / vide sanitaire / sous-sol.
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.2.2 (Ue)
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.2.2 (Ue)
  */
 describe('calc_pb - calcul de Ue (tv_ue)', () => {
   /** Renvoie une ue interpolée selon la valeur de upb du matcher. */
@@ -658,7 +658,7 @@ describe('calc_pb - calcul de Ue (tv_ue)', () => {
 
   /**
    * Issue #46 : ue calculé plancher par plancher, 2S/P issu du seul plancher courant.
-   * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.2.2 (tableau ue : « Les données ne figurant
+   * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.2.2 (tableau ue : « Les données ne figurant
    * pas dans le tableau peuvent être obtenues par interpolation et extrapolation »)
    */
   describe('calcul plancher par plancher (#46)', () => {

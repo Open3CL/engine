@@ -1,3 +1,9 @@
+/** @import { ApplicationConfig } from '../../conf/infrastructure/application.config.js' */
+/** @import { FileStore } from '../../file/infrastructure/adapter/file.store.js' */
+/** @import { AddAdditionnalUeValuesTables } from './add-additionnal-ue-values-tables.js' */
+/** @import { SynchronizeC1Tables } from './synchronize-c1-tables.js' */
+/** @import { SynchronizeDpeGesLimitValuesTables } from './synchronize-dpe-ges-limit-values-tables.js' */
+/** @import { SynchronizeSolicitationsTables } from './synchronize-solicitations-tables.js' */
 import { ObjectUtil } from '../../util/infrastructure/object-util.js';
 
 /**

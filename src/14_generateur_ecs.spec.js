@@ -90,7 +90,7 @@ const { getChaudiereFioulDefautId } = await import('./13.2_generateur_combustion
 
 /**
  * 14. Générateur d'ECS : rendements et consommations
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §14
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §14
  */
 describe('rendements de génération (fonctions pures)', () => {
   const di = { rpn: 0.9, qp0: 0.1, pveil: 0.02, Qgw: 1000 };
@@ -415,7 +415,7 @@ describe('calc_gen_ecs - consommation par générateur', () => {
 
   /**
    * 14.1 - Pertes de stockage forfaitaires (générateur électrique à accumulation).
-   * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §14.1
+   * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §14.1
    */
   test('électrique avec stockage : pertes de stockage forfaitaires et matcher de volume', () => {
     vi.mocked(tvColumnIDs).mockImplementation((table) =>
@@ -690,7 +690,7 @@ describe('calc_gen_ecs - consommation par générateur', () => {
 
   /**
    * Issue #39 : présence de veilleuse lue dans la fiche technique (de.presence_veilleuse).
-   * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §14.1
+   * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §14.1
    */
   test.each([
     [1, undefined, 0.02],
@@ -943,7 +943,7 @@ describe('calc_gen_ecs - consommation par générateur', () => {
 
   /**
    * Type 84 : chaudière fioul standard datant de la construction du bâtiment.
-   * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §17.2.1.1
+   * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §17.2.1.1
    */
   test('type 84 combustion compatible 84 : chaudière de la période de construction retenue', () => {
     vi.mocked(getChaudiereFioulDefautId).mockReturnValue('39');

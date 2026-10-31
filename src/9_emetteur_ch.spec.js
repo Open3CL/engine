@@ -81,7 +81,7 @@ function emetteur({
  * Tests pour le calcul du rendement de distribution pour chauffage (9_emetteur_ch.js)
  * Focus sur la correction du bug #170 : conservation du tv_rendement_distribution_ch_id
  * pour type_emission_distribution=41 ('Autres équipements').
- * @see : https://github.com/Open3CL/engine/issues/170
+ * @see https://github.com/Open3CL/engine/issues/170
  */
 describe('tv_rendement_distribution_ch - rendement de distribution CH', () => {
   test("type_emission=41 AVEC tv_rendement_distribution_ch_id=6 : conserve l'ID original", () => {

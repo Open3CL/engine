@@ -36,7 +36,7 @@ const { conso_aux_gen, conso_aux_distribution_ch, conso_aux_distribution_ecs, ge
 
 /**
  * 15.1 Consommation des auxiliaires de génération
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §15.1
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §15.1
  */
 describe('conso_aux_gen - auxiliaires de génération', () => {
   let di;
@@ -94,7 +94,7 @@ describe('conso_aux_gen - auxiliaires de génération', () => {
   /**
    * Le besoin transmis par calc_chauffage est déjà proratisé par Sc / Sh : aucun second prorata.
    * Autotest CSTB MI5-0-8 : radiateur gaz (G = 40, H = 0), Sc = 96 m², Sh = 136 m².
-   * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §15.1
+   * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §15.1
    */
   test('chauffage : surface chauffée partielle sans second prorata Sc / Sh du besoin', () => {
     const diPartiel = { pn: 20000 };
@@ -235,7 +235,7 @@ describe('conso_aux_gen - auxiliaires de génération', () => {
    * installation individuelle (enum_type_installation_id = 1) : ce besoin est déjà proratisé
    * par Sc / Sh, et le moteur CSTB (Tribu) n'utilise aucune clé pour ces installations.
    * La clé reste appliquée au collectif et à l'ECS.
-   * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §15.1
+   * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §15.1
    */
   describe('clé de répartition (issue #252)', () => {
     test('chauffage, installation individuelle : la clé de répartition est ignorée', () => {
@@ -297,7 +297,7 @@ describe('conso_aux_gen - auxiliaires de génération', () => {
 
 /**
  * 15.2 Consommation des auxiliaires de distribution de chauffage
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §15.2
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §15.2
  */
 describe('conso_aux_distribution_ch - auxiliaires de distribution', () => {
   const emCh = [
@@ -379,7 +379,7 @@ describe('conso_aux_distribution_ch - auxiliaires de distribution', () => {
    * Seuls les émetteurs reliés au générateur (même enum_lien_generateur_emetteur_id) dimensionnent
    * son circulateur. Autotest CSTB IC5-0-3 : chaudière (lien 1) sur plancher chauffant + convecteurs
    * électriques d'appoint (lien 2) : Fcot du plancher (0,156), pas le forçage multi-émetteurs.
-   * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §15.2.1
+   * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §15.2.1
    */
   test('émetteurs reliés à un autre générateur : exclus du dimensionnement du circulateur', () => {
     const plancher = {
@@ -412,7 +412,7 @@ describe('conso_aux_distribution_ch - auxiliaires de distribution', () => {
   /**
    * La longueur du réseau le plus défavorisé (Lem) est exposée sous le nom lb dans la donnée
    * intermédiaire de chaque émetteur desservi par le circulateur.
-   * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §15.2.1
+   * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §15.2.1
    */
   test('longueur du réseau lb exposée dans la donnée intermédiaire des émetteurs', () => {
     const em = [
@@ -640,7 +640,7 @@ describe('conso_aux_distribution_ch - auxiliaires de distribution', () => {
 
 /**
  * 15.2.1 Chute nominale de température de dimensionnement ΔθDim
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §15.2.1
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §15.2.1
  */
 describe('getDeltaDim - chute nominale de température de dimensionnement', () => {
   const em = (temp, type = '10') => ({
@@ -674,7 +674,7 @@ describe('getDeltaDim - chute nominale de température de dimensionnement', () =
 
 /**
  * 15.2.3 Consommation des auxiliaires de distribution d'ECS
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §15.2.3
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §15.2.3
  *
  * Les scénarios ci-dessous s'appuient sur l'année réduite à Janvier (31 jours,
  * tefs = 10 °C) définie par les mocks en tête de fichier :

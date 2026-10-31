@@ -73,7 +73,7 @@ const { calc_Qrec_gen_j, calc_Qrec_gen_ecs_j, isGenerateurEcsSeulRecuperable } =
 
 /**
  * 9. Besoins de chauffage (Bch)
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §9
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §9
  */
 describe('calc_Fj - fraction des besoins de chauffage couverte par les apports', () => {
   test('retourne 0 lorsque le nombre de degrés-heures est nul', () => {
@@ -419,7 +419,7 @@ describe('calc_besoin_ch - branches complémentaires', () => {
 /**
  * 9.1.1 - Pertes récupérées de génération : générateurs de la collection ECS assurant l'ECS
  * uniquement, avec Qp0 > 0 et en volume chauffé (issue #153).
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §9.1.1
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §9.1.1
  */
 describe('calc_besoin_ch - récupération des pertes des générateurs ECS seuls (#153)', () => {
   const genEcsSeul = {
@@ -566,7 +566,7 @@ describe('calc_besoin_ch - récupération des pertes des générateurs ECS seuls
  * Immeuble à plusieurs installations ECS dont une collective (ex. installation mixte
  * individuelle/collective) : besoin de chaque installation = Becs_immeuble × Sh_ecs / SH, × rdim
  * pour une installation individuelle (Tribu, Calcul_batiment.Calcul_Cecs et l. 374).
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §9.1.1 et §11.4
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §9.1.1 et §11.4
  */
 describe('calc_besoin_ch - immeuble à installations ECS individuelles et collectives', () => {
   const ecsIndividuelle = (surface_habitable, rdim) => ({

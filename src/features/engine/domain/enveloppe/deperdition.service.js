@@ -1,3 +1,6 @@
+/** @import { DE } from '../../../dpe/domain/models/dpe.model.js' */
+/** @import { Contexte } from '../models/contexte.model.js' */
+/** @import { DeperditionData } from '../models/deperdition.model.js' */
 import { logger } from '../../../../core/util/logger/log-service.js';
 import { inject } from 'dioma';
 import { TvStore } from '../../../dpe/infrastructure/tv.store.js';

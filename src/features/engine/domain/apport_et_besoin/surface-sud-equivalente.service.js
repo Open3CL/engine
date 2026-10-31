@@ -1,3 +1,8 @@
+/** @import { BaieEts } from '../../../dpe/domain/models/baie-ets.model.js' */
+/** @import { BaieVitree } from '../../../dpe/domain/models/baie-vitree.model.js' */
+/** @import { Enveloppe } from '../../../dpe/domain/models/dpe.model.js' */
+/** @import { Ets } from '../../../dpe/domain/models/ets.model.js' */
+/** @import { Contexte } from '../models/contexte.model.js' */
 import { mois_liste } from '../../../../utils.js';
 import { inject } from 'dioma';
 import { BaieVitreeTvStore } from '../../../dpe/infrastructure/enveloppe/baieVitreeTv.store.js';
@@ -8,7 +13,7 @@ import { BaieVitreeTvStore } from '../../../dpe/infrastructure/enveloppe/baieVit
  *
  * Methode_de_calcul_3CL_DPE_2021 - Page 45
  * Octobre 2021
- * @see consolide_anne…arrete_du_31_03_2021_relatif_aux_methodes_et_procedures_applicables.pdf
+ * @see consolide_annexe_arrete_du_31_03_2021_relatif_aux_methodes_et_procedures_applicables.pdf
  */
 export class SurfaceSudEquivalenteService {
   /**

@@ -1,7 +1,10 @@
+/** @import { FullDpe } from './features/dpe/domain/models/dpe.model.js' */
+/** @import { GenerateurChauffageDE } from './features/dpe/domain/models/installation-chauffage.model.js' */
+/** @import { GenerateurEcsDE } from './features/dpe/domain/models/installation-ecs.model.js' */
 /**
  * Pour les générateurs "Autre système thermodynamique", les calculs sont faits comme pour les 'cet sur air ambiant'
  * @param dpe {FullDpe}
- * @param de {Donnee_entree}
+ * @param de {GenerateurChauffageDE|GenerateurEcsDE}
  * @param type {'ch' | 'ecs'}
  */
 export function updateGenerateurPacs(dpe, de, type) {

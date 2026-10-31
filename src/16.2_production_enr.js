@@ -1,3 +1,4 @@
+/** @import { EfConso, EpConso, SortieParEnergie } from './features/dpe/domain/models/sortie.model.js' */
 import enums from './enums.js';
 import { mois_liste, tv } from './utils.js';
 import tvs from './tv.js';
@@ -152,7 +153,7 @@ export class ProductionENR {
 
     /**
      * Récupération des consommations électriques pour ch et ecs
-     * @type {SortieParEnergieItem}
+     * @type {SortieParEnergie}
      */
     let consoElec = conso.sortie_par_energie_collection.sortie_par_energie.find(
       (sortie) => sortie.enum_type_energie_id === '1'
@@ -302,7 +303,7 @@ export class ProductionENR {
   /**
    * Mise à jour des consommations ef en minorant l'énergie primaire consommée par l'énergie autoconsommée par chaque enveloppe
    * @param productionElectricite
-   * @param conso {{ep_conso: Ep_conso}}
+   * @param conso {{ep_conso: EpConso}}
    * @param Sh {number}
    * @param coeff_ep_override {number?} coeff ep à surcharger si définit
    */
@@ -350,7 +351,7 @@ export class ProductionENR {
 
   /**
    * Calcul des taux d'autoproduction consommés pour chaque enveloppe
-   * @param efConso {Ef_conso}
+   * @param efConso {EfConso}
    * @param consoElec
    * @param ccom {number}
    * @param consoElecTotale {number}

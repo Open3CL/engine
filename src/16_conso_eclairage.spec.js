@@ -23,7 +23,7 @@ const { default: calc_conso_eclairage } = await import('./16_conso_eclairage.js'
 
 /**
  * 16.1 Consommation d'éclairage (Cecl)
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §16.1
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §16.1
  *
  * Cecl = (C * Pecl * Nh) / 1000 avec C = 0.9 (interrupteur) et Pecl = 1.4 W/m²
  * Nh = nombre d'heures de fonctionnement de l'éclairage, fonction de la zone climatique.

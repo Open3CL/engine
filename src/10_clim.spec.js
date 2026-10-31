@@ -31,7 +31,7 @@ beforeEach(() => {
 
 /**
  * 10. Calcul de la consommation de climatisation (froid)
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §10
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §10
  */
 describe('calc_clim - consommation de climatisation', () => {
   test('prorate le besoin de froid au ratio surface_clim / Sh', () => {

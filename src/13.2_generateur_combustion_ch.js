@@ -1,3 +1,4 @@
+/** @import { GenerateurChauffageDE, GenerateurChauffageDI } from './features/dpe/domain/models/installation-chauffage.model.js' */
 import enums from './enums.js';
 import { bug_for_bug_compat, requestInput, requestInputID, tv } from './utils.js';
 
@@ -18,7 +19,7 @@ const coef_pond = {
  * Coefficients de conversion PCS / PCI.
  * Le propane et le butane sont des GPL : k = 1.09 (et non 1.11, valeur du gaz naturel), comme
  * dans le moteur de référence CSTB (Tribu).
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.1.2
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.1.2
  */
 export const K = {
   électricité: 1,
@@ -84,7 +85,7 @@ export const TOLERANCE_TEMP_FONC = 0.01;
  * 13.2.1.5 Chaudières basse température et condensation
  * « Si l'année d'installation des émetteurs est inconnue, prendre l'année de construction du
  * bâtiment. »
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.1.5
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.1.5
  *
  * @param ac {number} année de construction du bâtiment
  * @return {string} période d'installation des émetteurs
@@ -148,7 +149,7 @@ export function temp_fonc_pour_periode(de, em_ch, periodeParDefaut) {
  * - plusieurs : celle de l'année de construction si elle en fait partie, sinon la plus récente ;
  * - aucune : null (repli sur l'année de construction, valeurs hors tables).
  *
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.1.5
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.1.5
  *
  * @param tempFonc30Dpe {number} temp_fonc_30 d'origine du DPE
  * @param tempFonc100Dpe {number} temp_fonc_100 d'origine du DPE
@@ -203,7 +204,7 @@ export function deductionPeriodeEmetteursActive(tempFonc30Dpe, tempFonc100Dpe, e
  * d'installation des émetteurs non exportée (issue #220) ; les valeurs retenues proviennent
  * toujours des tables (tv_temp_fonc_30_id / tv_temp_fonc_100_id renseignés).
  *
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.1.5
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.1.5
  */
 export function tv_temp_fonc_30_100(di, de, du, em_ch, ac) {
   const tempFonc30Dpe = di.temp_fonc_30;
@@ -281,9 +282,9 @@ function Tch_xfinal(x, Cdimref) {
  * une division en place ramenait QP0 à ~0 (÷ 100 à chaque appel), et le terme 0,45 × QP0 du
  * rendement de génération en était absent.
  *
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.1
- * @param de {Donnee_entree}
- * @param di {Donnee_intermediaire}
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.1
+ * @param de {GenerateurChauffageDE}
+ * @param di {GenerateurChauffageDI}
  * @param k {number} rapport PCI/PCS de l'énergie
  * @returns {number}
  */

@@ -54,7 +54,7 @@ describe('Lecture des tables de valeurs', () => {
 
   /**
    * Nombre d’heures de refroidissement Nref entre 400 m et 800 m d’altitude
-   * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - Annexe 18.2.2 (tableaux Nref (26°C) et Nref (28°C))
+   * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - Annexe 18.2.2 (tableaux Nref (26°C) et Nref (28°C))
    */
   describe('lecture des heures de refroidissement Nref entre 400m et 800m', () => {
     const zones = ['h1a', 'h1b', 'h1c', 'h2a', 'h2b', 'h2c', 'h2d', 'h3'];

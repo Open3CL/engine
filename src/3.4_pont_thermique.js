@@ -1,3 +1,5 @@
+/** @import { BaieVitree } from './features/dpe/domain/models/baie-vitree.model.js' */
+/** @import { PontThermiqueDE, PontThermiqueDI } from './features/dpe/domain/models/pont-thermique.model.js' */
 import enums from './enums.js';
 import { isNil } from 'lodash-es';
 import { tv, requestInput, cleanReference, bug_for_bug_compat } from './utils.js';
@@ -36,7 +38,7 @@ function tv_k(pt_di, di, de, du, pc_id, logement) {
   const mur_list = enveloppe.mur_collection.mur || [];
   const pb_list = enveloppe.plancher_bas_collection.plancher_bas || [];
   const ph_list = enveloppe.plancher_haut_collection.plancher_haut || [];
-  /** @type {BaieVitreeItem[]} **/
+  /** @type {BaieVitree[]} **/
   const bv_list = enveloppe.baie_vitree_collection.baie_vitree || [];
   const porte_list = enveloppe.porte_collection.porte || [];
 
@@ -137,7 +139,7 @@ function tv_k(pt_di, di, de, du, pc_id, logement) {
        * Si on ne trouve pas de mur associé au pont thermique, on vérifie si on trouve une baie vitrée associée
        * au pont thermique et si cette dernière à une reference_paroi qui correspond à un mur existant.
        */
-      /** @type {BaieVitreeItem} **/
+      /** @type {BaieVitree} **/
       const bvPt = bv_list.find((bv) => bv.donnee_entree.reference === de.reference_1);
       if (bvPt && Number(bvPt.donnee_entree.reference_paroi) === murIndex) {
         console.error(
@@ -444,9 +446,9 @@ function tv_k(pt_di, di, de, du, pc_id, logement) {
  * Si la valeur k calculée est égale au à celle spécifiée, le facteur est déjà pris en compte
  *
  * @param type_liaison {string} type de liaison du pont thermique en cours d'étude
- * @param de {Donnee_entree} données d'entrée du pont thermique en cours d'étude
+ * @param de {PontThermiqueDE} données d'entrée du pont thermique en cours d'étude
  * @param k {string} valeur calculée pour k
- * @param pt_di {Donnee_intermediaire} données intermédiaires du pont thermique en cours d'étude
+ * @param pt_di {PontThermiqueDI} données intermédiaires du pont thermique en cours d'étude
  */
 function pourcentageValeurPontThermique(type_liaison, de, k, pt_di) {
   if (

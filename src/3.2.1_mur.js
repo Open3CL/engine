@@ -1,3 +1,4 @@
+/** @import { MurDE, MurDI } from './features/dpe/domain/models/mur.model.js' */
 import enums from './enums.js';
 import {
   tv,
@@ -24,7 +25,7 @@ const scriptName = new URL(import.meta.url).pathname.split('/').pop();
  * logiciels) : colonne la plus proche, et en cas d'égalité la colonne inférieure (la plus
  * défavorable thermiquement). Les bornes ouvertes « ≤ x » / « ≥ x » sont ramenées à x.
  *
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.2.1.2
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.2.1.2
  *
  * @param enumMateriauxStructureMurId {string|number}
  * @param epaisseur {number|string}
@@ -87,7 +88,7 @@ function matcherEpaisseurTable(matcher) {
  * 2, 3 - pierre de taille et moellons ; 4 - pisé / béton de terre ; 5, 6 - pan de bois (colombage) ;
  * 7 - bois (rondin) ; 8, 9 - briques pleines ; 21 - autre matériau traditionnel ancien.
  *
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.2.1
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.2.1
  * @see https://github.com/Open3CL/engine/issues/295
  */
 export const MATERIAUX_PAROI_ANCIENNE = [2, 3, 4, 5, 6, 7, 8, 9, 21];
@@ -99,7 +100,7 @@ export const MATERIAUX_PAROI_ANCIENNE = [2, 3, 4, 5, 6, 7, 8, 9, 21];
  * La méthode ne précise pas de règle d'interpolation pour Umur0 : cette valeur n'est utilisée qu'en
  * compatibilité (bug_for_bug), lorsque le DPE d'origine l'a manifestement appliquée.
  *
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.2.1.2
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.2.1.2
  * @see https://github.com/Open3CL/engine/issues/295
  *
  * @param enumMateriauxStructureMurId {string|number}
@@ -204,7 +205,7 @@ function tv_umur0(di, de, du) {
      * Certains logiciels interpolent Umur0 entre les deux colonnes d'épaisseur qui encadrent
      * l'épaisseur saisie (ex : 2,28 pour un béton banché de 32 cm, entre 30 et 35 cm).
      * Si l'Umur0 du DPE correspond à cette interpolation (tolérance empirique de 0,006), on la reprend.
-     * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.2.1.2
+     * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.2.1.2
      * @see https://github.com/Open3CL/engine/issues/295
      */
     if (bug_for_bug_compat && du.umur0_avant !== undefined) {
@@ -330,7 +331,7 @@ function calc_umur0(di, de, du, versionDpe) {
    * DPE antérieurs à la version 2.4 : certains logiciels n'y cumulent déjà pas le doublage avec une
    * isolation ITE/ITI. Si l'Umur0 du DPE vaut min(2,5 ; Umur0 de la paroi nue), le doublage n'a pas
    * été appliqué : on ne l'applique pas non plus.
-   * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.2.1
+   * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.2.1
    * @see https://github.com/Open3CL/engine/issues/295
    */
   if (
@@ -376,7 +377,7 @@ function calc_umur0(di, de, du, versionDpe) {
      * intègre l'enduit. Si l'Umur du DPE vaut min(2,5 ; Umur0 avec enduit), le DPE a bien appliqué
      * l'enduit : l'Umur0 d'origine ne doit pas être conservé.
      * Garde : l'enduit isolant ne vaut que pour les parois anciennes (MATERIAUX_PAROI_ANCIENNE).
-     * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.2.1
+     * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.2.1
      * @see https://github.com/Open3CL/engine/issues/295
      */
     const enduitAppliqueDansDpe =
@@ -510,8 +511,8 @@ export default function calc_mur(mur, zc, pc_id, effetJoule, versionDpe) {
  * Vérification si le calcul des déperditions des murs utilisent, dans le DPE d'origine, une minoration à 2.5 de Umur0
  * pour l'application du doublage
  * @param type_doublage {number}
- * @param di {Donnee_intermediaire}
- * @param de {Donnee_entree}
+ * @param di {MurDI}
+ * @param de {MurDE}
  * @param umur0_avant {number}
  * @param umur_avant {number}
  */

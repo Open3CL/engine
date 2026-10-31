@@ -1,3 +1,5 @@
+/** @import { BaieVitree } from './features/dpe/domain/models/baie-vitree.model.js' */
+/** @import { Ets } from './features/dpe/domain/models/ets.model.js' */
 import enums from './enums.js';
 import tvs from './tv.js';
 import { mois_liste } from './utils.js';
@@ -41,8 +43,8 @@ export function calc_sse_j(bv_list, ets, ca, zc, mois) {
  * Certaines vérandas sont dupliquées dans les DPE : une même véranda (même référence, ou à défaut
  * même contenu) ne doit être comptée qu'une seule fois.
  *
- * @param etsList {EtsItem[]}
- * @returns {EtsItem[]}
+ * @param etsList {Ets[]}
+ * @returns {Ets[]}
  */
 export function dedoublonnerEts(etsList) {
   const vues = new Set();
@@ -64,9 +66,9 @@ export function dedoublonnerEts(etsList) {
  * rattachée à la première véranda : c'est le comportement historique, et le seul possible quand le
  * DPE ne comporte qu'une véranda. La méthode ne permet pas de faire mieux pour une donnée manquante.
  *
- * @param baiesAdjVeranda {BaieVitreeItem[]}
- * @param etsList {EtsItem[]}
- * @returns {BaieVitreeItem[][]} baies par véranda, dans l'ordre de etsList
+ * @param baiesAdjVeranda {BaieVitree[]}
+ * @param etsList {Ets[]}
+ * @returns {BaieVitree[][]} baies par véranda, dans l'ordre de etsList
  */
 export function rattacherBaiesAuxEts(baiesAdjVeranda, etsList) {
   const baiesParEts = etsList.map(() => []);
@@ -87,8 +89,8 @@ export function rattacherBaiesAuxEts(baiesAdjVeranda, etsList) {
 /**
  * Surface sud équivalente apportée par une véranda sur le mois j (§6.3).
  *
- * @param ets {EtsItem}
- * @param baiesAdjVeranda {BaieVitreeItem[]} baies séparant le logement de cette véranda
+ * @param ets {Ets}
+ * @param baiesAdjVeranda {BaieVitree[]} baies séparant le logement de cette véranda
  * @param zc {string}
  * @param mois {string}
  * @returns {number}
@@ -157,7 +159,7 @@ function calc_sse_veranda_j(ets, baiesAdjVeranda, zc, mois) {
 /**
  * Calcul de la surface sur équivalente pour la baie vitrée bv pendant le mois $mois
  *
- * @param bv {BaieVitreeItem}
+ * @param bv {BaieVitree}
  * @param zc {string} zone climatique du logement
  * @param mois {string} mois au cours duquel calculer la surface sur équivalente de la baie vitrée
  * @param coeff {number} coefficient à appliquer à cette surface sud

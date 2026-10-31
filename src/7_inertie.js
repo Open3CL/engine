@@ -1,3 +1,6 @@
+/** @import { Enveloppe } from './features/dpe/domain/models/dpe.model.js' */
+/** @import { Mur, MurDE } from './features/dpe/domain/models/mur.model.js' */
+/** @import { PlancherBas, PlancherBasDE, PlancherHaut, PlancherHautDE } from './features/dpe/domain/models/plancher.model.js' */
 import enums from './enums.js';
 import { getThicknessFromDescription, getKeyByValue } from './utils.js';
 
@@ -11,7 +14,7 @@ export class Inertie {
 
   /**
    * Return 1 if the plancher_haut has high inertia, 0 otherwise
-   * @param de {Donnee_entree}
+   * @param de {PlancherHautDE}
    * @returns {number}
    */
   calculateInertiePhLourd(de) {
@@ -37,7 +40,7 @@ export class Inertie {
 
   /**
    * Return 1 if the plancher_bas has high inertia, 0 otherwise
-   * @param de {Donnee_entree}
+   * @param de {PlancherBasDE}
    * @returns {number}
    */
   calculateInertiePbLourd(de) {
@@ -68,7 +71,7 @@ export class Inertie {
 
   /**
    * Return 1 if the mur has high inertia, 0 otherwise
-   * @param de {Donnee_entree}
+   * @param de {MurDE}
    * @returns {number}
    */
   calculateInertieMurLourd(de) {
@@ -163,7 +166,7 @@ export class Inertie {
 
   /**
    * Return 1 if the collection has high inertia (majority high inertia surface), 0 otherwise
-   * @param collection {PlancherBasItem[] || PlancherHautItem[] || MurItem[]}
+   * @param collection {PlancherBas[] | PlancherHaut[] | Mur[]}
    * @param method - method to apply on each item to get inertia type
    * @returns {number}
    */

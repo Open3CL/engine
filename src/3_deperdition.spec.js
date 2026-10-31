@@ -52,7 +52,7 @@ afterEach(() => {
 
 /**
  * 3. Déperditions de l'enveloppe : déperditions surfaciques par paroi.
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §3
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §3
  */
 describe('déperditions surfaciques par paroi (U * surface * b)', () => {
   test('Umur = surface_paroi_opaque * umur * b', () => {
@@ -106,7 +106,7 @@ describe('déperditions surfaciques par paroi (U * surface * b)', () => {
 
 /**
  * 3.4 Déperdition d'un pont thermique : Upt = l * k * pourcentage.
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.4
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.4
  */
 describe('Upt - déperdition linéique des ponts thermiques', () => {
   test("Upt = l * k lorsque le pourcentage n'est pas renseigné (défaut 1)", () => {
@@ -361,7 +361,7 @@ describe("calc_deperdition - agrégation des déperditions de l'enveloppe", () =
 
 /**
  * 3.4 Comparaison des déperditions calculées et déclarées.
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.4
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.4
  */
 describe('totalDeperditionMurs - arbitrage entre valeur calculée et déclarée', () => {
   /** Un mur unique : Umur = 10 * 0,5 * 1 = 5. */

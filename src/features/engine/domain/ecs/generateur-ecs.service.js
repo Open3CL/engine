@@ -1,3 +1,4 @@
+/** @import { GenerateurEcsDE, InstallationEcs } from '../../../dpe/domain/models/installation-ecs.model.js' */
 import { TypeStockage } from '../../../dpe/domain/models/type-stockage.model.js';
 import { inject } from 'dioma';
 import { EcsTvStore } from '../../../dpe/infrastructure/ecs/ecsTv.store.js';

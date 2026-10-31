@@ -1,3 +1,4 @@
+/** @import { FullDpe } from './features/dpe/domain/models/dpe.model.js' */
 import enums from './enums.js';
 import calc_deperdition from './3_deperdition.js';
 import calc_apport_et_besoin from './apport_et_besoin.js';

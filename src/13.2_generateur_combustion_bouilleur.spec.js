@@ -18,7 +18,7 @@ beforeEach(() => {
 /**
  * 13.1 - Les poêles à bois bouilleur sont assimilés à des chaudières bois de la
  * période correspondante.
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.1
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.1
  */
 describe('updateGenerateurBouilleurs - substitution par une chaudière bois équivalente', () => {
   test('type non concerné : aucune substitution', () => {

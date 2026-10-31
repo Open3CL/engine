@@ -3,7 +3,7 @@ import { describe, expect, test, it } from 'vitest';
 
 describe('production ENR unit tests', () => {
   /**
-   * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf Page 103
+   * @see Methode_de_calcul_3CL_DPE_2021-338.pdf Page 103
    */
   const productionENR = new ProductionENR();
 

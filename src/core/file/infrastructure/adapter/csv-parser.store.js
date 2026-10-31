@@ -1,3 +1,4 @@
+/** @import { ReadStream } from 'node:fs' */
 import { parse } from 'fast-csv';
 
 export default class CsvParserStore {
