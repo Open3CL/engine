@@ -11,6 +11,7 @@ import { BaieVitreeTvStore } from '../../../../dpe/infrastructure/enveloppe/baie
  * Méthode de calcul 3CL-DPE 2021
  * Octobre 2021
  * @see consolide_annexe_arrete_du_31_03_2021_relatif_aux_methodes_et_procedures_applicables.pdf
+ * @extends {DeperditionService<BaieVitreeTvStore>}
  */
 export class DeperditionBaieVitreeService extends DeperditionService {
   /**

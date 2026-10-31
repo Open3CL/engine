@@ -89,7 +89,7 @@ function champEnMinuscules(groupe, field) {
  * @param dpe {FullDpe}
  * @param categoryFicheTechiqueId {string}
  * @param description {string}
- * @param classifications {[string]}
+ * @param classifications {string[]}
  * @param field {'description' | 'valeur'}
  */
 export default function getFicheTechnique(

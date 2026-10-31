@@ -1,4 +1,4 @@
-/** @import { EmetteurChauffage, GenerateurChauffageDE, GenerateurChauffageDI } from './features/dpe/domain/models/installation-chauffage.model.js' */
+/** @import { EmetteurChauffage, EmetteurChauffageDI, GenerateurChauffageDE, GenerateurChauffageDI } from './features/dpe/domain/models/installation-chauffage.model.js' */
 /** @import { GenerateurEcsDE, GenerateurEcsDI, InstallationEcsDE, InstallationEcsDI } from './features/dpe/domain/models/installation-ecs.model.js' */
 import enums from './enums.js';
 import tvs from './tv.js';
@@ -287,7 +287,7 @@ function getPuissanceCirculateur(em_ch, de, di, du, surfaceHabitable, GV, Tbase)
 
   // Exposition de la longueur du réseau (lb) dans les données intermédiaires des émetteurs desservis
   em_ch.forEach((em) => {
-    em.donnee_intermediaire = em.donnee_intermediaire || {};
+    em.donnee_intermediaire = /** @type {EmetteurChauffageDI} */ (em.donnee_intermediaire || {});
     em.donnee_intermediaire.lb = Lem;
   });
 

@@ -8,17 +8,18 @@ import { TvStore } from '../../../dpe/infrastructure/tv.store.js';
 /**
  * Calcul des déperditions de l’enveloppe GV
  * @see Méthode de calcul 3CL-DPE 2021 (cotobre 2021) chapitre 3
+ * @template {TvStore} [S=TvStore] type du store de tables de valeurs (spécialisé par sous-classe)
  */
 export class DeperditionService {
   /**
-   * @type {TvStore}
+   * @type {S}
    */
   tvStore;
 
   /**
-   * @param tvStore {TvStore}
+   * @param tvStore {S}
    */
-  constructor(tvStore = inject(TvStore)) {
+  constructor(tvStore = /** @type {S} */ (inject(TvStore))) {
     this.tvStore = tvStore;
   }
 
@@ -91,7 +92,7 @@ export class DeperditionService {
    *   Si Année de construction ≤74 alors Année d’isolation = 75-77
    *   Sinon Année d’isolation = Année de construction
    *
-   * @param enumPeriodeIsolationId {number}
+   * @param enumPeriodeIsolationId {string}
    * @param ctx {Contexte}
    * @return {string} ID de la période d'isolation
    */
