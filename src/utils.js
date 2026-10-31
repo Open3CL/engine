@@ -683,8 +683,8 @@ export function containsAnySubstring(mainString, substrings) {
  *
  * @param formulaOrValue {string|number} Formule tableur ou valeur numérique.
  * @param pn {number} Puissance nominale en W.
- * @param E {number} [Coefficient forfaitaire E]
- * @param F {number} [Coefficient forfaitaire F]
+ * @param [E] {number} Coefficient forfaitaire E
+ * @param [F] {number} Coefficient forfaitaire F
  * @returns {number} Résultat de l'évaluation.
  */
 export function excel_to_js_exec(formulaOrValue, pn, E, F) {

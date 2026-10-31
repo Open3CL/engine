@@ -211,7 +211,7 @@ export class SurfaceSudEquivalenteService {
    * @param baieVitree {BaieVitree|BaieEts}
    * @param zc {string} zone climatique du logement
    * @param mois {string} mois au cours duquel calculer la surface sur équivalente de la baie vitrée
-   * @param coeff {number} coefficient à appliquer à cette surface sud
+   * @param [coeff] {number} coefficient à appliquer à cette surface sud
    * @returns {number}
    */
   ssdBaieMois(baieVitree, zc, mois, coeff) {
