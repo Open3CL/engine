@@ -1,19 +1,11 @@
-import { BaieEts } from './baie-ets.model';
-import { DE } from './dpe.model';
+// Alias des types générés depuis le XSD DPE (voir dpe-xsd.generated.ts). Les extensions propres
+// à Open3CL se déclarent ici (hors fichier généré) pour survivre à la régénération.
+import type {
+  XsdLogementEnveloppeEts,
+  XsdLogementEnveloppeEtsDonneeEntree,
+  XsdLogementEnveloppeEtsDonneeIntermediaire
+} from './dpe-xsd.generated';
 
-export interface Ets {
-  donnee_entree?: EtsDE;
-  donnee_intermediaire?: EtsDI;
-  baie_ets_collection?: { baie_ets: BaieEts[] };
-}
-
-export interface EtsDE extends DE {
-  tv_coef_reduction_deperdition_id?: number; // TV
-  enum_cfg_isolation_lnc_id?: number; // ENUM cfg_isolation_lnc
-  tv_coef_transparence_ets_id: number; // TV
-}
-
-export interface EtsDI {
-  coef_transparence_ets: number;
-  bver: number;
-}
+export type Ets = XsdLogementEnveloppeEts;
+export type EtsDE = XsdLogementEnveloppeEtsDonneeEntree;
+export type EtsDI = XsdLogementEnveloppeEtsDonneeIntermediaire;
