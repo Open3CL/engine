@@ -131,4 +131,30 @@ describe('Lecture des tables de valeurs', () => {
       ).toBe(expected);
     }
   );
+
+  describe('lecture des lignes de la table (issue #296)', () => {
+    test.each([
+      { label: 'identifiant numérique', id: 72, expected: '72' },
+      { label: 'identifiant chaîne', id: '72', expected: '72' }
+    ])('ligne via tv_pont_thermique_id ($label)', ({ id, expected }) => {
+      const ligne = tvStore.getById(id);
+      expect(ligne.tv_pont_thermique_id).toBe(expected);
+      expect(ligne.largeur_dormant).toBe('10');
+    });
+
+    test('tv_pont_thermique_id inexistant : aucune ligne', () => {
+      expect(tvStore.getById(0)).toBeUndefined();
+    });
+
+    test('ligne menuiserie / mur : même critère que getKForMenuiserie', () => {
+      const ligne = tvStore.getForMenuiserie(5, 'Non isolé', 1, undefined, 5);
+      expect(ligne.tv_pont_thermique_id).toBe('71');
+      expect(ligne.largeur_dormant).toBe('5');
+      expect(parseFloat(ligne.k)).toBe(tvStore.getKForMenuiserie(5, 'Non isolé', 1, undefined, 5));
+    });
+
+    test('ligne menuiserie / mur introuvable : undefined', () => {
+      expect(tvStore.getForMenuiserie(5, 'undefined', 1, 1, 5)).toBeUndefined();
+    });
+  });
 });

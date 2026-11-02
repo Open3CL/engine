@@ -1,7 +1,7 @@
 import { inject } from 'dioma';
 import { DeperditionService } from '../deperdition.service.js';
 import { logger } from '../../../../../core/util/logger/log-service.js';
-import { compareReferences } from '../../../../../utils.js';
+import { bug_for_bug_compat, compareReferences } from '../../../../../utils.js';
 import { DeperditionMurService } from '../mur/deperdition-mur.service.js';
 import { PontThermiqueTvStore } from '../../../../dpe/infrastructure/enveloppe/pontThermiqueTv.store.js';
 import enums from '../../../../../enums.js';
@@ -56,9 +56,10 @@ export class DeperditionPontThermiqueService extends DeperditionService {
    * @param ctx {Contexte}
    * @param enveloppe {Enveloppe}
    * @param pontThermiqueDE {PontThermiqueDE}
+   * @param kExporte {number|string|undefined} k exporté par le DPE (utilisé en mode bug_for_bug_compat, issue #296)
    * @return {PontThermiqueDI}
    */
-  execute(ctx, enveloppe, pontThermiqueDE) {
+  execute(ctx, enveloppe, pontThermiqueDE, kExporte = undefined) {
     /** @type {PontThermiqueDI} */
     const di = {
       k: undefined
@@ -76,7 +77,7 @@ export class DeperditionPontThermiqueService extends DeperditionService {
       }
     } else {
       // valeur forfaitaire
-      di.k = this.k(ctx, pontThermiqueDE, enveloppe);
+      di.k = this.k(ctx, pontThermiqueDE, enveloppe, kExporte);
     }
 
     if (di.k === undefined) {
@@ -95,9 +96,10 @@ export class DeperditionPontThermiqueService extends DeperditionService {
    * @param ctx {Contexte}
    * @param pontThermiqueDE {PontThermiqueDE}
    * @param enveloppe {Enveloppe}
+   * @param kExporte {number|string|undefined} k exporté par le DPE (mode bug_for_bug_compat, issue #296)
    * @return {number|undefined}
    */
-  k(ctx, pontThermiqueDE, enveloppe) {
+  k(ctx, pontThermiqueDE, enveloppe, kExporte = undefined) {
     if (!pontThermiqueDE.reference_1) {
       logger.error(`
         Impossible de trouver un mur ayant pour référence '${pontThermiqueDE.reference_1}' ou '${pontThermiqueDE.reference_2}'.
@@ -129,7 +131,7 @@ export class DeperditionPontThermiqueService extends DeperditionService {
       }
       // 'menuiserie / mur'
       case 5: {
-        return this.pontThermiqueMenuiserieMur(pontThermiqueDE, enveloppe, isolationMur);
+        return this.pontThermiqueMenuiserieMur(pontThermiqueDE, enveloppe, isolationMur, kExporte);
       }
       //'plancher intermédiaire lourd / mur'
       // 'refend / mur'
@@ -233,9 +235,10 @@ export class DeperditionPontThermiqueService extends DeperditionService {
    * @param pontThermiqueDE {PontThermiqueDE}
    * @param enveloppe {Enveloppe}
    * @param isolationMur {number}
+   * @param kExporte {number|string|undefined} k exporté par le DPE (mode bug_for_bug_compat, issue #296)
    * @return {number|undefined}
    */
-  pontThermiqueMenuiserieMur(pontThermiqueDE, enveloppe, isolationMur) {
+  pontThermiqueMenuiserieMur(pontThermiqueDE, enveloppe, isolationMur, kExporte = undefined) {
     const menuiserieDE = this.menuiserie(pontThermiqueDE, enveloppe);
 
     if (!menuiserieDE) {
@@ -259,13 +262,83 @@ export class DeperditionPontThermiqueService extends DeperditionService {
     const largeurDormant = menuiserieDE.largeur_dormant;
     const presenceRetourIsolation = menuiserieDE.presence_retour_isolation;
 
-    return this.tvStore.getKForMenuiserie(
+    const k = this.tvStore.getKForMenuiserie(
       5,
       enums.type_isolation[isolationMur],
       typePose,
       presenceRetourIsolation,
       largeurDormant
     );
+
+    if (bug_for_bug_compat && k !== undefined) {
+      const ligneRecalculee = this.tvStore.getForMenuiserie(
+        5,
+        enums.type_isolation[isolationMur],
+        typePose,
+        presenceRetourIsolation,
+        largeurDormant
+      );
+      const ligneDpe = this.ligneDpeSiSeulDormantDiffere(
+        ligneRecalculee,
+        pontThermiqueDE.tv_pont_thermique_id,
+        kExporte
+      );
+      if (ligneDpe) {
+        return parseFloat(ligneDpe.k);
+      }
+    }
+
+    return k;
+  }
+
+  /**
+   * Mode bug_for_bug_compat uniquement - pont thermique « menuiserie / mur »
+   *
+   * Certains logiciels (DPEWIN 3.1.x / 5.1.6, moteur 3cl_tribu_1.4.25.1) exportent une largeur de dormant
+   * (ex : 5 cm) sur la menuiserie alors que le tv_pont_thermique_id et le k exportés pour le pont thermique
+   * correspondent à la ligne d'une autre largeur de dormant (ex : 10 cm).
+   * Normativement la ligne recalculée est la bonne, mais pour rester fidèle au calcul certifié on reprend
+   * la ligne exportée par le DPE si elle ne diffère de la ligne recalculée que par la largeur du dormant
+   * et si son k est égal au k exporté.
+   *
+   * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.4.5 Menuiserie / mur
+   * @see https://github.com/Open3CL/engine/issues/296
+   *
+   * @param ligneRecalculee {object|undefined} ligne de la table pont_thermique recalculée
+   * @param tvPontThermiqueId {number|string|undefined} tv_pont_thermique_id exporté par le DPE
+   * @param kExporte {number|string|undefined} k exporté par le DPE
+   * @return {object|undefined} ligne du DPE à reprendre, undefined sinon
+   */
+  ligneDpeSiSeulDormantDiffere(ligneRecalculee, tvPontThermiqueId, kExporte) {
+    if (
+      !ligneRecalculee ||
+      tvPontThermiqueId === undefined ||
+      tvPontThermiqueId === null ||
+      kExporte === undefined ||
+      kExporte === null
+    ) {
+      return undefined;
+    }
+
+    const ligneDpe = this.tvStore.getById(tvPontThermiqueId);
+
+    if (
+      ligneDpe &&
+      ligneDpe.enum_type_liaison_id === ligneRecalculee.enum_type_liaison_id &&
+      ligneDpe.largeur_dormant &&
+      ligneDpe.largeur_dormant !== ligneRecalculee.largeur_dormant &&
+      ligneDpe.isolation_mur === ligneRecalculee.isolation_mur &&
+      ligneDpe.enum_type_pose_id === ligneRecalculee.enum_type_pose_id &&
+      ligneDpe.presence_retour_isolation === ligneRecalculee.presence_retour_isolation &&
+      Number(ligneDpe.k) === Number(kExporte)
+    ) {
+      logger.warn(
+        `Pont thermique menuiserie / mur : reprise de la ligne tv_pont_thermique_id = ${tvPontThermiqueId} du DPE (largeur de dormant ${ligneDpe.largeur_dormant} au lieu de ${ligneRecalculee.largeur_dormant})`
+      );
+      return ligneDpe;
+    }
+
+    return undefined;
   }
 
   /**

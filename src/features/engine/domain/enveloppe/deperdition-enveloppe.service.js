@@ -266,10 +266,12 @@ export class DeperditionEnveloppeService {
     }
 
     enveloppe.pont_thermique_collection.pont_thermique?.forEach((pt) => {
+      // Le k exporté par le DPE n'est utilisé qu'en mode bug_for_bug_compat (issue #296)
       pt.donnee_intermediaire = this.#deperditionPontThermiqueService.execute(
         ctx,
         enveloppe,
-        pt.donnee_entree
+        pt.donnee_entree,
+        pt.donnee_intermediaire?.k
       );
       deperditions.deperdition_pont_thermique +=
         pt.donnee_entree.l *

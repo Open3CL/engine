@@ -148,9 +148,16 @@ export class EngineService {
     dpe.logement.enveloppe.plancher_haut_collection.plancher_haut?.map(
       (m) => delete m.donnee_intermediaire
     );
-    dpe.logement.enveloppe.pont_thermique_collection.pont_thermique?.map(
-      (m) => delete m.donnee_intermediaire
-    );
+    /**
+     * Issue #296 : seul le k exporté du pont thermique est conservé. Il n'est lu qu'en mode
+     * bug_for_bug_compat (reprise de la ligne « menuiserie / mur » du DPE) et les données
+     * intermédiaires sont intégralement recalculées par DeperditionEnveloppeService.
+     */
+    dpe.logement.enveloppe.pont_thermique_collection.pont_thermique?.map((m) => {
+      if (m.donnee_intermediaire) {
+        m.donnee_intermediaire = { k: m.donnee_intermediaire.k };
+      }
+    });
     dpe.logement.enveloppe.porte_collection.porte?.map((m) => delete m.donnee_intermediaire);
     dpe.logement.climatisation_collection.climatisation?.map((m) => delete m.donnee_intermediaire);
     dpe.logement.ventilation_collection.ventilation?.map((m) => delete m.donnee_intermediaire);

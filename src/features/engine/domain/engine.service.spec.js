@@ -88,7 +88,9 @@ function dpeComplet() {
         ets_collection: { ets: { donnee_intermediaire: {} } },
         plancher_bas_collection: { plancher_bas: [{ donnee_intermediaire: {} }] },
         plancher_haut_collection: { plancher_haut: [{ donnee_intermediaire: {} }] },
-        pont_thermique_collection: { pont_thermique: [{ donnee_intermediaire: {} }] },
+        pont_thermique_collection: {
+          pont_thermique: [{ donnee_intermediaire: { k: 0.29, autre: 1 } }, {}]
+        },
         porte_collection: { porte: [{ donnee_intermediaire: {} }] }
       },
       climatisation_collection: { climatisation: [{ donnee_intermediaire: {} }] },
@@ -200,7 +202,11 @@ describe('EngineService (orchestration de la méthode 3CL)', () => {
     expect(env.ets_collection.ets.donnee_intermediaire).toBeUndefined();
     expect(env.plancher_bas_collection.plancher_bas[0].donnee_intermediaire).toBeUndefined();
     expect(env.plancher_haut_collection.plancher_haut[0].donnee_intermediaire).toBeUndefined();
-    expect(env.pont_thermique_collection.pont_thermique[0].donnee_intermediaire).toBeUndefined();
+    // Issue #296 : seul le k exporté du pont thermique est conservé (lu en bug_for_bug_compat)
+    expect(env.pont_thermique_collection.pont_thermique[0].donnee_intermediaire).toEqual({
+      k: 0.29
+    });
+    expect(env.pont_thermique_collection.pont_thermique[1].donnee_intermediaire).toBeUndefined();
     expect(env.porte_collection.porte[0].donnee_intermediaire).toBeUndefined();
 
     expect(

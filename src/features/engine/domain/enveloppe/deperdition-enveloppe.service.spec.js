@@ -135,7 +135,10 @@ describe('DeperditionEnveloppeService (§3 déperditions de l’enveloppe)', () 
       .mockReturnValueOnce({ b: 0, u_menuiserie: 2 });
 
     env.pont_thermique_collection.pont_thermique = [
-      { donnee_entree: { l: 10, pourcentage_valeur_pont_thermique: 0.5 } },
+      {
+        donnee_entree: { l: 10, pourcentage_valeur_pont_thermique: 0.5 },
+        donnee_intermediaire: { k: 0.29 }
+      },
       { donnee_entree: { l: 4 } }
     ];
     pontThermiqueService.execute.mockReturnValue({ k: 0.5 });
@@ -166,7 +169,15 @@ describe('DeperditionEnveloppeService (§3 déperditions de l’enveloppe)', () 
     expect(pontThermiqueService.execute).toHaveBeenCalledWith(
       ctx,
       env,
-      env.pont_thermique_collection.pont_thermique[0].donnee_entree
+      env.pont_thermique_collection.pont_thermique[0].donnee_entree,
+      0.29
+    );
+    // Issue #296 : le k exporté est transmis (undefined si le DPE n'en exporte pas)
+    expect(pontThermiqueService.execute).toHaveBeenCalledWith(
+      ctx,
+      env,
+      env.pont_thermique_collection.pont_thermique[1].donnee_entree,
+      undefined
     );
 
     // Surfaces transmises à la ventilation :
