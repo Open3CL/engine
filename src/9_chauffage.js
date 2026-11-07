@@ -197,13 +197,9 @@ export default function calc_chauffage(
       zc,
       principaux.includes(gen)
     );
-    /* c8 ignore next 2 -- repli défensif inatteignable : donnee_utilisateur est toujours renseignée
-       par la première boucle sur gen_ch ci-dessus */
-    /** @type {GenerateurChauffageDU} */ (
-      gen.donnee_utilisateur = gen.donnee_utilisateur || {}
-    ).nbGenerateurCascade = reseauCirculateurUnique(de.enum_cfg_installation_ch_id)
-      ? 1
-      : gen_ch.length;
+    // donnee_utilisateur est toujours renseignée par la première boucle sur gen_ch ci-dessus
+    /** @type {GenerateurChauffageDU} */ (gen.donnee_utilisateur).nbGenerateurCascade =
+      reseauCirculateurUnique(de.enum_cfg_installation_ch_id) ? 1 : gen_ch.length;
 
     calc_generateur_ch(
       dpe,
