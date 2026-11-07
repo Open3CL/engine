@@ -81,7 +81,7 @@ afterEach(() => {
 
 /**
  * 3.4 Calcul des déperditions par les ponts thermiques
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.4
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.4
  */
 describe('calc_pont_thermique - méthode de saisie directe', () => {
   test('k justifié saisi (méthode 2) : k pris directement', () => {
@@ -132,7 +132,7 @@ describe('calc_pont_thermique - valeur forfaitaire (méthode 1)', () => {
 
   /**
    * Les ponts thermiques des murs de circulation avec k intermédiaire nul restent nuls.
-   * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.4 (locaux de circulation)
+   * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.4 (locaux de circulation)
    */
   test('mur de circulation (adjacence 22) avec k intermédiaire nul : k = 0 sans accès table', () => {
     const mur = [
@@ -157,7 +157,7 @@ describe('calc_pont_thermique - valeur forfaitaire (méthode 1)', () => {
 
   /**
    * 3.4.5 Menuiserie / mur : les ponts thermiques avec les parois en structure bois sont négligés.
-   * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.4.5
+   * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.4.5
    */
   test('liaison menuiserie / mur sur structure bois : k = 0', () => {
     const mur = [
@@ -248,7 +248,7 @@ describe('defaultValue - valeur de repli sur description non reconnue', () => {
 
 /**
  * 3.4 Reconstruction des références manquantes à partir de la description.
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.4
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.4
  */
 describe('calc_pont_thermique - reconstruction des références via la description', () => {
   test('description "mur / plancher" : la référence du mur est retrouvée (liaison refend, pas de 2e paroi)', () => {
@@ -439,7 +439,7 @@ describe('calc_pont_thermique - mur de circulation avec k non nul', () => {
 
 /**
  * 3.4.1 / 3.4.3 Ponts thermiques plancher bas / mur et plancher haut lourd / mur.
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.4.1 et §3.4.3
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.4.1 et §3.4.3
  */
 describe('calc_pont_thermique - liaisons plancher / mur', () => {
   function murPlancher(murOverrides = {}, plancherOverrides = {}) {
@@ -633,7 +633,7 @@ describe('calc_pont_thermique - liaisons plancher / mur', () => {
 
 /**
  * 3.4.5 Menuiserie / mur.
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.4.5
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.4.5
  */
 describe('calc_pont_thermique - liaison menuiserie / mur', () => {
   function murMenuiserie(murOverrides = {}, menuiserieOverrides = {}) {
@@ -920,7 +920,7 @@ describe('calc_pont_thermique - cas limites', () => {
 /**
  * Issue #212 : l'exclusion des parois non déperditives s'applique aussi au plancher des liaisons
  * plancher bas / mur et plancher haut lourd / mur, pas seulement au mur.
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.4
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.4
  */
 describe('calc_pont_thermique - plancher sur paroi non déperditive (issue #212)', () => {
   /** Mur extérieur lourd isolé ITI + plancher lourd isolé ITE avec l'adjacence donnée. */

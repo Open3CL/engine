@@ -1,3 +1,5 @@
+/** @import { CaracteristiqueGenerale, Dpe } from '../../dpe/domain/models/dpe.model.js' */
+/** @import { Contexte } from './models/contexte.model.js' */
 import { TypeDpe, TypeHabitation } from '../../dpe/domain/models/type-habitation.model.js';
 import enums from '../../../enums.js';
 import { NadeqService } from './logement/nadeq.service.js';

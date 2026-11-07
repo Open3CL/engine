@@ -1,3 +1,4 @@
+/** @import { FullDpe } from './features/dpe/domain/models/dpe.model.js' */
 import enums from './enums.js';
 import calc_mur from './3.2.1_mur.js';
 import calc_pb from './3.2.2_plancher_bas.js';

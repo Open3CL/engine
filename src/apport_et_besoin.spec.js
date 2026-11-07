@@ -62,7 +62,7 @@ beforeEach(() => {
 
 /**
  * Calcul des apports et besoins (assembleur chauffage / froid / ECS)
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf
  */
 describe('calc_apport_et_besoin', () => {
   test('agrège les besoins, apports et volumes ECS (climatisation présente)', () => {

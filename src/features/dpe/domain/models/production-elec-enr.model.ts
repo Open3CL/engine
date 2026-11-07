@@ -5,7 +5,7 @@ import type {
   XsdLogementProductionElecEnrDonneeEntree,
   XsdLogementProductionElecEnrDonneeIntermediaire,
   XsdLogementProductionElecEnrPanneauxPv
-} from './dpe-xsd.generated';
+} from './dpe-xsd.generated.js';
 
 export type ProductionElecEnr = XsdLogementProductionElecEnr;
 export type ProductionElecEnrDE = XsdLogementProductionElecEnrDonneeEntree;

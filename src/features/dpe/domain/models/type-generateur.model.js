@@ -1,7 +1,8 @@
 /**
- * @type {{[key: string]: string}}
+ * Valeur de TypeGenerateur.
+ * @typedef {'CHAUDIERE' | 'OTHER'} TypeGenerateur
  */
-export const TypeGenerateur = {
+export const TypeGenerateur = /** @type {const} */ ({
   CHAUDIERE: 'CHAUDIERE',
   OTHER: 'OTHER'
-};
+});

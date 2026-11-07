@@ -45,7 +45,7 @@ function plancherHaut({ typeAdjacence = 'extérieur', typeIsolation = 'isolé' }
 
 /**
  * Indicateur de confort d'été
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - annexe confort d'été
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - annexe confort d'été
  */
 describe("calc_confort_ete - indicateur de confort d'été", () => {
   test('inertie lourde + aspect traversant : niveau « bon »', () => {

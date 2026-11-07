@@ -1,3 +1,5 @@
+/** @import { PlancherHautDE, PlancherHautDI } from '../../../../dpe/domain/models/plancher.model.js' */
+/** @import { Contexte } from '../../models/contexte.model.js' */
 import { inject } from 'dioma';
 import { PRECISION } from '../../constants.js';
 import { DeperditionService } from '../deperdition.service.js';
@@ -9,7 +11,7 @@ import { TvStore } from '../../../../dpe/infrastructure/tv.store.js';
  *
  * Méthode de calcul 3CL-DPE 2021
  * Octobre 2021
- * @see consolide_anne…arrete_du_31_03_2021_relatif_aux_methodes_et_procedures_applicables.pdf
+ * @see consolide_annexe_arrete_du_31_03_2021_relatif_aux_methodes_et_procedures_applicables.pdf
  */
 export class DeperditionPlancherHautService extends DeperditionService {
   /**
@@ -119,7 +121,7 @@ export class DeperditionPlancherHautService extends DeperditionService {
    * @see Méthode de calcul 3CL-DPE 2021 (cotobre 2021) chapitre 3.2.3.1
    * "Lorsque le local au-dessus du logement est un local non chauffé, ou un local autre que d’habitation., Uph_tab est pris dans la catégorie « Terrasse »."
    * @param phDE {PlancherHautDE}
-   * @return {'combles'|'terasse'}
+   * @return {'combles'|'terrasse'}
    */
   #getTypeAdjacence(phDE) {
     switch (phDE.enum_type_adjacence_id) {

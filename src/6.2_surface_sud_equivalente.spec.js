@@ -51,7 +51,7 @@ function baie({ adjacence, surface, orientationId = '1', inclinaisonId = '3', sw
 
 /**
  * 6.2 Calcul de la surface sud équivalente (SSE)
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §6.2 / §6.3
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §6.2 / §6.3
  */
 describe('calc_sse_j - surface sud équivalente journalière', () => {
   test("sans espace tampon : somme sur les baies donnant sur l'extérieur", () => {
@@ -143,7 +143,7 @@ describe('calc_sse_j - surface sud équivalente journalière', () => {
  * Issue #140 : la surface sud équivalente véranda (Sse_ver = Ssd + Ssind * bver) n'est calculée que
  * pour les baies vitrées séparant le logement de l'espace tampon solarisé (adjacence 10).
  * Sans aucune de ces baies, les apports de l'ETS n'entrent pas dans le logement => Sse_ver = 0.
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §6.3
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §6.3
  */
 describe('calc_sse_j - espace tampon solarisé sans baie séparant le logement de l’ETS', () => {
   /** Fabrique un espace tampon solarisé avec une baie donnant sur l'extérieur. */
@@ -225,7 +225,7 @@ describe('calc_sse - surface sud équivalente annuelle', () => {
  * sur laquelle elle donne (reference_lnc = ets.reference).
  * Cas de test fournis par Olivier (thermicien), zone h1b mockée avec C1 sud = 1, est = 0,40,
  * nord = 0,31 ; Fe = 1.
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §6.3
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §6.3
  */
 describe('calc_sse_j - plusieurs espaces tampons solarisés (issue #101)', () => {
   const SUD = '1';

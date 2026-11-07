@@ -1,9 +1,12 @@
+/** @import { FullDpe } from './features/dpe/domain/models/dpe.model.js' */
+/** @import { GenerateurChauffageDE } from './features/dpe/domain/models/installation-chauffage.model.js' */
+/** @import { GenerateurEcsDE } from './features/dpe/domain/models/installation-ecs.model.js' */
 import getFicheTechnique from './ficheTechnique.js';
 
 /**
  * Pour les générateurs "poêles à bois bouilleur", les calculs sont faits comme pour les chaudières bois
  * @param dpe {FullDpe}
- * @param de {Donnee_entree}
+ * @param de {GenerateurChauffageDE|GenerateurEcsDE}
  * @param type {'ch' | 'ecs'}
  */
 export function updateGenerateurBouilleurs(dpe, de, type) {
@@ -121,7 +124,7 @@ export function updateGenerateurBouilleurs(dpe, de, type) {
  *  - Pour un poêle à bois bouilleur bûche installé avant 1948, on prendra la chaudière bois bûche avant 1978
  * @param dpe {FullDpe}
  * @param ids
- * @param de {Donnee_entree}
+ * @param de {GenerateurChauffageDE|GenerateurEcsDE}
  * @param type {'ch' | 'ecs'}
  */
 function updateGenerateurBouilleur(dpe, ids, de, type) {

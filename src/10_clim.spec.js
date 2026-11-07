@@ -31,7 +31,7 @@ beforeEach(() => {
 
 /**
  * 10. Calcul de la consommation de climatisation (froid)
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §10
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §10
  */
 describe('calc_clim - consommation de climatisation', () => {
   test('prorate le besoin de froid au ratio surface_clim / Sh', () => {
@@ -69,14 +69,10 @@ describe('calc_clim - consommation de climatisation', () => {
 
     calc_clim(c, 1000, 1500, '2', 100);
 
-    expect(tv).toHaveBeenCalledWith(
-      'seer',
-      {
-        enum_zone_climatique_id: '2',
-        enum_periode_installation_fr_id: '4'
-      },
-      c.donnee_entree
-    );
+    expect(tv).toHaveBeenCalledWith('seer', {
+      enum_zone_climatique_id: '2',
+      enum_periode_installation_fr_id: '4'
+    });
   });
 
   test.each([['6'], ['7'], ['8']])(

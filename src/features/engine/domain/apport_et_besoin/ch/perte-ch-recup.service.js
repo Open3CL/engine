@@ -1,3 +1,7 @@
+/** @import { Logement } from '../../../../dpe/domain/models/dpe.model.js' */
+/** @import { GenerateurChauffage } from '../../../../dpe/domain/models/installation-chauffage.model.js' */
+/** @import { GenerateurEcs, GenerateurEcsDE, GenerateurEcsDI } from '../../../../dpe/domain/models/installation-ecs.model.js' */
+/** @import { Contexte } from '../../models/contexte.model.js' */
 import { mois_liste } from '../../../../../utils.js';
 import { inject } from 'dioma';
 import { FrTvStore } from '../../../../dpe/infrastructure/froid/frTv.store.js';
@@ -12,7 +16,7 @@ import { FrTvStore } from '../../../../dpe/infrastructure/froid/frTv.store.js';
  *
  * Methode_de_calcul_3CL_DPE_2021 - Page 57
  * Octobre 2021
- * @see consolide_anne…arrete_du_31_03_2021_relatif_aux_methodes_et_procedures_applicables.pdf
+ * @see consolide_annexe_arrete_du_31_03_2021_relatif_aux_methodes_et_procedures_applicables.pdf
  */
 export class PerteChRecupService {
   /**
@@ -93,8 +97,10 @@ export class PerteChRecupService {
 
     return installationsEcs.flatMap((installation) =>
       (installation.generateur_ecs_collection?.generateur_ecs || []).filter((generateurEcs) => {
-        const generateurEcsDE = generateurEcs.donnee_entree || {};
-        const generateurEcsDI = generateurEcs.donnee_intermediaire || {};
+        const generateurEcsDE = /** @type {GenerateurEcsDE} */ (generateurEcs.donnee_entree || {});
+        const generateurEcsDI = /** @type {GenerateurEcsDI} */ (
+          generateurEcs.donnee_intermediaire || {}
+        );
         return (
           Number(generateurEcsDI.qp0 || 0) > 0 &&
           Number(generateurEcsDE.position_volume_chauffe ?? 0) === 1 &&

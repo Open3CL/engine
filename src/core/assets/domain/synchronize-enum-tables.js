@@ -1,3 +1,5 @@
+/** @import { ApplicationConfig } from '../../conf/infrastructure/application.config.js' */
+/** @import { FileStore } from '../../file/infrastructure/adapter/file.store.js' */
 /**
  * Download the `enum_tables.xlsx` file from the official ademe repository and generates a new `enums.js` file
  * Please see @link https://gitlab.com/observatoire-dpe/observatoire-dpe/-/tree/master

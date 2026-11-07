@@ -3,7 +3,7 @@ import { describe, expect, test } from 'vitest';
 
 describe("Recherche de bugs dans le calcul de l'apport gratuit", () => {
   /**
-   * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf Page 43
+   * @see Methode_de_calcul_3CL_DPE_2021-338.pdf Page 43
    */
   test('calcul de f apport solaire', () => {
     const ilpa = '0';
@@ -165,7 +165,7 @@ describe("Recherche de bugs dans le calcul de l'apport gratuit", () => {
   });
 
   /**
-   * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf Page 43
+   * @see Methode_de_calcul_3CL_DPE_2021-338.pdf Page 43
    */
   test('calcul de f apport interne', () => {
     const ilpa = '0';

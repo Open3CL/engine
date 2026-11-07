@@ -26,7 +26,7 @@ beforeEach(() => {
 
 /**
  * 12.4 - Détermination du SCOP / COP des pompes à chaleur.
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §12.4
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §12.4
  */
 describe('scopOrCop - méthode de saisie "caractéristiques saisies" (id 6)', () => {
   test('SCOP renseigné : rg et rg_dep prennent la valeur du SCOP sans accès à la table', () => {
@@ -55,14 +55,10 @@ describe('scopOrCop - valeur forfaitaire (table scop)', () => {
 
     scopOrCop(di, de, {}, 'h1a', null, 'ch');
 
-    expect(tv).toHaveBeenCalledWith(
-      'scop',
-      {
-        enum_zone_climatique_id: 'h1a',
-        enum_type_generateur_ch_id: '160'
-      },
-      de
-    );
+    expect(tv).toHaveBeenCalledWith('scop', {
+      enum_zone_climatique_id: 'h1a',
+      enum_type_generateur_ch_id: '160'
+    });
     expect(di.scop).toBe(4.2);
     expect(di.rg).toBe(4.2);
     expect(di.rg_dep).toBe(4.2);
@@ -76,15 +72,11 @@ describe('scopOrCop - valeur forfaitaire (table scop)', () => {
 
     scopOrCop(di, de, {}, 'h2b', '5', 'ecs');
 
-    expect(tv).toHaveBeenCalledWith(
-      'scop',
-      {
-        enum_zone_climatique_id: 'h2b',
-        enum_type_generateur_ecs_id: '10',
-        enum_type_emission_distribution_id: '5'
-      },
-      de
-    );
+    expect(tv).toHaveBeenCalledWith('scop', {
+      enum_zone_climatique_id: 'h2b',
+      enum_type_generateur_ecs_id: '10',
+      enum_type_emission_distribution_id: '5'
+    });
     // scop_ou_cop vaut 'cop' : la valeur est stockée sous di.cop
     expect(di.cop).toBe(3.1);
     expect(di.rg).toBe(3.1);

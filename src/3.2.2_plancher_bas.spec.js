@@ -61,7 +61,7 @@ beforeEach(() => {
 
 /**
  * 3.2.2 Coefficient de transmission des planchers bas (Upb)
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.2.2
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.2.2
  */
 describe('calc_pb - plancher non isolé (methode 1)', () => {
   test('Upb égal à Upb0 (paroi nue) et adjacence non déperditive => upb_final = upb', () => {
@@ -216,8 +216,7 @@ describe('calc_pb - isolation inconnue / table forfaitaire (methodes 2 et 7)', (
     // La période d'isolation renseignée est utilisée comme période de la table
     expect(tv).toHaveBeenCalledWith(
       'upb',
-      expect.objectContaining({ enum_periode_construction_id: '6' }),
-      pb.donnee_entree
+      expect.objectContaining({ enum_periode_construction_id: '6' })
     );
     // min(0,3 ; 2) = 0,3
     expect(pb.donnee_intermediaire.upb).toBe(0.3);
@@ -237,8 +236,7 @@ describe('calc_pb - isolation inconnue / table forfaitaire (methodes 2 et 7)', (
 
     expect(tv).toHaveBeenCalledWith(
       'upb',
-      expect.objectContaining({ enum_periode_construction_id: '5' }),
-      pb.donnee_entree
+      expect.objectContaining({ enum_periode_construction_id: '5' })
     );
   });
 
@@ -278,8 +276,7 @@ describe('calc_pb - année de construction saisie (methode 8)', () => {
 
     expect(tv).toHaveBeenCalledWith(
       'upb',
-      expect.objectContaining({ enum_periode_construction_id: '6' }),
-      pb.donnee_entree
+      expect.objectContaining({ enum_periode_construction_id: '6' })
     );
     warn.mockRestore();
   });
@@ -305,8 +302,7 @@ describe('calc_pb - année de construction saisie (methode 8)', () => {
       // getKeyByValue(periode_isolation, '1975-1977') = '2' (différent de pc_id) => avertissement
       expect(tv).toHaveBeenCalledWith(
         'upb',
-        expect.objectContaining({ enum_periode_construction_id: '2' }),
-        pb.donnee_entree
+        expect.objectContaining({ enum_periode_construction_id: '2' })
       );
       expect(warn).toHaveBeenCalled();
       warn.mockRestore();
@@ -346,8 +342,7 @@ describe('calc_pb - année de construction saisie (methode 8)', () => {
     // Le dernier appel forfaitaire utilise la période de construction d'origine ('1')
     expect(tv).toHaveBeenLastCalledWith(
       'upb',
-      expect.objectContaining({ enum_periode_construction_id: '1' }),
-      pb.donnee_entree
+      expect.objectContaining({ enum_periode_construction_id: '1' })
     );
     warn.mockRestore();
     error.mockRestore();
@@ -368,8 +363,7 @@ describe('calc_pb - année de construction saisie (methode 8)', () => {
 
     expect(tv).toHaveBeenCalledWith(
       'upb',
-      expect.objectContaining({ enum_periode_construction_id: '5' }),
-      pb.donnee_entree
+      expect.objectContaining({ enum_periode_construction_id: '5' })
     );
     expect(warn).not.toHaveBeenCalled();
     warn.mockRestore();
@@ -498,11 +492,7 @@ describe('calc_pb - compatibilité bug for bug (forçage de la méthode de saisi
 
     expect(error).toHaveBeenCalledWith(expect.stringContaining('effet_joule'));
     // Le matcher forfaitaire final utilise l'effet Joule '1' issu du DPE
-    expect(tv).toHaveBeenLastCalledWith(
-      'upb',
-      expect.objectContaining({ effet_joule: '1' }),
-      pb.donnee_entree
-    );
+    expect(tv).toHaveBeenLastCalledWith('upb', expect.objectContaining({ effet_joule: '1' }));
     error.mockRestore();
   });
 
@@ -531,7 +521,7 @@ describe('calc_pb - compatibilité bug for bug (forçage de la méthode de saisi
 
 /**
  * Calcul de la déperdition Ue vers un plancher bas sur terre-plein / vide sanitaire / sous-sol.
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.2.2 (Ue)
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.2.2 (Ue)
  */
 describe('calc_pb - calcul de Ue (tv_ue)', () => {
   /** Renvoie une ue interpolée selon la valeur de upb du matcher. */
@@ -658,7 +648,7 @@ describe('calc_pb - calcul de Ue (tv_ue)', () => {
 
   /**
    * Issue #46 : ue calculé plancher par plancher, 2S/P issu du seul plancher courant.
-   * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.2.2 (tableau ue : « Les données ne figurant
+   * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.2.2 (tableau ue : « Les données ne figurant
    * pas dans le tableau peuvent être obtenues par interpolation et extrapolation »)
    */
   describe('calcul plancher par plancher (#46)', () => {

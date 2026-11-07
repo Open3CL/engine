@@ -54,7 +54,7 @@ afterEach(() => {
 
 /**
  * 3.1 Coefficient de réduction des déperditions (b)
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.1
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.1
  */
 describe('findRanges - encadrement du rapport surface_aiu / surface_aue', () => {
   const ranges = [0.25, 0.5, 0.75, 1, 1.25, 2, 2.5, 3, 3.5, 4, 6, 8, 10, 25, 50];

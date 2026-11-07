@@ -1,3 +1,5 @@
+/** @import { VentilationDE, VentilationDI } from '../../../../dpe/domain/models/ventilation.model.js' */
+/** @import { Contexte } from '../../models/contexte.model.js' */
 import { DeperditionService } from '../deperdition.service.js';
 
 import { logger } from '../../../../../core/util/logger/log-service.js';
@@ -11,7 +13,7 @@ import { TypeVentilation } from '../../../../dpe/domain/models/type-ventilation.
  *
  * Méthode de calcul 3CL-DPE 2021
  * Octobre 2021
- * @see consolide_anne…arrete_du_31_03_2021_relatif_aux_methodes_et_procedures_applicables.pdf
+ * @see consolide_annexe_arrete_du_31_03_2021_relatif_aux_methodes_et_procedures_applicables.pdf
  */
 export class DeperditionVentilationService extends DeperditionService {
   /**

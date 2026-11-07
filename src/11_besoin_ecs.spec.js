@@ -23,7 +23,7 @@ const { default: calc_besoin_ecs, calc_besoin_ecs_j } = await import('./11_besoi
 
 /**
  * 11. Calcul du besoin d'eau chaude sanitaire (Becs)
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §11
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §11
  */
 describe('calc_besoin_ecs_j - besoin ECS journalier', () => {
   test('valeur de référence en mode conventionnel (56 L/j/personne)', () => {

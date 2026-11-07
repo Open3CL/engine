@@ -9,7 +9,7 @@ const { default: calc_qualite_isolation, qualite_isol } =
 
 /**
  * Qualité de l'isolation
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - annexe qualité d'isolation
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - annexe qualité d'isolation
  */
 describe('qualite_isol - classement selon les seuils U', () => {
   const seuils = [0.3, 0.45, 0.65];
@@ -123,7 +123,7 @@ describe('calc_qualite_isolation - agrégation et classement', () => {
   /**
    * Ubat est un coefficient de transmission surfacique moyen : il exclut les
    * déperditions par renouvellement d'air (DR).
-   * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - annexe 8 / issue #45
+   * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - annexe 8 / issue #45
    */
   test("les déperditions par renouvellement d'air (DR) ne sont pas prises en compte dans ubat", () => {
     const env = enveloppe({

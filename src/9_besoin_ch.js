@@ -1,3 +1,5 @@
+/** @import { GenerateurChauffage } from './features/dpe/domain/models/installation-chauffage.model.js' */
+/** @import { GenerateurEcs } from './features/dpe/domain/models/installation-ecs.model.js' */
 import enums from './enums.js';
 import tvs from './tv.js';
 import { calc_besoin_ecs_j } from './11_besoin_ecs.js';
@@ -99,7 +101,7 @@ export default function calc_besoin_ch(
    * Seules les pertes des générateurs et des ballons de stockage en volume chauffé sont récupérables. Les pertes
    * récupérées des générateurs d’air chaud sont nulles.
    *
-   * @type {GenerateurChauffageItem[]}
+   * @type {GenerateurChauffage[]}
    */
   const gen_ch_recup = instal_ch.flatMap((inst_ch) =>
     inst_ch.generateur_chauffage_collection.generateur_chauffage.filter(
@@ -112,9 +114,9 @@ export default function calc_besoin_ch(
    * 9.1.1 - Générateurs de la collection ECS assurant l'ECS uniquement, avec Qp0 > 0 et situés en
    * volume chauffé : leurs pertes de génération sont aussi récupérées pour le chauffage.
    * Les générateurs 'chauffage + ecs' sont exclus car déjà présents dans la collection chauffage.
-   * @see issue #153
+   * @see issue 153
    *
-   * @type {GenerateurEcsItem[]}
+   * @type {GenerateurEcs[]}
    */
   const gen_ecs_recup = instal_ecs.flatMap((inst_ecs) =>
     (inst_ecs.generateur_ecs_collection?.generateur_ecs || []).filter(

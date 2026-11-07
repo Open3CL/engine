@@ -1,3 +1,5 @@
+/** @import { ApplicationConfig } from '../../conf/infrastructure/application.config.js' */
+/** @import { FileStore } from '../../file/infrastructure/adapter/file.store.js' */
 import { set } from 'lodash-es';
 
 const ZONE_CLIMATIQUE_PROPERTY = 'zc';

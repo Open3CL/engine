@@ -4,7 +4,7 @@ import type {
   XsdLogementClimatisation,
   XsdLogementClimatisationDonneeEntree,
   XsdLogementClimatisationDonneeIntermediaire
-} from './dpe-xsd.generated';
+} from './dpe-xsd.generated.js';
 
 export interface Climatisation extends Omit<XsdLogementClimatisation, 'donnee_intermediaire'> {
   donnee_intermediaire?: ClimatisationDI;

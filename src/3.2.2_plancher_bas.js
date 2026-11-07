@@ -9,7 +9,7 @@ function tv_upb0(di, de, du) {
   const matcher = {
     enum_type_plancher_bas_id: de.enum_type_plancher_bas_id
   };
-  const row = tv('upb0', matcher, de);
+  const row = tv('upb0', matcher);
   if (row) {
     di.upb0 = Number(row.upb0);
     de.tv_upb0_id = Number(row.tv_upb0_id);
@@ -44,7 +44,7 @@ function tv_upb(di, de, du, pc_id, zc, effetJoule) {
     enum_zone_climatique_id: zc,
     effet_joule: effetJoule
   };
-  const row = tv('upb', matcher, de);
+  const row = tv('upb', matcher);
   if (row) {
     di.upb = Number(row.upb);
     de.tv_upb_id = Number(row.tv_upb_id);
@@ -61,7 +61,7 @@ const values_2s_p = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16, 18, 20];
  * (perimetre_ue) du seul plancher courant, sans sommer les autres planchers de même adjacence.
  * Les valeurs absentes du tableau sont obtenues par interpolation linéaire sur upb.
  *
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.2.2 (tableau ue)
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.2.2 (tableau ue)
  */
 function tv_ue(di, de, du, pc_id) {
   const type_adjacence = enums.type_adjacence[de.enum_type_adjacence_id];
@@ -84,6 +84,7 @@ function tv_ue(di, de, du, pc_id) {
   const surfaceUe = de.surface_ue || de.surface_paroi_opaque;
   const perimetreUe = de.perimetre_ue || 0;
 
+  /** @type {Record<string, any>} `2s_p` est d'abord numérique puis devient une regex (chaîne) */
   const matcher = {
     type_adjacence_plancher,
     '2s_p': Math.round((2 * surfaceUe) / perimetreUe)

@@ -11,19 +11,19 @@ import type {
   XsdLogementEnveloppe,
   XsdLogementMeteo,
   XsdTAdresse
-} from './dpe-xsd.generated';
-import type { BaieVitree } from './baie-vitree.model';
-import type { Climatisation } from './climatisation.model';
-import type { Ets } from './ets.model';
-import type { InstallationChauffage } from './installation-chauffage.model';
-import type { InstallationEcs } from './installation-ecs.model';
-import type { Mur } from './mur.model';
-import type { PlancherBas, PlancherHaut } from './plancher.model';
-import type { PontThermique } from './pont-thermique.model';
-import type { Porte } from './porte.model';
-import type { ProductionElecEnr } from './production-elec-enr.model';
-import type { Sortie } from './sortie.model';
-import type { Ventilation } from './ventilation.model';
+} from './dpe-xsd.generated.js';
+import type { BaieVitree } from './baie-vitree.model.js';
+import type { Climatisation } from './climatisation.model.js';
+import type { Ets } from './ets.model.js';
+import type { InstallationChauffage } from './installation-chauffage.model.js';
+import type { InstallationEcs } from './installation-ecs.model.js';
+import type { Mur } from './mur.model.js';
+import type { PlancherBas, PlancherHaut } from './plancher.model.js';
+import type { PontThermique } from './pont-thermique.model.js';
+import type { Porte } from './porte.model.js';
+import type { ProductionElecEnr } from './production-elec-enr.model.js';
+import type { Sortie } from './sortie.model.js';
+import type { Ventilation } from './ventilation.model.js';
 
 // Types issus du XSD (générés) : voir dpe-xsd.generated.ts
 export type Administratif = XsdAdministratif;
@@ -124,15 +124,8 @@ export interface DE {
   reference?: string;
 }
 
-export enum TypeHabitation {
-  MAISON = 'MAISON',
-  APPARTEMENT = 'APPARTEMENT',
-  IMMEUBLE = 'IMMEUBLE'
-}
-export enum TypeDpe {
-  MAISON = 'MAISON',
-  APPARTEMENT = 'APPARTEMENT',
-  IMMEUBLE = 'IMMEUBLE'
-}
+/** Types définis à l'exécution dans type-habitation.model.js. */
+export type TypeHabitation = 'MAISON' | 'APPARTEMENT' | 'IMMEUBLE';
+export type TypeDpe = 'MAISON' | 'APPARTEMENT' | 'APPARTEMENT_A_PARTIR_IMMEUBLE' | 'IMMEUBLE';
 
 export type FullDpe = Dpe;

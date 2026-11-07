@@ -20,7 +20,7 @@ beforeEach(() => {
 /**
  * 13.2 - Les "autres systèmes à combustion" sont assimilés à des chaudières standard
  * de la période correspondante.
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2
  */
 describe('updateGenerateurChaudieres - substitution par une chaudière équivalente', () => {
   test('type non concerné : aucune substitution, pas de champ previous', () => {
@@ -108,7 +108,7 @@ describe('findIdForAnnee - sélection de la période', () => {
 /**
  * Système collectif par défaut (ch 119 / ecs 84) : chaudière atmosphérique mixte standard
  * datant de la construction du bâtiment, énergie fioul.
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §17.2.1.1
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §17.2.1.1
  */
 describe('getChaudiereFioulDefautId - chaudière fioul par défaut selon l’année de construction', () => {
   const dpe = (annee) => ({

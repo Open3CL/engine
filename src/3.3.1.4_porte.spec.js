@@ -27,7 +27,7 @@ beforeEach(() => {
 
 /**
  * 3.3.1.4 Coefficient de transmission surfacique des portes (Uporte)
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.3.1.4
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.3.1.4
  */
 describe('calc_porte - coefficient de transmission des portes', () => {
   test('valeur forfaitaire : Uporte lu dans la table via le type de porte', () => {
@@ -42,7 +42,7 @@ describe('calc_porte - coefficient de transmission des portes', () => {
 
     calc_porte(porte, 1);
 
-    expect(tv).toHaveBeenCalledWith('uporte', { enum_type_porte_id: '3' }, porte.donnee_entree);
+    expect(tv).toHaveBeenCalledWith('uporte', { enum_type_porte_id: '3' });
     expect(porte.donnee_intermediaire.uporte).toBe(2.4);
     expect(porte.donnee_entree.tv_uporte_id).toBe(15);
   });

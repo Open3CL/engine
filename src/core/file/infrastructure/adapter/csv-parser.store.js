@@ -1,10 +1,11 @@
+/** @import { ReadStream } from 'node:fs' */
 import { parse } from 'fast-csv';
 
 export default class CsvParserStore {
   /**
    * @param stream {ReadStream}
    * @param opts {import('fast-csv').ParserOptionsArgs}
-   * @param transform {import('fast-csv').RowTransformFunction}
+   * @param transform {import('fast-csv').ParserRowTransformFunction<any, any>}
    * @return Promise<object[]>
    */
   parseFromStream(stream, opts, transform) {

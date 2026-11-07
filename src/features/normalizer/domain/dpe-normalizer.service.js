@@ -1,3 +1,4 @@
+/** @import { Dpe } from '../../dpe/domain/models/dpe.model.js' */
 import { DpePreProcessor } from '../../../preprocessor/index.js';
 
 /**

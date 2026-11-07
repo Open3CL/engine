@@ -1,9 +1,11 @@
+/** @import { GenerateurChauffageDE, GenerateurChauffageDI } from './features/dpe/domain/models/installation-chauffage.model.js' */
+/** @import { GenerateurEcsDE, GenerateurEcsDI } from './features/dpe/domain/models/installation-ecs.model.js' */
 import { requestInputID, tv } from './utils.js';
 
 /**
  * Calcul ou récupération des paramètres scop ou cop
- * @param di {Donnee_intermediaire}
- * @param de {Donnee_entree}
+ * @param di {GenerateurChauffageDI|GenerateurEcsDI}
+ * @param de {GenerateurChauffageDE|GenerateurEcsDE}
  * @param du {Object}
  * @param zc_id {string}
  * @param ed_id {string|null}
@@ -31,7 +33,7 @@ function tv_scop(di, de, du, zc_id, ed_id, type) {
   };
   matcher[`enum_type_generateur_${type}_id`] = requestInputID(de, du, `type_generateur_${type}`);
   if (ed_id) matcher.enum_type_emission_distribution_id = ed_id;
-  const row = tv('scop', matcher, de);
+  const row = tv('scop', matcher);
   if (row) {
     const scop = row.scop_ou_cop;
     di[scop] = Number(row.scop);

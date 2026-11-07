@@ -1,3 +1,5 @@
+/** @import { Logement } from './features/dpe/domain/models/dpe.model.js' */
+/** @import { InstallationChauffage } from './features/dpe/domain/models/installation-chauffage.model.js' */
 import enums from './enums.js';
 import tvs from './tv.js';
 import { set } from 'lodash-es';
@@ -522,7 +524,7 @@ export function getThicknessFromDescription(description) {
  * - Déperdition pour $type === 0 (donne probablement sur un autre local chauffé)
  * @param logement {Logement}
  * @param type {string}
- * @param enum_type_liaison_id {number}
+ * @param enum_type_liaison_id {string}
  * @returns {boolean}
  */
 export function collectionCanBeEmpty(logement, type, enum_type_liaison_id) {
@@ -612,7 +614,7 @@ export function compareReferences(reference1, reference2) {
  * Vérification si le chauffage est par effet joule
  * 3.2 Calcul des U des parois opaques
  * On considère qu’un logement est chauffé par effet joule lorsque la chaleur est fournie par une résistance électrique.
- * @param instal_ch {InstallationChauffageItem[]}
+ * @param instal_ch {InstallationChauffage[]}
  * @returns {string} 1 if effet joule, 0 otherwise
  */
 export function isEffetJoule(instal_ch) {
@@ -682,8 +684,8 @@ export function containsAnySubstring(mainString, substrings) {
  *
  * @param formulaOrValue {string|number} Formule tableur ou valeur numérique.
  * @param pn {number} Puissance nominale en W.
- * @param E {number} [Coefficient forfaitaire E]
- * @param F {number} [Coefficient forfaitaire F]
+ * @param [E] {number} Coefficient forfaitaire E
+ * @param [F] {number} Coefficient forfaitaire F
  * @returns {number} Résultat de l'évaluation.
  */
 export function excel_to_js_exec(formulaOrValue, pn, E, F) {
@@ -712,8 +714,8 @@ export function convertExpression(expression) {
  * Retourne les valeurs qui encadrent inputNumber dans ranges
  * Si inputNumber est présent dans ranges, inputNumber est retourné comme borne 1 et borne 2
  *
- * @param inputNumber {float}
- * @param ranges {number[]}
+ * @param inputNumber {number}
+ * @param ranges {any[]} bornes (nombres, ou chaînes numériques issues des tables de valeurs)
  * @returns {*[]}
  */
 export function getRange(inputNumber, ranges) {

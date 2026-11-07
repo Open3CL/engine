@@ -3,7 +3,7 @@ import { describe, expect, test } from 'vitest';
 
 describe('Inertie unit tests', () => {
   /**
-   * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf Page 53
+   * @see Methode_de_calcul_3CL_DPE_2021-338.pdf Page 53
    */
   const inertie = new Inertie();
 

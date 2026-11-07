@@ -173,13 +173,13 @@ export function valeurChaudiereMurale(valeur) {
  *    majoritairement murales), première sinon.
  *
  * @param params {{
- *   pch: number,                      Pch (W), déjà proratisée à la surface desservie
- *   volumeStockage?: number|string,   Vs (L) de la production d'ECS assurée par le générateur
- *   usageEcs?: boolean,               le générateur produit de l'ECS (usage ECS ou mixte)
- *   usageChauffage?: boolean,         le générateur assure le chauffage (défaut true)
+ *   pch: number,                      // Pch (W), déjà proratisée à la surface desservie
+ *   volumeStockage?: number|string,   // Vs (L) de la production d'ECS assurée par le générateur
+ *   usageEcs?: boolean,               // le générateur produit de l'ECS (usage ECS ou mixte)
+ *   usageChauffage?: boolean,         // le générateur assure le chauffage (défaut true)
  *   libelleTypeGenerateur?: string,
- *   murale?: boolean,                 pose murale (undefined si inconnue)
- *   anneeInstallation?: number        année d'installation (undefined si inconnue)
+ *   murale?: boolean,                 // pose murale (undefined si inconnue)
+ *   anneeInstallation?: number        // année d'installation (undefined si inconnue)
  * }}
  * @returns {number} Pn (W)
  */
