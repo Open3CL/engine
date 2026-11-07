@@ -16,7 +16,7 @@ const { default: rendement_distribution_ecs } = await import('./13_rendement_dis
 
 /**
  * 13. Rendement de distribution de l'ECS
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §13
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §13
  */
 describe('rendement_distribution_ecs', () => {
   test('ne retourne aucune valeur (fonction sans effet de sortie)', () => {

@@ -1,3 +1,4 @@
+/** @import { Dpe } from '../features/dpe/domain/models/dpe.model.js' */
 /**
  * Pré-traitement du DPE d'entrée.
  *

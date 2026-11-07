@@ -1,3 +1,5 @@
+/** @import { EmetteurChauffage, GenerateurChauffageDE, GenerateurChauffageDI } from './features/dpe/domain/models/installation-chauffage.model.js' */
+/** @import { GenerateurEcsDE, GenerateurEcsDI, InstallationEcsDE, InstallationEcsDI } from './features/dpe/domain/models/installation-ecs.model.js' */
 import enums from './enums.js';
 import tvs from './tv.js';
 import { mois_liste, Njj, Tbase } from './utils.js';
@@ -11,8 +13,8 @@ const H_CHAUDIERE_BOIS = 10.5;
 
 /**
  * 15.1 Consommation des auxiliaires de génération
- * @param di {Donnee_intermediaire}
- * @param de {Donnee_entree}
+ * @param di {GenerateurChauffageDI|GenerateurEcsDI}
+ * @param de {GenerateurChauffageDE|GenerateurEcsDE}
  * @param type {'ecs'|'ch'}
  * @param besoin {number} Besoin en chauffage ou ecs pour ce générateur
  * @param besoin_dep {number} Besoin en chauffage ou ecs pour ce générateur (mode dépensier)
@@ -31,7 +33,7 @@ export function conso_aux_gen(di, de, type, besoin, besoin_dep) {
    * nominale réelle du générateur, comme le moteur de référence CSTB (Tribu) et comme le calcul
    * dépensier. Autotests CSTB APP3-0-3 (chaudière bois collective 150 kW, Tribu Qaux_ch =
    * 13,27 kWh) et IC4-0-1 (chaudière bois 300 kW, Tribu Qaux_ch = 864,60 kWh).
-   * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §15.1
+   * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §15.1
    */
   const pnReel = di.pn / (de.ratio_virtualisation || 1);
   let pe = pnReel;
@@ -53,7 +55,7 @@ export function conso_aux_gen(di, de, type, besoin, besoin_dep) {
    * Installation collective virtualisée : Paux_g (W) est celle du générateur de l'immeuble
    * (Pn = pe, puissance immeuble) et Caux_g = Paux_g × Bch_logement / Pn. Le terme G ne doit pas
    * être proratisé par ratio_virtualisation (sinon G × ratio), comme le moteur CSTB (Tribu).
-   * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §15.1
+   * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §15.1
    */
   const Paux_g_ch = g + h * (pe / 1000);
 
@@ -65,7 +67,7 @@ export function conso_aux_gen(di, de, type, besoin, besoin_dep) {
    * le moteur de référence CSTB (Tribu) n'utilise aucune clé de répartition pour ces
    * installations (DPE.Core : Calcul_installation.cs l.79-80, Calcul_generateur.cs l.1497,
    * Calcul_batiment.cs l.652). La clé reste appliquée au collectif et à l'ECS.
-   * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §15.1
+   * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §15.1
    */
   const ignoreCle = type === 'ch' && String(de.enum_type_installation_id) === '1';
   const cle = ignoreCle ? 1 : de[`cle_repartition_${type}`] || 1;
@@ -78,7 +80,7 @@ export function conso_aux_gen(di, de, type, besoin, besoin_dep) {
    * seconde fois (sinon Bch × (Sc / Sh)²), comme le moteur de référence CSTB (Tribu).
    * Autotest CSTB MI5-0-8 : radiateur gaz, Sc = 96 m², Sh = 136 m², Tribu Qaux_ch = 84,69 kWh
    * (59,78 kWh avec le double prorata, −29 %).
-   * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §15.1
+   * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §15.1
    */
   di[`conso_auxiliaire_generation_${type}`] = (Paux_g_ch * besoinAppart) / pnReel || 0;
   di[`conso_auxiliaire_generation_${type}_depensier`] = (Paux_g_ch * besoinAppartDep) / pnReel || 0;
@@ -167,9 +169,9 @@ function getFacteur(values, type, id, presenceVentilateur) {
 
 /**
  * Calcul de la consommation des auxiliaires de distribution de chauffage
- * @param em_ch { EmetteurChauffageItem[]}
- * @param de {Donnee_entree} donnée du générateur de chauffage
- * @param di {Donnee_intermediaire} donnée intermédiaire du générateur de chauffage
+ * @param em_ch { EmetteurChauffage[]}
+ * @param de {GenerateurChauffageDE} donnée du générateur de chauffage
+ * @param di {GenerateurChauffageDI} donnée intermédiaire du générateur de chauffage
  * @param du {object} donnée utilisateur du générateur de chauffage
  * @param surfaceHabitable {number}
  * @param zcId {number} id de la zone climatique du bien
@@ -214,9 +216,9 @@ export function conso_aux_distribution_ch(
 
 /**
  * 15.2.1 Puissance des circulateurs de chauffage
- * @param em_ch { EmetteurChauffageItem[]}
- * @param de {Donnee_entree} donnée du générateur de chauffage
- * @param di {Donnee_intermediaire} donnée intermédiaire du générateur de chauffage
+ * @param em_ch { EmetteurChauffage[]}
+ * @param de {GenerateurChauffageDE} donnée du générateur de chauffage
+ * @param di {GenerateurChauffageDI} donnée intermédiaire du générateur de chauffage
  * @param du {object} donnée utilisateur du générateur de chauffage
  * @param surfaceHabitable {number}
  * @param GV {number} déperdition de l'enveloppe
@@ -319,8 +321,8 @@ function getPuissanceCirculateur(em_ch, de, di, du, surfaceHabitable, GV, Tbase)
  * température impose 15 °C, quel que soit l'ordre de saisie des émetteurs (comme le moteur de
  * référence CSTB Tribu). Auparavant, seul le premier émetteur était considéré.
  *
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §15.2.1
- * @param em_ch {EmetteurChauffageItem[]}
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §15.2.1
+ * @param em_ch {EmetteurChauffage[]}
  * @return {number}
  */
 export function getDeltaDim(em_ch) {
@@ -343,8 +345,8 @@ export function getDeltaDim(em_ch) {
  *   CAS 3 - enum_bouclage_reseau_ecs_id = 3 (traçage) : conso = 0.14 * BECS_annuel * Sh_install / Sh_logement
  *
  * @param ecs {object} installation ECS
- * @param de {Donnee_entree} donnée d'entrée de l'installation ECS
- * @param di {Donnee_intermediaire} donnée intermédiaire de l'installation ECS
+ * @param de {InstallationEcsDE} donnée d'entrée de l'installation ECS
+ * @param di {InstallationEcsDI} donnée intermédiaire de l'installation ECS
  * @param Sh_logement {number} surface habitable du logement
  * @param Sh_immeuble {number} surface habitable de l'immeuble
  * @param caId {number} id de la classe d'altitude

@@ -1,3 +1,5 @@
+/** @import { BaieVitree, BaieVitreeDE, BaieVitreeDI, BaieVitreeDoubleFenetreDE, MasqueLointainNonHomogene } from '../../../../dpe/domain/models/baie-vitree.model.js' */
+/** @import { Contexte } from '../../models/contexte.model.js' */
 import { DeperditionService } from '../deperdition.service.js';
 import { inject } from 'dioma';
 import { BaieVitreeTvStore } from '../../../../dpe/infrastructure/enveloppe/baieVitreeTv.store.js';
@@ -8,7 +10,7 @@ import { BaieVitreeTvStore } from '../../../../dpe/infrastructure/enveloppe/baie
  *
  * Méthode de calcul 3CL-DPE 2021
  * Octobre 2021
- * @see consolide_anne…arrete_du_31_03_2021_relatif_aux_methodes_et_procedures_applicables.pdf
+ * @see consolide_annexe_arrete_du_31_03_2021_relatif_aux_methodes_et_procedures_applicables.pdf
  */
 export class DeperditionBaieVitreeService extends DeperditionService {
   /**

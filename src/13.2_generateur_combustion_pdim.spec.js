@@ -12,7 +12,7 @@ import {
 
 /**
  * Module de calcul pur (aucune dépendance) : pas de mock nécessaire.
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.2.4 Calcul des puissances nominales (p.90-91)
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.2.4 Calcul des puissances nominales (p.90-91)
  */
 describe('puissanceEcs - puissance de dimensionnement ECS selon le volume de stockage', () => {
   test('production instantanée (Vs = 0) : Pecs = 21 kW', () => {

@@ -1,3 +1,5 @@
+/** @import { GenerateurChauffage, GenerateurChauffageDE } from './features/dpe/domain/models/installation-chauffage.model.js' */
+/** @import { GenerateurEcs, GenerateurEcsDE, InstallationEcs } from './features/dpe/domain/models/installation-ecs.model.js' */
 import enums from './enums.js';
 import calc_conso_eclairage from './16_conso_eclairage.js';
 import tvs from './tv.js';
@@ -219,7 +221,7 @@ export function masqueEnergie(groupe) {
  * Calcul_batiment.cs l.1318). Vérifié sur 927 / 1000 DPE ADEME appartement gaz collectif 2026.
  *
  * @param base {object} barème (prix unitaires et fonctions par tranches)
- * @param consoGroupe {function(masque): {total: number, collectif: number}} consommations EF
+ * @param consoGroupe {function(object): {total: number, collectif: number}} consommations EF
  * @param nbLogements {number} nombre de logements (1 hors immeuble)
  * @param genCollectifs {Set} générateurs de chauffage / ECS d'installations collectives
  * @param ratioSurfaceCollectif {number} SH_immeuble / SH_logement pour un appartement (1 sinon)
@@ -261,7 +263,7 @@ function coefPourGenerateur(coef, gen) {
 /**
  * Part d'appoint individuel (40 % du besoin, §9.1.6) de la consommation d'un convecteur
  * bi-jonction, mémorisée par conso_ch (9_conso_ch.js) ; 0 pour les autres générateurs.
- * @param gen {GenerateurChauffageItem}
+ * @param gen {GenerateurChauffage}
  * @param field {'conso_ch'|'conso_ch_depensier'}
  * @returns {number}
  */
@@ -281,10 +283,10 @@ export function appointBijonction(gen, field) {
  * Moteur de référence CSTB : DPE.Core Calcul_batiment.cs l.861-872 (base Cch1 → conso_elec_coll_ch
  * si l'installation n'est pas individuelle) et l.912-915 (Cch_appoint_elec → conso_elec_indiv_ch),
  * Calcul_cout.cs l.149-172 (tarification séparée collectif / individuel).
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §9.1.6 (convecteurs bi-jonction)
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §9.1.6 (convecteurs bi-jonction)
  *
  * @param coef {object} barème issu de coefCoutProrata
- * @param gen {GenerateurChauffageItem}
+ * @param gen {GenerateurChauffage}
  * @param typeEnergie {string}
  * @param conso {number} consommation du générateur (base + appoint)
  * @param field {'conso_ch'|'conso_ch_depensier'}
@@ -444,7 +446,7 @@ const ENERGIE_MULTI_BATIMENT = {
 
 /**
  * Récupération du coefficient d'émission GES pour le générateur
- * @param gen_ch {GenerateurChauffageItem||GenerateurEcsItem}
+ * @param gen_ch {GenerateurChauffage|GenerateurEcs}
  * @param suffix {'ch'|'ecs'}
  * @param dateDpe {string} date d'établissement du DPE
  * @param versionLogiciel {string} version du logiciel de saisie
@@ -882,7 +884,7 @@ export function classe_emission_ges(emission_ges_5_usages_m2, zc_id, ca_id, Sh) 
 
 /**
  Calcul de la consommation globale d'ECS
- * @param gen_ecs {Generateur_ecs_collection}
+ * @param gen_ecs {GenerateurEcs[]}
  * @param field {string}
  * @param coef {number}
  * @param prorataECS {number}
@@ -948,7 +950,7 @@ export function getAuxGenerationEcs(ecs, field, coef, prorataECS, facteurAc = 1)
 
 /**
  * Calcul de la consommation globale de chauffage
- * @param gen_ch {Generateur_chauffage_collection}
+ * @param gen_ch {GenerateurChauffage[]}
  * @param field {string}
  * @param coef {number}
  * @param prorataChauffage {number}
@@ -1133,7 +1135,7 @@ function calc_conso_pond(
 /**
  * Retourne le type d'énergie utilisé.
  * 1 - Electricité par défaut si la donnée n'est pas définie
- * @param donneeEntree {Donnee_entree}
+ * @param donneeEntree {GenerateurChauffageDE|GenerateurEcsDE}
  * @param suffix {string} Suffix à ajouter au type électricité
  * @return {string}
  */

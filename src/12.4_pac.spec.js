@@ -26,7 +26,7 @@ beforeEach(() => {
 
 /**
  * 12.4 - Détermination du SCOP / COP des pompes à chaleur.
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §12.4
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §12.4
  */
 describe('scopOrCop - méthode de saisie "caractéristiques saisies" (id 6)', () => {
   test('SCOP renseigné : rg et rg_dep prennent la valeur du SCOP sans accès à la table', () => {

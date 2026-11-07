@@ -1,3 +1,4 @@
+/** @import { Dpe } from '../../dpe/domain/models/dpe.model.js' */
 import { inject } from 'dioma';
 import { ContexteBuilder } from './contexte.builder.js';
 import { DeperditionEnveloppeService } from './enveloppe/deperdition-enveloppe.service.js';

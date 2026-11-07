@@ -349,7 +349,7 @@ export class BaieVitreeTvStore extends TvStore {
   }
 
   /**
-   * @see 18.5 - Coefficients d’orientation et d’inclinaison des parois vitrées : C1
+   * @see Chapitre 18.5 - Coefficients d’orientation et d’inclinaison des parois vitrées : C1
    *
    * @param enumOrientationId {number}
    * @param enumInclinaisonVitrageId {number}

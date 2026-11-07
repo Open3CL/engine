@@ -61,7 +61,7 @@ beforeEach(() => {
 
 /**
  * 11. Prise en compte de l'ECS (ratio de besoin + rendement de distribution)
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §11 / §17.2.1
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §11 / §17.2.1
  */
 describe('calc_ecs - ratio de besoin ECS', () => {
   test('virtualisation : le ratio est la clé de répartition ECS', () => {
@@ -87,7 +87,7 @@ describe('calc_ecs - ratio de besoin ECS', () => {
    * Immeuble à ECS individuelles de surfaces différentes (cas CSTB IC1-0-3 / IC1-0-5 : 4
    * appartements de 20, 30, 45 et 80 m² sur 175 m², rdim 1) : besoin au prorata de la surface
    * desservie, comme Tribu (Becs appartement 1 = Becs immeuble × 20 / 175).
-   * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §11.4
+   * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §11.4
    */
   test('immeuble à ECS individuelles : ratio = surface desservie / surface de l’immeuble', () => {
     const des = [20, 30, 45, 80].map((surface) => ({

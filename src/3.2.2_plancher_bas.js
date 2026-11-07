@@ -61,7 +61,7 @@ const values_2s_p = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16, 18, 20];
  * (perimetre_ue) du seul plancher courant, sans sommer les autres planchers de même adjacence.
  * Les valeurs absentes du tableau sont obtenues par interpolation linéaire sur upb.
  *
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.2.2 (tableau ue)
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.2.2 (tableau ue)
  */
 function tv_ue(di, de, du, pc_id) {
   const type_adjacence = enums.type_adjacence[de.enum_type_adjacence_id];

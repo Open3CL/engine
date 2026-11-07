@@ -1,3 +1,6 @@
+/** @import { FullDpe } from './features/dpe/domain/models/dpe.model.js' */
+/** @import { GenerateurChauffage, GenerateurChauffageDE, GenerateurChauffageDI, InstallationChauffage } from './features/dpe/domain/models/installation-chauffage.model.js' */
+/** @import { GenerateurEcsDE, GenerateurEcsDI } from './features/dpe/domain/models/installation-ecs.model.js' */
 import { bug_for_bug_compat, convertExpression, tv, tvColumnLines } from './utils.js';
 import enums from './enums.js';
 import { updateGenerateurBouilleurs } from './13.2_generateur_combustion_bouilleur.js';
@@ -63,7 +66,7 @@ export const PN_MAX_QP0_CHAUDIERE_GAZ = 400000;
  * (Tribu, `Calcul_generateur.cs` Rpn_chaudieregaz, `Math.Min(400.0, Pn)`) plafonne Pn à 400 kW :
  * au-delà, la formule n'est plus représentative (elle décroît et devient négative vers 1 500 kW).
  * Le plafond ne s'applique pas aux chaudières fioul (Rpn_chaudierefioul : Pn non plafonné).
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.2
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.2
  *
  * @param row {object} ligne de la table generateur_combustion
  * @param pnCollectif {number} puissance nominale du générateur (W)
@@ -154,7 +157,7 @@ export function pnEstimee(GV, tbase, ratioSurface = 1) {
  * pour le chauffage, 8 pour l'ECS) du générateur.
  *
  * @param dpe {FullDpe}
- * @param de {Donnee_entree}
+ * @param de {GenerateurChauffageDE|GenerateurEcsDE}
  * @param type {'ch' | 'ecs'}
  * @returns {boolean|undefined} undefined si non renseigné
  */
@@ -170,7 +173,7 @@ export function chaudiereMurale(dpe, de, type) {
  * générateur ECS mixte de même `reference_generateur_mixte`, sinon générateur ECS mixte unique.
  *
  * @param dpe {FullDpe}
- * @param de {Donnee_entree} données du générateur de chauffage
+ * @param de {GenerateurChauffageDE|GenerateurEcsDE} données du générateur de chauffage
  * @returns {number|undefined}
  */
 export function volumeStockageEcsMixte(dpe, de) {
@@ -200,7 +203,7 @@ export function volumeStockageEcsMixte(dpe, de) {
  * pour une installation collective, Pch est conservée (comportement historique).
  *
  * @param dpe {FullDpe}
- * @param de {Donnee_entree} données du générateur
+ * @param de {GenerateurChauffageDE|GenerateurEcsDE} données du générateur
  * @param type {'ch' | 'ecs'}
  * @param pch {number} Pch (W) proratisée à la surface desservie
  * @param optionsPn {{installationIndividuelle?: boolean, volumeStockage?: number}}
@@ -249,8 +252,8 @@ export function pnEstimeeGenerateur(dpe, de, type, pch, optionsPn = {}) {
  * 5 - caractéristiques saisies à partir de la plaque signalétique ou d'une documentation technique du système à combustion : pn, rpn,rpint,qp0,temp_fonc_30,temp_fonc_100
  *
  * @param dpe {FullDpe}
- * @param di {Donnee_intermediaire} données du générateur
- * @param de {Donnee_entree} données du générateur
+ * @param di {GenerateurChauffageDI|GenerateurEcsDI} données du générateur
+ * @param de {GenerateurChauffageDE|GenerateurEcsDE} données du générateur
  * @param type {'ecs'|'ch'}
  * @param GV {number} déperdition de l'enveloppe
  * @param tbase {number} température de fonctionnement du générateur
@@ -392,8 +395,8 @@ export function tv_generateur_combustion(
    * dans Cper). Le XML ne transporte pas cette donnée : elle est lue dans la fiche technique du
    * générateur. Sans fiche technique, la ventouse est conservée comme approximation (choix
    * Open3CL, la méthode ne prévoyant pas de valeur par défaut).
-   * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.2
-   * @see : Tribu Calcul_generateur.cs (ventilateur_combustion)
+   * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.2
+   * @see Tribu Calcul_generateur.cs (ventilateur_combustion)
    */
   const indexEF = de.ventilateurCombustion ?? de.presence_ventouse;
   const E = E_tab[indexEF];
@@ -474,7 +477,7 @@ export function tv_generateur_combustion(
 /**
  * Mise à jour du type de générateur si besoin
  * @param dpe {FullDpe}
- * @param de {Donnee_entree}
+ * @param de {GenerateurChauffageDE|GenerateurEcsDE}
  * @param type {'ch' | 'ecs'}
  */
 export function updateGenerateurCombustion(dpe, de, type) {
@@ -515,7 +518,7 @@ export function valeurVeilleuse(valeur) {
  * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.4 / §14.1 (« Pveil : si veilleuse »)
  *
  * @param dpe {FullDpe}
- * @param de {Donnee_entree}
+ * @param de {GenerateurChauffageDE|GenerateurEcsDE}
  * @param type {'ch' | 'ecs'}
  * @returns {1 | 0 | undefined} 1 si veilleuse, 0 si pas de veilleuse, undefined si non renseigné
  */
@@ -558,7 +561,7 @@ export function presenceVeilleuse(dpe, de, type) {
  * Récupération d'informations complémentaires issues des fiches techniques pour les générateurs
  *
  * @param dpe {FullDpe}
- * @param de {Donnee_entree}
+ * @param de {GenerateurChauffageDE|GenerateurEcsDE}
  * @param type {'ch' | 'ecs'}
  */
 function addInfosFromFichesTechniques(dpe, de, type) {
@@ -590,7 +593,7 @@ function addInfosFromFichesTechniques(dpe, de, type) {
  * Vérifier que les informations du générateur ECS sont bien les mêmes que celles du générateur de chauffage
  * Dans le cas d'une génération mixte, le type du générateur doit être le même
  * @param dpe {FullDpe}
- * @param de {Donnee_entree}
+ * @param de {GenerateurChauffageDE|GenerateurEcsDE}
  * @param typeGenerateurKey {string}
  * @returns {string}
  */
@@ -612,7 +615,7 @@ function checkEcsVsChauffageForMixteGeneration(dpe, de, typeGenerateurKey) {
   }
 
   /**
-   * @type {InstallationChauffageItem[]}
+   * @type {InstallationChauffage[]}
    */
   const installationsCh = dpe.logement.installation_chauffage_collection.installation_chauffage;
 
@@ -668,9 +671,9 @@ function checkEcsVsChauffageForMixteGeneration(dpe, de, typeGenerateurKey) {
  * 3. même énergie (`enum_type_energie_id`), si un seul générateur de chauffage mixte correspond ;
  * 4. générateur de chauffage mixte unique du DPE, si son énergie n'est pas incompatible.
  *
- * @param generateursChMixtes {GenerateurChauffageItem[]} générateurs de chauffage d'usage 'chauffage + ecs'
- * @param de {Donnee_entree} données du générateur ECS
- * @returns {GenerateurChauffageItem|null} null si aucun jumeau ne peut être identifié sans ambiguïté
+ * @param generateursChMixtes {GenerateurChauffage[]} générateurs de chauffage d'usage 'chauffage + ecs'
+ * @param de {GenerateurEcsDE} données du générateur ECS
+ * @returns {GenerateurChauffage|null} null si aucun jumeau ne peut être identifié sans ambiguïté
  */
 export function findGenerateurChMixteJumeau(generateursChMixtes, de) {
   const sameValue = (a, b) =>

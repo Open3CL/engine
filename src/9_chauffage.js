@@ -1,3 +1,5 @@
+/** @import { FullDpe } from './features/dpe/domain/models/dpe.model.js' */
+/** @import { GenerateurChauffage, InstallationChauffage, InstallationChauffageDE } from './features/dpe/domain/models/installation-chauffage.model.js' */
 import { requestInput, Tbase, tv, tvColumnIDs } from './utils.js';
 import { calc_emetteur_ch } from './9_emetteur_ch.js';
 import {
@@ -251,9 +253,9 @@ export default function calc_chauffage(
  * Comme le moteur de référence CSTB (Tribu, autotests État APP5-0-4/41/43), le générateur
  * prioritaire assure la totalité du besoin et son taux de charge est calculé avec sa seule Pn.
  *
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.1.3
- * @param gen_ch {GenerateurChauffageItem[]}
- * @return {GenerateurChauffageItem[]} générateurs principaux
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.1.3
+ * @param gen_ch {GenerateurChauffage[]}
+ * @return {GenerateurChauffage[]} générateurs principaux
  */
 export function generateursPrincipauxCascade(gen_ch) {
   const priorites = gen_ch.map((gen) => Number(gen.donnee_entree.priorite_generateur_cascade));
@@ -278,7 +280,7 @@ export function generateursPrincipauxCascade(gen_ch) {
  * collectif (cfg 10). Le circulateur unique n'est pas divisé par le nombre de générateurs.
  * Autotests CSTB IC4-0-1 (cfg 6, Tribu Caux_dist_ch = 8908,24 kWh), IC5-0-1 (cfg 8, 1777,76 kWh),
  * IC5-0-3 (cfg 10, 1951,90 kWh).
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §15.2.1
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §15.2.1
  * @param cfgInstallationId {string|number} enum_cfg_installation_ch_id
  * @return {boolean}
  */
@@ -332,8 +334,8 @@ function getProrataGenerateur(
 
 /**
  * Retourne le facteur de couverture solaire pour les maisons avec chauffage solaire
- * @param de {Donnee_entree}
- * @param zc_id {int}
+ * @param de {InstallationChauffageDE}
+ * @param zc_id {number}
  * @returns {number|*|null}
  */
 function tv_ch_facteur_couverture_solaire(de, zc_id) {
@@ -362,7 +364,7 @@ function tv_ch_facteur_couverture_solaire(de, zc_id) {
  * 13.2.1.2 Présence d’un ou plusieurs générateurs à combustion indépendants
  * Calcul du taux de charge cdimref et cdimrefDep pour chacun des générateurs
  *
- * @param installationChauffage {InstallationChauffageItem[]}
+ * @param installationChauffage {InstallationChauffage[]}
  * @param GV {number} déperdition de l'enveloppe
  * @param zcId {string} id de la zone climatique du bien
  * @param caId {string} id de la classe d'altitude du bien
@@ -421,7 +423,7 @@ export function tauxChargeForGenerator(installationChauffage, GV, caId, zcId, th
  * En immeuble, chaque installation est ramenée à l'échelle de l'immeuble par son rdim (y compris les
  * installations collectives : rdim est renseigné par le logiciel et déjà appliqué au GV avant correctif).
  *
- * @param installCh {InstallationChauffageItem}
+ * @param installCh {InstallationChauffage}
  * @param th {string} type d'habitation
  * @return {number}
  */

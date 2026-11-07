@@ -105,7 +105,7 @@ function baseBv(overrides = {}) {
 
 /**
  * 3.3 Coefficients de transmission thermique et facteur solaire des baies vitrées.
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.3
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.3
  */
 describe('calc_bv - parcours nominal (double vitrage avec fermeture)', () => {
   test('renseigne b, sw, ug, uw, ujn et u_menuiserie', () => {
@@ -301,7 +301,7 @@ describe('calc_bv - traitement de la fermeture', () => {
 
 /**
  * 3.3.2 / 6.2.1 Traitement des doubles fenêtres : sw et uw équivalents.
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.3.2
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.3.2
  */
 describe('calc_bv - double fenêtre', () => {
   /** Baie secondaire (deuxième fenêtre) mesurable pour sw / uw équivalents. */
@@ -394,7 +394,7 @@ describe('calc_bv - double fenêtre', () => {
 
 /**
  * 6.3 Masques proches et lointains.
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §6.3
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §6.3
  */
 describe('calc_bv - masques lointains non homogènes (fe2)', () => {
   test('collection de masques : fe2 = 1 - somme des occultations', () => {

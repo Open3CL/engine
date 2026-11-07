@@ -94,7 +94,7 @@ beforeEach(() => {
 
 /**
  * 9.1.1 Pertes récupérées de génération pour le chauffage (Qrec_gen)
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §9.1.1
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §9.1.1
  */
 describe('calc_Qrec_gen_j - pertes de génération récupérées', () => {
   /** Générateur minimal en volume chauffé, non "air chaud". */
@@ -159,7 +159,7 @@ describe('calc_Qrec_gen_j - pertes de génération récupérées', () => {
  * 9.1.1 Pertes récupérées de génération pour le chauffage : générateur de la collection ECS
  * assurant l'ECS uniquement (issue #153).
  * Dperj = Nrefj * 1790 / 8760 ; Qgen_rec_j = 0,48 * Cper * Qp0 * Dperj
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §9.1.1
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §9.1.1
  */
 describe('calc_Qrec_gen_ecs_j / isGenerateurEcsSeulRecuperable - générateur ECS seul', () => {
   /** Générateur ECS seul (usage 2), en volume chauffé, avec Qp0 = 100 W. */
@@ -355,7 +355,7 @@ describe('checkForGeneratorType - classification du générateur', () => {
 
   /**
    * Chaudière fioul par défaut : chaudière standard datant de la construction du bâtiment.
-   * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §17.2.1.1
+   * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §17.2.1.1
    */
   describe('cas 119 : chaudière fioul par défaut selon l’année de construction', () => {
     beforeEach(() => {
@@ -397,7 +397,7 @@ describe('checkForGeneratorType - classification du générateur', () => {
 
 /**
  * 15 Consommations d'auxiliaires de distribution : générateurs concernés.
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §15
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §15
  */
 describe('hasConsoForAuxDistribution - éligibilité aux auxiliaires de distribution', () => {
   test('générateurs éligibles (chacune des plages)', () => {
@@ -428,7 +428,7 @@ describe('hasConsoForAuxDistribution - éligibilité aux auxiliaires de distribu
 /**
  * 15.2 Réseau aéraulique (émetteur 5) rattaché au générateur : auxiliaires de distribution calculés
  * quel que soit le générateur, comme le moteur de référence (#291).
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §15.2
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §15.2
  */
 describe('hasEmetteurAerauliqueLie - réseau aéraulique rattaché au générateur', () => {
   const em = (ed, lien) => ({
@@ -688,7 +688,7 @@ describe('calc_generateur_ch - orchestration du calcul générateur', () => {
  * effectivement couvert par le générateur (retourné par conso_ch : part de relève, de base ou
  * d'appoint) et non le besoin de toute l'installation.
  * Autotest CSTB APP5-0-5 : chaudière fioul en relève de PAC (part 0,2), Tribu Qaux_ch = 2,13 kWh.
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §15.1
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §15.1
  */
 describe('calc_generateur_ch - besoin couvert transmis aux auxiliaires de génération', () => {
   const dpe = {

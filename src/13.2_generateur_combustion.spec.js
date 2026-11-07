@@ -121,7 +121,7 @@ const ROW_DEFAUT = {
 
 /**
  * 13.2 - Récupération des caractéristiques forfaitaires d'un générateur à combustion.
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2
  */
 describe('tv_generateur_combustion - caractéristiques du générateur', () => {
   test('puissance nominale calculée à partir de GV et Tbase lorsqu’elle est absente', () => {
@@ -358,7 +358,7 @@ describe('tv_generateur_combustion - compatibilité bug_for_bug_compat', () => {
 
   /**
    * Système collectif par défaut : chaudière fioul standard datant de la construction du bâtiment.
-   * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §17.2.1.1
+   * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §17.2.1.1
    */
   describe('système collectif par défaut : chaudière selon l’année de construction', () => {
     test('CH 119 + ligne compatible : type et ligne de la période de construction retenus', () => {
@@ -668,7 +668,7 @@ describe('tv_generateur_combustion - génération mixte (checkEcsVsChauffageForM
 /**
  * Issue #210 : l'ECS mixte doit être appariée avec SON générateur de chauffage mixte (même appareil),
  * et non avec le premier générateur de chauffage mixte du DPE.
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2 et §14
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2 et §14
  */
 describe('findGenerateurChMixteJumeau - appariement ECS / chauffage mixte (issue #210)', () => {
   const ch = (donnees) => ({ donnee_entree: { enum_usage_generateur_id: '3', ...donnees } });
@@ -876,7 +876,7 @@ const dpeFiches = (...fiches) => ({
 
 /**
  * 13.2 - Orchestration des substitutions de générateurs et enrichissement fiches techniques.
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2
  */
 describe('updateGenerateurCombustion - orchestration des substitutions', () => {
   test('délègue aux trois routines de substitution avec les mêmes arguments', () => {
@@ -983,7 +983,7 @@ describe('updateGenerateurCombustion - orchestration des substitutions', () => {
 /**
  * Issue #35 : les coefficients (E, F) de la formule qp0 dépendent de la présence d'un ventilateur
  * dans le circuit de combustion (fiche technique), la ventouse n'étant qu'un repli.
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.2
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.2
  */
 describe('tv_generateur_combustion - coefficients (E, F) selon le ventilateur de combustion (#35)', () => {
   const ROW_EF = { ...ROW_DEFAUT, rpn: 'E*40', qp0_perc: 'Pn*(E+F*log10(Pn))/100' };
@@ -1032,7 +1032,7 @@ describe('tv_generateur_combustion - coefficients (E, F) selon le ventilateur de
  * Issue #39 : présence d'une veilleuse lue dans la sous-fiche technique du générateur.
  * Tribu : entrée `Is_veilleuse` (DPE.DataClasses/generateur.cs), Pveil1 = 0 si absente
  * (DPE.Core/Calcul_generateur.cs).
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.4 / §14.1
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.4 / §14.1
  */
 describe('presenceVeilleuse - fiche technique « Présence d’une veilleuse »', () => {
   const ficheGen = (desc, veilleuse) => [
@@ -1151,7 +1151,7 @@ describe('presenceVeilleuse - fiche technique « Présence d’une veilleuse »'
 /**
  * Issue #124 : générateur collectif virtualisé, puissance saisie collective (Pn) ou individualisée
  * (Pe = a × Pn) selon les logiciels.
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2 et §17.2.1
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2 et §17.2.1
  */
 describe('tv_generateur_combustion - convention de puissance d’un générateur virtualisé (#124)', () => {
   const ROW_PN = {
@@ -1418,7 +1418,7 @@ describe('caracteristiquesGenerateurCombustion - selon la méthode de saisie', (
 /**
  * Plafond de Pn à 400 kW dans Qp0 = Pn × (E + F × log Pn) / 100 des chaudières gaz après 2015
  * (moteur de référence Tribu : Calcul_generateur.cs, Rpn_chaudieregaz, Math.Min(400.0, Pn)).
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.2
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.2
  */
 describe('puissanceFormuleQp0 - plafond de Pn à 400 kW pour les chaudières gaz', () => {
   const ROW_GAZ = {
@@ -1486,7 +1486,7 @@ describe('puissanceFormuleQp0 - plafond de Pn à 400 kW pour les chaudières gaz
 
 /**
  * Estimation de la puissance nominale d'un générateur à combustion (pn absente).
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.2.4
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.2.4
  */
 describe('pnEstimee - puissance nominale estimée (issue #264)', () => {
   // 1,2 × 200 × (19 − (−9)) / 0,95³ -- valeur de référence de régression
@@ -1518,7 +1518,7 @@ describe('pnEstimee - puissance nominale estimée (issue #264)', () => {
 
 /**
  * Pn estimée par la puissance de dimensionnement (issue #271).
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.2.4
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.2.4
  */
 describe('pnEstimeeGenerateur - Pdim = max(Pch ; Pecs) et table Pdim → Pn (issue #271)', () => {
   const dpeAvecEcsMixte = (generateursEcs) => ({

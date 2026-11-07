@@ -78,7 +78,7 @@ const { tv } = await import('./utils.js');
 
 /**
  * Classe énergétique (bilan DPE)
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf
  */
 describe('classe_bilan_dpe - seuils de classe énergétique', () => {
   test('consommation nulle (null) : aucune classe', () => {
@@ -121,7 +121,7 @@ describe('classe_bilan_dpe - seuils de classe énergétique', () => {
 
 /**
  * Classe climat (émissions GES)
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf
  */
 describe('classe_emission_ges - seuils de classe climat', () => {
   test('émission nulle (null) : aucune classe', () => {
@@ -758,7 +758,7 @@ describe('calc_conso - agrégation des consommations', () => {
 
 /**
  * Ligne « électricité » de sortie_par_energie (issue #34).
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §15, §16.2 ; arrêté DPE habitation du 31/03/2021 §3.a, §4.a
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §15, §16.2 ; arrêté DPE habitation du 31/03/2021 §3.a, §4.a
  */
 describe('sortie_par_energie - ligne électricité (issue #34)', () => {
   const elecDe = (res) =>

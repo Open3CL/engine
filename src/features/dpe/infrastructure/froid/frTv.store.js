@@ -8,7 +8,7 @@ import { logger } from '../../../../core/util/logger/log-service.js';
 export class FrTvStore extends TvStore {
   /**
    * Recherche des valeurs nécessaires au calcul du besoin en froid
-   * @see 10.2 Calcul du besoin mensuel de froid
+   * @see Chapitre 10.2 Calcul du besoin mensuel de froid
    * — e : nombre d’heures de chauffage pour un mois donné et une consigne de refroidissement à 26°C (comportement dépensier).
    * — nref26 : nombre d’heures de chauffage pour un mois donné et une consigne de refroidissement à 26°C (comportement dépensier).
    * — nref28 : nombre d’heures de chauffage pour un mois donné et une consigne de refroidissement à 28°C (comportement conventionnel).
@@ -19,7 +19,7 @@ export class FrTvStore extends TvStore {
    * — dh19 : degrés heures de chauffage pour un mois donné à 19°C (comportement conventionnel).
    * — dh21 : degrés heures de chauffage pour un mois donné à 21°C (comportement dépensier).
    *
-   * @param type {'e', nref26' | 'nref28' | 'e_fr_26' | 'e_fr_28' | 'textmoy_clim_26' | 'textmoy_clim_28'| 'dh19'| 'dh21'}
+   * @param type {'e' | 'nref26' | 'nref28' | 'e_fr_26' | 'e_fr_28' | 'textmoy_clim_26' | 'textmoy_clim_28'| 'dh19'| 'dh21'}
    * @param classeAltitude {string}
    * @param zoneClimatique {string}
    * @param mois {string}
@@ -39,7 +39,7 @@ export class FrTvStore extends TvStore {
 
   /**
    * Coefficient d’efficience énergétique
-   * @see 10.3 - Les consommations de refroidissement
+   * @see Chapitre 10.3 - Les consommations de refroidissement
    *
    * @param zoneClimatiqueId {string}
    * @param periodeInstallationId {number}

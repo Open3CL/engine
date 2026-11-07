@@ -52,7 +52,7 @@ beforeEach(() => {
 
 /**
  * 3.2.3 Coefficient de transmission des planchers hauts (Uph)
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.2.3
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.2.3
  */
 describe('calc_ph - plancher non isolé', () => {
   test('Uph égal à Uph0 (paroi nue)', () => {
@@ -249,7 +249,7 @@ describe('calc_ph - isolation inconnue (table forfaitaire)', () => {
 
   /**
    * Détermination du type de toiture (matcher de la table `uph`) selon l'adjacence.
-   * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - page 21
+   * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - page 21
    */
   test.each([
     ['locaux non chauffés non accessible', 'terrasse', 'terrasse'],

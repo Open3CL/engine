@@ -1,9 +1,11 @@
+/** @import { GenerateurChauffageDE, GenerateurChauffageDI } from './features/dpe/domain/models/installation-chauffage.model.js' */
+/** @import { GenerateurEcsDE, GenerateurEcsDI } from './features/dpe/domain/models/installation-ecs.model.js' */
 import { requestInputID, tv } from './utils.js';
 
 /**
  * Calcul ou récupération des paramètres scop ou cop
- * @param di {Donnee_intermediaire}
- * @param de {Donnee_entree}
+ * @param di {GenerateurChauffageDI|GenerateurEcsDI}
+ * @param de {GenerateurChauffageDE|GenerateurEcsDE}
  * @param du {Object}
  * @param zc_id {string}
  * @param ed_id {string|null}

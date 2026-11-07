@@ -68,7 +68,7 @@ const RG_DEP_AIR_CHAUD = 0.874622228362935;
 /**
  * Pertes à l'arrêt QP0 (kW sur PCS) : pour les générateurs d'air chaud, la valeur de la table 13.2
  * est en % de Pn et doit être ramenée en W.
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.1
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.1
  */
 describe('qp0PcsKw - pertes à l’arrêt sur PCS', () => {
   test('générateur à air chaud : qp0 ramené en W (÷ 100) puis en kW PCS', () => {
@@ -94,7 +94,7 @@ describe('qp0PcsKw - pertes à l’arrêt sur PCS', () => {
 
 /**
  * 13.2.1.1 - Températures de fonctionnement à 30 % et 100 % de charge.
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.1.1
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.1.1
  */
 describe('tv_temp_fonc_30_100 - températures de fonctionnement', () => {
   function emetteur(overrides = {}) {
@@ -266,7 +266,7 @@ describe('tv_temp_fonc_30_100 - températures de fonctionnement', () => {
  * Mode strict : « Si l'année d'installation des émetteurs est inconnue, prendre l'année de
  * construction du bâtiment. » En mode bug_for_bug_compat uniquement, la période est retrouvée à
  * partir des temp_fonc_30 / temp_fonc_100 d'origine stockées dans le DPE (règle de l'expert).
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.1.5
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.1.5
  */
 describe('tv_temp_fonc_30_100 - période des émetteurs absente (issue #220)', () => {
   /**
@@ -555,7 +555,7 @@ describe('tempDistributionChPourTempFonc', () => {
 
 /**
  * 13.2.1.2 - Rendement de génération des chaudières (rg PCI).
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.1.2
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.1.2
  */
 describe('calc_generateur_combustion_ch - rendement de génération', () => {
   test('chaudière gaz standard : rendement PCI et rendement dépensier', () => {
@@ -822,7 +822,7 @@ describe('calc_generateur_combustion_ch - rendement de génération', () => {
    * Pveil = 150 W, Tfonc30/100 = 56/70, Cdimref = 0.05 / TchFinal(Ch_5)).
    * Comme QP0, la puissance de veilleuse est exprimée sur PCS (Pveil × k) dans le dénominateur.
    * Avant correctif (Pveil sur PCI) : rg = 0.740607866698453 (Cch −0,42 %).
-   * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.1.2
+   * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.1.2
    */
   test('autotest État MI4-0-1 : rg identique à Tribu (Pveil exprimée sur PCS)', () => {
     const di = {
@@ -902,7 +902,7 @@ describe('calc_generateur_combustion_ch - rendement de génération', () => {
    * Issue #39 : la présence de veilleuse lue dans la fiche technique (de.presence_veilleuse)
    * prime sur la valeur intermédiaire pveilleuse du DPE. Sans fiche, comportement inchangé.
    * Tribu : Pveil1 = 0 si Is_veilleuse != oui (DPE.Core/Calcul_generateur.cs).
-   * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.4
+   * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.4
    */
   describe('présence de veilleuse (issue #39)', () => {
     const di = (extra) => ({
@@ -985,7 +985,7 @@ describe('calc_generateur_combustion_ch - rendement de génération', () => {
 
 /**
  * Coefficient de conversion PCS / PCI : le propane et le butane sont des GPL (k = 1.09).
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.1.2
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.1.2
  */
 describe('K - coefficient PCS / PCI', () => {
   test('propane et butane : même coefficient que le gpl (1.09), distinct du gaz naturel', () => {

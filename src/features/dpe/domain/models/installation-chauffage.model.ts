@@ -8,7 +8,7 @@ import type {
   XsdLogementInstallationChauffageGenerateurChauffage,
   XsdLogementInstallationChauffageGenerateurChauffageDonneeEntree,
   XsdLogementInstallationChauffageGenerateurChauffageDonneeIntermediaire
-} from './dpe-xsd.generated';
+} from './dpe-xsd.generated.js';
 
 /** + champ Open3CL hors XSD : `ficheTechniqueComptage` (fiche technique). */
 export type InstallationChauffageDE = XsdLogementInstallationChauffageDonneeEntree & {

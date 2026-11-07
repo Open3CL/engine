@@ -1,3 +1,5 @@
+/** @import { Logement } from '../../../dpe/domain/models/dpe.model.js' */
+/** @import { Contexte } from '../models/contexte.model.js' */
 import { inject } from 'dioma';
 import { GenerateurChService } from './generateur-ch.service.js';
 

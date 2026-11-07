@@ -1,3 +1,6 @@
+/** @import { FullDpe } from './features/dpe/domain/models/dpe.model.js' */
+/** @import { GenerateurChauffageDE } from './features/dpe/domain/models/installation-chauffage.model.js' */
+/** @import { GenerateurEcsDE } from './features/dpe/domain/models/installation-ecs.model.js' */
 import getFicheTechnique from './ficheTechnique.js';
 
 /**
@@ -91,7 +94,7 @@ export function getChaudiereFioulDefautId(dpe, type, typeSaisiId) {
 /**
  * Pour les générateurs "Autre système à combustion", les calculs sont faits comme pour les chaudières standard
  * @param dpe {FullDpe}
- * @param de {Donnee_entree}
+ * @param de {GenerateurChauffageDE|GenerateurEcsDE}
  * @param type {'ch' | 'ecs'}
  */
 export function updateGenerateurChaudieres(dpe, de, type) {
@@ -169,7 +172,7 @@ export function updateGenerateurChaudieres(dpe, de, type) {
  *  - Pour un système 'autre système à combustion fioul' granulés installé en 2000, on prendra la chaudière gaz standard 2001-2015
  * @param dpe {FullDpe}
  * @param ids
- * @param de {Donnee_entree}
+ * @param de {GenerateurChauffageDE|GenerateurEcsDE}
  * @param type {'ch' | 'ecs'}
  */
 function updateGenerateurChaudiere(dpe, ids, de, type) {

@@ -1,3 +1,6 @@
+/** @import { FullDpe } from './features/dpe/domain/models/dpe.model.js' */
+/** @import { EmetteurChauffage, GenerateurChauffageDE, GenerateurChauffageDI } from './features/dpe/domain/models/installation-chauffage.model.js' */
+/** @import { GenerateurEcs } from './features/dpe/domain/models/installation-ecs.model.js' */
 import enums from './enums.js';
 import { requestInput, requestInputID, tv, tvColumnIDs } from './utils.js';
 import { conso_aux_distribution_ch, conso_aux_gen } from './15_conso_aux.js';
@@ -57,9 +60,9 @@ export function calc_Qrec_gen_j(gen_ch, nrefj, Bch_hp_j) {
  * l'usage est 'ecs' sont concernés. Les générateurs 'chauffage + ecs' sont déjà pris en compte via
  * la collection des générateurs de chauffage (cf. issue #153).
  *
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §9.1.1
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §9.1.1
  *
- * @param gen_ecs {GenerateurEcsItem}
+ * @param gen_ecs {GenerateurEcs}
  * @param nrefj {number}
  * @returns {number}
  */
@@ -78,7 +81,7 @@ export function calc_Qrec_gen_ecs_j(gen_ecs, nrefj) {
  * s'il a des pertes à l'arrêt (Qp0 > 0), s'il est en volume chauffé et si son usage est 'ecs' seul
  * (enum_usage_generateur_id = 2).
  *
- * @param gen_ecs {GenerateurEcsItem}
+ * @param gen_ecs {GenerateurEcs}
  * @returns {boolean}
  */
 export function isGenerateurEcsSeulRecuperable(gen_ecs) {
@@ -128,8 +131,8 @@ export function type_generateur_ch(di, de, du, usage_generateur) {
 /**
  * Récupération du type de générateur
  * @param dpe {FullDpe}
- * @param de {Donnee_entree}
- * @param di {Donnee_intermediaire}
+ * @param de {GenerateurChauffageDE}
+ * @param di {GenerateurChauffageDI}
  * @param du {Object}
  */
 export function checkForGeneratorType(dpe, de, di, du) {
@@ -285,7 +288,7 @@ export function calc_generateur_ch(
    * ce générateur (part de base / d'appoint, relève), et non le besoin de toute l'installation.
    * Autotests CSTB APP5-0-5 (chaudière fioul en relève de PAC, Tribu Qaux_ch = 2,13 kWh) et
    * IC4-0-1 (chaudière en relève d'une chaudière bois).
-   * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §15.1
+   * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §15.1
    */
   const besoinGenerateur = besoinCouvert ?? bch;
   const besoinGenerateurDep = bch > 0 ? (bch_dep * besoinGenerateur) / bch : 0;
@@ -330,11 +333,11 @@ const TYPE_EMISSION_DISTRIBUTION_AERAULIQUE = 5;
  * aéraulique a donc des auxiliaires de distribution, bien que hasConsoForAuxDistribution l'exclue.
  * L'émetteur est rattaché au générateur s'il est seul, ou par enum_lien_generateur_emetteur_id.
  *
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §15.2
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §15.2
  * @see Tribu Calcul_installation.cs (calcul_Cauxiliaires), Calcul_batiment.cs (Calcul_Cauxiliaires)
  * @see https://github.com/Open3CL/engine/issues/291
- * @param em_ch {EmetteurChauffageItem[]}
- * @param de {Donnee_entree} donnée d'entrée du générateur de chauffage
+ * @param em_ch {EmetteurChauffage[]}
+ * @param de {GenerateurChauffageDE} donnée d'entrée du générateur de chauffage
  * @returns {boolean}
  */
 export function hasEmetteurAerauliqueLie(em_ch, de) {

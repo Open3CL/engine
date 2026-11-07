@@ -7,7 +7,7 @@ import { DeperditionPlancherBasService } from './deperdition-plancher-bas.servic
  * Le `TvStore` est remplacé par un double de test (spies `vi.fn`) et le coefficient b (classe de
  * base) est espionné : seule la logique propre au service (Upb0, Upb, Ue, type d'isolation) est
  * vérifiée, sans dépendre des tables de valeurs réelles.
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.2.2
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.2.2
  */
 
 /** @type {{ getUpb0: import('vitest').Mock, getUpb: import('vitest').Mock, getUeByUpd: import('vitest').Mock }} */
@@ -156,7 +156,7 @@ describe('DeperditionPlancherBasService - calcul de upb_final (Ue)', () => {
 
   /**
    * Issue #46 : ue calculé plancher par plancher, 2S/P issu du seul plancher courant.
-   * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.2.2 (tableau ue)
+   * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §3.2.2 (tableau ue)
    */
   describe('calcul plancher par plancher (#46)', () => {
     test('2187E0982591I plancher 1 : 2S/P = 2 * 44,8 / 12,8 = 7', () => {

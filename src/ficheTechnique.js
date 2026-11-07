@@ -1,3 +1,5 @@
+/** @import { XsdFicheTechnique } from './features/dpe/domain/models/dpe-xsd.generated.js' */
+/** @import { FullDpe } from './features/dpe/domain/models/dpe.model.js' */
 /**
  * Recherche dans les fiches techniques d'un DPE.
  *
@@ -29,7 +31,7 @@ const indexParDpe = new WeakMap();
 function indexerFichesTechniques(dpe) {
   const parCategorie = new Map();
 
-  /** @type {FicheTechniqueItem[]} */
+  /** @type {XsdFicheTechnique[]} */
   let fichesTechniques = dpe.fiche_technique_collection?.fiche_technique || [];
   if (!Array.isArray(fichesTechniques)) {
     fichesTechniques = [fichesTechniques];

@@ -1,3 +1,5 @@
+/** @import { EmetteurChauffage, GenerateurChauffageDE } from '../../../dpe/domain/models/installation-chauffage.model.js' */
+/** @import { Contexte } from '../models/contexte.model.js' */
 import { ChTvStore } from '../../../dpe/infrastructure/ch/chTv.store.js';
 import { inject } from 'dioma';
 import { bug_for_bug_compat } from '../../../../utils.js';
@@ -95,7 +97,7 @@ export class EmetteurChService {
    * Aucune déduction si le mode bug_for_bug_compat est désactivé, si l'une des deux températures
    * du DPE est absente ou non numérique, ou si tous les émetteurs ont une période saisie.
    *
-   * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.1.5
+   * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2.1.5
    *
    * @param ctx {Contexte}
    * @param generateurChauffageDE {GenerateurChauffageDE}

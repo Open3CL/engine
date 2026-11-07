@@ -12,7 +12,7 @@ let tvStore;
 /**
  * 9.1.1 Pertes récupérées de génération pour le chauffage
  * Qgen_rec_j = 0,48 * Cper * Qp0 * Dperj
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §9.1.1
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §9.1.1
  */
 describe('Calcul des pertes récupérées de génération pour le chauffage', () => {
   /** @type {Contexte} */

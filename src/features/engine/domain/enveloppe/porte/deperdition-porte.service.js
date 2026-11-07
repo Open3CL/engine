@@ -1,3 +1,5 @@
+/** @import { PorteDE, PorteDI } from '../../../../dpe/domain/models/porte.model.js' */
+/** @import { Contexte } from '../../models/contexte.model.js' */
 import { inject } from 'dioma';
 import { DeperditionService } from '../deperdition.service.js';
 import { TvStore } from '../../../../dpe/infrastructure/tv.store.js';
@@ -8,7 +10,7 @@ import { TvStore } from '../../../../dpe/infrastructure/tv.store.js';
  *
  * Méthode de calcul 3CL-DPE 2021
  * Octobre 2021
- * @see consolide_anne…arrete_du_31_03_2021_relatif_aux_methodes_et_procedures_applicables.pdf
+ * @see consolide_annexe_arrete_du_31_03_2021_relatif_aux_methodes_et_procedures_applicables.pdf
  *
  * Si le coefficient U des portes est connu et justifié, le saisir directement. Sinon, prendre les valeurs tabulées
  */

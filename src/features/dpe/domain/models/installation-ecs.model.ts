@@ -5,7 +5,7 @@ import type {
   XsdLogementInstallationEcsGenerateurEcs,
   XsdLogementInstallationEcsGenerateurEcsDonneeEntree,
   XsdLogementInstallationEcsGenerateurEcsDonneeIntermediaire
-} from './dpe-xsd.generated';
+} from './dpe-xsd.generated.js';
 
 export type InstallationEcsDE = XsdLogementInstallationEcsDonneeEntree;
 export type InstallationEcsDI = XsdLogementInstallationEcsDonneeIntermediaire;

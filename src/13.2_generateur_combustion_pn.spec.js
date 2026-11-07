@@ -14,7 +14,7 @@ import {
  * Module pur (aucune dépendance importée) : les caractéristiques du générateur sont fournies par
  * une fonction injectée, remplacée ici par un double de test déterministe.
  *
- * @see : Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2 et §17.2.1 (virtualisation)
+ * @see Methode_de_calcul_3CL_DPE_2021-338.pdf - §13.2 et §17.2.1 (virtualisation)
  */
 
 /**
