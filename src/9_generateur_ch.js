@@ -1,6 +1,6 @@
 /** @import { FullDpe } from './features/dpe/domain/models/dpe.model.js' */
 /** @import { EmetteurChauffage, GenerateurChauffageDE, GenerateurChauffageDI } from './features/dpe/domain/models/installation-chauffage.model.js' */
-/** @import { GenerateurEcs } from './features/dpe/domain/models/installation-ecs.model.js' */
+/** @import { GenerateurEcs, GenerateurEcsDE, GenerateurEcsDI } from './features/dpe/domain/models/installation-ecs.model.js' */
 import enums from './enums.js';
 import { requestInput, requestInputID, tv, tvColumnIDs } from './utils.js';
 import { conso_aux_distribution_ch, conso_aux_gen } from './15_conso_aux.js';
@@ -68,7 +68,7 @@ export function calc_Qrec_gen_j(gen_ch, nrefj, Bch_hp_j) {
  */
 export function calc_Qrec_gen_ecs_j(gen_ecs, nrefj) {
   const de = gen_ecs.donnee_entree;
-  const di = gen_ecs.donnee_intermediaire || {};
+  const di = /** @type {GenerateurEcsDI} */ (gen_ecs.donnee_intermediaire || {});
 
   if (!isGenerateurEcsSeulRecuperable(gen_ecs)) return 0;
 
@@ -85,8 +85,8 @@ export function calc_Qrec_gen_ecs_j(gen_ecs, nrefj) {
  * @returns {boolean}
  */
 export function isGenerateurEcsSeulRecuperable(gen_ecs) {
-  const de = gen_ecs.donnee_entree || {};
-  const di = gen_ecs.donnee_intermediaire || {};
+  const de = /** @type {GenerateurEcsDE} */ (gen_ecs.donnee_entree || {});
+  const di = /** @type {GenerateurEcsDI} */ (gen_ecs.donnee_intermediaire || {});
   return (
     Number(di.qp0 || 0) > 0 &&
     Number(de.position_volume_chauffe ?? 0) === 1 &&
@@ -98,7 +98,7 @@ function tv_rendement_generation(di, de, du) {
   const matcher = {
     enum_type_generateur_ch_id: requestInputID(de, du, 'type_generateur_ch')
   };
-  const row = tv('rendement_generation', matcher, de);
+  const row = tv('rendement_generation', matcher);
   if (row) {
     di.rendement_generation = Number(row.rg);
     di.rg = di.rendement_generation;

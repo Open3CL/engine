@@ -43,7 +43,7 @@ function tv_rendement_emission(di, de) {
   const matcher = {
     enum_type_emission_distribution_id: de.enum_type_emission_distribution_id
   };
-  const row = tv('rendement_emission', matcher, de);
+  const row = tv('rendement_emission', matcher);
   if (row) {
     di.rendement_emission = Number(row.re);
     de.tv_rendement_emission_id = Number(row.tv_rendement_emission_id);
@@ -56,7 +56,7 @@ function tv_rendement_regulation(di, de) {
   const matcher = {
     enum_type_emission_distribution_id: de.enum_type_emission_distribution_id
   };
-  const row = tv('rendement_regulation', matcher, de);
+  const row = tv('rendement_regulation', matcher);
   if (row) {
     di.rendement_regulation = Number(row.rr);
     de.tv_rendement_regulation_id = Number(row.tv_rendement_regulation_id);
@@ -73,7 +73,7 @@ function tv_rendement_regulation(di, de) {
  */
 export function isIntermittenceCollectiveSaisie(de) {
   if (!bug_for_bug_compat || !de.tv_intermittence_id) return false;
-  const row = tv('intermittence', { tv_intermittence_id: de.tv_intermittence_id }, de);
+  const row = tv('intermittence', { tv_intermittence_id: de.tv_intermittence_id });
   if (!row || !row.enum_type_installation_id) return false;
   return !row.enum_type_installation_id.split('|').includes('1');
 }
@@ -94,7 +94,7 @@ function tv_intermittence(di, de, inst_ch_de, map_id, inertie_id, isAppointIndiv
       const inertie = {
         tv_intermittence_id: de.tv_intermittence_id
       };
-      row = tv('intermittence', inertie, de);
+      row = tv('intermittence', inertie);
 
       if (row && row.comptage_individuel) {
         hasComptage = row.comptage_individuel.includes('Présence');
@@ -128,7 +128,7 @@ function tv_intermittence(di, de, inst_ch_de, map_id, inertie_id, isAppointIndiv
     delete matcher.comptage_individuel;
   }
 
-  row = tv('intermittence', matcher, de);
+  row = tv('intermittence', matcher);
   if (row) {
     di.i0 = Number(row.i0);
     de.tv_intermittence_id = Number(row.tv_intermittence_id);

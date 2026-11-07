@@ -1,6 +1,6 @@
 /** @import { Logement } from '../../../../dpe/domain/models/dpe.model.js' */
 /** @import { GenerateurChauffage } from '../../../../dpe/domain/models/installation-chauffage.model.js' */
-/** @import { GenerateurEcs } from '../../../../dpe/domain/models/installation-ecs.model.js' */
+/** @import { GenerateurEcs, GenerateurEcsDE, GenerateurEcsDI } from '../../../../dpe/domain/models/installation-ecs.model.js' */
 /** @import { Contexte } from '../../models/contexte.model.js' */
 import { mois_liste } from '../../../../../utils.js';
 import { inject } from 'dioma';
@@ -97,8 +97,10 @@ export class PerteChRecupService {
 
     return installationsEcs.flatMap((installation) =>
       (installation.generateur_ecs_collection?.generateur_ecs || []).filter((generateurEcs) => {
-        const generateurEcsDE = generateurEcs.donnee_entree || {};
-        const generateurEcsDI = generateurEcs.donnee_intermediaire || {};
+        const generateurEcsDE = /** @type {GenerateurEcsDE} */ (generateurEcs.donnee_entree || {});
+        const generateurEcsDI = /** @type {GenerateurEcsDI} */ (
+          generateurEcs.donnee_intermediaire || {}
+        );
         return (
           Number(generateurEcsDI.qp0 || 0) > 0 &&
           Number(generateurEcsDE.position_volume_chauffe ?? 0) === 1 &&

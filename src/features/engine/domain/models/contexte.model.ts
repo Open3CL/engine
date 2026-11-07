@@ -1,9 +1,9 @@
-import { TypeDpe, TypeHabitation } from '../../../dpe/domain/models/dpe.model.js';
+import type { TypeDpe, TypeHabitation } from '../../../dpe/domain/models/type-habitation.model.js';
 
 export interface Contexte {
   typeHabitation: TypeHabitation;
   typeDpe: TypeDpe;
-  enumPeriodeConstructionId: number;
+  enumPeriodeConstructionId: string;
   anneeConstruction: number;
   surfaceHabitable: number;
   hauteurSousPlafond: number;

@@ -24,6 +24,7 @@ import { DeperditionPlancherBasService } from '../plancher_bas/deperdition-planc
  * @see consolide_annexe_arrete_du_31_03_2021_relatif_aux_methodes_et_procedures_applicables.pdf
  *
  * Si le coefficient U des portes est connu et justifié, le saisir directement. Sinon, prendre les valeurs tabulées
+ * @extends {DeperditionService<PontThermiqueTvStore>}
  */
 export class DeperditionPontThermiqueService extends DeperditionService {
   /**

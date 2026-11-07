@@ -124,15 +124,8 @@ export interface DE {
   reference?: string;
 }
 
-export enum TypeHabitation {
-  MAISON = 'MAISON',
-  APPARTEMENT = 'APPARTEMENT',
-  IMMEUBLE = 'IMMEUBLE'
-}
-export enum TypeDpe {
-  MAISON = 'MAISON',
-  APPARTEMENT = 'APPARTEMENT',
-  IMMEUBLE = 'IMMEUBLE'
-}
+/** Types définis à l'exécution dans type-habitation.model.js. */
+export type TypeHabitation = 'MAISON' | 'APPARTEMENT' | 'IMMEUBLE';
+export type TypeDpe = 'MAISON' | 'APPARTEMENT' | 'APPARTEMENT_A_PARTIR_IMMEUBLE' | 'IMMEUBLE';
 
 export type FullDpe = Dpe;
