@@ -105,8 +105,14 @@ vi.mock('./dpe-sanitizer.service.js', () => ({
   })
 }));
 
-const { getVersion, get_conso_coeff_1_7_2027, get_classe_ges_dpe, calcul_3cl, calcul_3cl_xml } =
-  await import('./engine.js');
+const {
+  getVersion,
+  get_conso_coeff_1_7_2027,
+  get_classe_ges_dpe,
+  calcul_3cl,
+  calcul_3cl_xml,
+  removeDonneeUtilisateur
+} = await import('./engine.js');
 const { classe_bilan_dpe, classe_emission_ges } = await import('./conso.js');
 const calc_conso = (await import('./conso.js')).default;
 const {
@@ -629,6 +635,109 @@ describe('calcul_3cl - run intégral (maison)', () => {
     expect(calc_ecs).not.toHaveBeenCalled();
     expect(conso_aux_distribution_ecs).not.toHaveBeenCalled();
     expect(calc_clim).not.toHaveBeenCalled();
+  });
+});
+
+describe('calcul_3cl - option verbose (donnee_utilisateur en sortie)', () => {
+  /** DPE dont plusieurs objets portent un `donnee_utilisateur` (valeurs de travail du moteur). */
+  function makeDpeAvecDonneeUtilisateur() {
+    const dpe = makeDpe();
+    dpe.logement.enveloppe.mur_collection.mur[0].donnee_utilisateur = {
+      enum_type_isolation_id: []
+    };
+    dpe.logement.installation_chauffage_collection.installation_chauffage[0].donnee_utilisateur = {
+      Pnominal: 4000
+    };
+    dpe.logement.installation_ecs_collection.installation_ecs[0].donnee_utilisateur = {
+      QgwRecuperable: 12
+    };
+    return dpe;
+  }
+
+  test('par défaut, les donnee_utilisateur sont retirées du DPE retourné', () => {
+    const res = calcul_3cl(makeDpeAvecDonneeUtilisateur(), { sanitize: false });
+
+    expect(JSON.stringify(res)).not.toContain('donnee_utilisateur');
+    // Les autres données des objets sont conservées.
+    expect(res.logement.enveloppe.mur_collection.mur[0].donnee_entree).toEqual({});
+    expect(
+      res.logement.installation_ecs_collection.installation_ecs[0].donnee_intermediaire
+    ).toEqual({});
+  });
+
+  test('sans options (sanitize par défaut), les donnee_utilisateur sont retirées', () => {
+    const res = calcul_3cl(makeDpeAvecDonneeUtilisateur());
+
+    expect(JSON.stringify(res)).not.toContain('donnee_utilisateur');
+  });
+
+  test('verbose: false explicite => donnee_utilisateur retirées', () => {
+    const res = calcul_3cl(makeDpeAvecDonneeUtilisateur(), { sanitize: false, verbose: false });
+
+    expect(JSON.stringify(res)).not.toContain('donnee_utilisateur');
+  });
+
+  test('verbose: true => donnee_utilisateur conservées', () => {
+    const res = calcul_3cl(makeDpeAvecDonneeUtilisateur(), { sanitize: false, verbose: true });
+
+    expect(res.logement.enveloppe.mur_collection.mur[0].donnee_utilisateur).toEqual({
+      enum_type_isolation_id: []
+    });
+    expect(
+      res.logement.installation_chauffage_collection.installation_chauffage[0].donnee_utilisateur
+    ).toEqual({ Pnominal: 4000 });
+    expect(res.logement.installation_ecs_collection.installation_ecs[0].donnee_utilisateur).toEqual(
+      {
+        QgwRecuperable: 12
+      }
+    );
+  });
+
+  test("verbose n'est activé que par la valeur booléenne true", () => {
+    const res = calcul_3cl(makeDpeAvecDonneeUtilisateur(), { sanitize: false, verbose: 'true' });
+
+    expect(JSON.stringify(res)).not.toContain('donnee_utilisateur');
+  });
+});
+
+describe('removeDonneeUtilisateur', () => {
+  test('supprime récursivement les donnee_utilisateur dans les objets et tableaux imbriqués', () => {
+    const node = {
+      donnee_utilisateur: { a: 1 },
+      collection: {
+        item: [
+          { donnee_entree: { x: 1 }, donnee_utilisateur: { b: 2 } },
+          { sous: { donnee_utilisateur: { c: 3 }, valeur: 4 } }
+        ]
+      },
+      liste: [[{ donnee_utilisateur: {} }]]
+    };
+
+    removeDonneeUtilisateur(node);
+
+    expect(node).toEqual({
+      collection: { item: [{ donnee_entree: { x: 1 } }, { sous: { valeur: 4 } }] },
+      liste: [[{}]]
+    });
+  });
+
+  test('ignore les valeurs scalaires, null et undefined', () => {
+    expect(() => removeDonneeUtilisateur(null)).not.toThrow();
+    expect(() => removeDonneeUtilisateur(undefined)).not.toThrow();
+    expect(() => removeDonneeUtilisateur(42)).not.toThrow();
+    expect(() => removeDonneeUtilisateur('texte')).not.toThrow();
+  });
+
+  test('supporte les références partagées et cycliques sans boucler', () => {
+    const partage = { donnee_utilisateur: { d: 1 }, valeur: 1 };
+    const node = { a: partage, b: partage, donnee_utilisateur: {} };
+    node.self = node;
+
+    removeDonneeUtilisateur(node);
+
+    expect(node.donnee_utilisateur).toBeUndefined();
+    expect(partage).toEqual({ valeur: 1 });
+    expect(node.self).toBe(node);
   });
 });
 

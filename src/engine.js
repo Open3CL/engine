@@ -63,7 +63,7 @@ export function getVersion() {
 /**
  * Run the engine with a full dpe xml content
  * @param dpeXmlContent {string} A full dpe xml content
- * @param options {{sanitize?: boolean, compat_for_corpus_analysis?: boolean}?} voir `calcul_3cl`
+ * @param options {{sanitize?: boolean, compat_for_corpus_analysis?: boolean, verbose?: boolean}?} voir `calcul_3cl`
  * @return {FullDpe}
  */
 export function calcul_3cl_xml(dpeXmlContent, options) {
@@ -75,12 +75,14 @@ export function calcul_3cl_xml(dpeXmlContent, options) {
 /**
  * Run the engine with a javascript plain object dpe
  * @param inputDpe {FullDpe} A full plain object dpe
- * @param options {{sanitize?: boolean, compat_for_corpus_analysis?: boolean}?}
+ * @param options {{sanitize?: boolean, compat_for_corpus_analysis?: boolean, verbose?: boolean}?}
  * - `sanitize` (défaut `true` si `options` est absent) : nettoyage du DPE d'entrée ;
  * - `compat_for_corpus_analysis` (défaut `false`) : reprend les valeurs choisies par le logiciel de
  *   saisie qui contredisent les données d'entrée (ligne q4pa_conv, issues #312 et #294), pour
  *   reproduire les DPE du corpus ADEME. À réserver à l'analyse de corpus : jamais pour le contrôle
  *   d'un DPE ni pour les scénarios de travaux.
+ * - `verbose` (défaut `false`) : conserve dans le DPE retourné les objets `donnee_utilisateur`
+ *   (valeurs de travail du moteur, hors XSD). Par défaut, ils sont supprimés de la sortie.
  * @return {FullDpe}
  */
 export function calcul_3cl(inputDpe, options) {
@@ -793,7 +795,31 @@ export function calcul_3cl(inputDpe, options) {
   logement.sortie.ep_conso.ep_conso_5_usages_2027 = conso1_7.ep_conso.ep_conso_5_usages;
   logement.sortie.ep_conso.ep_conso_5_usages_2027_m2 = conso1_7.ep_conso.ep_conso_5_usages_m2;
 
+  if (options.verbose !== true) {
+    removeDonneeUtilisateur(dpe);
+  }
+
   return dpe;
+}
+
+/**
+ * Supprime récursivement les objets `donnee_utilisateur` du DPE.
+ *
+ * Ces objets (hors XSD) servent uniquement à transmettre des valeurs entre les étapes du calcul :
+ * ils ne doivent pas figurer dans le DPE retourné par le moteur.
+ *
+ * @param node {any} noeud du DPE (objet, tableau ou valeur scalaire)
+ * @param visited {WeakSet<object>} objets déjà parcourus (protection contre les cycles)
+ */
+export function removeDonneeUtilisateur(node, visited = new WeakSet()) {
+  if (node === null || typeof node !== 'object' || visited.has(node)) return;
+  visited.add(node);
+  if (Array.isArray(node)) {
+    node.forEach((item) => removeDonneeUtilisateur(item, visited));
+    return;
+  }
+  delete node.donnee_utilisateur;
+  Object.values(node).forEach((value) => removeDonneeUtilisateur(value, visited));
 }
 
 /**
