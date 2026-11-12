@@ -81,3 +81,42 @@ describe('q4pa_conv et ligne tv_q4pa_conv_id du DPE - issue #312', () => {
     expect(output.logement.sortie.ep_conso.classe_bilan_dpe).toBe('E');
   });
 });
+
+/**
+ * Non-régression https://github.com/Open3CL/engine/issues/332
+ *
+ * Le DPE 2606E1314062H (appartement avant 1948) retient la ligne q4pa_conv 12 « avant 1948, avec
+ * joints » (2,5) alors que ses cinq baies exportent presence_joint = 0 (ligne 1 : 4,6).
+ * - option `compat_for_corpus_analysis` : la ligne du DPE est reprise (même règle que #312) ;
+ * - par défaut : q4pa_conv est recalculé selon la méthode.
+ */
+describe('q4pa_conv et ligne « avec joints » du DPE - issue #332', () => {
+  test('2606E1314062H avec compat_for_corpus_analysis : q4pa_conv, hperm et conso_ch identiques au DPE', () => {
+    set_bug_for_bug_compat();
+    set_tv_match_optimized_version();
+    /** @type {FullDpe} */
+    const input = getAdemeFileJson('2606E1314062H');
+    const output = calcul_3cl(structuredClone(input), CORPUS_ANALYSIS_OPTIONS);
+
+    const ventIn = [input.logement.ventilation_collection.ventilation].flat()[0];
+    const ventOut = [output.logement.ventilation_collection.ventilation].flat()[0];
+    expect(ventOut.donnee_intermediaire.q4pa_conv).toBe(2.5);
+    expect(ventOut.donnee_intermediaire.hperm).toBeCloseTo(ventIn.donnee_intermediaire.hperm, 1);
+    expect(output.logement.sortie.ef_conso.conso_ch).toBeCloseTo(
+      input.logement.sortie.ef_conso.conso_ch,
+      0
+    );
+    expect(output.logement.sortie.ep_conso.classe_bilan_dpe).toBe('E');
+  });
+
+  test('2606E1314062H par défaut : q4pa_conv recalculé selon la méthode (menuiseries sans joint)', () => {
+    set_bug_for_bug_compat();
+    set_tv_match_optimized_version();
+    /** @type {FullDpe} */
+    const input = getAdemeFileJson('2606E1314062H');
+    const output = calcul_3cl(structuredClone(input));
+
+    const ventOut = [output.logement.ventilation_collection.ventilation].flat()[0];
+    expect(ventOut.donnee_intermediaire.q4pa_conv).toBe(4.6);
+  });
+});

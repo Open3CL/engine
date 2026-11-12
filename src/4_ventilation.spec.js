@@ -24,9 +24,8 @@ vi.mock('./5_conso_ventilation.js', () => ({
 const {
   default: calc_ventilation,
   calc_hperm,
-  presenceJointNonRenseignee,
   isLigneQ4paMemePeriode,
-  isLigneQ4paSurfacesIsolees
+  isLigneQ4paPlusFavorable
 } = await import('./4_ventilation.js');
 const { tv } = await import('./utils.js');
 const { default: calc_pvent } = await import('./5_conso_ventilation.js');
@@ -446,11 +445,12 @@ describe('calc_ventilation - compatibilité bug_for_bug_compat activée', () => 
     const ROW_12 = {
       q4pa_conv: '2.5',
       tv_q4pa_conv_id: '12',
+      enum_periode_construction_id: '1',
       isolation_surfaces: '0',
       presence_joints_menuiserie: '1'
     };
 
-    test('aucune menuiserie ne renseigne le champ : joints du DPE repris, sans message', async () => {
+    test('aucune menuiserie ne renseigne le champ : ligne du DPE reprise', async () => {
       const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       const { calc_ventilation_bug, tvBug } = await chargerAvecBug(ROW_12);
       const baies = [{ donnee_entree: { surface_totale_baie: 10 } }];
@@ -462,7 +462,9 @@ describe('calc_ventilation - compatibilité bug_for_bug_compat activée', () => 
         'q4pa_conv',
         expect.objectContaining({ isolation_surfaces: '0', presence_joints_menuiserie: '1' })
       );
-      expect(errorSpy).not.toHaveBeenCalled();
+      expect(errorSpy).toHaveBeenCalledWith(
+        expect.stringContaining('La ligne du DPE est conservée')
+      );
       errorSpy.mockRestore();
     });
 
@@ -482,9 +484,33 @@ describe('calc_ventilation - compatibilité bug_for_bug_compat activée', () => 
       );
     });
 
-    test('presence_joint renseigné à 0 : la valeur recalculée prime et l’écart est signalé', async () => {
+    /**
+     * Issue #332 : menuiseries toutes exportées sans joint alors que la ligne du DPE est « avec
+     * joints » (2606E1314062H). Même règle : la ligne de la même période est reprise.
+     */
+    test('presence_joint renseigné à 0 (#332) : ligne « avec joints » du DPE reprise', async () => {
       const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       const { calc_ventilation_bug, tvBug } = await chargerAvecBug(ROW_12);
+      const baies = [{ donnee_entree: { surface_totale_baie: 10, presence_joint: 0 } }];
+
+      calc_ventilation_bug(vtLigne12(), CG, 'th', 80, 100, murNonIsole, [], [], baies);
+
+      expect(tvBug).toHaveBeenLastCalledWith(
+        'q4pa_conv',
+        expect.objectContaining({ isolation_surfaces: '0', presence_joints_menuiserie: '1' })
+      );
+      expect(errorSpy).toHaveBeenCalledWith(
+        expect.stringContaining('La ligne q4pa_conv 12 du DPE')
+      );
+      errorSpy.mockRestore();
+    });
+
+    test('ligne « avec joints » d’une autre période : joints recalculés et écart signalé', async () => {
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const { calc_ventilation_bug, tvBug } = await chargerAvecBug({
+        ...ROW_12,
+        enum_periode_construction_id: '2'
+      });
       const baies = [{ donnee_entree: { surface_totale_baie: 10, presence_joint: 0 } }];
 
       calc_ventilation_bug(vtLigne12(), CG, 'th', 80, 100, murNonIsole, [], [], baies);
@@ -495,6 +521,27 @@ describe('calc_ventilation - compatibilité bug_for_bug_compat activée', () => 
       );
       expect(errorSpy).toHaveBeenCalledWith(
         expect.stringContaining('La valeur recalculée presence_joints_menuiserie = 0 est utilisée')
+      );
+      errorSpy.mockRestore();
+    });
+
+    test('ligne « sans joints » alors que les menuiseries ont des joints : joints recalculés', async () => {
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const { calc_ventilation_bug, tvBug } = await chargerAvecBug({
+        ...ROW_12,
+        tv_q4pa_conv_id: '1',
+        presence_joints_menuiserie: '0'
+      });
+      const baies = [{ donnee_entree: { surface_totale_baie: 10, presence_joint: 1 } }];
+
+      calc_ventilation_bug(vtLigne12(), CG, 'th', 80, 100, murNonIsole, [], [], baies);
+
+      expect(tvBug).toHaveBeenLastCalledWith(
+        'q4pa_conv',
+        expect.objectContaining({ presence_joints_menuiserie: '1' })
+      );
+      expect(errorSpy).toHaveBeenCalledWith(
+        expect.stringContaining('La valeur recalculée presence_joints_menuiserie = 1 est utilisée')
       );
       errorSpy.mockRestore();
     });
@@ -533,9 +580,9 @@ describe('calc_ventilation - compatibilité bug_for_bug_compat activée', () => 
         expect.objectContaining({ isolation_surfaces: '1', presence_joints_menuiserie: '0' })
       );
       expect(errorSpy).toHaveBeenCalledWith(
-        expect.stringContaining('La ligne q4pa_conv 10 du DPE est conservée')
+        expect.stringContaining('La ligne q4pa_conv 10 du DPE')
       );
-      // les joints de la ligne reprise concordent : pas de second message
+      // un seul message pour la ligne reprise
       expect(errorSpy).toHaveBeenCalledTimes(1);
       errorSpy.mockRestore();
     });
@@ -607,7 +654,7 @@ describe('calc_ventilation - compatibilité bug_for_bug_compat activée', () => 
         errorSpy.mockRestore();
       });
 
-      test('presence_joint non exporté : seuls les joints de la ligne du DPE sont repris', async () => {
+      test('presence_joint non exporté : la ligne n’est pas reprise, même pour les joints', async () => {
         vi.spyOn(console, 'error').mockImplementation(() => {});
         const { calc_ventilation_bug, tvBug } = await chargerAvecBug(ROW_12);
         const { murs } = surfacesIsolantes();
@@ -617,7 +664,7 @@ describe('calc_ventilation - compatibilité bug_for_bug_compat activée', () => 
 
         expect(tvBug).toHaveBeenLastCalledWith(
           'q4pa_conv',
-          expect.objectContaining({ isolation_surfaces: '1', presence_joints_menuiserie: '1' })
+          expect.objectContaining({ isolation_surfaces: '1', presence_joints_menuiserie: '0' })
         );
       });
     });
@@ -716,31 +763,6 @@ describe('calc_ventilation - compatibilité bug_for_bug_compat activée', () => 
   });
 });
 
-describe('presenceJointNonRenseignee', () => {
-  test('aucune menuiserie : faux', () => {
-    expect(presenceJointNonRenseignee([], [])).toBe(false);
-    expect(presenceJointNonRenseignee(undefined, undefined)).toBe(false);
-  });
-
-  test('champ absent, null ou vide sur toutes les menuiseries : vrai', () => {
-    expect(
-      presenceJointNonRenseignee(
-        [{ donnee_entree: { presence_joint: '' } }],
-        [{ donnee_entree: {} }, { donnee_entree: { presence_joint: null } }]
-      )
-    ).toBe(true);
-  });
-
-  test('au moins une menuiserie renseignée (même à 0) : faux', () => {
-    expect(
-      presenceJointNonRenseignee(
-        [{ donnee_entree: { presence_joint: 0 } }],
-        [{ donnee_entree: {} }]
-      )
-    ).toBe(false);
-  });
-});
-
 describe('isLigneQ4paMemePeriode', () => {
   test('période contenue dans une liste « a|b|c » : vrai', () => {
     expect(
@@ -766,18 +788,59 @@ describe('isLigneQ4paMemePeriode', () => {
   });
 });
 
-describe('isLigneQ4paSurfacesIsolees', () => {
+describe('isLigneQ4paPlusFavorable', () => {
   test('ligne « surfaces isolées » et recalcul « non isolées » : vrai', () => {
-    expect(isLigneQ4paSurfacesIsolees({ isolation_surfaces: '1' }, '0')).toBe(true);
-    expect(isLigneQ4paSurfacesIsolees({ isolation_surfaces: 1 }, 0)).toBe(true);
+    expect(isLigneQ4paPlusFavorable({ isolation_surfaces: '1' }, '0', '0')).toBe(true);
+    expect(isLigneQ4paPlusFavorable({ isolation_surfaces: 1 }, '0', '1')).toBe(true);
   });
 
-  test('ligne « non isolées » et recalcul « isolées » : faux (sens inverse)', () => {
-    expect(isLigneQ4paSurfacesIsolees({ isolation_surfaces: '0' }, '1')).toBe(false);
+  test('ligne « avec joints » et recalcul « sans joints », isolation concordante : vrai', () => {
+    expect(
+      isLigneQ4paPlusFavorable(
+        { isolation_surfaces: '0', presence_joints_menuiserie: '1' },
+        '0',
+        '0'
+      )
+    ).toBe(true);
+  });
+
+  test('ligne « non isolées » et recalcul « isolées » : faux, même si la ligne a des joints', () => {
+    expect(isLigneQ4paPlusFavorable({ isolation_surfaces: '0' }, '1', '0')).toBe(false);
+    expect(
+      isLigneQ4paPlusFavorable(
+        { isolation_surfaces: '0', presence_joints_menuiserie: '1' },
+        '1',
+        '0'
+      )
+    ).toBe(false);
+  });
+
+  test('ligne « sans joints » et recalcul « avec joints » : faux', () => {
+    expect(
+      isLigneQ4paPlusFavorable(
+        { isolation_surfaces: '0', presence_joints_menuiserie: '0' },
+        '0',
+        '1'
+      )
+    ).toBe(false);
   });
 
   test('valeurs concordantes ou ligne sans critère : faux', () => {
-    expect(isLigneQ4paSurfacesIsolees({ isolation_surfaces: '1' }, '1')).toBe(false);
-    expect(isLigneQ4paSurfacesIsolees({}, '0')).toBe(false);
+    expect(isLigneQ4paPlusFavorable({ isolation_surfaces: '1' }, '1', '0')).toBe(false);
+    expect(
+      isLigneQ4paPlusFavorable(
+        { isolation_surfaces: '0', presence_joints_menuiserie: '1' },
+        '0',
+        '1'
+      )
+    ).toBe(false);
+    expect(isLigneQ4paPlusFavorable({}, '0', '0')).toBe(false);
+    expect(
+      isLigneQ4paPlusFavorable(
+        { isolation_surfaces: null, presence_joints_menuiserie: '' },
+        '0',
+        '0'
+      )
+    ).toBe(false);
   });
 });
