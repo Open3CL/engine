@@ -14,6 +14,27 @@
 
 <h3 align="center">Open3CL</h3>
 Implémentation open source du moteur Open3CL de l'ADEME.
+
+<br/><br/>
+<sub>Développé et maintenu par</sub>
+<br/><br/>
+<table align="center">
+  <tr>
+    <td align="center" width="160">
+      <a href="https://redfroggy.fr/">
+        <img src="images/redfroggy.png" alt="Logo RedFroggy" height="48"><br/>
+        <strong>RedFroggy</strong>
+      </a>
+    </td>
+    <td align="center" width="160">
+      <a href="https://kardino.fr">
+        <img src="images/kardino.png" alt="Logo Kardino" height="48"><br/>
+        <strong>Kardino</strong>
+      </a>
+    </td>
+  </tr>
+</table>
+
   <p align="center">
 
 ![Javascript][Javascript]
@@ -43,9 +64,6 @@ Implémentation open source du moteur Open3CL de l'ADEME.
 
 Chargez le DPE d'un logement : Open3CL le recalcule dans le navigateur et en reconstruit la maquette 3D.
 Chaque paroi, fenêtre et équipement s'affiche avec ses déperditions — consultables et modifiables en direct.
-
-
-
 
 </div>
 
