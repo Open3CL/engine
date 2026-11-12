@@ -14,13 +14,13 @@
 
 <h3 align="center">Open3CL</h3>
 Implémentation open source du moteur Open3CL de l'ADEME.
-
+<br/>
 <sub>Développé et maintenu par</sub>
 <br/>
 <a href="https://open3cl.fr">
 <img src="images/redfroggy.png" alt="RedFroggy" width="160" height="160">
 </a>
-<br/><br/>
+<br/>
   <p align="center">
 
 <br/>
@@ -37,8 +37,6 @@ Implémentation open source du moteur Open3CL de l'ADEME.
 **Donnez-lui un DPE au format XML ou JSON, il vous rend les consommations, les émissions et les étiquettes.**
 
 </div>
-
-<br />
 
 <div align="center">
 
