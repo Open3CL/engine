@@ -5,7 +5,8 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
  * - `enums` : mapping minimal période de construction / période d'isolation ;
  * - `b` (3.1_b.js) : simple espion (le coefficient b n'intervient pas dans le calcul de Uph ici) ;
  * - `tv` : accès aux tables `uph0` / `uph`, on contrôle la ligne retournée par table ;
- * - `requestInput` : passe-plat renvoyant la donnée d'entrée demandée ;
+ * - `requestInput` : passe-plat espionné renvoyant la donnée d'entrée demandée (permet de
+ *   vérifier le type transmis : sans type, le vrai `requestInput` renvoie `null`) ;
  * - `getKeyByValue` : implémentation déterministe (pas de dépendance aux vraies enums) ;
  * - `bug_for_bug_compat` : exposé via un getter afin de pouvoir le basculer par test.
  */
@@ -25,7 +26,7 @@ vi.mock('./3.1_b.js', () => ({
 vi.mock('./utils.js', () => ({
   set_bug_for_bug_compat: vi.fn(),
   tv: vi.fn(),
-  requestInput: (de, du, field) => de[field],
+  requestInput: vi.fn((de, du, field) => de[field]),
   getKeyByValue: (object, value) => Object.keys(object).find((key) => object[key] === value),
   get bug_for_bug_compat() {
     return bugForBugCompat;
@@ -33,7 +34,7 @@ vi.mock('./utils.js', () => ({
 }));
 
 const { default: calc_ph } = await import('./3.2.3_plancher_haut.js');
-const { tv } = await import('./utils.js');
+const { tv, requestInput } = await import('./utils.js');
 
 /** Table `uph0` figée : U0 forfaitaire de la paroi nue. */
 const ROW_UPH0 = { uph0: '2', tv_uph0_id: '5' };
@@ -43,6 +44,7 @@ const ROW_UPH = { uph: '0.3', tv_uph_id: '7' };
 beforeEach(() => {
   bugForBugCompat = false;
   tv.mockReset();
+  requestInput.mockClear();
   tv.mockImplementation((table) => {
     if (table === 'uph0') return { ...ROW_UPH0 };
     if (table === 'uph') return { ...ROW_UPH };
@@ -122,6 +124,31 @@ describe('calc_ph - calcul de Uph0 (calc_uph0)', () => {
     expect(tv).not.toHaveBeenCalled();
     expect(ph.donnee_intermediaire.uph0).toBe(0.9);
     expect(ph.donnee_intermediaire.uph).toBe(0.9);
+  });
+
+  test.each([
+    'saisie direct u0 justifiée à partir des documents justificatifs autorisés',
+    "saisie direct u0 correspondant à la performance de la paroi avec son isolation antérieure iti (umur_iti) lorsqu'il y a une surisolation ite réalisée"
+  ])("saisie directe de Uph0 (%s) : uph0_saisi est demandé avec le type 'float'", (methode) => {
+    // Sans type, le vrai `requestInput` renvoie `null` pour un champ hors enum : Uph0, et donc
+    // les déperditions du plancher haut, tombaient à 0. Le mur (umur0_saisi) et le plancher bas
+    // (upb0_saisi) passent déjà 'float'.
+    const ph = {
+      donnee_entree: {
+        methode_saisie_u: 'non isolé',
+        methode_saisie_u0: methode,
+        uph0_saisi: 0.9
+      }
+    };
+
+    calc_ph(ph, 'h1a', '1', '0');
+
+    expect(requestInput).toHaveBeenCalledWith(
+      ph.donnee_entree,
+      expect.any(Object),
+      'uph0_saisi',
+      'float'
+    );
   });
 
   test('Uph0 non saisi car U est saisi : ni accès table, ni valeur Uph0', () => {

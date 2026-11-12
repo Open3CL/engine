@@ -83,7 +83,7 @@ function calc_uph0(di, de, du) {
       break;
     case 'saisie direct u0 justifiée à partir des documents justificatifs autorisés':
     case "saisie direct u0 correspondant à la performance de la paroi avec son isolation antérieure iti (umur_iti) lorsqu'il y a une surisolation ite réalisée":
-      di.uph0 = requestInput(de, du, 'uph0_saisi');
+      di.uph0 = requestInput(de, du, 'uph0_saisi', 'float');
       break;
     case 'u0 non saisi car le u est saisi connu et justifié.':
       break;
