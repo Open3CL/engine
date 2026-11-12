@@ -12,12 +12,11 @@
     <img src="images/logo.png" alt="Logo" width="260" height="80">
   </a>
 
-<h3 align="center">Open3CL</h3>
 Implémentation open source du moteur Open3CL de l'ADEME.
 <br/>
 <sub>Développé et maintenu par</sub>
 <br/>
-<a href="https://open3cl.fr">
+<a href="https://redfroggy.fr" target="_blank">
 <img src="images/redfroggy.png" alt="RedFroggy" width="160" height="160">
 </a>
 <br/>
