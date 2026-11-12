@@ -1,4 +1,4 @@
-import { ProductionENR, ratioProrataPvLogement } from './16.2_production_enr.js';
+import { ProductionENR, poidsCumulTribuPv, ratioProrataPvLogement } from './16.2_production_enr.js';
 import { describe, expect, test, it } from 'vitest';
 
 describe('production ENR unit tests', () => {
@@ -244,6 +244,31 @@ describe('production ENR unit tests', () => {
       );
       expect(ret.production_pv).toBeCloseTo(2120.1011712 * 0.5, 9);
     });
+  });
+
+  describe('poidsCumulTribuPv', () => {
+    test.each([
+      // [rang, nbInstallations, poids] : l'installation i (sur N) est comptée N − i fois
+      [0, 1, 1],
+      [0, 2, 2],
+      [1, 2, 1],
+      [0, 5, 5],
+      [2, 5, 3],
+      [4, 5, 1]
+    ])('rang %s sur %s installations : poids %s', (rang, nb, poids) => {
+      expect(poidsCumulTribuPv(rang, nb)).toBe(poids);
+    });
+  });
+
+  test('plusieurs installations hors bug_for_bug_compat : somme simple des productions', () => {
+    const inst = {
+      surface_totale_capteurs: 9.6,
+      enum_orientation_pv_id: 1,
+      enum_inclinaison_pv_id: 2
+    };
+    expect(
+      productionENR.getPpv({ panneaux_pv_collection: { panneaux_pv: [inst, inst, inst] } }, 1)
+    ).toBeCloseTo(3 * 2120.1011712, 9);
   });
 
   describe('ratioProrataPvLogement', () => {
