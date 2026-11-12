@@ -15,36 +15,21 @@
 <h3 align="center">Open3CL</h3>
 Implémentation open source du moteur Open3CL de l'ADEME.
 
-<br/><br/>
 <sub>Développé et maintenu par</sub>
+<br/>
+<a href="https://open3cl.fr">
+<img src="images/redfroggy.png" alt="RedFroggy" width="160" height="160">
+</a>
 <br/><br/>
-<table align="center">
-  <tr>
-    <td align="center" width="160">
-      <a href="https://redfroggy.fr/">
-        <img src="images/redfroggy.png" alt="Logo RedFroggy" height="48"><br/>
-        <strong>RedFroggy</strong>
-      </a>
-    </td>
-    <td align="center" width="160">
-      <a href="https://kardino.fr">
-        <img src="images/kardino.png" alt="Logo Kardino" height="48"><br/>
-        <strong>Kardino</strong>
-      </a>
-    </td>
-  </tr>
-</table>
-
   <p align="center">
 
 ![Javascript][Javascript]
-
-   <br/>
+<br/>
 <a href="https://github.com/Open3CL/engine/issues/new?labels=bug&template=bug-report---.md">Créer un bug</a>
-    &middot;
-    <a href="https://github.com/Open3CL/engine/issues/new?labels=enhancement&template=feature-request---.md">Créer une feature</a>
-    &middot;
-    <a href="https://open3cl.github.io/engine/">🏠 Démo 3D en ligne</a>
+&middot;
+<a href="https://github.com/Open3CL/engine/issues/new?labels=enhancement&template=feature-request---.md">Créer une feature</a>
+&middot;
+<a href="https://open3cl.github.io/engine/">🏠 Démo 3D en ligne</a>
   </p>
 </div>
 
@@ -65,8 +50,14 @@ Implémentation open source du moteur Open3CL de l'ADEME.
 Chargez le DPE d'un logement : Open3CL le recalcule dans le navigateur et en reconstruit la maquette 3D.
 Chaque paroi, fenêtre et équipement s'affiche avec ses déperditions — consultables et modifiables en direct.
 
-</div>
+[open3cl_3D_demo_resized.webm](https://github.com/user-attachments/assets/534a7f78-a493-41b7-9f73-128076349d84)
 
+<a href="images/open3cl_3D_screencast.mp4">
+  <img src="images/open3cl_3D_screencast.gif" alt="Démo Open3CL 3D : maquette d'un logement et ses déperditions" width="900">
+</a>
+
+</div>
+<br/><br/>
 <details>
   <summary>📚 Sommaire</summary>
   <ol>
