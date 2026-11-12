@@ -23,7 +23,6 @@ Implémentation open source du moteur Open3CL de l'ADEME.
 <br/><br/>
   <p align="center">
 
-![Javascript][Javascript]
 <br/>
 <a href="https://github.com/Open3CL/engine/issues/new?labels=bug&template=bug-report---.md">Créer un bug</a>
 &middot;
@@ -49,8 +48,6 @@ Implémentation open source du moteur Open3CL de l'ADEME.
 
 Chargez le DPE d'un logement : Open3CL le recalcule dans le navigateur et en reconstruit la maquette 3D.
 Chaque paroi, fenêtre et équipement s'affiche avec ses déperditions — consultables et modifiables en direct.
-
-[open3cl_3D_demo_resized.webm](https://github.com/user-attachments/assets/534a7f78-a493-41b7-9f73-128076349d84)
 
 <a href="images/open3cl_3D_screencast.mp4">
   <img src="images/open3cl_3D_screencast.gif" alt="Démo Open3CL 3D : maquette d'un logement et ses déperditions" width="900">
