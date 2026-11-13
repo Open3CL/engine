@@ -65,7 +65,7 @@ Trois façons d'utiliser Open3CL, de la plus rapide à la plus intégrée :
 &nbsp;·&nbsp;
 💡 [Proposer une fonctionnalité](https://github.com/Open3CL/engine/issues/new?labels=enhancement&template=feature-request---.md)
 &nbsp;·&nbsp;
-📊 [Rapports de corpus](https://open3cl.github.io/engine/reports/corpus/)
+📊 [Rapports de corpus](https://open3cl.redfroggy.io/reports/corpus/)
 &nbsp;·&nbsp;
 🌐 [open3cl.fr](https://open3cl.fr)
 
@@ -77,7 +77,7 @@ Trois façons d'utiliser Open3CL, de la plus rapide à la plus intégrée :
 
 ## 🏠 Voir un DPE en 3D
 
-**[➡️ Ouvrir la démo 3D en ligne](https://open3cl.github.io/engine/)**
+**[➡️ Ouvrir la démo 3D en ligne](https://open3cl.redfroggy.io)**
 
 Chargez le DPE d'un logement : Open3CL le recalcule dans le navigateur et en reconstruit la maquette 3D.
 Chaque paroi, fenêtre et équipement s'affiche avec ses déperditions, consultables et modifiables en direct.
@@ -228,13 +228,13 @@ flowchart LR
 
 ### L'écosystème Open3CL
 
-| Ressource                                                              | Description                                                                |
-| :--------------------------------------------------------------------- | :------------------------------------------------------------------------- |
-| [Démo 3D](https://open3cl.github.io/engine/)                           | Visualisation 3D des déperditions d'un DPE, recalculées dans le navigateur |
-| [Rapports de corpus](https://open3cl.github.io/engine/reports/corpus/) | Rapport HTML sur les corpus DPE                                            |
-| [API REST](https://github.com/Open3CL/engine/wiki/API-REST)            | Le moteur hébergé par RedFroggy, en JSON ou XML (clé d'API sur demande)    |
-| [open3cl.fr](https://open3cl.fr)                                       | Le site du projet                                                          |
-| [@open3cl/engine](https://www.npmjs.com/package/@open3cl/engine)       | Le paquet npm                                                              |
+| Ressource                                                          | Description                                                                |
+| :----------------------------------------------------------------- | :------------------------------------------------------------------------- |
+| [Démo 3D](https://open3cl.redfroggy.io)                            | Visualisation 3D des déperditions d'un DPE, recalculées dans le navigateur |
+| [Rapports de corpus](https://open3cl.redfroggy.io/reports/corpus/) | Rapport HTML sur les corpus DPE                                            |
+| [API REST](https://github.com/Open3CL/engine/wiki/API-REST)        | Le moteur hébergé par RedFroggy, en JSON ou XML (clé d'API sur demande)    |
+| [open3cl.fr](https://open3cl.fr)                                   | Le site du projet                                                          |
+| [@open3cl/engine](https://www.npmjs.com/package/@open3cl/engine)   | Le paquet npm                                                              |
 
 <p align="right">(<a href="#readme-top">Retour sommaire</a>)</p>
 
@@ -539,14 +539,14 @@ flowchart TD
     fait --> cours
 ```
 
-| Étape               | Statut      | Détail                                                                                           |
-| :------------------ | :---------- | :----------------------------------------------------------------------------------------------- |
-| Site Open3CL        | ✅ Terminé  | [open3cl.fr](https://open3cl.fr)                                                                 |
-| Démo 3D en ligne    | ✅ Terminé  | [Visualisation 3D des déperditions](https://open3cl.github.io/engine/), publiée sur GitHub Pages |
-| Rapports de tests   | ✅ Terminé  | Tableau de bord interactif généré à chaque exécution                                             |
-| Refonte technique   | 🚧 En cours | Découpage par article de la méthode, couverture de tests à 100 %                                 |
-| DPE à l'immeuble    | 🚧 En cours | Fiabilisation des appartements générés depuis un DPE immeuble                                    |
-| Certification ADEME | 🚧 En cours | Objectif de long terme                                                                           |
+| Étape               | Statut      | Détail                                                                                      |
+| :------------------ | :---------- | :------------------------------------------------------------------------------------------ |
+| Site Open3CL        | ✅ Terminé  | [open3cl.fr](https://open3cl.fr)                                                            |
+| Démo 3D en ligne    | ✅ Terminé  | [Visualisation 3D des déperditions](https://open3cl.redfroggy.io), publiée sur GitHub Pages |
+| Rapports de tests   | ✅ Terminé  | Tableau de bord interactif généré à chaque exécution                                        |
+| Refonte technique   | 🚧 En cours | Découpage par article de la méthode, couverture de tests à 100 %                            |
+| DPE à l'immeuble    | 🚧 En cours | Fiabilisation des appartements générés depuis un DPE immeuble                               |
+| Certification ADEME | 🚧 En cours | Objectif de long terme                                                                      |
 
 Le détail complet des bugs et fonctionnalités en cours est dans les
 [issues](https://github.com/Open3CL/engine/issues).
