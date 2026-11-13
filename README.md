@@ -1,60 +1,130 @@
 <a id="readme-top"></a>
 
+<div align="center">
+
+<a href="https://open3cl.fr">
+  <img src="images/logo.png" alt="Open3CL" width="260" height="80">
+</a>
+
+<sub>Développé et maintenu par</sub>
+<br/>
+<a href="https://redfroggy.fr" target="_blank">
+<img src="images/redfroggy.png" alt="RedFroggy" width="120" height="120">
+</a>
+
+<br/><br/>
+
+### Implémentation open source de la méthode de calcul 3CL-DPE
+
+**Donnez-lui un DPE au format XML ou JSON, il vous rend les consommations, les émissions et les étiquettes.**
+
+<br/>
+
 [![Contributors][contributors-shield]][contributors-url]
 [![Forks][forks-shield]][forks-url]
 [![Stargazers][stars-shield]][stars-url]
 [![Issues][issues-shield]][issues-url]
-[![ MIT license][license-shield]][license-url]
-
-<br />
-<div align="center">
-  <a href="https://open3cl.fr">
-    <img src="images/logo.png" alt="Logo" width="260" height="80">
-  </a>
-
-Implémentation open source du moteur Open3CL de l'ADEME.
-<br/>
-<sub>Développé et maintenu par</sub>
-<br/>
-<a href="https://redfroggy.fr" target="_blank">
-<img src="images/redfroggy.png" alt="RedFroggy" width="160" height="160">
-</a>
-<br/>
-  <p align="center">
-
-<br/>
-<a href="https://github.com/Open3CL/engine/issues/new?labels=bug&template=bug-report---.md">Créer un bug</a>
-&middot;
-<a href="https://github.com/Open3CL/engine/issues/new?labels=enhancement&template=feature-request---.md">Créer une feature</a>
-&middot;
-<a href="https://open3cl.github.io/engine/">🏠 Démo 3D en ligne</a>
-  </p>
-</div>
-
-<div align="center">
-
-**Donnez-lui un DPE au format XML ou JSON, il vous rend les consommations, les émissions et les étiquettes.**
+[![MIT license][license-shield]][license-url]
 
 </div>
 
+<br/>
+
+---
+
+## 🧭 Par où commencer ?
+
+Trois façons d'utiliser Open3CL, de la plus rapide à la plus intégrée :
+
+<table>
+  <tr>
+    <th width="33%">🏠 Voir un DPE en 3D</th>
+    <th width="33%">⚡ Appeler l'API REST</th>
+    <th width="33%">📦 Intégrer le moteur</th>
+  </tr>
+  <tr>
+    <td>Chargez un DPE dans le navigateur et explorez la maquette 3D du logement et ses déperditions.</td>
+    <td>Envoyez un DPE JSON ou XML à l'API hébergée par RedFroggy, recevez-le recalculé. Rien à installer.</td>
+    <td>Ajoutez le paquet npm à votre application Node.js ou web et calculez localement, sans service externe.</td>
+  </tr>
+  <tr>
+    <td><em>Pour découvrir, sans rien installer</em></td>
+    <td><em>Pour un serveur, quel que soit le langage</em></td>
+    <td><em>Pour un projet JavaScript</em></td>
+  </tr>
+  <tr>
+    <td align="center"><a href="#-voir-un-dpe-en-3d"><strong>Voir la démo ↓</strong></a></td>
+    <td align="center"><a href="#-utiliser-lapi-rest"><strong>Utiliser l'API ↓</strong></a></td>
+    <td align="center"><a href="#-démarrage"><strong>Démarrer ↓</strong></a></td>
+  </tr>
+</table>
+
 <div align="center">
 
-### 🏠 Voir un DPE en 3D
+🐛 [Signaler un bug](https://github.com/Open3CL/engine/issues/new?labels=bug&template=bug-report---.md)
+&nbsp;·&nbsp;
+💡 [Proposer une fonctionnalité](https://github.com/Open3CL/engine/issues/new?labels=enhancement&template=feature-request---.md)
+&nbsp;·&nbsp;
+📊 [Rapports de corpus](https://open3cl.github.io/engine/reports/corpus/)
+&nbsp;·&nbsp;
+🌐 [open3cl.fr](https://open3cl.fr)
+
+</div>
+
+<br/>
+
+---
+
+## 🏠 Voir un DPE en 3D
 
 **[➡️ Ouvrir la démo 3D en ligne](https://open3cl.github.io/engine/)**
 
 Chargez le DPE d'un logement : Open3CL le recalcule dans le navigateur et en reconstruit la maquette 3D.
-Chaque paroi, fenêtre et équipement s'affiche avec ses déperditions — consultables et modifiables en direct.
+Chaque paroi, fenêtre et équipement s'affiche avec ses déperditions, consultables et modifiables en direct.
 
+<div align="center">
 <a href="images/open3cl_3D_screencast.mp4">
   <img src="images/open3cl_3D_screencast.gif" alt="Démo Open3CL 3D : maquette d'un logement et ses déperditions" width="900">
 </a>
-
 </div>
-<br/><br/>
+
+<p align="right">(<a href="#readme-top">Retour en haut</a>)</p>
+
+---
+
+## ⚡ Utiliser l'API REST
+
+Pas envie d'intégrer le moteur ? Appelez l'API Open3CL hébergée par RedFroggy, depuis n'importe quel langage.
+
+|                      |                                                                         |
+| :------------------- | :---------------------------------------------------------------------- |
+| **URL**              | `POST https://3cl.redfroggy.io/`                                        |
+| **Entrée**           | un DPE en JSON (`application/json`) ou en XML ADEME (`application/xml`) |
+| **Sortie**           | le DPE recalculé, dans le même format que l'entrée                      |
+| **Authentification** | clé d'API dans l'en-tête `X-Auth-Token`                                 |
+
+```bash
+curl -X POST https://3cl.redfroggy.io/ \
+  -H "X-Auth-Token: $OPEN3CL_API_KEY" \
+  -H 'Content-Type: application/xml' \
+  --data-binary @dpe.xml
+```
+
+> [!IMPORTANT]
+> L'API est **privée**. Pour obtenir une clé d'API, écrivez à **[contact@redfroggy.fr](mailto:contact@redfroggy.fr)**.
+
+**[📖 Guide complet de l'API : exemples curl, JavaScript, Java, Python, PHP, C#, Go](https://github.com/Open3CL/engine/wiki/API-REST)**
+
+<p align="right">(<a href="#readme-top">Retour en haut</a>)</p>
+
+---
+
 <details>
   <summary>📚 Sommaire</summary>
   <ol>
+    <li><a href="#-par-où-commencer-">Par où commencer ?</a></li>
+    <li><a href="#-voir-un-dpe-en-3d">Voir un DPE en 3D</a></li>
+    <li><a href="#-utiliser-lapi-rest">Utiliser l'API REST</a></li>
     <li><a href="#-à-propos-du-projet">À propos du projet</a>
       <ul>
         <li><a href="#ce-que-fait-le-moteur">Ce que fait le moteur</a></li>
@@ -162,6 +232,7 @@ flowchart LR
 | :--------------------------------------------------------------------- | :------------------------------------------------------------------------- |
 | [Démo 3D](https://open3cl.github.io/engine/)                           | Visualisation 3D des déperditions d'un DPE, recalculées dans le navigateur |
 | [Rapports de corpus](https://open3cl.github.io/engine/reports/corpus/) | Rapport HTML sur les corpus DPE                                            |
+| [API REST](https://github.com/Open3CL/engine/wiki/API-REST)            | Le moteur hébergé par RedFroggy, en JSON ou XML (clé d'API sur demande)    |
 | [open3cl.fr](https://open3cl.fr)                                       | Le site du projet                                                          |
 | [@open3cl/engine](https://www.npmjs.com/package/@open3cl/engine)       | Le paquet npm                                                              |
 
@@ -523,6 +594,8 @@ Distribué sous licence **MIT**. Voir le fichier [`LICENSE`](LICENSE) pour plus 
 ## 📬 Contact
 
 Pour toute question : **open3cl@redfroggy.fr**
+
+Pour obtenir une clé d'API REST : **contact@redfroggy.fr**
 
 <p align="right">(<a href="#readme-top">Retour sommaire</a>)</p>
 
