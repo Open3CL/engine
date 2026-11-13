@@ -113,7 +113,7 @@ curl -X POST https://3cl.redfroggy.io/ \
 > [!IMPORTANT]
 > L'API est **privée**. Pour obtenir une clé d'API, écrivez à **[contact@redfroggy.fr](mailto:contact@redfroggy.fr)**.
 
-**[📖 Guide complet de l'API : exemples curl, JavaScript, Java, Python, PHP, C#, Go](https://github.com/Open3CL/engine/wiki/API-REST)**
+**[📖 Guide complet de l'API : exemples curl, JavaScript, Java, Python, PHP, C#, Go](https://github.com/Open3CL/engine/wiki/Api-rest-Open3Cl)**
 
 <p align="right">(<a href="#readme-top">Retour en haut</a>)</p>
 
