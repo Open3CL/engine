@@ -225,14 +225,14 @@ flowchart LR
 > [!NOTE]
 > Le moteur vise la **reproduction fidèle** des sorties des logiciels certifiés, y compris certains de leurs écarts à la
 > méthode.
-
+đAPI
 ### L'écosystème Open3CL
 
 | Ressource                                                          | Description                                                                |
 | :----------------------------------------------------------------- | :------------------------------------------------------------------------- |
 | [Démo 3D](https://open3cl.redfroggy.io)                            | Visualisation 3D des déperditions d'un DPE, recalculées dans le navigateur |
 | [Rapports de corpus](https://open3cl.redfroggy.io/reports/corpus/) | Rapport HTML sur les corpus DPE                                            |
-| [API REST](https://github.com/Open3CL/engine/wiki/API-REST)        | Le moteur hébergé par RedFroggy, en JSON ou XML (clé d'API sur demande)    |
+| [API REST](https://github.com/Open3CL/engine/wiki/Api-rest-Open3Cl)        | Le moteur hébergé par RedFroggy, en JSON ou XML (clé d'API sur demande)    |
 | [open3cl.fr](https://open3cl.fr)                                   | Le site du projet                                                          |
 | [@open3cl/engine](https://www.npmjs.com/package/@open3cl/engine)   | Le paquet npm                                                              |
 
