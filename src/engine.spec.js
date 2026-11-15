@@ -17,6 +17,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 // Drapeaux mutables pilotant les constantes de configuration importées depuis utils.
 // Les getters garantissent une lecture « live » côté module testé.
 let bugForBugCompat = false;
+let compatCorpusAnalysis = false;
 let useEnumAsStringFlag = false;
 
 vi.mock('./utils.js', () => ({
@@ -25,6 +26,9 @@ vi.mock('./utils.js', () => ({
   add_references: vi.fn(),
   get bug_for_bug_compat() {
     return bugForBugCompat;
+  },
+  get compat_for_corpus_analysis() {
+    return compatCorpusAnalysis;
   },
   collectionCanBeEmpty: vi.fn(),
   containsAnySubstring: vi.fn(),
@@ -73,6 +77,9 @@ vi.mock('./2021_04_13_qualite_isolation.js', () => ({ default: vi.fn() }));
 vi.mock('./ficheTechnique.js', () => ({ default: vi.fn() }));
 vi.mock('./17.2_rdim_dpe_genere_immeuble.js', () => ({
   reconstituerRdimDpeGenereImmeuble: vi.fn()
+}));
+vi.mock('./17.4_prorata_tertiaire_immeuble.js', () => ({
+  prorataChauffageTertiaire: vi.fn(() => 1)
 }));
 vi.mock('./11_rdim_ecs_individuelle_unique.js', () => ({
   reconstituerRdimEcsIndividuelleUnique: vi.fn(),
@@ -130,6 +137,7 @@ const calc_confort_ete = (await import('./2021_04_13_confort_ete.js')).default;
 const calc_qualite_isolation = (await import('./2021_04_13_qualite_isolation.js')).default;
 const getFicheTechnique = (await import('./ficheTechnique.js')).default;
 const { reconstituerRdimDpeGenereImmeuble } = await import('./17.2_rdim_dpe_genere_immeuble.js');
+const { prorataChauffageTertiaire } = await import('./17.4_prorata_tertiaire_immeuble.js');
 const { reconstituerRdimEcsIndividuelleUnique, reconstituerRdimEcsIndividuellesMultiples } =
   await import('./11_rdim_ecs_individuelle_unique.js');
 
@@ -139,6 +147,7 @@ let consoResult;
 beforeEach(() => {
   vi.clearAllMocks();
   bugForBugCompat = false;
+  compatCorpusAnalysis = false;
   useEnumAsStringFlag = false;
 
   // Enums par défaut : maison, modèle supporté.
@@ -178,7 +187,7 @@ beforeEach(() => {
   vi.mocked(calc_conso).mockReturnValue(consoResult);
   vi.mocked(calculateEnr).mockReturnValue({ pv: 1 });
   ratioProrataPvLogement.mockReset();
-  ratioProrataPvLogement.mockReturnValue(0.25);
+  ratioProrataPvLogement.mockReturnValueOnce(0.25);
   vi.mocked(calc_confort_ete).mockReturnValue('confort');
   vi.mocked(calc_qualite_isolation).mockReturnValue('qualite');
 });
@@ -829,6 +838,23 @@ describe('calcul_3cl - surfaces immeuble / appartement et prorata', () => {
     // th != immeuble => isImmeubleSystemEcsIndividuels false, besoin divisé.
     expect(calc_ecs.mock.calls[0][11]).toBe(false);
     expect(calc_ecs.mock.calls[0][2]).toBe(50);
+  });
+
+  test('surface tertiaire : le prorata de chauffage est multiplié par le facteur du module tertiaire', () => {
+    compatCorpusAnalysis = true;
+    vi.mocked(prorataChauffageTertiaire).mockReturnValueOnce(0.25);
+    enums.methode_application_dpe_log = { 15: 'dpe appartement collectif' };
+    const dpe = makeDpe();
+    dpe.logement.caracteristique_generale.enum_methode_application_dpe_log_id = '15';
+
+    calcul_3cl(dpe, { sanitize: false });
+
+    const args = vi.mocked(prorataChauffageTertiaire).mock.calls[0];
+    expect(args[1]).toBe(dpe.logement.caracteristique_generale);
+    expect(args[3]).toBe(true);
+    // 0,4 (prorata surfacique) × 0,25 ; l'ECS n'est pas proratisée.
+    expect(calc_conso.mock.calls[0][8]).toBeCloseTo(0.1, 9);
+    expect(calc_conso.mock.calls[0][7]).toBeCloseTo(0.4, 9);
   });
 
   test('appartement issu immeuble (map 15) : Sh immeuble pour chauffage/ECS et prorata surfacique', () => {
