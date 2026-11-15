@@ -21,6 +21,7 @@ import calc_conso, {
 import {
   add_references,
   bug_for_bug_compat,
+  compat_for_corpus_analysis,
   collectionCanBeEmpty,
   containsAnySubstring,
   isEffetJoule,
@@ -35,6 +36,7 @@ import getFicheTechnique from './ficheTechnique.js';
 import { ProductionENR, ratioProrataPvLogement } from './16.2_production_enr.js';
 import DpeSanitizerService from './dpe-sanitizer.service.js';
 import { reconstituerRdimDpeGenereImmeuble } from './17.2_rdim_dpe_genere_immeuble.js';
+import { prorataChauffageTertiaire } from './17.4_prorata_tertiaire_immeuble.js';
 import {
   reconstituerRdimEcsIndividuelleUnique,
   reconstituerRdimEcsIndividuellesMultiples
@@ -633,6 +635,17 @@ export function calcul_3cl(inputDpe, options) {
   ) {
     prorataChauffage = Sh / ShChauffageAndEcs;
   }
+
+  /**
+   * Immeuble avec surface tertiaire desservie par les installations de chauffage : consommation
+   * ramenée à la part habitation (convention LICIEL, voir le module).
+   */
+  prorataChauffage *= prorataChauffageTertiaire(
+    th,
+    cg,
+    versionLogiciel,
+    compat_for_corpus_analysis
+  );
 
   /**
    * Appartement : rapport SH_immeuble / SH_logement utilisé pour déterminer la tranche du barème
