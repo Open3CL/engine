@@ -358,11 +358,13 @@ function calc_umur0(di, de, du, versionDpe) {
     }
 
     /**
-     * Certains DPE minorent di.umur0 à 2.5 avant d'appliquer le doublage. On vérifie ici si c'est le cas pour informer que
-     * le calcul du doublage se trouvera plus déperditif ici
+     * Certains DPE minorent di.umur0 à 2.5 avant d'appliquer le doublage (Umur exporté = 1/(1/2,5 + Rdoublage)).
+     * En compatibilité bug_for_bug, lorsque l'Umur0 ou l'Umur du DPE d'origine porte cette signature, on reproduit
+     * ce calcul pour aligner les déperditions du mur sur celles du DPE.
      */
     if (bug_for_bug_compat) {
-      checkDoublageWithMinUmur0(type_doublage, di, de, umur0_avant, umur_avant);
+      umur0Doublage =
+        checkDoublageWithMinUmur0(type_doublage, di, de, umur0_avant, umur_avant) ?? umur0Doublage;
     }
 
     di.umur0 = umur0Doublage;
@@ -515,8 +517,14 @@ export default function calc_mur(mur, zc, pc_id, effetJoule, versionDpe) {
  * @param de {MurDE}
  * @param umur0_avant {number}
  * @param umur_avant {number}
+ * @return {number|undefined} Umur0 avec doublage appliqué sur min(2,5 ; Umur0) si le DPE d'origine a fait ce calcul
+ * alors que Umur0 > 2,5, sinon undefined
  */
-function checkDoublageWithMinUmur0(type_doublage, di, de, umur0_avant, umur_avant) {
+export function checkDoublageWithMinUmur0(type_doublage, di, de, umur0_avant, umur_avant) {
+  if (!(di.umur0 > 2.5)) {
+    return undefined;
+  }
+
   let umur0Doublage;
 
   // 3 - doublage indéterminé ou lame d'air inf 15 mm
@@ -529,12 +537,15 @@ function checkDoublageWithMinUmur0(type_doublage, di, de, umur0_avant, umur_avan
   }
 
   if (
-    umur0_avant?.toFixed(3) === umur0Doublage?.toFixed(3) ||
-    umur_avant?.toFixed(3) === umur0Doublage?.toFixed(3)
+    umur0Doublage !== undefined &&
+    (umur0_avant?.toFixed(3) === umur0Doublage.toFixed(3) ||
+      umur_avant?.toFixed(3) === umur0Doublage.toFixed(3))
   ) {
     console.error(`
       Le calcul Umur0 pour le mur ${de.description} utilise Umur0 minoré à 2.5 pour l'application du doublage alors qu'il est de ${di.umur0}.
-      Nous conservons ${di.umur0} pour la suite des calculs, les murs sont donc plus déperditifs que dans le DPE d'origine.
+      Nous reprenons ce calcul (Umur0 avec doublage = ${umur0Doublage}) pour rester aligné sur le DPE d'origine.
     `);
+    return umur0Doublage;
   }
+  return undefined;
 }
