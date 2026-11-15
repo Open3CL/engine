@@ -83,7 +83,8 @@ const {
   default: calc_mur,
   epaisseurStructureTable,
   umur0Interpole,
-  MATERIAUX_PAROI_ANCIENNE
+  MATERIAUX_PAROI_ANCIENNE,
+  checkDoublageWithMinUmur0
 } = await import('./3.2.1_mur.js');
 const { tv, getThicknessFromDescription } = await import('./utils.js');
 
@@ -522,48 +523,124 @@ describe('calc_mur - prise en compte du doublage', () => {
     error.mockRestore();
   });
 
-  test('bug_for_bug : DPE minorant Umur0 à 2,5 avant doublage : avertissement (Umur0 avant)', () => {
-    bugForBugCompat = true;
-    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
-    // umur0_avant est aligné sur le Umur0 minoré à 2,5 avec doublage type 3 => 1/(1/2 + 0,1)
-    const mur = {
+  describe('doublage appliqué sur Umur0 minoré à 2,5 par le DPE d’origine', () => {
+    /** Mur non isolé dont l'Umur0 de la table (3) dépasse le plafond forfaitaire de 2,5. */
+    const murUmur0Eleve = (typeDoublage, di) => ({
       donnee_entree: {
         methode_saisie_u: 'non isolé',
         methode_saisie_u0:
           'déterminé selon le matériau et épaisseur à partir de la table de valeur forfaitaire',
         enum_materiaux_structure_mur_id: '5',
         epaisseur_structure: 30,
-        enum_type_doublage_id: '3'
+        enum_type_doublage_id: typeDoublage
       },
-      donnee_intermediaire: { umur0: 1 / (1 / 2 + 0.1) }
-    };
+      donnee_intermediaire: di
+    });
 
-    calc_mur(mur, 'h1a', '1', '0');
+    beforeEach(() => {
+      tv.mockImplementation((table) => {
+        if (table === 'umur0') return { umur0: '3', tv_umur0_id: '1' };
+        if (table === 'umur') return { ...ROW_UMUR };
+        return null;
+      });
+    });
 
-    expect(error).toHaveBeenCalledWith(expect.stringContaining('minoré à 2.5'));
-    error.mockRestore();
+    test('bug_for_bug : Umur0 du DPE = 1/(1/2,5 + 0,1) (type 3) => doublage sur 2,5', () => {
+      bugForBugCompat = true;
+      const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const mur = murUmur0Eleve('3', { umur0: 1 / (1 / 2.5 + 0.1) });
+
+      calc_mur(mur, 'h1a', '1', '0');
+
+      // 1 / (1/2,5 + 0,1) = 2 (et non 1 / (1/3 + 0,1) = 2,307...)
+      expect(mur.donnee_intermediaire.umur0).toBeCloseTo(2, 9);
+      expect(error).toHaveBeenCalledWith(expect.stringContaining('minoré à 2.5'));
+      error.mockRestore();
+    });
+
+    test.each([['4'], ['5']])(
+      'bug_for_bug : Umur du DPE = 1/(1/2,5 + 0,21) (type %s) => doublage sur 2,5',
+      (typeDoublage) => {
+        bugForBugCompat = true;
+        const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+        const mur = murUmur0Eleve(typeDoublage, { umur: 1 / (1 / 2.5 + 0.21) });
+
+        calc_mur(mur, 'h1a', '1', '0');
+
+        // 1 / (1/2,5 + 0,21) = 1,6393... (signature observée sur 2262E1849729W)
+        // valeur de référence de régression
+        expect(mur.donnee_intermediaire.umur0).toBeCloseTo(1.639344262295082, 9);
+        expect(mur.donnee_intermediaire.umur).toBeCloseTo(1.639344262295082, 9);
+        error.mockRestore();
+      }
+    );
+
+    test('bug_for_bug : DPE sans la signature => doublage sur l’Umur0 de la table', () => {
+      bugForBugCompat = true;
+      const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const mur = murUmur0Eleve('4', { umur0: 2.2, umur: 2.2 });
+
+      calc_mur(mur, 'h1a', '1', '0');
+
+      // 1 / (1/3 + 0,21) = 1,8404...
+      // valeur de référence de régression
+      expect(mur.donnee_intermediaire.umur0).toBeCloseTo(1.8404907975460123, 9);
+      expect(error).not.toHaveBeenCalledWith(expect.stringContaining('minoré à 2.5'));
+      error.mockRestore();
+    });
+
+    test('hors bug_for_bug : la signature du DPE est ignorée', () => {
+      const mur = murUmur0Eleve('4', { umur: 1 / (1 / 2.5 + 0.21) });
+
+      calc_mur(mur, 'h1a', '1', '0');
+
+      // valeur de référence de régression : 1 / (1/3 + 0,21)
+      expect(mur.donnee_intermediaire.umur0).toBeCloseTo(1.8404907975460123, 9);
+    });
+
+    test('bug_for_bug : Umur0 ≤ 2,5 => aucune reprise ni avertissement', () => {
+      bugForBugCompat = true;
+      tv.mockImplementation((table) => {
+        if (table === 'umur0') return { ...ROW_UMUR0 };
+        if (table === 'umur') return { ...ROW_UMUR };
+        return null;
+      });
+      const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+      // Avec Umur0 = 2, min(2,5 ; Umur0) = Umur0 : la signature est indiscernable du calcul normal.
+      const mur = murUmur0Eleve('4', { umur: 1 / (1 / 2 + 0.21) });
+
+      calc_mur(mur, 'h1a', '1', '0');
+
+      expect(mur.donnee_intermediaire.umur0).toBeCloseTo(1.4084507042253522, 9);
+      expect(error).not.toHaveBeenCalledWith(expect.stringContaining('minoré à 2.5'));
+      error.mockRestore();
+    });
   });
 
-  test('bug_for_bug : DPE minorant Umur0 à 2,5 avant doublage : avertissement (Umur avant)', () => {
-    bugForBugCompat = true;
-    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
-    // umur_avant est aligné sur le Umur0 minoré à 2,5 avec doublage type 4 => 1/(1/2 + 0,21)
-    const mur = {
-      donnee_entree: {
-        methode_saisie_u: 'non isolé',
-        methode_saisie_u0:
-          'déterminé selon le matériau et épaisseur à partir de la table de valeur forfaitaire',
-        enum_materiaux_structure_mur_id: '5',
-        epaisseur_structure: 30,
-        enum_type_doublage_id: '4'
-      },
-      donnee_intermediaire: { umur: 1 / (1 / 2 + 0.21) }
-    };
+  describe('checkDoublageWithMinUmur0', () => {
+    const de = { description: 'Mur test' };
 
-    calc_mur(mur, 'h1a', '1', '0');
+    test('Umur0 ≤ 2,5 => undefined', () => {
+      expect(checkDoublageWithMinUmur0(4, { umur0: 2.5 }, de, 1.6393, undefined)).toBeUndefined();
+    });
 
-    expect(error).toHaveBeenCalledWith(expect.stringContaining('minoré à 2.5'));
-    error.mockRestore();
+    test('Umur0 absent => undefined', () => {
+      expect(checkDoublageWithMinUmur0(4, {}, de, 1.6393, undefined)).toBeUndefined();
+    });
+
+    test('type de doublage sans résistance (6) et aucune valeur du DPE => undefined', () => {
+      expect(checkDoublageWithMinUmur0(6, { umur0: 3 }, de, undefined, undefined)).toBeUndefined();
+    });
+
+    test('type 3 et Umur0 du DPE = 2 => 1/(1/2,5 + 0,1)', () => {
+      const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+      expect(checkDoublageWithMinUmur0(3, { umur0: 4 }, de, 2, undefined)).toBeCloseTo(2, 9);
+      error.mockRestore();
+    });
+
+    test('valeurs du DPE différentes => undefined', () => {
+      expect(checkDoublageWithMinUmur0(5, { umur0: 3 }, de, 1.7, 1.7)).toBeUndefined();
+    });
   });
 });
 
