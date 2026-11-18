@@ -838,10 +838,44 @@ export function sortieElectricite(
   };
 }
 
+/**
+ * Seuils de classe DPE / GES pour une surface habitable donnée (logements de moins de 40 m²).
+ *
+ * Les tables `dpe_class_limit` / `ges_class_limit` donnent les seuils pour chaque surface entière.
+ * Pour une surface non entière, les seuils sont interpolés linéairement entre les deux surfaces
+ * entières qui l'encadrent (arrêté JORFTEXT000049446315, logements < 40 m²) au lieu d'arrondir la
+ * surface. Surface entière, ou hors de la plage tabulée : ligne de la surface arrondie (comportement
+ * historique). Surface absente ou non numérique : aucun seuil (valeurs par défaut).
+ *
+ * @param table {Record<number, Record<string, number>>} seuils par surface entière
+ * @param Sh {number|string|undefined} surface habitable (m²)
+ * @returns {Record<string, number>}
+ */
+export function seuilsClasseSurface(table, Sh) {
+  const surface = Number(Sh);
+  if (!table || Sh == null || !Number.isFinite(surface)) return {};
+
+  const surfaceBasse = Math.floor(surface);
+  const ligneBasse = table[surfaceBasse];
+  const ligneHaute = table[surfaceBasse + 1];
+
+  if (surface === surfaceBasse || !ligneBasse || !ligneHaute) {
+    return table[Math.round(surface)] ?? {};
+  }
+
+  const t = surface - surfaceBasse;
+  return Object.fromEntries(
+    Object.entries(ligneBasse).map(([classe, seuilBas]) => {
+      const seuilHaut = ligneHaute[classe] ?? seuilBas;
+      return [classe, seuilBas + (seuilHaut - seuilBas) * t];
+    })
+  );
+}
+
 export function classe_bilan_dpe(ep_conso_5_usages_m2, zc_id, ca_id, Sh) {
   const ca = enums.classe_altitude[ca_id];
 
-  const cut = tvs.dpe_class_limit[ca][Math.round(Sh)] ?? [];
+  const cut = seuilsClasseSurface(tvs.dpe_class_limit[ca], Sh);
 
   if (ep_conso_5_usages_m2 == null) return null;
   if (ep_conso_5_usages_m2 < (cut['A'] ?? 70)) return 'A';
@@ -864,7 +898,7 @@ export function classe_bilan_dpe(ep_conso_5_usages_m2, zc_id, ca_id, Sh) {
 export function classe_emission_ges(emission_ges_5_usages_m2, zc_id, ca_id, Sh) {
   const ca = enums.classe_altitude[ca_id];
 
-  const cut = tvs.ges_class_limit[ca][Math.round(Sh)] ?? [];
+  const cut = seuilsClasseSurface(tvs.ges_class_limit[ca], Sh);
 
   if (emission_ges_5_usages_m2 == null) return null;
   if (emission_ges_5_usages_m2 < (cut['A'] ?? 6)) return 'A';

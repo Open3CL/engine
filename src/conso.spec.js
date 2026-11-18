@@ -27,11 +27,19 @@ vi.mock('./16_conso_eclairage.js', () => ({ default: vi.fn(() => 1) }));
 vi.mock('./tv.js', () => ({
   default: {
     dpe_class_limit: {
-      'inférieur à 400m': { 100: { A: 10, B: 20, C: 30, D: 40, E: 300, F: 400 } },
+      'inférieur à 400m': {
+        20: { A: 88, B: 128, C: 230, D: 300, E: 385, F: 476 },
+        21: { A: 86, B: 126, C: 226, D: 296, E: 380, F: 470 },
+        100: { A: 10, B: 20, C: 30, D: 40, E: 300, F: 400 }
+      },
       'supérieur à 800m': {}
     },
     ges_class_limit: {
-      'inférieur à 400m': { 100: { A: 1, B: 2, C: 3, D: 4, E: 60, F: 90 } },
+      'inférieur à 400m': {
+        20: { A: 8, B: 13, C: 34, D: 54, E: 74, F: 104 },
+        21: { A: 8, B: 13, C: 33, D: 53, E: 73, F: 103 },
+        100: { A: 1, B: 2, C: 3, D: 4, E: 60, F: 90 }
+      },
       'supérieur à 800m': {}
     }
   }
@@ -58,6 +66,7 @@ const {
   default: calc_conso,
   classe_bilan_dpe,
   classe_emission_ges,
+  seuilsClasseSurface,
   getCoefKey,
   coef_ep,
   getCoefCout,
@@ -116,6 +125,84 @@ describe('classe_bilan_dpe - seuils de classe énergétique', () => {
     expect(classe_bilan_dpe(350, 2, 2, 100)).toBe('E');
     expect(classe_bilan_dpe(450, 2, 2, 100)).toBe('F');
     expect(classe_bilan_dpe(600, 2, 2, 100)).toBe('G');
+  });
+});
+
+/**
+ * Seuils des logements de moins de 40 m² : interpolation linéaire entre surfaces entières
+ * @see arrêté JORFTEXT000049446315
+ */
+describe('seuilsClasseSurface - seuils des petites surfaces', () => {
+  const table = {
+    20: { A: 88, B: 128, E: 385 },
+    21: { A: 86, B: 126, E: 380 },
+    40: { A: 70, B: 110 }
+  };
+
+  test('surface entière : ligne de la table, sans interpolation', () => {
+    expect(seuilsClasseSurface(table, 20)).toBe(table[20]);
+    expect(seuilsClasseSurface(table, '21')).toBe(table[21]);
+  });
+
+  test('surface non entière : interpolation linéaire entre les deux surfaces entières', () => {
+    expect(seuilsClasseSurface(table, 20.5)).toEqual({ A: 87, B: 127, E: 382.5 });
+    const seuils = seuilsClasseSurface(table, 20.25);
+    expect(seuils.A).toBeCloseTo(87.5, 9);
+    expect(seuils.E).toBeCloseTo(383.75, 9);
+  });
+
+  test("l'interpolation ne revient pas à arrondir la surface", () => {
+    // 20,6 m² : l'arrondi donnerait la ligne 21 (A = 86)
+    expect(seuilsClasseSurface(table, 20.6).A).toBeCloseTo(86.8, 9);
+  });
+
+  test('surface chaîne non entière : convertie avant interpolation', () => {
+    expect(seuilsClasseSurface(table, '20.5')).toEqual({ A: 87, B: 127, E: 382.5 });
+  });
+
+  test('classe absente de la ligne haute : seuil de la ligne basse conservé', () => {
+    expect(seuilsClasseSurface({ 3: { A: 146, F: 739 }, 4: { A: 140 } }, 3.5)).toEqual({
+      A: 143,
+      F: 739
+    });
+  });
+
+  test('surface encadrée par une seule ligne : ligne de la surface arrondie', () => {
+    // 21,4 -> pas de ligne 22 : ligne 21 ; 39,6 -> pas de ligne 39 : ligne 40
+    expect(seuilsClasseSurface(table, 21.4)).toBe(table[21]);
+    expect(seuilsClasseSurface(table, 39.6)).toBe(table[40]);
+  });
+
+  test('surface hors table (> 40 m²) : aucun seuil, valeurs par défaut', () => {
+    expect(seuilsClasseSurface(table, 85.3)).toEqual({});
+    expect(seuilsClasseSurface(table, 100)).toEqual({});
+  });
+
+  test('surface absente ou non numérique, ou table absente : aucun seuil', () => {
+    expect(seuilsClasseSurface(table, undefined)).toEqual({});
+    expect(seuilsClasseSurface(table, null)).toEqual({});
+    expect(seuilsClasseSurface(table, 'abc')).toEqual({});
+    expect(seuilsClasseSurface(undefined, 20.5)).toEqual({});
+  });
+});
+
+describe('classes DPE / GES - petites surfaces interpolées', () => {
+  // 20,5 m² : seuils DPE interpolés A = 87, B = 127 ; GES C = 33,5, D = 53,5
+  test('classe énergétique : seuil interpolé, et non celui de la surface arrondie', () => {
+    expect(classe_bilan_dpe(86.5, 1, 1, 20.5)).toBe('A'); // < 87 (arrondi à 21 : 86 => B)
+    expect(classe_bilan_dpe(87, 1, 1, 20.5)).toBe('B');
+    expect(classe_bilan_dpe(126.5, 1, 1, 20.5)).toBe('B'); // < 127 (arrondi à 21 : 126 => C)
+    expect(classe_bilan_dpe(127, 1, 1, 20.5)).toBe('C');
+  });
+
+  test('classe climat : seuil interpolé, et non celui de la surface arrondie', () => {
+    expect(classe_emission_ges(33.2, 1, 1, 20.5)).toBe('C'); // < 33,5 (arrondi à 21 : 33 => D)
+    expect(classe_emission_ges(53.7, 1, 1, 20.5)).toBe('E'); // >= 53,5
+  });
+
+  test('surface absente : valeurs par défaut, sans erreur', () => {
+    expect(classe_bilan_dpe(100, 1, 1, undefined)).toBe('B');
+    expect(classe_emission_ges(10, 1, 1, undefined)).toBe('B');
   });
 });
 
