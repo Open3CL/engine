@@ -225,16 +225,17 @@ flowchart LR
 > [!NOTE]
 > Le moteur vise la **reproduction fidèle** des sorties des logiciels certifiés, y compris certains de leurs écarts à la
 > méthode.
-đAPI
+> đAPI
+
 ### L'écosystème Open3CL
 
-| Ressource                                                          | Description                                                                |
-| :----------------------------------------------------------------- | :------------------------------------------------------------------------- |
-| [Démo 3D](https://open3cl.redfroggy.io)                            | Visualisation 3D des déperditions d'un DPE, recalculées dans le navigateur |
-| [Rapports de corpus](https://open3cl.redfroggy.io/reports/corpus/) | Rapport HTML sur les corpus DPE                                            |
-| [API REST](https://github.com/Open3CL/engine/wiki/Api-rest-Open3Cl)        | Le moteur hébergé par RedFroggy, en JSON ou XML (clé d'API sur demande)    |
-| [open3cl.fr](https://open3cl.fr)                                   | Le site du projet                                                          |
-| [@open3cl/engine](https://www.npmjs.com/package/@open3cl/engine)   | Le paquet npm                                                              |
+| Ressource                                                           | Description                                                                |
+| :------------------------------------------------------------------ | :------------------------------------------------------------------------- |
+| [Démo 3D](https://open3cl.redfroggy.io)                             | Visualisation 3D des déperditions d'un DPE, recalculées dans le navigateur |
+| [Rapports de corpus](https://open3cl.redfroggy.io/reports/corpus/)  | Rapport HTML sur les corpus DPE                                            |
+| [API REST](https://github.com/Open3CL/engine/wiki/Api-rest-Open3Cl) | Le moteur hébergé par RedFroggy, en JSON ou XML (clé d'API sur demande)    |
+| [open3cl.fr](https://open3cl.fr)                                    | Le site du projet                                                          |
+| [@open3cl/engine](https://www.npmjs.com/package/@open3cl/engine)    | Le paquet npm                                                              |
 
 <p align="right">(<a href="#readme-top">Retour sommaire</a>)</p>
 
@@ -303,13 +304,14 @@ Consommation      : 174 kWh/m²/an
 
 ### API publique
 
-| Fonction                        | Entrée      | Description                                                |
-| :------------------------------ | :---------- | :--------------------------------------------------------- |
-| `calcul_3cl(dpe, options?)`     | Objet JSON  | Calcule un DPE et renvoie l'objet enrichi de ses sorties   |
-| `calcul_3cl_xml(xml, options?)` | Chaîne XML  | Parse le XML puis appelle `calcul_3cl`                     |
-| `get_classe_ges_dpe(dpe)`       | DPE calculé | Recalcule les étiquettes énergie et climat                 |
-| `get_conso_coeff_1_7_2027(dpe)` | DPE calculé | Projette la consommation avec le coefficient EP 1,7 (2027) |
-| `getVersion()`                  | –           | Version du moteur utilisée                                 |
+| Fonction                         | Entrée                                      | Description                                                                 |
+| :------------------------------- | :------------------------------------------ | :-------------------------------------------------------------------------- |
+| `calcul_3cl(dpe, options?)`      | Objet JSON                                  | Calcule un DPE et renvoie l'objet enrichi de ses sorties                    |
+| `calcul_3cl_xml(xml, options?)`  | Chaîne XML                                  | Parse le XML puis appelle `calcul_3cl`                                      |
+| `get_classe_ges_dpe(dpe)`        | DPE calculé                                 | Recalcule les étiquettes énergie et climat                                  |
+| `get_seuils_classes(zc, ca, sh)` | Zone climatique, classe d'altitude, surface | Seuils A à F des étiquettes énergie et climat (montagne, < 40 m² interpolé) |
+| `get_conso_coeff_1_7_2027(dpe)`  | DPE calculé                                 | Projette la consommation avec le coefficient EP 1,7 (2027)                  |
+| `getVersion()`                   | –                                           | Version du moteur utilisée                                                  |
 
 ### Options de calcul
 

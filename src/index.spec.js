@@ -11,6 +11,7 @@ vi.mock('./engine.js', () => ({
   calcul_3cl_xml: vi.fn(),
   get_classe_ges_dpe: vi.fn(),
   get_conso_coeff_1_9_2026: vi.fn(),
+  get_seuils_classes: vi.fn(),
   getVersion: vi.fn()
 }));
 
@@ -29,13 +30,16 @@ const engine = await import('./engine.js');
 const deperdition = await import('./3_deperdition.js');
 
 describe('index - ré-exports depuis engine.js', () => {
-  test.each(['calcul_3cl', 'calcul_3cl_xml', 'get_classe_ges_dpe', 'getVersion'])(
-    "ré-exporte %s à l'identique depuis engine.js",
-    (nom) => {
-      expect(index[nom]).toBe(engine[nom]);
-      expect(typeof index[nom]).toBe('function');
-    }
-  );
+  test.each([
+    'calcul_3cl',
+    'calcul_3cl_xml',
+    'get_classe_ges_dpe',
+    'get_seuils_classes',
+    'getVersion'
+  ])("ré-exporte %s à l'identique depuis engine.js", (nom) => {
+    expect(index[nom]).toBe(engine[nom]);
+    expect(typeof index[nom]).toBe('function');
+  });
 });
 
 describe('index - ré-exports depuis 3_deperdition.js', () => {

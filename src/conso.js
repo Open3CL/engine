@@ -872,50 +872,93 @@ export function seuilsClasseSurface(table, Sh) {
   );
 }
 
-export function classe_bilan_dpe(ep_conso_5_usages_m2, zc_id, ca_id, Sh) {
-  const ca = enums.classe_altitude[ca_id];
+/** Classes à seuil, dans l'ordre (la classe G n'a pas de seuil haut). */
+export const CLASSES_A_SEUIL = ['A', 'B', 'C', 'D', 'E', 'F'];
 
-  const cut = seuilsClasseSurface(tvs.dpe_class_limit[ca], Sh);
-
-  if (ep_conso_5_usages_m2 == null) return null;
-  if (ep_conso_5_usages_m2 < (cut['A'] ?? 70)) return 'A';
-  if (ep_conso_5_usages_m2 < (cut['B'] ?? 110)) return 'B';
-  if (ep_conso_5_usages_m2 < (cut['C'] ?? 180)) return 'C';
-  if (ep_conso_5_usages_m2 < (cut['D'] ?? 250)) return 'D';
-
-  const zc = enums.zone_climatique[zc_id];
-
-  if (['h1b', 'h1c', 'h2d'].includes(zc) && ca === 'supérieur à 800m') {
-    if (ep_conso_5_usages_m2 < (cut['E'] ?? 390)) return 'E';
-    if (ep_conso_5_usages_m2 < (cut['F'] ?? 500)) return 'F';
-  } else {
-    if (ep_conso_5_usages_m2 < (cut['E'] ?? 330)) return 'E';
-    if (ep_conso_5_usages_m2 < (cut['F'] ?? 420)) return 'F';
+/**
+ * Seuils par défaut (logements de 40 m² et plus), en kWhEP/m².an pour le DPE et en
+ * kgCO2eq/m².an pour le GES. Les seuils E/F sont relevés en zone de montagne
+ * (zones h1b, h1c, h2d à plus de 800 m d'altitude).
+ */
+export const SEUILS_CLASSE_DEFAUT = {
+  dpe: {
+    standard: { A: 70, B: 110, C: 180, D: 250, E: 330, F: 420 },
+    montagne: { A: 70, B: 110, C: 180, D: 250, E: 390, F: 500 }
+  },
+  ges: {
+    standard: { A: 6, B: 11, C: 30, D: 50, E: 70, F: 100 },
+    montagne: { A: 6, B: 11, C: 30, D: 50, E: 80, F: 110 }
   }
-  return 'G';
+};
+
+const ZONES_MONTAGNE = ['h1b', 'h1c', 'h2d'];
+
+/**
+ * Seuils de classe (A à F) d'une étiquette pour une zone climatique, une classe d'altitude et une
+ * surface habitable : seuils par défaut (standard ou montagne), remplacés classe par classe par
+ * ceux de la table des petites surfaces (< 40 m², interpolés) quand elle en fournit.
+ *
+ * @param etiquette {'dpe'|'ges'}
+ * @param zc_id {number|string} enum_zone_climatique_id
+ * @param ca_id {number|string} enum_classe_altitude_id
+ * @param Sh {number|string|undefined} surface habitable (m²)
+ * @returns {{A: number, B: number, C: number, D: number, E: number, F: number}}
+ */
+function seuilsClasse(etiquette, zc_id, ca_id, Sh) {
+  const ca = enums.classe_altitude[ca_id];
+  const zc = enums.zone_climatique[zc_id];
+  const montagne = ZONES_MONTAGNE.includes(zc) && ca === 'supérieur à 800m';
+  const defaut = SEUILS_CLASSE_DEFAUT[etiquette][montagne ? 'montagne' : 'standard'];
+  const table = etiquette === 'dpe' ? tvs.dpe_class_limit : tvs.ges_class_limit;
+  const cut = seuilsClasseSurface(table?.[ca], Sh);
+
+  return Object.fromEntries(
+    CLASSES_A_SEUIL.map((classe) => [classe, cut[classe] ?? defaut[classe]])
+  );
+}
+
+/**
+ * Seuils de l'étiquette énergie (DPE), en kWhEP/m².an : la valeur d'une classe est la borne
+ * haute exclue (conso < seuil A => A, …, conso >= seuil F => G).
+ * @see arrêté du 31 mars 2021 (seuils) et arrêté JORFTEXT000049446315 (logements < 40 m²)
+ *
+ * @param zc_id {number|string} enum_zone_climatique_id
+ * @param ca_id {number|string} enum_classe_altitude_id
+ * @param Sh {number|string|undefined} surface habitable (m²)
+ */
+export function seuils_classe_dpe(zc_id, ca_id, Sh) {
+  return seuilsClasse('dpe', zc_id, ca_id, Sh);
+}
+
+/**
+ * Seuils de l'étiquette climat (GES), en kgCO2eq/m².an (mêmes conventions que
+ * {@link seuils_classe_dpe}).
+ *
+ * @param zc_id {number|string} enum_zone_climatique_id
+ * @param ca_id {number|string} enum_classe_altitude_id
+ * @param Sh {number|string|undefined} surface habitable (m²)
+ */
+export function seuils_classe_ges(zc_id, ca_id, Sh) {
+  return seuilsClasse('ges', zc_id, ca_id, Sh);
+}
+
+/**
+ * Classe correspondant à une valeur pour des seuils donnés.
+ * @param valeur {number|null|undefined}
+ * @param seuils {Record<string, number>}
+ * @returns {string|null}
+ */
+export function classeSelonSeuils(valeur, seuils) {
+  if (valeur == null) return null;
+  return CLASSES_A_SEUIL.find((classe) => valeur < seuils[classe]) ?? 'G';
+}
+
+export function classe_bilan_dpe(ep_conso_5_usages_m2, zc_id, ca_id, Sh) {
+  return classeSelonSeuils(ep_conso_5_usages_m2, seuils_classe_dpe(zc_id, ca_id, Sh));
 }
 
 export function classe_emission_ges(emission_ges_5_usages_m2, zc_id, ca_id, Sh) {
-  const ca = enums.classe_altitude[ca_id];
-
-  const cut = seuilsClasseSurface(tvs.ges_class_limit[ca], Sh);
-
-  if (emission_ges_5_usages_m2 == null) return null;
-  if (emission_ges_5_usages_m2 < (cut['A'] ?? 6)) return 'A';
-  if (emission_ges_5_usages_m2 < (cut['B'] ?? 11)) return 'B';
-  if (emission_ges_5_usages_m2 < (cut['C'] ?? 30)) return 'C';
-  if (emission_ges_5_usages_m2 < (cut['D'] ?? 50)) return 'D';
-
-  const zc = enums.zone_climatique[zc_id];
-
-  if (['h1b', 'h1c', 'h2d'].includes(zc) && ca === 'supérieur à 800m') {
-    if (emission_ges_5_usages_m2 < (cut['E'] ?? 80)) return 'E';
-    if (emission_ges_5_usages_m2 < (cut['F'] ?? 110)) return 'F';
-  } else {
-    if (emission_ges_5_usages_m2 < (cut['E'] ?? 70)) return 'E';
-    if (emission_ges_5_usages_m2 < (cut['F'] ?? 100)) return 'F';
-  }
-  return 'G';
+  return classeSelonSeuils(emission_ges_5_usages_m2, seuils_classe_ges(zc_id, ca_id, Sh));
 }
 
 /**
