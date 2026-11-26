@@ -57,7 +57,9 @@ vi.mock('./conso.js', () => ({
   coef_ep_1_7: { tag: 'coef_ep_1_7' },
   coef_ep_2_3: { tag: 'coef_ep_2_3' },
   COEFF_EP_1_7: 1.7,
-  COEFF_EP_2_3: 2.3
+  COEFF_EP_2_3: 2.3,
+  seuils_classe_dpe: vi.fn(),
+  seuils_classe_ges: vi.fn()
 }));
 
 // Dépendances de calcul mockées : elles ne doivent pas s'exécuter réellement.
@@ -105,9 +107,16 @@ vi.mock('./dpe-sanitizer.service.js', () => ({
   })
 }));
 
-const { getVersion, get_conso_coeff_1_7_2027, get_classe_ges_dpe, calcul_3cl, calcul_3cl_xml } =
-  await import('./engine.js');
-const { classe_bilan_dpe, classe_emission_ges } = await import('./conso.js');
+const {
+  getVersion,
+  get_conso_coeff_1_7_2027,
+  get_classe_ges_dpe,
+  get_seuils_classes,
+  calcul_3cl,
+  calcul_3cl_xml
+} = await import('./engine.js');
+const { classe_bilan_dpe, classe_emission_ges, seuils_classe_dpe, seuils_classe_ges } =
+  await import('./conso.js');
 const calc_conso = (await import('./conso.js')).default;
 const {
   add_references,
@@ -243,6 +252,19 @@ describe('getVersion', () => {
   test('retourne le jeton de version remplacé au build', () => {
     // En source, le jeton n'est pas encore substitué.
     expect(getVersion()).toBe('OPEN3CL_VERSION');
+  });
+});
+
+describe('get_seuils_classes', () => {
+  test('délègue aux seuils DPE et GES de conso avec zone, altitude et surface', () => {
+    const seuilsDpe = { A: 87, B: 127, C: 228, D: 298, E: 382.5, F: 473 };
+    const seuilsGes = { A: 8, B: 13, C: 33.5, D: 53.5, E: 73.5, F: 103.5 };
+    vi.mocked(seuils_classe_dpe).mockReturnValue(seuilsDpe);
+    vi.mocked(seuils_classe_ges).mockReturnValue(seuilsGes);
+
+    expect(get_seuils_classes(3, 1, 20.5)).toEqual({ dpe: seuilsDpe, ges: seuilsGes });
+    expect(seuils_classe_dpe).toHaveBeenCalledWith(3, 1, 20.5);
+    expect(seuils_classe_ges).toHaveBeenCalledWith(3, 1, 20.5);
   });
 });
 

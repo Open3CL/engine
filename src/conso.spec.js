@@ -67,6 +67,11 @@ const {
   classe_bilan_dpe,
   classe_emission_ges,
   seuilsClasseSurface,
+  seuils_classe_dpe,
+  seuils_classe_ges,
+  classeSelonSeuils,
+  CLASSES_A_SEUIL,
+  SEUILS_CLASSE_DEFAUT,
   getCoefKey,
   coef_ep,
   getCoefCout,
@@ -203,6 +208,87 @@ describe('classes DPE / GES - petites surfaces interpolées', () => {
   test('surface absente : valeurs par défaut, sans erreur', () => {
     expect(classe_bilan_dpe(100, 1, 1, undefined)).toBe('B');
     expect(classe_emission_ges(10, 1, 1, undefined)).toBe('B');
+  });
+});
+
+/**
+ * Seuils de classe exposés (issue #346) : défauts standard / montagne, surcharge par la table des
+ * petites surfaces (interpolée), et cohérence avec le classement.
+ */
+describe('seuils_classe_dpe / seuils_classe_ges - seuils exposés', () => {
+  test('surface >= 40 m², zone standard : seuils par défaut complets A à F', () => {
+    // ca_id=2 => table vide, zc_id=1 (h1a) => standard
+    expect(seuils_classe_dpe(1, 2, 85)).toEqual({ A: 70, B: 110, C: 180, D: 250, E: 330, F: 420 });
+    expect(seuils_classe_ges(1, 2, 85)).toEqual({ A: 6, B: 11, C: 30, D: 50, E: 70, F: 100 });
+  });
+
+  test('zone de montagne (h1b, > 800 m) : seuils E/F relevés', () => {
+    expect(seuils_classe_dpe(2, 2, 85)).toEqual({ A: 70, B: 110, C: 180, D: 250, E: 390, F: 500 });
+    expect(seuils_classe_ges(2, 2, 85)).toEqual({ A: 6, B: 11, C: 30, D: 50, E: 80, F: 110 });
+  });
+
+  test('petite surface entière : seuils de la ligne de la table', () => {
+    expect(seuils_classe_dpe(1, 1, 20)).toEqual({ A: 88, B: 128, C: 230, D: 300, E: 385, F: 476 });
+    expect(seuils_classe_ges(1, 1, 21)).toEqual({ A: 8, B: 13, C: 33, D: 53, E: 73, F: 103 });
+  });
+
+  test('petite surface non entière : seuils interpolés entre les deux surfaces entières', () => {
+    expect(seuils_classe_dpe(1, 1, 20.5)).toEqual({
+      A: 87,
+      B: 127,
+      C: 228,
+      D: 298,
+      E: 382.5,
+      F: 473
+    });
+    expect(seuils_classe_ges(1, 1, '20.5')).toEqual({
+      A: 8,
+      B: 13,
+      C: 33.5,
+      D: 53.5,
+      E: 73.5,
+      F: 103.5
+    });
+  });
+
+  test('surface absente : aucune ligne de table, seuils par défaut', () => {
+    expect(seuils_classe_dpe(1, 1, undefined)).toEqual(SEUILS_CLASSE_DEFAUT.dpe.standard);
+    expect(seuils_classe_ges(1, 1, undefined)).toEqual(SEUILS_CLASSE_DEFAUT.ges.standard);
+  });
+
+  test("classe d'altitude inconnue : seuils par défaut, sans erreur", () => {
+    expect(seuils_classe_dpe(1, 99, 20.5)).toEqual(SEUILS_CLASSE_DEFAUT.dpe.standard);
+  });
+
+  test('cohérence : une valeur égale à un seuil bascule dans la classe suivante', () => {
+    const seuils = seuils_classe_dpe(1, 1, 20.5);
+    for (const [index, classe] of CLASSES_A_SEUIL.entries()) {
+      const suivante = CLASSES_A_SEUIL[index + 1] ?? 'G';
+      expect(classe_bilan_dpe(seuils[classe] - 0.01, 1, 1, 20.5)).toBe(classe);
+      expect(classe_bilan_dpe(seuils[classe], 1, 1, 20.5)).toBe(suivante);
+    }
+  });
+});
+
+describe('classeSelonSeuils - classement selon des seuils', () => {
+  const seuils = { A: 1, B: 2, C: 3, D: 4, E: 5, F: 6 };
+
+  test.each([
+    [0, 'A'],
+    [1, 'B'],
+    [2.5, 'C'],
+    [3, 'D'],
+    [4.99, 'E'],
+    [5, 'F'],
+    [6, 'G'],
+    [1000, 'G']
+  ])('valeur %s => classe %s', (valeur, classe) => {
+    expect(classeSelonSeuils(valeur, seuils)).toBe(classe);
+  });
+
+  test('valeur absente : aucune classe', () => {
+    expect(classeSelonSeuils(null, seuils)).toBeNull();
+    expect(classeSelonSeuils(undefined, seuils)).toBeNull();
   });
 });
 

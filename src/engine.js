@@ -16,7 +16,9 @@ import calc_conso, {
   coef_ep_1_7,
   coef_ep_2_3,
   COEFF_EP_1_7,
-  COEFF_EP_2_3
+  COEFF_EP_2_3,
+  seuils_classe_dpe,
+  seuils_classe_ges
 } from './conso.js';
 import {
   add_references,
@@ -819,6 +821,31 @@ export function get_classe_ges_dpe(dpe) {
       ca_id,
       Sh
     )
+  };
+}
+
+/**
+ * Seuils des classes énergie (DPE) et climat (GES) applicables à un logement.
+ *
+ * Pour chaque étiquette, la valeur associée à une classe (A à F) est sa borne haute exclue :
+ * `valeur < seuils.A` => A, …, `valeur >= seuils.F` => G. Unités : kWhEP/m².an (DPE) et
+ * kgCO2eq/m².an (GES).
+ *
+ * - Seuils E/F relevés en zone de montagne (h1b, h1c, h2d à plus de 800 m).
+ * - Logements de moins de 40 m² : seuils de la table des petites surfaces, interpolés
+ *   linéairement entre les deux surfaces entières qui encadrent la surface habitable.
+ *
+ * @see arrêté du 31 mars 2021 et arrêté JORFTEXT000049446315 (logements < 40 m²)
+ *
+ * @param zone_climatique_id {number|string} enum_zone_climatique_id (1 = h1a … 8 = h3)
+ * @param classe_altitude_id {number|string} enum_classe_altitude_id (1 = < 400 m, 2 = 400-800 m, 3 = > 800 m)
+ * @param surface_habitable {number|string} surface habitable (m²) du logement (ou de l'immeuble)
+ * @returns {{dpe: Record<'A'|'B'|'C'|'D'|'E'|'F', number>, ges: Record<'A'|'B'|'C'|'D'|'E'|'F', number>}}
+ */
+export function get_seuils_classes(zone_climatique_id, classe_altitude_id, surface_habitable) {
+  return {
+    dpe: seuils_classe_dpe(zone_climatique_id, classe_altitude_id, surface_habitable),
+    ges: seuils_classe_ges(zone_climatique_id, classe_altitude_id, surface_habitable)
   };
 }
 
